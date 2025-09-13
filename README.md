@@ -93,9 +93,6 @@ project-root/
 │   ├── validators/                   # Zod schema
 │   └── utils.ts
 │
-│── prisma/                           # Schema DB
-│   └── schema.prisma
-│
 │── store/                            # Global state (Zustand/Redux)
 │   ├── userStore.ts
 │   └── packageStore.ts
