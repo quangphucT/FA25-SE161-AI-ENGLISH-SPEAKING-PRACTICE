@@ -1,15 +1,20 @@
 // store/userStore.ts
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface Account {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  avatar?: string | null;
   accessToken: string;
   refreshToken: string;
+  avatar: string | null;
+  createdAt: string;
+  description: string | null;
+  email: string;
+  firstName: string;
+  id: number;
+  isActive: boolean;
+  phone: string | null;
+  updatedAt: string;
+  lastName: string;
 }
 
 interface UserState {
@@ -18,8 +23,16 @@ interface UserState {
   logout: () => void;
 }
 
-export const useUserStore = create<UserState>((set) => ({
-  account: null,
-  setAccount: (account) => set({ account }),
-  logout: () => set({ account: null }),
-}));
+export const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
+      account: null,
+      setAccount: (account) => set({ account }),
+      logout: () => set({ account: null }),
+    }),
+    {
+      name: "user-storage",
+      partialize: (state) => ({ account: state.account }),
+    }
+  )
+);

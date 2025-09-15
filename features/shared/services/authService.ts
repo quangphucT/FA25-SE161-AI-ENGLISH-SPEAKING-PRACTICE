@@ -1,19 +1,44 @@
 // features/shared/services/authService.ts
-import { LoginRequest, LoginResponse } from "@/types/auth";
+import {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+} from "@/types/auth";
+import axiosClient from "@/lib/axiosClient";
 
 export const loginService = async (
   credentials: LoginRequest
 ): Promise<LoginResponse> => {
-  const res = await fetch("/api/auth/sign-in", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
-  });
-
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Login failed");
+  try {
+    const response = await axiosClient.post<LoginResponse>(
+      "/api/auth/sign-in",
+      credentials
+    );
+    return response.data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || error.message || "Login failed";
+    throw new Error(message);
   }
+};
 
-  return res.json();
+export const registerService = async (
+  credentials: RegisterRequest
+): Promise<RegisterResponse> => {
+  try {
+    const response = await axiosClient.post<RegisterResponse>(
+      "/api/auth/sign-up",
+      credentials
+    );
+    return response.data;
+  } catch (error: any) {
+     const data = error?.response?.data;
+  const message =
+    data?.message ||
+    (Array.isArray(data?.messages) ? data.messages.join(', ') : undefined) ||
+    error.message ||
+    "Register failed";
+  throw new Error(message);
+  }
 };
