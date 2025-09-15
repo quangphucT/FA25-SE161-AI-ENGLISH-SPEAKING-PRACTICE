@@ -20,7 +20,7 @@ import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import AdvertisingMessage from "@/components/AdvertisingMessage";
 export default function LoginForm() {
   const { mutate, isPending } = useLoginMutation();
-  const route = useRouter();
+  const router = useRouter();
   const formSchema = z.object({
     email: z.string().min(2).max(100).email(),
     password: z.string().min(6).max(100),
@@ -37,11 +37,9 @@ export default function LoginForm() {
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     mutate(values, {
-      onSuccess: (res) => {
-        localStorage.setItem("accessToken", res.account.accessToken);
-        localStorage.setItem("refreshToken", res.account.refreshToken);
+      onSuccess: () => {
         toast.success("Đăng nhập thành công!");
-        route.push("/");
+        router.push("/");
       },
       onError: (err) => { 
         toast.error(err.message);
@@ -51,6 +49,13 @@ export default function LoginForm() {
   }
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#18232a]">
+        <button
+            className="absolute left-6 top-6 cursor-pointer text-gray-400 hover:text-white text-3xl font-bold"
+            aria-label="Quay về đăng nhập"
+            onClick={() => router.push("/landing")}
+          >
+            ×
+          </button>
       <div className="w-full max-w-md bg-[#18232a] rounded-xl shadow-lg p-8 flex flex-col items-center">
         <h1 className="text-3xl font-bold text-white mb-8 text-center">
           Đăng nhập

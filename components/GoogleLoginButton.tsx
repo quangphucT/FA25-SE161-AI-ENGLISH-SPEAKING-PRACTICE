@@ -1,5 +1,6 @@
 import { Button } from "./ui/button";
-
+import googleIcon from "../public/icons/googleIcon.png"
+import Image from "next/image";
 export function GoogleLoginButton({onClick}: {onClick?: () => void}) {
     return (
          <>
@@ -11,12 +12,12 @@ export function GoogleLoginButton({onClick}: {onClick?: () => void}) {
            <div className="flex gap-4">
               <Button
                 type="button"
-                variant="outline"
+                
                 onClick={onClick}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#22313c] border-[#2c3e50] text-white rounded-xl py-3 text-lg cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-2 bg-[#22313c] border-[#2c3e50] text-white rounded-xl py-[23px] text-lg cursor-pointer"
               >
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png"
+                <Image
+                  src={googleIcon}
                   alt="Google"
                   className="w-6 h-6"
                 />

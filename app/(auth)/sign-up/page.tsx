@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import AdvertisingMessage from "@/components/AdvertisingMessage";
+import Link from "next/link";
 const formSchema = z.object({
   firstName: z.string().min(1, "Vui lòng nhập tên").max(50),
   lastName: z.string().min(1, "Vui lòng nhập họ").max(50),
@@ -69,9 +70,9 @@ export default function RegisterPage() {
         <>
           {" "}
           <button
-            className="absolute left-6 top-6 text-gray-400 hover:text-white text-3xl font-bold"
+            className="absolute left-6 top-6 cursor-pointer text-gray-400 hover:text-white text-3xl font-bold"
             aria-label="Quay về đăng nhập"
-            onClick={() => router.push("/sign-in")}
+            onClick={() => router.push("/landing")}
           >
             ×
           </button>
@@ -131,7 +132,7 @@ export default function RegisterPage() {
                           <Input
                             placeholder="Họ"
                             {...field}
-                            className="bg-[#18232a] text-white border rounded-xl px-4 py-[23px] text-lg"
+                            className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] text-lg"
                           />
                         </FormControl>
                         <FormMessage />
@@ -159,7 +160,7 @@ export default function RegisterPage() {
                         <Input
                           placeholder="Email"
                           {...field}
-                          className="bg-[#18232a] text-white border  rounded-xl px-4 py-[23px] text-lg"
+                          className="bg-[#18232a] text-white border border-[#616163]  rounded-xl px-4 py-[23px] text-lg"
                         />
                       </FormControl>
                       <FormMessage />
@@ -175,7 +176,7 @@ export default function RegisterPage() {
                         <Input
                           placeholder="Số điện thoại"
                           {...field}
-                          className="bg-[#18232a] text-white border rounded-xl px-4 py-[23px] text-lg"
+                          className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] text-lg"
                         />
                       </FormControl>
                       <FormMessage />
@@ -192,7 +193,7 @@ export default function RegisterPage() {
                           type="password"
                           placeholder="Mật khẩu"
                           {...field}
-                          className="bg-[#18232a] text-white border rounded-xl px-4 py-[23px] text-lg"
+                          className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] text-lg"
                         />
                       </FormControl>
                       <FormMessage />
@@ -214,9 +215,9 @@ export default function RegisterPage() {
         </Form>
         <div className="mt-8 text-center text-gray-400 text-sm">
           Đã có tài khoản?{" "}
-          <a href="/sign-in" className="text-[#2ed7ff] font-bold underline">
+          <Link href="/sign-in" className="text-[#2ed7ff] font-bold underline">
             Đăng nhập
-          </a>
+          </Link>
         </div>
         <AdvertisingMessage/>
       </div>

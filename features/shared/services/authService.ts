@@ -1,21 +1,25 @@
-// features/shared/services/authService.ts
+
 import {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
 } from "@/types/auth";
-import axiosClient from "@/lib/axiosClient";
 
 export const loginService = async (
   credentials: LoginRequest
 ): Promise<LoginResponse> => {
   try {
-    const response = await axiosClient.post<LoginResponse>(
-      "/api/auth/sign-in",
-      credentials
-    );
-    return response.data;
+    const response = await fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Login failed");
+    return data;
   } catch (error: any) {
     const message =
       error?.response?.data?.message || error.message || "Login failed";
@@ -27,18 +31,22 @@ export const registerService = async (
   credentials: RegisterRequest
 ): Promise<RegisterResponse> => {
   try {
-    const response = await axiosClient.post<RegisterResponse>(
-      "/api/auth/sign-up",
-      credentials
-    );
-    return response.data;
+    const response = await fetch("/api/auth/sign-up", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Register failed");
+    return data;
   } catch (error: any) {
-     const data = error?.response?.data;
-  const message =
-    data?.message ||
-    (Array.isArray(data?.messages) ? data.messages.join(', ') : undefined) ||
-    error.message ||
-    "Register failed";
-  throw new Error(message);
+    const data = error?.response?.data;
+    const message = data?.message ||
+      (Array.isArray(data?.messages) ? data.messages.join(", ") : undefined) ||
+      error.message ||
+      "Register failed";
+    throw new Error(message);
   }
 };
