@@ -1,3 +1,4 @@
+"use client";
 import { Card } from "@/components/ui/card";
 import { Line } from "react-chartjs-2";
 import { FaBox, FaChartLine, FaClock, FaUser } from "react-icons/fa";
