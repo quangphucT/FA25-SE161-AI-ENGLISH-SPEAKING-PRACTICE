@@ -1,11 +1,11 @@
 
 
-const Page = () => {
+const MentorManagement = () => {
   return (
     <div>
-      Mentors
+      Mentor Management
     </div>
   )
 }
 
-export default Page
+export default MentorManagement
