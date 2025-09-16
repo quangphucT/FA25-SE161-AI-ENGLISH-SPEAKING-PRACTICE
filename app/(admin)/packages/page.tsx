@@ -1,11 +1,11 @@
 
 
-const Page = () => {
+const ServicePackageManagement = () => {
   return (
     <div>
-      Packages
+      Service Packages
     </div>
   )
 }
 
-export default Page
+export default ServicePackageManagement
