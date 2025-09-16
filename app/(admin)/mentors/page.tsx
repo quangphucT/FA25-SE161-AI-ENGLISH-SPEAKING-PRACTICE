@@ -1,5 +1,5 @@
 
-
+"use client";
 const MentorManagement = () => {
   return (
     <div>

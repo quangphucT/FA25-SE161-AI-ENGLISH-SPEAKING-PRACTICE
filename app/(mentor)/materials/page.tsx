@@ -1,5 +1,5 @@
 
-
+"use client";
 const Page = () => {
   return (
     <div>
