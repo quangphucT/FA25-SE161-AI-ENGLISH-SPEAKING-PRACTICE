@@ -2,6 +2,14 @@
 
 import { NextResponse } from "next/server";
 
+interface CustomError {
+  response?: {
+    data?: { message?: string };
+    status?: number;
+  };
+  message?: string;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -37,10 +45,11 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 7,
     });
     return res;
-  } catch (error: any) {
+  } catch (error: unknown) {
+     const e = error as CustomError;
     const message =
-      error?.response?.data?.message || error.message || "Login failed";
-    const status = error?.response?.status || 500;
+      e.response?.data?.message || e.message || "Login failed";
+    const status = e.response?.status || 500;
     return NextResponse.json({ message }, { status });
   }
 }
