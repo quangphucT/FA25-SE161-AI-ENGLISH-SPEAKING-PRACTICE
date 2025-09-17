@@ -10,17 +10,17 @@ const features = [
   {
     title: "Luyện nói tiếng Anh với AI",
     desc: "Công nghệ AI giúp bạn luyện nói, sửa phát âm, phản xạ tự nhiên như người bản xứ.",
-    img: "/duo_speaking.png",
+    img: "/images/imageLanding.avif",
   },
   {
     title: "Mentor đồng hành",
     desc: "Đăng ký gói premium để được học cùng mentor, nhận feedback cá nhân và lộ trình riêng.",
-    img: "/duo_mentor.png",
+    img: "/images/imageLanding.avif",
   },
   {
     title: "Miễn phí. Vui nhộn. Hiệu quả.",
     desc: "Bài học nhỏ gọn, gamification, nhận điểm thưởng, bảng xếp hạng, học mọi lúc mọi nơi.",
-    img: "/duo_fun.png",
+    img: "/images/imageLanding.avif",
   },
 ];
 
