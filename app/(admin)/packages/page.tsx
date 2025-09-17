@@ -1,5 +1,5 @@
 
-
+"use client";
 const ServicePackageManagement = () => {
   return (
     <div>
