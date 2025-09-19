@@ -1,6 +1,6 @@
 "use client";
 
-const Page = () => {
+const PracticeMainLayout = () => {
   return (
     <div>
       Practice
@@ -8,4 +8,4 @@ const Page = () => {
   )
 }
 
-export default Page
+export default PracticeMainLayout
