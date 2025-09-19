@@ -95,7 +95,7 @@ export default function LoginForm() {
                         className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-lg"
                       />
                     </FormControl>
-                    <span className="ml-2 text-gray-400 text-sm cursor-pointer">
+                    <span onClick={() => {router.push("/forgot-password")}} className="ml-2 text-gray-400 text-sm cursor-pointer">
                       QUÊN?
                     </span>
                   </div>
