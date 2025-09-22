@@ -8,7 +8,37 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
-const sampleLearners = [
+// Type definitions
+interface Package {
+  name: string;
+  duration: string;
+  price: string;
+  status: 'Active' | 'Completed' | 'Expired';
+}
+
+interface Achievement {
+  name: string;
+  description: string;
+  points: number;
+  icon: string;
+  date: string;
+  requirement: string;
+}
+
+interface Learner {
+  id: string;
+  fullName: string;
+  email: string;
+  pronunciationScore: number;
+  favouriteLevelGoal: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  status: 'Active' | 'Inactive';
+  joinedDate: string;
+  totalLessons: number;
+  purchasedPackages: Package[];
+  achievements: Achievement[];
+}
+
+const sampleLearners: Learner[] = [
   {
     id: "L001",
     fullName: "Nguyễn Văn An",
@@ -263,12 +293,12 @@ const sampleLearners = [
 
 const LearnerManagement = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
-  const [search, setSearch] = useState("");
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedLearner, setSelectedLearner] = useState<any>(null);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [search, setSearch] = useState<string>("");
+  const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
+  const [selectedLearner, setSelectedLearner] = useState<Learner | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [actionType, setActionType] = useState<'block' | 'unblock'>('block');
-  const [learnerToAction, setLearnerToAction] = useState<any>(null);
+  const [learnerToAction, setLearnerToAction] = useState<Learner | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Filter learners by search
@@ -293,12 +323,12 @@ const LearnerManagement = () => {
     }
   };
 
-  const handleViewDetails = (learner: any) => {
+  const handleViewDetails = (learner: Learner) => {
     setSelectedLearner(learner);
     setShowDetailsModal(true);
   };
 
-  const handleBlockUnblock = (learner: any, action: 'block' | 'unblock') => {
+  const handleBlockUnblock = (learner: Learner, action: 'block' | 'unblock') => {
     setLearnerToAction(learner);
     setActionType(action);
     setShowConfirmDialog(true);
@@ -312,8 +342,9 @@ const LearnerManagement = () => {
   };
 
   // Close dropdown when clicking outside
-  const handleClickOutside = (e: any) => {
-    if (!e.target.closest('.dropdown-container')) {
+  const handleClickOutside = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.dropdown-container')) {
       setOpenDropdownId(null);
     }
   };
@@ -538,7 +569,7 @@ const LearnerManagement = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Các gói dịch vụ đã mua (Purchase)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedLearner.purchasedPackages.map((pkg: any, index: number) => (
+                  {selectedLearner.purchasedPackages.map((pkg: Package, index: number) => (
                     <Card key={index} className="border-2">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
@@ -587,7 +618,7 @@ const LearnerManagement = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {selectedLearner.achievements.map((achievement: any, index: number) => (
+                        {selectedLearner.achievements.map((achievement: Achievement, index: number) => (
                           <TableRow key={index}>
                             <TableCell>{index + 1}</TableCell>
                             <TableCell className="font-medium">{achievement.name}</TableCell>
