@@ -22,20 +22,29 @@ interface TimeSlot {
   notes?: string;
 }
 
-interface WeekSchedule {
-  weekStart: string;
-  timeSlots: TimeSlot[];
+interface StudentTestData {
+  studentName: string;
+  testDate: string;
+  overallScore: number;
+  level: string;
+  details: {
+    [key: string]: {
+      score: number;
+      level: string;
+      notes: string;
+    };
+  };
+  recommendations: string[];
 }
 
 const ScheduleMentor = () => {
   const [selectedWeek, setSelectedWeek] = useState("2025-09-22");
   const [showAddSlotModal, setShowAddSlotModal] = useState(false);
   const [showEntryTestModal, setShowEntryTestModal] = useState(false);
-  const [selectedStudentTest, setSelectedStudentTest] = useState<any>(null);
+  const [selectedStudentTest, setSelectedStudentTest] = useState<StudentTestData | null>(null);
   const [selectedDay, setSelectedDay] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [activeTab, setActiveTab] = useState("weekly"); // weekly, booked, available
 
   // Function to calculate days of the week based on selected week
   const getDaysOfWeek = (weekStartDate: string) => {
