@@ -976,7 +976,7 @@ const PurchasesManagement = () => {
               
               <div className="space-y-4">
                 <p className="text-sm text-red-600 font-medium">⚠️ Warning: This action cannot be undone.</p>
-                <p className="text-sm text-gray-600">Cancelling this purchase will immediately revoke the learner's access. No refunds will be processed as per company policy.</p>
+                <p className="text-sm text-gray-600">Cancelling this purchase will immediately revoke the learner&apos;s access. No refunds will be processed as per company policy.</p>
                 <div>
                     <label className="block text-sm font-medium mb-2">Cancellation Reason</label>
                     <textarea className="w-full px-3 py-2 border rounded-md" rows={3} placeholder="Enter reason for cancellation..."></textarea>
