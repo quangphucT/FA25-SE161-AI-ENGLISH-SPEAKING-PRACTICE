@@ -19,6 +19,7 @@ import AccountManagement from "../learners-management/page";
 import MentorManagement from "../mentors-management/page";
 import ServicePackageManagement from "../packages/page";
 import LearnerManagement from "../learners-management/page";
+import SkillManagement from "../skills-management/page";
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -86,6 +87,23 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               </div>
           </button>
         </li>
+
+  <li>
+          <button
+            type="button"
+            onClick={() => setActiveMenu("skill")}
+            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
+              activeMenu === "skill" ? "bg-green-100" : "hover:bg-gray-100"
+            }`}
+          >
+              <span className="bg-green-400 text-white p-2 rounded-full flex items-center justify-center"><User size={22} /></span>
+              <div className="flex flex-col items-start justify-center">
+                <span>Skill</span>
+                <span>Mentor</span>
+              </div>
+          </button>
+        </li>
+
         <li>
           <button
             type="button"
@@ -161,6 +179,8 @@ const DashboardAdmin = () => {
         return  <LearnerManagement />;
       case "mentor":
         return <MentorManagement />;
+        case "skill":
+        return <SkillManagement />;
       case "package":
         return <ServicePackageManagement/>;
       case "purchase":

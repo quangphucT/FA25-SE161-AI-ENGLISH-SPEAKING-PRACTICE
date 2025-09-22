@@ -323,7 +323,7 @@ const ServicePackageManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
-  const [actionType, setActionType] = useState<'activate' | 'deactivate' | 'delete'>('activate');
+  const [actionType, setActionType] = useState<'delete'>('delete');
   const [packageToAction, setPackageToAction] = useState<ServicePackage | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
@@ -357,7 +357,7 @@ const ServicePackageManagement = () => {
     setShowDetailsModal(true);
   };
 
-  const handleAction = (pkg: ServicePackage, action: 'activate' | 'deactivate' | 'delete') => {
+  const handleAction = (pkg: ServicePackage, action: 'delete') => {
     setPackageToAction(pkg);
     setActionType(action);
     setShowConfirmDialog(true);
@@ -541,33 +541,6 @@ const ServicePackageManagement = () => {
                               <circle cx="12" cy="12" r="3"/>
                             </svg>
                             View Details
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleAction(pkg, pkg.status === 'Active' ? 'deactivate' : 'activate');
-                              setOpenDropdownId(null);
-                            }}
-                            className={`block cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                              pkg.status === 'Active' ? 'text-orange-600' : 'text-green-600'
-                            }`}
-                          >
-                            {pkg.status === 'Active' ? (
-                              <>
-                                <svg width="16" height="16" className="inline mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <circle cx="12" cy="12" r="10"/>
-                                  <path d="M8 12l2 2 4-4"/>
-                                </svg>
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <svg width="16" height="16" className="inline mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <circle cx="12" cy="12" r="10"/>
-                                  <path d="M9 12l2 2 4-4"/>
-                                </svg>
-                                Activate
-                              </>
-                            )}
                           </button>
                           <button
                             onClick={() => {
@@ -785,15 +758,11 @@ const ServicePackageManagement = () => {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
             <h3 className="text-lg font-semibold mb-4">
-              Confirm {actionType === 'activate' ? 'Activate' : actionType === 'deactivate' ? 'Deactivate' : 'Delete'} Package
+              Confirm Delete Package
             </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to {actionType} <strong>{packageToAction.packageName}</strong>? 
-              {actionType === 'delete' 
-                ? ' This action cannot be undone.' 
-                : actionType === 'deactivate'
-                ? ' This will hide the package from learners.'
-                : ' This will make the package visible to learners.'}
+              Are you sure you want to delete <strong>{packageToAction.packageName}</strong>? 
+              This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <Button 
@@ -805,13 +774,9 @@ const ServicePackageManagement = () => {
               </Button>
               <Button 
                 onClick={confirmAction}
-                className={
-                  actionType === 'delete' ? 'bg-red-600 hover:bg-red-700 cursor-pointer' : 
-                  actionType === 'activate' ? 'bg-green-600 hover:bg-green-700 cursor-pointer' : 
-                  'bg-orange-600 hover:bg-orange-700 cursor-pointer'
-                }
+                className="bg-red-600 hover:bg-red-700 cursor-pointer"
               >
-                {actionType === 'activate' ? 'Activate' : actionType === 'deactivate' ? 'Deactivate' : 'Delete'} Package
+                Delete Package
               </Button>
             </div>
           </div>
