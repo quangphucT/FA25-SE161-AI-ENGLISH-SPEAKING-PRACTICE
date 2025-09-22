@@ -150,42 +150,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
   </aside>
 );
 
-const Header = () => (
-  <header className="flex items-center justify-between px-8 py-6 bg-white border-b sticky top-0 z-10 ml-0 md:ml-64">
-    <div className="flex items-center gap-4">
-      <form className="flex items-center gap-2">
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Search..."
-            className="border rounded-full pl-4 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-          />
-          <Button
-            type="submit"
-            className="absolute right-1 top-1/2 -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 transition"
-          >
-            <FaSearch className="text-lg" />
-      
-          </Button>
-        </div>
-      </form>
-    </div>
-    <div className="flex items-center gap-6">
-      <FaBell className="text-xl text-gray-500" />
-      <div className="flex items-center gap-2">
-        <img
-          src="/images/imageLanding.avif"
-          alt="avatar"
-          className="w-8 h-8 rounded-full"
-        />
-        <div>
-          <div className="font-semibold">Moni Roy</div>
-          <div className="text-xs text-gray-500">Admin</div>
-        </div>
-      </div>
-    </div>
-  </header>
-);
 
 const DashboardAdmin = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -213,7 +177,7 @@ const DashboardAdmin = () => {
     <div className="bg-gray-50 min-h-screen">
       <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
       <div className="md:ml-64">
-        <Header />
+      
         <main className="p-8">{renderContent()}</main>
       </div>
     </div>
