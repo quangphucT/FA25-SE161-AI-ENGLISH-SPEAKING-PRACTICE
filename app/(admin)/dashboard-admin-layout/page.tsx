@@ -20,6 +20,7 @@ import MentorManagement from "../mentors-management/page";
 import ServicePackageManagement from "../packages/page";
 import LearnerManagement from "../learners-management/page";
 import SkillManagement from "../skills-management/page";
+import PurchasesManagement from "../purchases-management/page";
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -129,7 +130,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
           >
               <span className="bg-pink-400 text-white p-2 rounded-full flex items-center justify-center"><FaListAlt size={22} /></span>
               <div className="flex flex-col items-start justify-center">
-                <span>Purchases</span>
+                <span>Transactions</span>
               </div>
           </button>
         </li>
@@ -184,7 +185,7 @@ const DashboardAdmin = () => {
       case "package":
         return <ServicePackageManagement/>;
       case "purchase":
-        return <h1 className="text-2xl font-bold">Purchases</h1>;
+        return <PurchasesManagement/>;
       case "feedback":
         return <h1 className="text-2xl font-bold">Feedback & Comments</h1>;
       default:
