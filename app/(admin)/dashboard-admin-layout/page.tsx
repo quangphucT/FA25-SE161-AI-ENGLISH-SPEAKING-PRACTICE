@@ -21,6 +21,7 @@ import ServicePackageManagement from "../packages/page";
 import LearnerManagement from "../learners-management/page";
 import SkillManagement from "../skills-management/page";
 import PurchasesManagement from "../purchases-management/page";
+import FeedbacksCommentsManagement from "../feedbacks-comments-management/page";
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -187,7 +188,7 @@ const DashboardAdmin = () => {
       case "purchase":
         return <PurchasesManagement/>;
       case "feedback":
-        return <h1 className="text-2xl font-bold">Feedback & Comments</h1>;
+        return <FeedbacksCommentsManagement/>;
       default:
         return null;
     }
