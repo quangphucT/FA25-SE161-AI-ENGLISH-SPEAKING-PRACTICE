@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useState } from "react";
-import { FaBox, FaSearch, FaBell, FaBars, FaListAlt } from "react-icons/fa";
+import { FaBox, FaBars, FaListAlt } from "react-icons/fa";
 
 import {
   Chart,
@@ -14,12 +14,11 @@ import {
   Legend,
 } from "chart.js";
 import { LogOutIcon, PackageIcon, User, User2Icon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import PageStatistics from "../statistics/page";
-import AccountManagement from "../accounts-management/page";
+import AccountManagement from "../learners-management/page";
 import MentorManagement from "../mentors/page";
 import ServicePackageManagement from "../packages/page";
+import LearnerManagement from "../learners-management/page";
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -60,14 +59,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
         <li>
           <button
             type="button"
-            onClick={() => setActiveMenu("account")}
+            onClick={() => setActiveMenu("learner")}
             className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "account" ? "bg-violet-100" : "hover:bg-gray-100"
+              activeMenu === "learner" ? "bg-violet-100" : "hover:bg-gray-100"
             }`}
           >
               <span className="bg-violet-400 text-white p-2 rounded-full flex items-center justify-center"><User2Icon size={22} /></span>
               <div className="flex flex-col items-start justify-center">
-                <span>Account</span>
+                <span>Learner</span>
                 <span>Management</span>
               </div>
           </button>
@@ -158,8 +157,8 @@ const DashboardAdmin = () => {
     switch (activeMenu) {
       case "dashboard":
         return <PageStatistics />;
-      case "account":
-        return  <AccountManagement />;
+      case "learner":
+        return  <LearnerManagement />;
       case "mentor":
         return <MentorManagement />;
       case "package":
