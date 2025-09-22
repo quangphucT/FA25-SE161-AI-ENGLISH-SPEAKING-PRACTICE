@@ -16,7 +16,7 @@ import {
 import { LogOutIcon, PackageIcon, User, User2Icon } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import AccountManagement from "../learners-management/page";
-import MentorManagement from "../mentors/page";
+import MentorManagement from "../mentors-management/page";
 import ServicePackageManagement from "../packages/page";
 import LearnerManagement from "../learners-management/page";
 Chart.register(
