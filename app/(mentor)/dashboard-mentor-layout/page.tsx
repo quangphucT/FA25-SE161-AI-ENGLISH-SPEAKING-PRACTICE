@@ -134,7 +134,7 @@ const DashboardMentorLayout = () => {
                 {navigationItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                Welcome back, Sarah! Here's what's happening today.
+                Welcome back, Sarah! Here&apos;s what&apos;s happening today.
               </p>
             </div>
             <div className="flex items-center space-x-4">

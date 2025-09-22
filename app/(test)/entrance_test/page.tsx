@@ -1,16 +1,15 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 
 const steps = [
   {
-    desc: 'Hãy đọc to từ sau: "apple"',
+    desc: 'Hãy đọc to từ sau: &quot;apple&quot;',
     type: "word",
     sample: "apple",
   },
   {
-    desc: 'Hãy đọc to câu sau: "I like learning English."',
+    desc: 'Hãy đọc to câu sau: &quot;I like learning English.&quot;',
     type: "sentence",
     sample: "I like learning English.",
   },

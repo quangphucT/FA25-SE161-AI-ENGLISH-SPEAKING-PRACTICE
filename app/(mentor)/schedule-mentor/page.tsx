@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 
 // Type definitions
 interface TimeSlot {
@@ -22,20 +21,37 @@ interface TimeSlot {
   notes?: string;
 }
 
-interface WeekSchedule {
-  weekStart: string;
-  timeSlots: TimeSlot[];
+interface StudentTestData {
+  studentName: string;
+  testDate: string;
+  overallScore: number;
+  level: string;
+  details: {
+    [key: string]: {
+      score: number;
+      level: string;
+      notes: string;
+    };
+  };
+  recommendations: string[];
+}
+
+interface DayInfo {
+  key: string;
+  label: string;
+  date: string;
+  fullDate: string;
+  monthName: string;
 }
 
 const ScheduleMentor = () => {
   const [selectedWeek, setSelectedWeek] = useState("2025-09-22");
   const [showAddSlotModal, setShowAddSlotModal] = useState(false);
   const [showEntryTestModal, setShowEntryTestModal] = useState(false);
-  const [selectedStudentTest, setSelectedStudentTest] = useState<any>(null);
+  const [selectedStudentTest, setSelectedStudentTest] = useState<StudentTestData | null>(null);
   const [selectedDay, setSelectedDay] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [activeTab, setActiveTab] = useState("weekly"); // weekly, booked, available
 
   // Function to calculate days of the week based on selected week
   const getDaysOfWeek = (weekStartDate: string) => {
@@ -86,7 +102,7 @@ const ScheduleMentor = () => {
   };
 
   // Function to format date display
-  const formatDateDisplay = (day: any) => {
+  const formatDateDisplay = (day: DayInfo) => {
     if (!day || !day.monthName || !day.date) {
       return 'Invalid Date';
     }
@@ -528,7 +544,7 @@ const ScheduleMentor = () => {
                     <div>
                       <h4 className="font-medium text-gray-900">{slot.studentName}</h4>
                       <p className="text-sm text-gray-500">
-                        {day?.label}, {formatDateDisplay(day)} • {slot.startTime} - {slot.endTime}
+                        {day?.label}, {day && formatDateDisplay(day)} • {slot.startTime} - {slot.endTime}
                       </p>
                       <p className="text-xs text-gray-400">{slot.sessionType}</p>
                     </div>
@@ -697,7 +713,7 @@ const ScheduleMentor = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {Object.entries(selectedStudentTest.details).map(([skill, data]: [string, any]) => (
+                    {Object.entries(selectedStudentTest.details).map(([skill, data]: [string, { score: number; level: string; notes: string }]) => (
                       <div key={skill} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold text-gray-900 capitalize">{skill}</h4>

@@ -209,7 +209,7 @@ const StatisticsForMentor = () => {
                                 ))}
                               </div>
                             </div>
-                            <p className="text-xs text-gray-600 mb-2 line-clamp-2">"{feedback.comment}"</p>
+                            <p className="text-xs text-gray-600 mb-2 line-clamp-2">&quot;{feedback.comment}&quot;</p>
                             <div className="flex items-center justify-between text-xs text-gray-500">
                               <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full">{feedback.sessionType}</span>
                               <span>{feedback.date}</span>
