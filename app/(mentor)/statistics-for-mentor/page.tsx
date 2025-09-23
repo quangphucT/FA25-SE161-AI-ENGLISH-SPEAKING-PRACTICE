@@ -8,7 +8,7 @@ const StatisticsForMentor = () => {
     totalStudents: 42,
     totalSessions: 186,
     avgRating: 4.8,
-    completedAssessments: 23
+    totalSyllabus: 23
   };
 
   const feedbackSummary = [
@@ -146,8 +146,8 @@ const StatisticsForMentor = () => {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Assessments</p>
-                        <p className="text-2xl font-bold text-gray-900">{mentorStats.completedAssessments}</p>
+                        <p className="text-sm font-medium text-gray-600">Total Syllabus</p>
+                        <p className="text-2xl font-bold text-gray-900">{mentorStats.totalSyllabus}</p>
                       </div>
                       <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-purple-600">

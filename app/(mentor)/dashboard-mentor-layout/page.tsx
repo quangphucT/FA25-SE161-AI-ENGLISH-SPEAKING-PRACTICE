@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ScheduleMentor from "../schedule-mentor/page";
 import StatisticsForMentor from "../statistics-for-mentor/page";
+import MentorProfile from "../mentor-profile/page";
 
 const DashboardMentorLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForMentor");
@@ -22,6 +23,19 @@ const DashboardMentorLayout = () => {
         </svg>
       ),
       path: "/statistics-for-mentor"
+    },
+    {
+      id: "profileMentor",
+      label: "Profile",
+      icon: (
+        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+      ),
+      path: "/mentor-profile"
     },
     {
       id: "schedule",
@@ -162,6 +176,9 @@ const DashboardMentorLayout = () => {
         <div className="flex-1 p-6 overflow-auto">
           {activeTab === 'statisticsForMentor' && (
             <StatisticsForMentor />
+          )}
+          {activeTab === 'profileMentor' && (
+            <MentorProfile />
           )}
 
           {/* Other tab contents would be rendered here based on activeTab */}
