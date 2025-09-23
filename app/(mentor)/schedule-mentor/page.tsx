@@ -52,6 +52,8 @@ const ScheduleMentor = () => {
   const [selectedDay, setSelectedDay] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [isStartingSession, setIsStartingSession] = useState(false);
+  const [activeSession, setActiveSession] = useState<any>(null);
 
   // Function to calculate days of the week based on selected week
   const getDaysOfWeek = (weekStartDate: string) => {
@@ -333,6 +335,7 @@ const ScheduleMentor = () => {
     }
   };
 
+
   const handleViewEntryTest = (studentId: string) => {
     const testData = studentTestData[studentId as keyof typeof studentTestData];
     setSelectedStudentTest(testData);
@@ -558,8 +561,24 @@ const ScheduleMentor = () => {
                     >
                       Xem kết quả test
                     </Button>
-                    <Button variant="outline" size="sm">
-                      View Details
+
+                    <Button 
+                      variant="default" 
+                      size="sm"
+          
+                      disabled={isStartingSession}
+                    >
+                      {isStartingSession ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Starting...
+                        </>
+                      ) : (
+                        "Start Session"
+                      )}
                     </Button>
                   </div>
                 </div>

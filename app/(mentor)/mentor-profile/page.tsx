@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import imageProfile from '../../../public/images/imageLanding.avif'
 import { 
   Star, 
@@ -30,16 +29,16 @@ const MentorProfile = () => {
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [isAddingTopic, setIsAddingTopic] = useState(false)
   const [skills, setSkills] = useState([
-    { name: "Business English", level: 95, subSkills: ["Presentations", "Negotiations", "Email Writing", "Meeting Facilitation"] },
-    { name: "IELTS Preparation", level: 92, subSkills: ["Speaking", "Writing", "Reading Strategies", "Listening Practice"] },
-    { name: "Conversation Practice", level: 98, subSkills: ["Daily Conversation", "Pronunciation", "Fluency Building", "Cultural Context"] },
-    { name: "Grammar & Writing", level: 88, subSkills: ["Academic Writing", "Creative Writing", "Grammar Rules", "Sentence Structure"] }
+    { name: "Business English" },
+    { name: "IELTS Preparation" },
+    { name: "Conversation Practice" },
+    { name: "Grammar & Writing" }
   ])
   const [topics, setTopics] = useState([
-    { category: "Business", materials: ["Business Presentations", "Networking", "Interview Skills", "Corporate Communication"] },
-    { category: "Academic", materials: ["Essay Writing", "Research Papers", "Academic Vocabulary", "Citation Styles"] },
-    { category: "Daily Life", materials: ["Travel English", "Shopping", "Healthcare", "Social Situations"] },
-    { category: "Test Prep", materials: ["IELTS Speaking", "TOEIC Listening", "Practice Tests", "Exam Strategies"] }
+    { name: "Business" },
+    { name: "Academic" },
+    { name: "Daily Life" },
+    { name: "Test Prep" }
   ])
   const [formData, setFormData] = useState({
     name: "Nguyễn Văn Minh",
@@ -92,36 +91,36 @@ const MentorProfile = () => {
 
   // Available skills and topics to choose from
   const availableSkills = [
-    { name: "Business English", subSkills: ["Presentations", "Negotiations", "Email Writing", "Meeting Facilitation"] },
-    { name: "IELTS Preparation", subSkills: ["Speaking", "Writing", "Reading Strategies", "Listening Practice"] },
-    { name: "TOEIC Preparation", subSkills: ["Listening", "Reading", "Test Strategies", "Business Context"] },
-    { name: "Conversation Practice", subSkills: ["Daily Conversation", "Pronunciation", "Fluency Building", "Cultural Context"] },
-    { name: "Grammar & Writing", subSkills: ["Academic Writing", "Creative Writing", "Grammar Rules", "Sentence Structure"] },
-    { name: "Pronunciation", subSkills: ["IPA Symbols", "Sound Recognition", "Accent Reduction", "Stress Patterns"] },
-    { name: "Academic English", subSkills: ["Research Writing", "Presentation Skills", "Critical Thinking", "Citation"] }
+    { name: "Business English" },
+    { name: "IELTS Preparation" },
+    { name: "TOEIC Preparation" },
+    { name: "Conversation Practice" },
+    { name: "Grammar & Writing" },
+    { name: "Pronunciation" },
+    { name: "Academic English" }
   ]
 
   const availableTopics = [
-    { category: "Business", materials: ["Business Presentations", "Networking", "Interview Skills", "Corporate Communication"] },
-    { category: "Academic", materials: ["Essay Writing", "Research Papers", "Academic Vocabulary", "Citation Styles"] },
-    { category: "Daily Life", materials: ["Travel English", "Shopping", "Healthcare", "Social Situations"] },
-    { category: "Test Prep", materials: ["IELTS Speaking", "TOEIC Listening", "Practice Tests", "Exam Strategies"] },
-    { category: "Technology", materials: ["Tech Vocabulary", "Software Documentation", "IT Communication", "Digital Literacy"] },
-    { category: "Culture", materials: ["Cultural Exchange", "Traditions", "Social Customs", "Cross-cultural Communication"] },
-    { category: "Career", materials: ["Job Interviews", "Resume Writing", "Professional Development", "Workplace Communication"] }
+    { name: "Business" },
+    { name: "Academic" },
+    { name: "Daily Life" },
+    { name: "Test Prep" },
+    { name: "Technology" },
+    { name: "Culture" },
+    { name: "Career" }
   ]
 
   const addSkill = (skillName: string) => {
     const availableSkill = availableSkills.find(skill => skill.name === skillName)
     if (availableSkill && !skills.some(skill => skill.name === skillName)) {
-      setSkills([...skills, { ...availableSkill, level: 70 }])
+      setSkills([...skills, availableSkill])
     }
     setIsAddingSkill(false)
   }
 
-  const addTopic = (topicCategory: string) => {
-    const availableTopic = availableTopics.find(topic => topic.category === topicCategory)
-    if (availableTopic && !topics.some(topic => topic.category === topicCategory)) {
+  const addTopic = (topicName: string) => {
+    const availableTopic = availableTopics.find(topic => topic.name === topicName)
+    if (availableTopic && !topics.some(topic => topic.name === topicName)) {
       setTopics([...topics, availableTopic])
     }
     setIsAddingTopic(false)
@@ -131,8 +130,8 @@ const MentorProfile = () => {
     setSkills(skills.filter(skill => skill.name !== skillName))
   }
 
-  const removeTopic = (topicCategory: string) => {
-    setTopics(topics.filter(topic => topic.category !== topicCategory))
+  const removeTopic = (topicName: string) => {
+    setTopics(topics.filter(topic => topic.name !== topicName))
   }
 
   return (
@@ -255,50 +254,41 @@ const MentorProfile = () => {
             </Button>
           </div>
           
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[250px]">Skill Name</TableHead>
-                  <TableHead className="w-[120px]">Level</TableHead>
-                  <TableHead>Sub-skills</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {skills.map((skill, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{skill.name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Progress value={skill.level} className="w-16" />
-                        <Badge variant="secondary">{skill.level}%</Badge>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {skills.map((skill, index) => (
+              <Card key={index} className="relative group hover:shadow-md transition-all hover:-translate-y-1 border-l-4 border-l-blue-400">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Award className="w-4 h-4 text-blue-600" />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {skill.subSkills.map((subSkill, subIndex) => (
-                          <Badge key={subIndex} variant="outline" className="text-xs">
-                            {subSkill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeSkill(skill.name)}
-                        className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+                      <h4 className="font-medium text-gray-900">{skill.name}</h4>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSkill(skill.name)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 text-red-500 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {/* Empty state */}
+            {skills.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <Award className="w-8 h-8 text-blue-600 opacity-50" />
+                </div>
+                <p className="text-lg font-medium text-gray-700 mb-1">No skills added yet</p>
+                <p className="text-sm text-gray-500">Click "Add Skill" to showcase your expertise</p>
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* Topics Tab */}
@@ -314,48 +304,41 @@ const MentorProfile = () => {
             </Button>
           </div>
           
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Topic Category</TableHead>
-                  <TableHead>Materials</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {topics.map((topic, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div className="flex items-center gap-2 font-medium">
-                        <BookOpen className="w-4 h-4 text-blue-500" />
-                        {topic.category}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {topics.map((topic, index) => (
+              <Card key={index} className="relative group hover:shadow-md transition-all hover:-translate-y-1 border-l-4 border-l-green-400">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <BookOpen className="w-4 h-4 text-green-600" />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {topic.materials.map((material, materialIndex) => (
-                          <Badge key={materialIndex} variant="outline" className="text-xs">
-                            {material}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeTopic(topic.category)}
-                        className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+                      <h4 className="font-medium text-gray-900">{topic.name}</h4>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTopic(topic.name)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 text-red-500 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {/* Empty state */}
+            {topics.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <BookOpen className="w-8 h-8 text-green-600 opacity-50" />
+                </div>
+                <p className="text-lg font-medium text-gray-700 mb-1">No topics added yet</p>
+                <p className="text-sm text-gray-500">Click "Add Topic" to share your teaching areas</p>
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -495,10 +478,6 @@ const MentorProfile = () => {
                   <div key={index} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50">
                     <div>
                       <h4 className="font-semibold text-gray-900">{skill.name}</h4>
-                      <p className="text-sm text-gray-600">
-                        {skill.subSkills.slice(0, 3).join(", ")}
-                        {skill.subSkills.length > 3 && "..."}
-                      </p>
                     </div>
                     <Button
                       onClick={() => addSkill(skill.name)}
@@ -536,25 +515,21 @@ const MentorProfile = () => {
             <div className="p-6">
               <div className="space-y-3">
                 {availableTopics
-                  .filter(topic => !topics.some(t => t.category === topic.category))
+                  .filter(topic => !topics.some(t => t.name === topic.name))
                   .map((topic, index) => (
                   <div key={index} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50">
                     <div>
-                      <h4 className="font-semibold text-gray-900">{topic.category}</h4>
-                      <p className="text-sm text-gray-600">
-                        {topic.materials.slice(0, 3).join(", ")}
-                        {topic.materials.length > 3 && "..."}
-                      </p>
+                      <h4 className="font-semibold text-gray-900">{topic.name}</h4>
                     </div>
                     <Button
-                      onClick={() => addTopic(topic.category)}
+                      onClick={() => addTopic(topic.name)}
                       size="sm"
                     >
                       Add
                     </Button>
                   </div>
                 ))}
-                {availableTopics.filter(topic => !topics.some(t => t.category === topic.category)).length === 0 && (
+                {availableTopics.filter(topic => !topics.some(t => t.name === topic.name)).length === 0 && (
                   <p className="text-center text-gray-500 py-4">All available topics have been added</p>
                 )}
               </div>

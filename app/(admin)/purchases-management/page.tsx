@@ -18,7 +18,6 @@ interface Learner {
 interface ServicePackage {
   packageId: string;
   packageName: string;
-  category: string;
   originalPrice: number;
   discountedPrice?: number;
 }
@@ -63,7 +62,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG001",
       packageName: "Basic English Conversation",
-      category: "Language",
       originalPrice: 600000,
       discountedPrice: 500000
     },
@@ -97,7 +95,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG002",
       packageName: "IELTS Preparation Premium",
-      category: "Language",
       originalPrice: 1500000,
       discountedPrice: 1200000
     },
@@ -132,7 +129,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG003",
       packageName: "Business English Mastery",
-      category: "Business",
       originalPrice: 2000000,
       discountedPrice: 1800000
     },
@@ -166,7 +162,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG005",
       packageName: "Pronunciation Mastery",
-      category: "Language",
       originalPrice: 900000,
       discountedPrice: 800000
     },
@@ -199,7 +194,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG006",
       packageName: "Self-Study Vocabulary Builder",
-      category: "Language",
       originalPrice: 350000,
       discountedPrice: 300000
     },
@@ -232,7 +226,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG007",
       packageName: "Cambridge Exam Preparation",
-      category: "Language",
       originalPrice: 1700000,
       discountedPrice: 1500000
     },
@@ -265,7 +258,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG004",
       packageName: "TOEFL Complete Course",
-      category: "Language",
       originalPrice: 1000000
     },
     finalPrice: 1000000,
@@ -297,7 +289,6 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG008",
       packageName: "Medical English Specialist",
-      category: "Career",
       originalPrice: 2500000,
       discountedPrice: 2200000
     },
@@ -410,14 +401,13 @@ const PurchasesManagement = () => {
     const excelData = [
       ['Purchase Report - Generated on ' + new Date().toLocaleDateString('vi-VN')],
       [],
-      ['Purchase ID', 'Learner Name', 'Email', 'Phone', 'Package', 'Category', 'Price', 'Payment Method', 'Purchase Date', 'Expiry Date', 'Status', 'Notes'],
+      ['Purchase ID', 'Learner Name', 'Email', 'Phone', 'Package', 'Price', 'Payment Method', 'Purchase Date', 'Expiry Date', 'Status', 'Notes'],
       ...filteredPurchases.map(purchase => [
         purchase.purchaseId,
         purchase.learner.fullName,
         purchase.learner.email,
         purchase.learner.phone,
         purchase.servicePackage.packageName,
-        purchase.servicePackage.category,
         purchase.finalPrice.toLocaleString('vi-VN') + ' VND',
         purchase.paymentMethod,
         formatDate(purchase.purchaseDate),
@@ -706,9 +696,6 @@ const PurchasesManagement = () => {
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium">{purchase.servicePackage.packageName}</span>
-                      <Badge variant="outline" className="w-fit text-xs">
-                        {purchase.servicePackage.category}
-                      </Badge>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -870,7 +857,6 @@ const PurchasesManagement = () => {
                   <h3 className="text-lg font-medium">Service Package</h3>
                   <div className="space-y-2">
                     <div><strong>Package Name:</strong> {selectedPurchase.servicePackage.packageName}</div>
-                    <div><strong>Category:</strong> <Badge variant="outline">{selectedPurchase.servicePackage.category}</Badge></div>
                     <div><strong>Original Price:</strong> {formatPrice(selectedPurchase.servicePackage.originalPrice)}</div>
                     {selectedPurchase.servicePackage.discountedPrice && (
                       <div><strong>Discounted Price:</strong> {formatPrice(selectedPurchase.servicePackage.discountedPrice)}</div>

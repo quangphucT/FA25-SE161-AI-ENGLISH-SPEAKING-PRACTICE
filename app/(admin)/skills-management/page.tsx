@@ -18,7 +18,6 @@ interface MentorSkill {
 interface Skill {
   skillId: string;
   skillName: string;
-  category: 'General' | 'Business' | 'Test Prep' | 'Technical' | 'Soft Skills';
   description: string;
   status: 'Active' | 'Inactive';
   createdDate: string;
@@ -30,7 +29,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL001",
     skillName: "Pronunciation",
-    category: "General",
     description: "Teaching correct pronunciation and accent reduction techniques",
     status: "Active",
     createdDate: "2024-01-15",
@@ -43,7 +41,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL002",
     skillName: "IELTS Speaking",
-    category: "Test Prep",
     description: "Specialized training for IELTS speaking test preparation",
     status: "Active",
     createdDate: "2024-02-10",
@@ -56,7 +53,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL003",
     skillName: "Business English",
-    category: "Business",
     description: "Professional English communication for workplace scenarios",
     status: "Active",
     createdDate: "2024-03-05",
@@ -69,7 +65,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL004",
     skillName: "TOEFL Preparation",
-    category: "Test Prep",
     description: "Comprehensive TOEFL test preparation and strategies",
     status: "Active",
     createdDate: "2024-04-12",
@@ -81,7 +76,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL005",
     skillName: "Conversation Practice",
-    category: "General",
     description: "Daily conversation skills and fluency development",
     status: "Active",
     createdDate: "2024-05-20",
@@ -94,7 +88,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL006",
     skillName: "Medical English",
-    category: "Technical",
     description: "English for healthcare professionals and medical terminology",
     status: "Active",
     createdDate: "2024-06-15",
@@ -106,7 +99,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL007",
     skillName: "Public Speaking",
-    category: "Soft Skills",
     description: "Confidence building and public speaking techniques",
     status: "Inactive",
     createdDate: "2024-07-08",
@@ -118,7 +110,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL008",
     skillName: "Academic Writing",
-    category: "Technical",
     description: "Research writing and academic paper composition",
     status: "Active",
     createdDate: "2024-08-22",
@@ -130,7 +121,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL009",
     skillName: "Cambridge Exams",
-    category: "Test Prep",
     description: "FCE, CAE, CPE exam preparation and practice",
     status: "Active",
     createdDate: "2024-09-10",
@@ -142,7 +132,6 @@ const sampleSkills: Skill[] = [
   {
     skillId: "SKL010",
     skillName: "IT English",
-    category: "Technical",
     description: "Technical English for IT professionals and developers",
     status: "Inactive",
     createdDate: "2024-10-05",
@@ -156,9 +145,7 @@ const sampleSkills: Skill[] = [
 const SkillManagement = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
@@ -172,10 +159,9 @@ const SkillManagement = () => {
     const matchesSearch = skill.skillName.toLowerCase().includes(search.toLowerCase()) ||
                          skill.skillId.toLowerCase().includes(search.toLowerCase()) ||
                          skill.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter === "All" || skill.category === categoryFilter;
     const matchesStatus = statusFilter === "All" || skill.status === statusFilter;
     
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const handleSelectRow = (idx: number) => {
@@ -190,11 +176,6 @@ const SkillManagement = () => {
     } else {
       setSelectedRows(filteredSkills.map((_, idx) => idx));
     }
-  };
-
-  const handleViewDetails = (skill: Skill) => {
-    setSelectedSkill(skill);
-    setShowDetailsModal(true);
   };
 
   const handleEditSkill = (skill: Skill) => {
@@ -241,18 +222,6 @@ const SkillManagement = () => {
             className="w-[300px]"
           />
           <select 
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border rounded-md"
-          >
-            <option value="All">All Categories</option>
-            <option value="General">General</option>
-            <option value="Business">Business</option>
-            <option value="Test Prep">Test Prep</option>
-            <option value="Technical">Technical</option>
-            <option value="Soft Skills">Soft Skills</option>
-          </select>
-          <select 
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
             className="px-3 py-2 border rounded-md"
@@ -287,7 +256,6 @@ const SkillManagement = () => {
               </TableHead>
               <TableHead>Skill ID</TableHead>
               <TableHead>Skill Name</TableHead>
-              <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Total Mentors</TableHead>
               <TableHead>Status</TableHead>
@@ -307,20 +275,6 @@ const SkillManagement = () => {
                 <TableCell className="font-medium text-blue-600">{skill.skillId}</TableCell>
                 <TableCell className="font-medium">
                   {skill.skillName}
-                </TableCell>
-                <TableCell>
-                  <Badge 
-                    variant="outline" 
-                    className={`${
-                      skill.category === 'General' ? 'text-blue-600 border-blue-300 bg-blue-50' :
-                      skill.category === 'Business' ? 'text-purple-600 border-purple-300 bg-purple-50' :
-                      skill.category === 'Test Prep' ? 'text-orange-600 border-orange-300 bg-orange-50' :
-                      skill.category === 'Technical' ? 'text-green-600 border-green-300 bg-green-50' :
-                      'text-pink-600 border-pink-300 bg-pink-50'
-                    }`}
-                  >
-                    {skill.category}
-                  </Badge>
                 </TableCell>
                 <TableCell className="text-gray-600 max-w-[250px] truncate" title={skill.description}>
                   {skill.description}
@@ -356,19 +310,6 @@ const SkillManagement = () => {
                     {openDropdownId === skill.skillId && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
                         <div className="py-1">
-                          <button
-                            onClick={() => {
-                              handleViewDetails(skill);
-                              setOpenDropdownId(null);
-                            }}
-                            className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            <svg width="16" height="16" className="inline mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            View Details
-                          </button>
                           <button
                             onClick={() => {
                               handleEditSkill(skill);
@@ -417,122 +358,6 @@ const SkillManagement = () => {
         <div>Rows per page: <span className="font-semibold">10</span> &nbsp; 1-10 of {filteredSkills.length}</div>
       </div>
 
-      {/* Skills Details Modal */}
-      {showDetailsModal && selectedSkill && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] overflow-y-auto w-full mx-4">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">Skill Details</h2>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-500 hover:text-gray-700 cursor-pointer"
-                >
-                  <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </Button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
-                  <div className="space-y-3">
-                    <div><span className="font-medium">Skill ID:</span> {selectedSkill.skillId}</div>
-                    <div><span className="font-medium">Name:</span> {selectedSkill.skillName}</div>
-                    <div><span className="font-medium">Category:</span> 
-                      <Badge className="ml-2" variant="outline">{selectedSkill.category}</Badge>
-                    </div>
-                    <div><span className="font-medium">Description:</span> {selectedSkill.description}</div>
-                    <div><span className="font-medium">Status:</span> 
-                      <Badge className={`ml-2 ${selectedSkill.status === 'Active' ? 'bg-green-600' : 'bg-red-400'}`}>
-                        {selectedSkill.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Statistics</h3>
-                  <div className="space-y-3">
-                    <div><span className="font-medium">Total Mentors:</span> 
-                      <span className="ml-2 font-bold text-blue-600">{selectedSkill.assignedMentors.length}</span>
-                    </div>
-                    <div><span className="font-medium">Total Learners:</span> 
-                      <span className="ml-2 font-bold text-green-600">
-                        {selectedSkill.assignedMentors.reduce((sum, mentor) => sum + mentor.learnerCount, 0)}
-                      </span>
-                    </div>
-                    <div><span className="font-medium">Average Rating:</span> 
-                      <span className="ml-2 font-bold text-yellow-600">
-                        {selectedSkill.assignedMentors.length > 0 
-                          ? (selectedSkill.assignedMentors.reduce((sum, mentor) => sum + mentor.rating, 0) / selectedSkill.assignedMentors.length).toFixed(1)
-                          : 'N/A'
-                        } ⭐
-                      </span>
-                    </div>
-                    <div><span className="font-medium">Created:</span> {selectedSkill.createdDate}</div>
-                    <div><span className="font-medium">Updated:</span> {selectedSkill.updatedDate}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Assigned Mentors */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">👨‍🏫 Assigned Mentors</h3>
-                 
-                </div>
-                {selectedSkill.assignedMentors.length > 0 ? (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Mentor ID</TableHead>
-                          <TableHead>Mentor Name</TableHead>
-                          <TableHead>Specialization</TableHead>
-                          <TableHead>Rating</TableHead>
-                          <TableHead>Learners</TableHead>
-                    
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedSkill.assignedMentors.map((mentor) => (
-                          <TableRow key={mentor.mentorId}>
-                            <TableCell className="font-medium text-blue-600">{mentor.mentorId}</TableCell>
-                            <TableCell>{mentor.mentorName}</TableCell>
-                            <TableCell className="text-gray-600">{mentor.specialization}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <span className="text-yellow-600 mr-1">⭐</span>
-                                {mentor.rating}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50">
-                                {mentor.learnerCount} learners
-                              </Badge>
-                            </TableCell>
-                           
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 border rounded-lg">
-                    No mentors assigned to this skill yet
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Add Skill Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
@@ -554,26 +379,13 @@ const SkillManagement = () => {
             
             <div className="p-6 space-y-6">
               <form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Skill Name *</label>
-                    <Input 
-                      placeholder="e.g., Advanced Grammar" 
-                      className="w-full"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Category *</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                      <option value="">Select Category</option>
-                      <option value="General">General</option>
-                      <option value="Business">Business</option>
-                      <option value="Test Prep">Test Prep</option>
-                      <option value="Technical">Technical</option>
-                      <option value="Soft Skills">Soft Skills</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Skill Name *</label>
+                  <Input 
+                    placeholder="e.g., Advanced Grammar" 
+                    className="w-full"
+                    required
+                  />
                 </div>
                 
                 <div>
@@ -646,29 +458,13 @@ const SkillManagement = () => {
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Skill Name *</label>
-                    <Input 
-                      defaultValue={selectedSkill.skillName}
-                      className="w-full"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Category *</label>
-                    <select 
-                      defaultValue={selectedSkill.category}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      required
-                    >
-                      <option value="General">General</option>
-                      <option value="Business">Business</option>
-                      <option value="Test Prep">Test Prep</option>
-                      <option value="Technical">Technical</option>
-                      <option value="Soft Skills">Soft Skills</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Skill Name *</label>
+                  <Input 
+                    defaultValue={selectedSkill.skillName}
+                    className="w-full"
+                    required
+                  />
                 </div>
                 
                 <div>
