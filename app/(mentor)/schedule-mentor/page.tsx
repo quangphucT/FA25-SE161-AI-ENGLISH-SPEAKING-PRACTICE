@@ -53,6 +53,7 @@ const ScheduleMentor = () => {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
+
   // Function to calculate days of the week based on selected week
   const getDaysOfWeek = (weekStartDate: string) => {
     // Validate input date
@@ -333,6 +334,7 @@ const ScheduleMentor = () => {
     }
   };
 
+
   const handleViewEntryTest = (studentId: string) => {
     const testData = studentTestData[studentId as keyof typeof studentTestData];
     setSelectedStudentTest(testData);
@@ -558,8 +560,13 @@ const ScheduleMentor = () => {
                     >
                       Xem kết quả test
                     </Button>
-                    <Button variant="outline" size="sm">
-                      View Details
+
+                    <Button 
+                      variant="default" 
+                      size="sm"
+        
+                    >
+                      Join Session
                     </Button>
                   </div>
                 </div>

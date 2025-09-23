@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
 // Type definitions
@@ -38,7 +38,6 @@ interface ServicePackage {
   withMentor: 'Yes' | 'No';
   numberOfMentorMeeting: number;
   status: 'Active' | 'Inactive';
-  category: 'Language' | 'Soft Skills' | 'IT' | 'Career' | 'Business';
   originalPrice: number;
   discountedPrice?: number;
   purchasedCount: number;
@@ -59,7 +58,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 8,
     status: "Active",
-    category: "Language",
     originalPrice: 600000,
     discountedPrice: 500000,
     purchasedCount: 145,
@@ -88,7 +86,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 12,
     status: "Active",
-    category: "Language",
     originalPrice: 1500000,
     discountedPrice: 1200000,
     purchasedCount: 89,
@@ -118,7 +115,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 16,
     status: "Active",
-    category: "Business",
     originalPrice: 2000000,
     discountedPrice: 1800000,
     purchasedCount: 67,
@@ -147,7 +143,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes", 
     numberOfMentorMeeting: 10,
     status: "Active",
-    category: "Language",
     originalPrice: 1000000,
     purchasedCount: 52,
     createdDate: "2024-04-05",
@@ -169,7 +164,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 8,
     status: "Active",
-    category: "Language",
     originalPrice: 900000,
     discountedPrice: 800000,
     purchasedCount: 123,
@@ -192,7 +186,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "No",
     numberOfMentorMeeting: 0,
     status: "Active", 
-    category: "Language",
     originalPrice: 350000,
     discountedPrice: 300000,
     purchasedCount: 267,
@@ -213,7 +206,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 14,
     status: "Active",
-    category: "Language", 
     originalPrice: 1700000,
     discountedPrice: 1500000,
     purchasedCount: 34,
@@ -235,7 +227,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 20,
     status: "Active",
-    category: "Career",
     originalPrice: 2500000,
     discountedPrice: 2200000,
     purchasedCount: 18,
@@ -255,7 +246,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 10,
     status: "Inactive",
-    category: "Soft Skills",
     originalPrice: 1100000,
     purchasedCount: 78,
     createdDate: "2024-09-01",
@@ -276,7 +266,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 8,
     status: "Active",
-    category: "Soft Skills",
     originalPrice: 1000000,
     discountedPrice: 900000,
     purchasedCount: 42,
@@ -298,7 +287,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 6,
     status: "Inactive",
-    category: "IT",
     originalPrice: 850000,
     discountedPrice: 750000,
     purchasedCount: 25,
@@ -317,7 +305,6 @@ const samplePackages: ServicePackage[] = [
 const ServicePackageManagement = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
@@ -332,10 +319,9 @@ const ServicePackageManagement = () => {
     const matchesSearch = pkg.packageName.toLowerCase().includes(search.toLowerCase()) ||
                          pkg.packageId.toLowerCase().includes(search.toLowerCase()) ||
                          pkg.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter === "All" || pkg.category === categoryFilter;
     const matchesStatus = statusFilter === "All" || pkg.status === statusFilter;
     
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const handleSelectRow = (idx: number) => {
@@ -400,18 +386,6 @@ const ServicePackageManagement = () => {
             className="w-[300px]"
           />
           <select 
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border rounded-md cursor-pointer"
-          >
-            <option value="All">All Categories</option>
-            <option value="Language">Language</option>
-            <option value="Business">Business</option>
-            <option value="Soft Skills">Soft Skills</option>
-            <option value="Career">Career</option>
-            <option value="IT">IT</option>
-          </select>
-          <select 
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
             className="px-3 py-2 border rounded-md cursor-pointer"
@@ -468,7 +442,6 @@ const ServicePackageManagement = () => {
                 <TableCell className="font-medium text-blue-600">{pkg.packageId}</TableCell>
                 <TableCell className="font-medium">
                   {pkg.packageName}
-                  <div className="text-xs text-gray-500">{pkg.category}</div>
                 </TableCell>
                 <TableCell className="text-gray-600 max-w-[200px] truncate" title={pkg.description}>
                   {pkg.description}
@@ -602,9 +575,6 @@ const ServicePackageManagement = () => {
                   <div className="space-y-3">
                     <div><span className="font-medium">Package ID:</span> {selectedPackage.packageId}</div>
                     <div><span className="font-medium">Name:</span> {selectedPackage.packageName}</div>
-                    <div><span className="font-medium">Category:</span> 
-                      <Badge className="ml-2" variant="outline">{selectedPackage.category}</Badge>
-                    </div>
                     <div><span className="font-medium">Description:</span> {selectedPackage.description}</div>
                     <div><span className="font-medium">Status:</span> 
                       <Badge className={`ml-2 ${selectedPackage.status === 'Active' ? 'bg-green-600' : 'bg-red-400'}`}>
