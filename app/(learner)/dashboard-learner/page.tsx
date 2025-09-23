@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import homeIcon from "../../../public/icons/homeIcon.svg";
 import mountIcon from "../../../public/icons/mountIcon.svg";
 import rankIcon from '../../../public/icons/rankIcon.svg';

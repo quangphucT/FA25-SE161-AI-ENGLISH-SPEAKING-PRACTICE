@@ -4,10 +4,8 @@
 
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import imageProfile from '../../../public/images/imageLanding.avif'
@@ -285,7 +283,7 @@ const MentorProfile = () => {
                   <Award className="w-8 h-8 text-blue-600 opacity-50" />
                 </div>
                 <p className="text-lg font-medium text-gray-700 mb-1">No skills added yet</p>
-                <p className="text-sm text-gray-500">Click "Add Skill" to showcase your expertise</p>
+                <p className="text-sm text-gray-500">Click &quot;Add Skill&quot; to showcase your expertise</p>
               </div>
             )}
           </div>
@@ -335,7 +333,7 @@ const MentorProfile = () => {
                   <BookOpen className="w-8 h-8 text-green-600 opacity-50" />
                 </div>
                 <p className="text-lg font-medium text-gray-700 mb-1">No topics added yet</p>
-                <p className="text-sm text-gray-500">Click "Add Topic" to share your teaching areas</p>
+                <p className="text-sm text-gray-500">Click &quot;Add Topic&quot; to share your teaching areas</p>
               </div>
             )}
           </div>
