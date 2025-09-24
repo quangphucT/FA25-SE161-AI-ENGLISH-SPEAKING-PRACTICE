@@ -200,14 +200,7 @@ const PageStatistics = () => {
               </div>
 
               {/* Package Category */}
-              <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3 ${
-                pkg.category === 'Premium' ? 'bg-purple-100 text-purple-700' :
-                pkg.category === 'IELTS' ? 'bg-blue-100 text-blue-700' :
-                'bg-green-100 text-green-700'
-              }`}>
-                {pkg.category}
-              </div>
-
+             
               {/* Package Info */}
               <h3 className="font-bold text-gray-800 mb-2">{pkg.name}</h3>
               <p className="text-sm text-gray-600 mb-4 line-clamp-2">{pkg.description}</p>
