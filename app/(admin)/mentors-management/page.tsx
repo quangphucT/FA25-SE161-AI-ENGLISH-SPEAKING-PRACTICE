@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent} from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
 // Type definitions
@@ -610,15 +609,26 @@ const MentorManagement = () => {
 
       {/* Mentor Details Modal */}
       {showDetailsModal && selectedMentor && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-6xl max-h-[90vh] overflow-y-auto w-full mx-4">
-            <div className="p-6 border-b">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-y-auto">
+            {/* Header with gradient */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">Mentor Details Information</h2>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">{selectedMentor.fullName}</h2>
+                    <p className="text-blue-100">{selectedMentor.email}</p>
+                  </div>
+                </div>
                 <Button 
                   variant="ghost" 
                   onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                  className="text-white hover:bg-white/10 h-10 w-10 p-0 rounded-full"
                 >
                   <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M18 6L6 18M6 6l12 12"/>
@@ -627,196 +637,147 @@ const MentorManagement = () => {
               </div>
             </div>
             
-            <div className="p-6 space-y-8">
-              {/* Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+            {/* Content */}
+            <div className="p-8">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white">
+                        <path d="M12 2v20M2 12h20"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Experience</p>
+                      <p className="text-2xl font-bold text-blue-900">{selectedMentor.experience}<span className="text-sm font-normal"> years</span></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
+                      <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20" className="text-white">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-yellow-600">Rating</p>
+                      <p className="text-2xl font-bold text-yellow-900">{selectedMentor.rating}<span className="text-sm font-normal">/5.0</span></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v6m0 6v6"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Status</p>
+                      <p className="text-lg font-bold text-green-900">{selectedMentor.mentorStatus}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
+                      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white">
+                        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-purple-600">Joined</p>
+                      <p className="text-sm font-bold text-purple-900">{new Date(selectedMentor.joinedDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Status */}
+              <div className="bg-gray-50 rounded-xl p-6 mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Account Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <div><span className="font-medium">ID:</span> {selectedMentor.id}</div>
-                    <div><span className="font-medium">Full Name:</span> {selectedMentor.fullName}</div>
-                    <div><span className="font-medium">Email:</span> {selectedMentor.email}</div>
-                    <div><span className="font-medium">Status:</span> 
-                      <Badge className={`ml-2 ${selectedMentor.status === 'Active' ? 'bg-green-600' : 'bg-gray-400'}`}>
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                      <span className="font-medium text-gray-700">Mentor ID</span>
+                      <span className="text-blue-600 font-mono">{selectedMentor.id}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                      <span className="font-medium text-gray-700">Account Status</span>
+                      <Badge className={selectedMentor.status === 'Active' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'}>
                         {selectedMentor.status}
                       </Badge>
                     </div>
-                    <div><span className="font-medium">Joined:</span> {selectedMentor.joinedDate}</div>
                   </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Professional Details</h3>
                   <div className="space-y-3">
-                    <div><span className="font-medium">Experience:</span> {selectedMentor.experience} years</div>
-                    <div>
-                      <span className="font-medium">Rating:</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xl font-bold text-yellow-600">{selectedMentor.rating}</span>
-                        <svg width="20" height="20" fill="currentColor" className="text-yellow-400" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                        </svg>
-                      </div>
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                      <span className="font-medium text-gray-700">Email Address</span>
+                      <span className="text-gray-600 text-sm">{selectedMentor.email}</span>
                     </div>
-                    <div><span className="font-medium">Mentor Status:</span> 
-                      <Badge 
-                        variant="outline" 
-                        className={`ml-2 ${
-                          selectedMentor.mentorStatus === 'Available' ? 'text-green-600 border-green-300 bg-green-50' :
-                          selectedMentor.mentorStatus === 'Busy' ? 'text-orange-600 border-orange-300 bg-orange-50' :
-                          'text-gray-600 border-gray-300 bg-gray-50'
-                        }`}
-                      >
-                        {selectedMentor.mentorStatus}
-                      </Badge>
-                    </div>
-                    <div>
-                      <span className="font-medium">Specializations:</span>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {selectedMentor.specializations.map((spec, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {spec}
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                      <span className="font-medium text-gray-700">Join Date</span>
+                      <span className="text-gray-600">{selectedMentor.joinedDate}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Schedule */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">📅 Lịch hoạt động (MentorSchedule)</h3>
-                <div className="border rounded-lg p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {selectedMentor.schedules.length > 0 ? (
-                      selectedMentor.schedules.map((schedule) => (
-                        <Card key={schedule.id} className="border-2 border-dashed border-purple-300">
-                          <CardContent className="p-4">
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-sm">#{schedule.id}</span>
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs ${
-                                    schedule.status === 'Open' ? 'text-blue-600 border-blue-300 bg-blue-50' :
-                                    schedule.status === 'Booked' ? 'text-orange-600 border-orange-300 bg-orange-50' :
-                                    'text-green-600 border-green-300 bg-green-50'
-                                  }`}
-                                >
-                                  {schedule.status}
-                                </Badge>
-                              </div>
-                              <div className="text-sm">
-                                <div><span className="font-medium">Start Time:</span> {schedule.startTime}</div>
-                                <div><span className="font-medium">End Time:</span> {schedule.endTime}</div>
-                                <div><span className="font-medium">Date:</span> {schedule.date}</div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="col-span-full text-center py-8 text-gray-500">
-                        No schedules available
-                      </div>
-                    )}
-                  </div>
+              {/* Skills Section */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                  Skills của mentor
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedMentor.specializations.map((spec, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="outline" 
+                      className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors"
+                    >
+                      {spec}
+                    </Badge>
+                  ))}
                 </div>
               </div>
+            </div>
 
-              {/* Content Library */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">📚 Học liệu (ContentLibrary)</h3>
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>URL</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedMentor.contentLibrary.length > 0 ? (
-                        selectedMentor.contentLibrary.map((content) => (
-                          <TableRow key={content.id}>
-                            <TableCell className="font-medium">{content.id}</TableCell>
-                            <TableCell>{content.title}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant="outline" 
-                                className={`${
-                                  content.type === 'E-Book' ? 'text-blue-600 border-blue-300 bg-blue-50' :
-                                  content.type === 'VIDEO' ? 'text-red-600 border-red-300 bg-red-50' :
-                                  'text-green-600 border-green-300 bg-green-50'
-                                }`}
-                              >
-                                {content.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-blue-600 hover:underline">
-                              <a href={content.url} target="_blank" rel="noopener noreferrer">
-                                {content.url}
-                              </a>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                            No content library items
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Feedback */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">💬 Feedback từ learner</h3>
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>#</TableHead>
-                        <TableHead>FullName</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Content</TableHead>
-                        <TableHead>Rating</TableHead>
-                        <TableHead>CreatedAt</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedMentor.feedbacks.length > 0 ? (
-                        selectedMentor.feedbacks.map((feedback) => (
-                          <TableRow key={feedback.id}>
-                            <TableCell>{feedback.id}</TableCell>
-                            <TableCell className="font-medium">{feedback.fullName}</TableCell>
-                            <TableCell className="text-blue-600">{feedback.email}</TableCell>
-                            <TableCell>{feedback.phone}</TableCell>
-                            <TableCell>{feedback.content}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <span className="font-semibold">{feedback.rating}</span>
-                                <span className="text-yellow-400">⭐</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm text-gray-500">{feedback.createdAt}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                            No feedback yet
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+            {/* Footer */}
+            <div className="bg-gray-50 p-6 rounded-b-2xl">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-500">
+                  Last updated: {new Date().toLocaleDateString()}
+                </p>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowDetailsModal(false)}
+                    className="hover:bg-gray-100"
+                  >
+                    Close
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      handleBlockUnblock(selectedMentor, selectedMentor.status === 'Active' ? 'block' : 'unblock');
+                      setShowDetailsModal(false);
+                    }}
+                    className={selectedMentor.status === 'Active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+                  >
+                    {selectedMentor.status === 'Active' ? 'Block Mentor' : 'Unblock Mentor'}
+                  </Button>
                 </div>
               </div>
             </div>
