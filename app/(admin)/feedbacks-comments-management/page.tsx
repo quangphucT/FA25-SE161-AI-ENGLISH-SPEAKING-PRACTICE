@@ -17,7 +17,7 @@ interface User {
 }
 
 interface FeedbackTarget {
-  type: 'mentor' | 'learner' | 'course' | 'package';
+  type: 'mentor' | 'package';
   id: string;
   name: string;
 }
@@ -119,9 +119,9 @@ const sampleFeedbacks: Feedback[] = [
       userType: "learner"
     },
     target: {
-      type: "course",
-      id: "C001", 
-      name: "IELTS Preparation Course"
+      type: "package",
+      id: "PKG003", 
+      name: "IELTS Preparation Package"
     },
     rating: 5,
     content: "Excellent course! Very comprehensive materials and the practice tests are exactly like the real IELTS exam. Highly recommended!",
@@ -185,6 +185,44 @@ const sampleFeedbacks: Feedback[] = [
     createdAt: "2025-09-13T10:15:00Z",
     status: "approved",
     type: "feedback"
+  },
+  {
+    feedbackId: "FB009",
+    reviewer: {
+      id: "L010",
+      fullName: "Lê Thị Mai",
+      email: "mai@gmail.com",
+      userType: "learner"
+    },
+    target: {
+      type: "package",
+      id: "PKG004",
+      name: "Advanced Speaking Package"
+    },
+    rating: 4,
+    content: "The speaking exercises are very challenging and helpful. Good value for money but could use more interactive elements.",
+    createdAt: "2025-09-12T14:30:00Z",
+    status: "approved",
+    type: "feedback"
+  },
+  {
+    feedbackId: "FB010",
+    reviewer: {
+      id: "L011",
+      fullName: "Nguyễn Quang Minh", 
+      email: "minh@yahoo.com",
+      userType: "learner"
+    },
+    target: {
+      type: "mentor",
+      id: "M006",
+      name: "Mr. James Smith"
+    },
+    rating: 2,
+    content: "Mentor often comes late to sessions and doesn't prepare well. Not satisfied with the service quality.",
+    createdAt: "2025-09-11T09:45:00Z",
+    status: "rejected",
+    type: "comment"
   }
 ];
 
@@ -192,8 +230,6 @@ const FeedbacksCommentsManagement = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [ratingFilter, setRatingFilter] = useState<string>("All");
-  const [typeFilter, setTypeFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [showActionModal, setShowActionModal] = useState<boolean>(false);
@@ -201,15 +237,10 @@ const FeedbacksCommentsManagement = () => {
 
   // Filter feedbacks
   const filteredFeedbacks = sampleFeedbacks.filter(feedback => {
-    const matchesSearch = feedback.content.toLowerCase().includes(search.toLowerCase()) ||
-                         feedback.reviewer.fullName.toLowerCase().includes(search.toLowerCase()) ||
-                         feedback.target.name.toLowerCase().includes(search.toLowerCase()) ||
-                         feedback.feedbackId.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = feedback.content.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "All" || feedback.status === statusFilter;
-    const matchesRating = ratingFilter === "All" || feedback.rating.toString() === ratingFilter;
-    const matchesType = typeFilter === "All" || feedback.type === typeFilter;
     
-    return matchesSearch && matchesStatus && matchesRating && matchesType;
+    return matchesSearch && matchesStatus;
   });
 
   const handleSelectRow = (idx: number) => {
@@ -277,10 +308,10 @@ const FeedbacksCommentsManagement = () => {
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
           </Button>
           <Input
-            placeholder="Search by content, reviewer, target, or feedback ID..."
+            placeholder="Search by content..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-[400px]"
+            className="w-[300px]"
           />
           <select 
             value={statusFilter}
@@ -290,27 +321,6 @@ const FeedbacksCommentsManagement = () => {
             <option value="All">All Status</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
-          </select>
-          <select 
-            value={ratingFilter}
-            onChange={e => setRatingFilter(e.target.value)}
-            className="px-3 py-2 border rounded-md cursor-pointer"
-          >
-            <option value="All">All Ratings</option>
-            <option value="5">5 Stars</option>
-            <option value="4">4 Stars</option>
-            <option value="3">3 Stars</option>
-            <option value="2">2 Stars</option>
-            <option value="1">1 Star</option>
-          </select>
-          <select 
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border rounded-md cursor-pointer"
-          >
-            <option value="All">All Types</option>
-            <option value="feedback">Feedback</option>
-            <option value="comment">Comment</option>
           </select>
         </div>
       </div>

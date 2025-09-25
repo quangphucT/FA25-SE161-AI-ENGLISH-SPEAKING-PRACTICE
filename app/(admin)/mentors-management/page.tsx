@@ -392,6 +392,7 @@ const sampleMentors: Mentor[] = [
 const MentorManagement = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
@@ -399,13 +400,12 @@ const MentorManagement = () => {
   const [mentorToAction, setMentorToAction] = useState<Mentor | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
-  // Filter mentors by search
-  const filteredMentors = sampleMentors.filter(
-    mentor => 
-      mentor.fullName.toLowerCase().includes(search.toLowerCase()) || 
-      mentor.email.toLowerCase().includes(search.toLowerCase()) ||
-      mentor.id.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter mentors by search and status
+  const filteredMentors = sampleMentors.filter(mentor => {
+    const matchesName = mentor.fullName.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || mentor.status === statusFilter;
+    return matchesName && matchesStatus;
+  });
 
   const handleSelectRow = (idx: number) => {
     setSelectedRows(selectedRows.includes(idx)
@@ -455,16 +455,25 @@ const MentorManagement = () => {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Button variant="outline" size="sm">
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
           </Button>
           <Input
-            placeholder="Search by ID, name or email..."
+            placeholder="Search by name..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-[300px]"
+            className="w-[250px]"
           />
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="All">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
         </div>
       </div>
       
@@ -751,33 +760,6 @@ const MentorManagement = () => {
                       {spec}
                     </Badge>
                   ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="bg-gray-50 p-6 rounded-b-2xl">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500">
-                  Last updated: {new Date().toLocaleDateString()}
-                </p>
-                <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowDetailsModal(false)}
-                    className="hover:bg-gray-100"
-                  >
-                    Close
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      handleBlockUnblock(selectedMentor, selectedMentor.status === 'Active' ? 'block' : 'unblock');
-                      setShowDetailsModal(false);
-                    }}
-                    className={selectedMentor.status === 'Active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
-                  >
-                    {selectedMentor.status === 'Active' ? 'Block Mentor' : 'Unblock Mentor'}
-                  </Button>
                 </div>
               </div>
             </div>
