@@ -31,8 +31,7 @@ interface Learner {
 interface ServicePackage {
   packageId: string;
   packageName: string;
-  originalPrice: number;
-  discountedPrice?: number;
+  price: number;
 }
 
 interface PaymentHistory {
@@ -75,8 +74,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG001",
       packageName: "Basic English Conversation",
-      originalPrice: 600000,
-      discountedPrice: 500000,
+      price: 500000,
     },
     finalPrice: 500000,
     paymentMethod: "PayOS QR",
@@ -116,8 +114,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG002",
       packageName: "IELTS Preparation Premium",
-      originalPrice: 1500000,
-      discountedPrice: 1200000,
+      price: 1200000,
     },
     finalPrice: 1200000,
     paymentMethod: "PayOS QR",
@@ -162,8 +159,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG003",
       packageName: "Business English Mastery",
-      originalPrice: 2000000,
-      discountedPrice: 1800000,
+      price: 1800000,
     },
     finalPrice: 1800000,
     paymentMethod: "PayOS QR",
@@ -203,8 +199,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG005",
       packageName: "Pronunciation Mastery",
-      originalPrice: 900000,
-      discountedPrice: 800000,
+      price: 800000,
     },
     finalPrice: 800000,
     paymentMethod: "PayOS QR",
@@ -239,8 +234,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG006",
       packageName: "Self-Study Vocabulary Builder",
-      originalPrice: 350000,
-      discountedPrice: 300000,
+      price: 300000,
     },
     finalPrice: 300000,
     paymentMethod: "PayOS QR",
@@ -275,8 +269,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG007",
       packageName: "Cambridge Exam Preparation",
-      originalPrice: 1700000,
-      discountedPrice: 1500000,
+      price: 1500000,
     },
     finalPrice: 1500000,
     paymentMethod: "PayOS QR",
@@ -311,7 +304,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG004",
       packageName: "TOEFL Complete Course",
-      originalPrice: 1000000,
+      price: 1000000,
     },
     finalPrice: 1000000,
     paymentMethod: "PayOS QR",
@@ -346,8 +339,7 @@ const samplePurchases: Purchase[] = [
     servicePackage: {
       packageId: "PKG008",
       packageName: "Medical English Specialist",
-      originalPrice: 2500000,
-      discountedPrice: 2200000,
+      price: 2200000,
     },
     finalPrice: 2200000,
     paymentMethod: "PayOS QR",
@@ -686,8 +678,8 @@ const PurchasesManagement = () => {
                 <TableHead>Service Package</TableHead>
                 <TableHead>Final Price</TableHead>
                 <TableHead>Payment Method</TableHead>
-                <TableHead>Purchase Date</TableHead>
-                <TableHead>Expiry Date</TableHead>
+               
+              
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -731,11 +723,6 @@ const PurchasesManagement = () => {
                       <span className="font-semibold">
                         {formatPrice(purchase.finalPrice)}
                       </span>
-                      {purchase.servicePackage.discountedPrice && (
-                        <span className="text-sm text-gray-400 line-through">
-                          {formatPrice(purchase.servicePackage.originalPrice)}
-                        </span>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -743,12 +730,8 @@ const PurchasesManagement = () => {
                       {purchase.paymentMethod}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm">
-                    {formatDate(purchase.purchaseDate)}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {formatDate(purchase.expiryDate)}
-                  </TableCell>
+               
+                
                   <TableCell>
                     <Badge
                       variant={
@@ -921,19 +904,9 @@ const PurchasesManagement = () => {
                       {selectedPurchase.servicePackage.packageName}
                     </div>
                     <div>
-                      <strong>Original Price:</strong>{" "}
-                      {formatPrice(
-                        selectedPurchase.servicePackage.originalPrice
-                      )}
+                      <strong>Package Price:</strong>{" "}
+                      {formatPrice(selectedPurchase.servicePackage.price)}
                     </div>
-                    {selectedPurchase.servicePackage.discountedPrice && (
-                      <div>
-                        <strong>Discounted Price:</strong>{" "}
-                        {formatPrice(
-                          selectedPurchase.servicePackage.discountedPrice
-                        )}
-                      </div>
-                    )}
                     <div>
                       <strong>Final Price:</strong>{" "}
                       <span className="text-lg font-semibold text-green-600">

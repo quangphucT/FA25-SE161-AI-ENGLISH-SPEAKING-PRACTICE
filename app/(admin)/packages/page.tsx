@@ -38,8 +38,6 @@ interface ServicePackage {
   withMentor: 'Yes' | 'No';
   numberOfMentorMeeting: number;
   status: 'Active' | 'Inactive';
-  originalPrice: number;
-  discountedPrice?: number;
   purchasedCount: number;
   createdDate: string;
   updatedDate: string;
@@ -58,8 +56,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 8,
     status: "Active",
-    originalPrice: 600000,
-    discountedPrice: 500000,
     purchasedCount: 145,
     createdDate: "2024-01-15",
     updatedDate: "2025-09-20",
@@ -86,8 +82,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 12,
     status: "Active",
-    originalPrice: 1500000,
-    discountedPrice: 1200000,
     purchasedCount: 89,
     createdDate: "2024-02-20",
     updatedDate: "2025-09-18",
@@ -115,8 +109,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 16,
     status: "Active",
-    originalPrice: 2000000,
-    discountedPrice: 1800000,
     purchasedCount: 67,
     createdDate: "2024-03-10",
     updatedDate: "2025-09-15",
@@ -143,7 +135,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes", 
     numberOfMentorMeeting: 10,
     status: "Active",
-    originalPrice: 1000000,
     purchasedCount: 52,
     createdDate: "2024-04-05",
     updatedDate: "2025-09-12",
@@ -164,8 +155,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 8,
     status: "Active",
-    originalPrice: 900000,
-    discountedPrice: 800000,
     purchasedCount: 123,
     createdDate: "2024-05-12",
     updatedDate: "2025-09-10",
@@ -186,8 +175,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "No",
     numberOfMentorMeeting: 0,
     status: "Active", 
-    originalPrice: 350000,
-    discountedPrice: 300000,
     purchasedCount: 267,
     createdDate: "2024-06-18",
     updatedDate: "2025-09-08",
@@ -206,8 +193,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 14,
     status: "Active",
-    originalPrice: 1700000,
-    discountedPrice: 1500000,
     purchasedCount: 34,
     createdDate: "2024-07-22",
     updatedDate: "2025-09-05",
@@ -227,8 +212,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 20,
     status: "Active",
-    originalPrice: 2500000,
-    discountedPrice: 2200000,
     purchasedCount: 18,
     createdDate: "2024-08-15",
     updatedDate: "2025-09-02",
@@ -246,7 +229,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 10,
     status: "Inactive",
-    originalPrice: 1100000,
     purchasedCount: 78,
     createdDate: "2024-09-01",
     updatedDate: "2025-08-30",
@@ -266,8 +248,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 8,
     status: "Active",
-    originalPrice: 1000000,
-    discountedPrice: 900000,
     purchasedCount: 42,
     createdDate: "2024-10-12",
     updatedDate: "2025-08-28",
@@ -287,8 +267,6 @@ const samplePackages: ServicePackage[] = [
     withMentor: "Yes",
     numberOfMentorMeeting: 6,
     status: "Inactive",
-    originalPrice: 850000,
-    discountedPrice: 750000,
     purchasedCount: 25,
     createdDate: "2024-03-20",
     updatedDate: "2025-07-15",
@@ -430,8 +408,7 @@ const ServicePackageManagement = () => {
               <TableHead>Description</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Duration</TableHead>
-              <TableHead>With Mentor</TableHead>
-              <TableHead>NumberOfMentorMeeting</TableHead>
+             
               <TableHead>Status</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
@@ -454,35 +431,12 @@ const ServicePackageManagement = () => {
                   {pkg.description}
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-1">
-                    {pkg.discountedPrice ? (
-                      <>
-                        <div className="text-sm line-through text-gray-400">
-                          {formatPrice(pkg.originalPrice)}
-                        </div>
-                        <div className="text-green-600 font-semibold">
-                          {formatPrice(pkg.discountedPrice)}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="font-semibold">
-                        {formatPrice(pkg.price)}
-                      </div>
-                    )}
+                  <div className="font-semibold">
+                    {formatPrice(pkg.price)}
                   </div>
                 </TableCell>
                 <TableCell>{pkg.duration}</TableCell>
-                <TableCell>
-                  <Badge 
-                    variant={pkg.withMentor === "Yes" ? "default" : "secondary"}
-                    className={pkg.withMentor === "Yes" ? "bg-blue-600 text-white" : "bg-gray-400 text-white"}
-                  >
-                    {pkg.withMentor}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  {pkg.withMentor === "Yes" ? pkg.numberOfMentorMeeting : "N/A"}
-                </TableCell>
+               
                 <TableCell>
                   <Badge 
                     variant={pkg.status === "Active" ? "default" : "secondary"}
@@ -622,28 +576,7 @@ const ServicePackageManagement = () => {
                 </div>
               </div>
 
-              {/* Pricing */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">💰 Pricing Information</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <span className="text-sm text-gray-600">Original Price</span>
-                      <div className="text-lg font-semibold">{formatPrice(selectedPackage.originalPrice)}</div>
-                    </div>
-                    {selectedPackage.discountedPrice && (
-                      <div>
-                        <span className="text-sm text-gray-600">Discounted Price</span>
-                        <div className="text-lg font-semibold text-green-600">{formatPrice(selectedPackage.discountedPrice)}</div>
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-sm text-gray-600">Current Price</span>
-                      <div className="text-lg font-semibold text-blue-600">{formatPrice(selectedPackage.price)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+           
 
               {/* Package Features */}
               <div>
@@ -671,14 +604,7 @@ const ServicePackageManagement = () => {
                     </div>
                   )}
 
-                  {/* Progress Tracking */}
-                  <div className="p-4 border rounded-lg bg-purple-50">
-                    <div className="flex items-center mb-2">
-                      <span className="text-2xl mr-2">📊</span>
-                      <h4 className="font-semibold text-purple-700">Progress Tracking</h4>
-                    </div>
-                    <p className="text-sm text-gray-600">Theo dõi tiến độ học tập chi tiết và báo cáo định kỳ</p>
-                  </div>
+             
 
                   {/* Speaking Assessment */}
                   <div className="p-4 border rounded-lg bg-orange-50">
@@ -695,61 +621,15 @@ const ServicePackageManagement = () => {
                       <span className="text-2xl mr-2">📚</span>
                       <h4 className="font-semibold text-teal-700">Interactive Lessons</h4>
                     </div>
-                    <p className="text-sm text-gray-600">Bài học tương tác với đa dạng chủ đề conversation</p>
+                    <p className="text-sm text-gray-600">Tương tác với đa dạng chủ đề conversation</p>
                   </div>
 
-                  {/* 24/7 Support */}
-                  <div className="p-4 border rounded-lg bg-red-50">
-                    <div className="flex items-center mb-2">
-                      <span className="text-2xl mr-2">🛟</span>
-                      <h4 className="font-semibold text-red-700">24/7 Support</h4>
-                    </div>
-                    <p className="text-sm text-gray-600">Hỗ trợ kỹ thuật và học tập 24/7 qua chat</p>
-                  </div>
+               
 
-                  {/* Mobile App Access */}
-                  <div className="p-4 border rounded-lg bg-indigo-50">
-                    <div className="flex items-center mb-2">
-                      <span className="text-2xl mr-2">📱</span>
-                      <h4 className="font-semibold text-indigo-700">Mobile App Access</h4>
-                    </div>
-                    <p className="text-sm text-gray-600">Học mọi lúc mọi nơi với ứng dụng mobile</p>
-                  </div>
-
-                  {/* Certificate */}
-                  <div className="p-4 border rounded-lg bg-yellow-50">
-                    <div className="flex items-center mb-2">
-                      <span className="text-2xl mr-2">🏆</span>
-                      <h4 className="font-semibold text-yellow-700">Certificate</h4>
-                    </div>
-                    <p className="text-sm text-gray-600">Chứng chỉ hoàn thành khóa học được công nhận</p>
-                  </div>
+              
                 </div>
 
-                {/* Package Duration & Access */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-semibold mb-3 text-gray-700">📅 Thời gian sử dụng & Quyền truy cập</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-600">Thời hạn:</span>
-                      <p className="text-blue-600 font-semibold">{selectedPackage.duration}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">Giá trị:</span>
-                      <p className="text-green-600 font-semibold">{selectedPackage.price.toLocaleString('vi-VN')} VNĐ</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">Trạng thái:</span>
-                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                        selectedPackage.status === 'Active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {selectedPackage.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            
               </div>
 
              
@@ -854,16 +734,7 @@ const ServicePackageManagement = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Discount Percent (%)</label>
-                      <Input 
-                        type="number" 
-                        placeholder="e.g., 20" 
-                        className="w-full"
-                        min="0"
-                        max="100"
-                      />
-                    </div>
+                   
                   </div>
                 </div>
 
@@ -917,7 +788,7 @@ const ServicePackageManagement = () => {
 
       {/* Update Package Modal */}
       {showUpdateModal && packageToUpdate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-semibold">Update Package</h2>

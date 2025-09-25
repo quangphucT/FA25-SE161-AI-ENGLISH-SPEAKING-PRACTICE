@@ -375,7 +375,7 @@ const FeedbacksCommentsManagement = () => {
                 <TableHead>Reviewer</TableHead>
                 <TableHead>Target</TableHead>
                 <TableHead>Rating</TableHead>
-                <TableHead>Content</TableHead>
+               
                 <TableHead>Type</TableHead>
                 <TableHead>Created Date</TableHead>
                 <TableHead>Status</TableHead>
@@ -417,15 +417,7 @@ const FeedbacksCommentsManagement = () => {
                       <span className="ml-2 text-sm font-medium">({feedback.rating})</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="max-w-xs">
-                      <p className="text-sm line-clamp-2">
-                        {feedback.content.length >20 
-                          ? `${feedback.content.substring(0, 20)}...` 
-                          : feedback.content}
-                      </p>
-                    </div>
-                  </TableCell>
+             
                   <TableCell>
                     <Badge variant={feedback.type === 'feedback' ? 'default' : 'secondary'} className="text-xs">
                       {feedback.type}

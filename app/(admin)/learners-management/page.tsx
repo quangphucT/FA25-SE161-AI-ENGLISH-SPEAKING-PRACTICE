@@ -394,7 +394,7 @@ const LearnerManagement = () => {
               <TableHead>Learner ID</TableHead>
               <TableHead>Full Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Pronunciation Score</TableHead>
+              <TableHead>Assessment Score</TableHead>
               <TableHead>Level Goal</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-center">Actions</TableHead>
@@ -552,47 +552,15 @@ const LearnerManagement = () => {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Tiến độ học tập (Learning Progress)</h3>
+                  
                   <div className="space-y-4">
-                    {/* Pronunciation Score với mô tả chi tiết */}
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <span className="font-medium text-blue-800">Điểm phát âm (Pronunciation Score):</span>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-2xl font-bold text-blue-600">{selectedLearner.pronunciationScore}/10</span>
-                        <div className="flex-1 h-4 bg-gray-200 rounded-full">
-                          <div 
-                            className={`h-4 rounded-full ${
-                              selectedLearner.pronunciationScore >= 8 
-                                ? 'bg-gradient-to-r from-green-400 to-green-600' 
-                                : selectedLearner.pronunciationScore >= 6 
-                                ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
-                                : 'bg-gradient-to-r from-red-400 to-red-600'
-                            }`}
-                            style={{ width: `${selectedLearner.pronunciationScore * 10}%` }}
-                          ></div>
-                        </div>
-                        <span className={`text-sm font-medium ${
-                          selectedLearner.pronunciationScore >= 8 
-                            ? 'text-green-600' 
-                            : selectedLearner.pronunciationScore >= 6 
-                            ? 'text-yellow-600'
-                            : 'text-red-600'
-                        }`}>
-                          {selectedLearner.pronunciationScore >= 8 
-                            ? 'Xuất sắc' 
-                            : selectedLearner.pronunciationScore >= 6 
-                            ? 'Khá tốt'
-                            : 'Cần cải thiện'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-blue-600 mt-1">
-                        Điểm trung bình dựa trên độ chính xác phát âm trong các bài học
-                      </p>
-                    </div>
+                
+                     
+                  
 
                     {/* Level Goal */}
                     <div>
-                      <span className="font-medium">Mục tiêu trình độ (Target Level):</span> 
+                      <span className="font-medium">Mục tiêu (Target Level):</span> 
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-sm px-3 py-1">
                           {selectedLearner.favouriteLevelGoal}
@@ -606,16 +574,8 @@ const LearnerManagement = () => {
                       </div>
                     </div>
 
-                    {/* Achievements count */}
-                    <div>
-                      <span className="font-medium">Tổng thành tích đạt được:</span>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                          🏆 {selectedLearner.achievements.length} thành tích
-                        </Badge>
-                        
-                      </div>
-                    </div>
+              
+                 
 
                     {/* Package status */}
                     <div>
@@ -675,50 +635,7 @@ const LearnerManagement = () => {
                 )}
               </div>
 
-              {/* Achievements */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Danh sách thành tích learner đã đạt được</h3>
-                <div className="text-sm text-gray-600 mb-4">Tổng số lượng thành tích đã đạt được: {selectedLearner.achievements.length}</div>
-                
-                {selectedLearner.achievements.length > 0 ? (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">#</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Requirements</TableHead>
-                          <TableHead>Points</TableHead>
-                          <TableHead>Icon</TableHead>
-                          <TableHead>Earned Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedLearner.achievements.map((achievement: Achievement, index: number) => (
-                          <TableRow key={index}>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell className="font-medium">{achievement.name}</TableCell>
-                            <TableCell className="text-sm">{achievement.description}</TableCell>
-                            <TableCell className="text-xs text-blue-600 font-medium">{achievement.requirement}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                {achievement.points} pts
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-2xl">{achievement.icon}</TableCell>
-                            <TableCell className="text-sm text-gray-500">{achievement.date}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 border rounded-lg">
-                    No achievements yet
-                  </div>
-                )}
-              </div>
+           
             </div>
           </div>
         </div>

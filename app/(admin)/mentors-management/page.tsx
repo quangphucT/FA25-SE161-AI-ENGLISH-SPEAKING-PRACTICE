@@ -43,6 +43,7 @@ interface Mentor {
   mentorStatus: 'Available' | 'Busy' | 'Offline';
   joinedDate: string;
   specializations: string[];
+  primarySkills?: string[]; // Skill điểm mạnh của mentor (optional)
   schedules: Schedule[];
   contentLibrary: ContentLibrary[];
   feedbacks: Feedback[];
@@ -59,6 +60,7 @@ const sampleMentors: Mentor[] = [
     mentorStatus: "Available",
     joinedDate: "2024-01-15",
     specializations: ["IELTS Preparation", "Business English", "Pronunciation"],
+    primarySkills: ["IELTS Preparation", "Business English"], // Skill điểm mạnh
     schedules: [
       { id: 1, startTime: "09:00", endTime: "10:00", status: "Open", date: "2025-09-21" },
       { id: 2, startTime: "14:00", endTime: "15:00", status: "Booked", date: "2025-09-22" }
@@ -81,6 +83,7 @@ const sampleMentors: Mentor[] = [
     mentorStatus: "Busy",
     joinedDate: "2023-11-20",
     specializations: ["TOEFL", "Academic Writing", "Speaking Skills"],
+    primarySkills: ["TOEFL", "Academic Writing"],
     schedules: [
       { id: 3, startTime: "10:00", endTime: "11:00", status: "Completed", date: "2025-09-20" },
       { id: 4, startTime: "16:00", endTime: "17:00", status: "Open", date: "2025-09-25" }
@@ -104,6 +107,7 @@ const sampleMentors: Mentor[] = [
     mentorStatus: "Offline",
     joinedDate: "2024-03-10",
     specializations: ["Conversational English", "Grammar"],
+    primarySkills: ["Conversational English"],
     schedules: [],
     contentLibrary: [
       { id: "conv-101", title: "Daily Conversation Guide", type: "E-Book", url: "http://example.com/conversation" }
@@ -120,6 +124,7 @@ const sampleMentors: Mentor[] = [
     mentorStatus: "Available",
     joinedDate: "2023-08-05",
     specializations: ["Business English", "Presentation Skills", "Interview Preparation"],
+    primarySkills: ["Business English", "Interview Preparation"],
     schedules: [
       { id: 5, startTime: "13:00", endTime: "14:00", status: "Open", date: "2025-09-23" },
       { id: 6, startTime: "15:00", endTime: "16:00", status: "Open", date: "2025-09-23" },
@@ -144,6 +149,7 @@ const sampleMentors: Mentor[] = [
     mentorStatus: "Available",
     joinedDate: "2024-02-28",
     specializations: ["Pronunciation", "Accent Reduction", "Phonetics"],
+    primarySkills: ["Pronunciation", "Accent Reduction"],
     schedules: [
       { id: 8, startTime: "11:00", endTime: "12:00", status: "Open", date: "2025-09-24" },
       { id: 9, startTime: "14:00", endTime: "15:00", status: "Completed", date: "2025-09-18" }
@@ -166,6 +172,7 @@ const sampleMentors: Mentor[] = [
     mentorStatus: "Busy",
     joinedDate: "2022-05-12",
     specializations: ["IELTS", "Academic English", "Test Preparation", "Writing Skills"],
+    primarySkills: ["IELTS", "Academic English"],
     schedules: [
       { id: 10, startTime: "08:00", endTime: "09:00", status: "Booked", date: "2025-09-26" },
       { id: 11, startTime: "10:00", endTime: "11:00", status: "Booked", date: "2025-09-26" },
@@ -279,6 +286,7 @@ const sampleMentors: Mentor[] = [
     mentorStatus: "Available",
     joinedDate: "2023-03-22",
     specializations: ["Public Speaking", "Presentation Skills", "Confidence Building"],
+    primarySkills: ["Public Speaking"],
     schedules: [
       { id: 20, startTime: "11:00", endTime: "12:00", status: "Open", date: "2025-09-30" },
       { id: 21, startTime: "13:00", endTime: "14:00", status: "Open", date: "2025-09-30" }
@@ -494,7 +502,7 @@ const MentorManagement = () => {
               <TableHead>Status</TableHead>
               <TableHead>Experience</TableHead>
               <TableHead>Rating</TableHead>
-              <TableHead>Mentor Status</TableHead>
+             
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -678,21 +686,7 @@ const MentorManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M12 1v6m0 6v6"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-green-600">Status</p>
-                      <p className="text-lg font-bold text-green-900">{selectedMentor.mentorStatus}</p>
-                    </div>
-                  </div>
-                </div>
-
+               
                 <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
@@ -743,23 +737,88 @@ const MentorManagement = () => {
               </div>
 
               {/* Skills Section */}
-              <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                   </svg>
-                  Skills của mentor
+                  Skills và Chuyên môn
                 </h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedMentor.specializations.map((spec, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="outline" 
-                      className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors"
-                    >
-                      {spec}
-                    </Badge>
-                  ))}
+                
+                {/* Primary Skills - Skill điểm mạnh */}
+                {selectedMentor.primarySkills && selectedMentor.primarySkills.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-amber-500">
+                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                      </svg>
+                      <h4 className="text-sm font-semibold text-gray-800">Skill điểm mạnh</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {selectedMentor.primarySkills.map((skill, index) => (
+                        <Badge 
+                          key={index} 
+                          className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                        >
+                          <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20" className="mr-1">
+                            <polygon points="10,1 13,7 20,7 15,12 17,19 10,15 3,19 5,12 0,7 7,7"/>
+                          </svg>
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* All Specializations */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-blue-500">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h4 className="text-sm font-semibold text-gray-800">Tất cả chuyên môn ({selectedMentor.specializations.length})</h4>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedMentor.specializations.map((spec, index) => {
+                      const isPrimary = selectedMentor.primarySkills?.includes(spec);
+                      return (
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className={`px-3 py-2 transition-all duration-200 ${
+                            isPrimary 
+                              ? "bg-amber-50 text-amber-700 border-amber-300 shadow-sm" 
+                              : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                          }`}
+                        >
+                          {isPrimary && (
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20" className="mr-1 text-amber-500">
+                              <polygon points="10,1 13,7 20,7 15,12 17,19 10,15 3,19 5,12 0,7 7,7"/>
+                            </svg>
+                          )}
+                          {spec}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-amber-600">{selectedMentor.primarySkills?.length || 0}</div>
+                      <div className="text-xs text-gray-600">Skill điểm mạnh</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">{selectedMentor.specializations.length}</div>
+                      <div className="text-xs text-gray-600">Tổng chuyên môn</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{selectedMentor.experience}</div>
+                      <div className="text-xs text-gray-600">Năm kinh nghiệm</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
