@@ -308,7 +308,9 @@ const ServicePackageManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
+  const [packageToUpdate, setPackageToUpdate] = useState<ServicePackage | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [actionType, setActionType] = useState<'delete'>('delete');
   const [packageToAction, setPackageToAction] = useState<ServicePackage | null>(null);
@@ -341,6 +343,11 @@ const ServicePackageManagement = () => {
   const handleViewDetails = (pkg: ServicePackage) => {
     setSelectedPackage(pkg);
     setShowDetailsModal(true);
+  };
+
+  const handleUpdate = (pkg: ServicePackage) => {
+    setPackageToUpdate(pkg);
+    setShowUpdateModal(true);
   };
 
   const handleAction = (pkg: ServicePackage, action: 'delete') => {
@@ -517,6 +524,19 @@ const ServicePackageManagement = () => {
                           </button>
                           <button
                             onClick={() => {
+                              handleUpdate(pkg);
+                              setOpenDropdownId(null);
+                            }}
+                            className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100"
+                          >
+                            <svg width="16" height="16" className="inline mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Update
+                          </button>
+                          <button
+                            onClick={() => {
                               handleAction(pkg, 'delete');
                               setOpenDropdownId(null);
                             }}
@@ -625,99 +645,114 @@ const ServicePackageManagement = () => {
                 </div>
               </div>
 
-              {/* Assigned Mentors */}
+              {/* Package Features */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">👨‍🏫 Assigned Mentors</h3>
-                {selectedPackage.assignedMentors.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedPackage.assignedMentors.map((mentor) => (
-                      <Card key={mentor.id} className="border-2">
-                        <CardContent className="p-4">
-                          <div className="font-medium">{mentor.name}</div>
-                          <div className="text-sm text-gray-600">{mentor.specialization}</div>
-                          <div className="text-xs text-blue-600">{mentor.id}</div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                <h3 className="text-lg font-semibold mb-4">⚙️ Các tính năng có trong service package</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* AI Practice Sessions */}
+                  <div className="p-4 border rounded-lg bg-blue-50">
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">🤖</span>
+                      <h4 className="font-semibold text-blue-700">AI Practice Sessions</h4>
+                    </div>
+                    <p className="text-sm text-gray-600">Unlimited AI conversation practice với phản hồi real-time</p>
                   </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">No mentors assigned</div>
-                )}
+
+                  {/* Mentor Sessions */}
+                  {selectedPackage.withMentor === 'Yes' && (
+                    <div className="p-4 border rounded-lg bg-green-50">
+                      <div className="flex items-center mb-2">
+                        <span className="text-2xl mr-2">👨‍🏫</span>
+                        <h4 className="font-semibold text-green-700">Mentor Sessions</h4>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {selectedPackage.numberOfMentorMeeting} buổi học 1-on-1 với mentor
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Progress Tracking */}
+                  <div className="p-4 border rounded-lg bg-purple-50">
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">📊</span>
+                      <h4 className="font-semibold text-purple-700">Progress Tracking</h4>
+                    </div>
+                    <p className="text-sm text-gray-600">Theo dõi tiến độ học tập chi tiết và báo cáo định kỳ</p>
+                  </div>
+
+                  {/* Speaking Assessment */}
+                  <div className="p-4 border rounded-lg bg-orange-50">
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">🎯</span>
+                      <h4 className="font-semibold text-orange-700">Speaking Assessment</h4>
+                    </div>
+                    <p className="text-sm text-gray-600">Đánh giá khả năng speaking và phát âm tự động</p>
+                  </div>
+
+                  {/* Interactive Lessons */}
+                  <div className="p-4 border rounded-lg bg-teal-50">
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">📚</span>
+                      <h4 className="font-semibold text-teal-700">Interactive Lessons</h4>
+                    </div>
+                    <p className="text-sm text-gray-600">Bài học tương tác với đa dạng chủ đề conversation</p>
+                  </div>
+
+                  {/* 24/7 Support */}
+                  <div className="p-4 border rounded-lg bg-red-50">
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">🛟</span>
+                      <h4 className="font-semibold text-red-700">24/7 Support</h4>
+                    </div>
+                    <p className="text-sm text-gray-600">Hỗ trợ kỹ thuật và học tập 24/7 qua chat</p>
+                  </div>
+
+                  {/* Mobile App Access */}
+                  <div className="p-4 border rounded-lg bg-indigo-50">
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">📱</span>
+                      <h4 className="font-semibold text-indigo-700">Mobile App Access</h4>
+                    </div>
+                    <p className="text-sm text-gray-600">Học mọi lúc mọi nơi với ứng dụng mobile</p>
+                  </div>
+
+                  {/* Certificate */}
+                  <div className="p-4 border rounded-lg bg-yellow-50">
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">🏆</span>
+                      <h4 className="font-semibold text-yellow-700">Certificate</h4>
+                    </div>
+                    <p className="text-sm text-gray-600">Chứng chỉ hoàn thành khóa học được công nhận</p>
+                  </div>
+                </div>
+
+                {/* Package Duration & Access */}
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold mb-3 text-gray-700">📅 Thời gian sử dụng & Quyền truy cập</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-600">Thời hạn:</span>
+                      <p className="text-blue-600 font-semibold">{selectedPackage.duration}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Giá trị:</span>
+                      <p className="text-green-600 font-semibold">{selectedPackage.price.toLocaleString('vi-VN')} VNĐ</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Trạng thái:</span>
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedPackage.status === 'Active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedPackage.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Purchased Learners */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">🎓 Purchased Learners</h3>
-                {selectedPackage.purchasedLearners.length > 0 ? (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Learner ID</TableHead>
-                          <TableHead>Full Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Purchase Date</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedPackage.purchasedLearners.map((learner) => (
-                          <TableRow key={learner.id}>
-                            <TableCell className="font-medium text-blue-600">{learner.id}</TableCell>
-                            <TableCell>{learner.fullName}</TableCell>
-                            <TableCell className="text-gray-600">{learner.email}</TableCell>
-                            <TableCell>{learner.purchaseDate}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant="outline" 
-                                className={`${
-                                  learner.status === 'Active' ? 'text-green-600 border-green-300 bg-green-50' :
-                                  learner.status === 'Completed' ? 'text-blue-600 border-blue-300 bg-blue-50' :
-                                  'text-red-600 border-red-300 bg-red-50'
-                                }`}
-                              >
-                                {learner.status}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 border rounded-lg">
-                    No learners have purchased this package yet
-                  </div>
-                )}
-              </div>
-
-              {/* Support Services */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">�️ Support Services Included</h3>
-                {selectedPackage.supportPackages && selectedPackage.supportPackages.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedPackage.supportPackages.map((service, index) => (
-                      <Card key={index} className="border-2">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="font-medium text-blue-600">{service.serviceName}</div>
-                            <div className={`text-sm px-2 py-1 rounded-full ${
-                              service.included ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {service.included ? '✓ Included' : 'Not Included'}
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-600">{service.description}</div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 border rounded-lg">
-                    No additional support services included with this package
-                  </div>
-                )}
-              </div>
+             
             </div>
           </div>
         </div>
@@ -872,6 +907,140 @@ const ServicePackageManagement = () => {
                     className="bg-green-600 hover:bg-green-700 cursor-pointer"
                   >
                     Create Package
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Package Modal */}
+      {showUpdateModal && packageToUpdate && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold">Update Package</h2>
+              <button
+                onClick={() => setShowUpdateModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Package Name
+                  </label>
+                  <input
+                    type="text"
+                    defaultValue={packageToUpdate.packageName}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter package name"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      With Mentor
+                    </label>
+                    <select 
+                      defaultValue={packageToUpdate.withMentor}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Duration
+                    </label>
+                    <select 
+                      defaultValue={packageToUpdate.duration}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="1 Month">1 Month</option>
+                      <option value="3 Months">3 Months</option>
+                      <option value="6 Months">6 Months</option>
+                      <option value="12 Months">12 Months</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Price
+                    </label>
+                    <input
+                      type="number"
+                      defaultValue={packageToUpdate.price}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 500000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select 
+                      defaultValue={packageToUpdate.status}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number of Mentor Meetings
+                  </label>
+                  <input
+                    type="number"
+                    defaultValue={packageToUpdate.numberOfMentorMeeting}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 8"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    rows={4}
+                    defaultValue={packageToUpdate.description}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter package description"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowUpdateModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Update Package
                   </Button>
                 </div>
               </form>
