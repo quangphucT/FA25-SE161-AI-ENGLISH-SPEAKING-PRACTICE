@@ -174,9 +174,7 @@ const PageStatistics = () => {
               <span className="font-semibold text-gray-600">{stat.label}</span>
             </div>
             <span className="text-3xl font-bold mt-2">{stat.value}</span>
-            <span className={`text-xs mt-1 ${stat.trendColor}`}>
-              {stat.change}
-            </span>
+           
           </Card>
         ))}
       </div>
@@ -185,7 +183,7 @@ const PageStatistics = () => {
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Top 3 Most Popular Packages</h2>
-          <span className="text-sm text-gray-500">Based on total purchases</span>
+
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {topPackages.map((pkg, index) => (
@@ -199,7 +197,6 @@ const PageStatistics = () => {
                 #{index + 1}
               </div>
 
-              {/* Package Category */}
              
               {/* Package Info */}
               <h3 className="font-bold text-gray-800 mb-2">{pkg.name}</h3>
@@ -214,22 +211,10 @@ const PageStatistics = () => {
                   <div className="text-2xl font-bold text-gray-800">{pkg.totalPurchases}</div>
                   <div className="text-xs text-gray-500">Total purchases</div>
                 </div>
-                <div className={`text-sm font-semibold ${pkg.growthRate.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
-                  {pkg.growthRate}
-                </div>
+                
               </div>
 
-              {/* Progress Bar */}
-              <div className="mt-4 bg-gray-200 rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full ${
-                    index === 0 ? 'bg-yellow-500' :
-                    index === 1 ? 'bg-gray-400' :
-                    'bg-orange-500'
-                  }`}
-                  style={{ width: `${(pkg.totalPurchases / 156) * 100}%` }}
-                ></div>
-              </div>
+          
             </div>
           ))}
         </div>
@@ -448,7 +433,6 @@ const PageStatistics = () => {
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Top 5 Highest Rated Mentors</h2>
-          <span className="text-sm text-gray-500">Based on average rating</span>
         </div>
         <div className="space-y-4">
           {topMentors.map((mentor, index) => (
@@ -489,7 +473,7 @@ const PageStatistics = () => {
                   <span className="font-bold text-gray-800">{mentor.rating.toFixed(2)}</span>
                 </div>
                 <div className="text-xs text-gray-500">
-                  {mentor.totalStars} stars • {mentor.totalFeedbacks} reviews
+             {mentor.totalFeedbacks} TotalFeedbacks
                 </div>
               </div>
             </div>
