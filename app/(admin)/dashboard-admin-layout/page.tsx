@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { LogOutIcon, PackageIcon, User2Icon, BarChart3, GraduationCap, BookOpen, MessageCircle, CreditCard, Star } from "lucide-react";
+import { LogOutIcon, PackageIcon, User2Icon, BarChart3, GraduationCap, BookOpen, MessageCircle, CreditCard, Star, Bell, Search, ChevronDown } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import MentorManagement from "../mentors-management/page";
 import ServicePackageManagement from "../packages/page";
@@ -36,170 +36,257 @@ type SidebarProps = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
-  <aside className="hidden md:flex flex-col w-68 h-screen bg-white border-r px-6 py-8 fixed left-0 top-0 z-10">
-    <div className="flex items-center gap-2 font-bold text-xl mb-8">
-      <span className="text-violet-400 text-[35px]">Speak</span>
-      <span className="text-gray-800 text-3xl">AI</span>
+  <aside className="hidden md:flex flex-col w-72 h-screen bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl fixed left-0 top-0 z-10 overflow-y-auto">
+    <div className="flex items-center gap-3 font-bold text-xl mb-12 px-6 pt-8">
+      <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+        <span className="text-white text-lg font-extrabold">S</span>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-white text-2xl font-extrabold">SpeakAI</span>
+        <span className="text-slate-400 text-xs font-medium">Admin Panel</span>
+      </div>
     </div>
-    <nav className="flex-1">
-      <ul className="space-y-2 ">
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("dashboard")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded font-semibold w-full ${
-              activeMenu === "dashboard" ? "bg-blue-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-blue-400 text-white p-2 rounded-full flex items-center justify-center">
-              <BarChart3 size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span className="font-bold">Dashboard</span>
-            </div>
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("learner")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "learner" ? "bg-violet-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-violet-400 text-white p-2 rounded-full flex items-center justify-center">
-              <User2Icon size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Learner</span>
-              <span>Management</span>
-            </div>
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("mentor")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "mentor" ? "bg-green-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-green-400 text-white p-2 rounded-full flex items-center justify-center">
-              <GraduationCap size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Mentor</span>
-              <span>Management</span>
-            </div>
-          </button>
-        </li>
+    <nav className="flex-1 px-6 pb-6 flex flex-col">
+      <div className="mb-6">
+        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-4">Main Menu</p>
+        <ul className="space-y-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("dashboard")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "dashboard" 
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "dashboard" ? "bg-white/20" : "bg-blue-500/20 group-hover:bg-blue-500/30"
+              }`}>
+                <BarChart3 size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Dashboard</span>
+                <span className="text-xs opacity-70">Overview & Analytics</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("learner")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "learner" 
+                  ? "bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "learner" ? "bg-white/20" : "bg-violet-500/20 group-hover:bg-violet-500/30"
+              }`}>
+                <User2Icon size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Learners</span>
+                <span className="text-xs opacity-70">Student Management</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("mentor")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "mentor" 
+                  ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "mentor" ? "bg-white/20" : "bg-emerald-500/20 group-hover:bg-emerald-500/30"
+              }`}>
+                <GraduationCap size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Mentors</span>
+                <span className="text-xs opacity-70">Tutor Management</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("skill")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "skill" 
+                  ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "skill" ? "bg-white/20" : "bg-teal-500/20 group-hover:bg-teal-500/30"
+              }`}>
+                <BookOpen size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Skills</span>
+                <span className="text-xs opacity-70">Skill Management</span>
+              </div>
+            </button>
+          </li>
+        </ul>
+      </div>
+      
+      <div className="mb-6">
+        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-4">Services</p>
+        <ul className="space-y-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("package")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "package" 
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "package" ? "bg-white/20" : "bg-amber-500/20 group-hover:bg-amber-500/30"
+              }`}>
+                <PackageIcon size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Packages</span>
+                <span className="text-xs opacity-70">Service Packages</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("topic")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "topic" 
+                  ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "topic" ? "bg-white/20" : "bg-indigo-500/20 group-hover:bg-indigo-500/30"
+              }`}>
+                <MessageCircle size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Topics</span>
+                <span className="text-xs opacity-70">Conversation Topics</span>
+              </div>
+            </button>
+          </li>
+        </ul>
+      </div>
 
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("skill")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "skill" ? "bg-green-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-green-400 text-white p-2 rounded-full flex items-center justify-center">
-              <BookOpen size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Skill</span>
-              <span>Mentor</span>
-            </div>
-          </button>
-        </li>
+      <div className="mb-6">
+        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-4">Business</p>
+        <ul className="space-y-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("purchase")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "purchase" 
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "purchase" ? "bg-white/20" : "bg-pink-500/20 group-hover:bg-pink-500/30"
+              }`}>
+                <CreditCard size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Transactions</span>
+                <span className="text-xs opacity-70">Payment History</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("feedback")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "feedback" 
+                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg transform scale-105" 
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                activeMenu === "feedback" ? "bg-white/20" : "bg-orange-500/20 group-hover:bg-orange-500/30"
+              }`}>
+                <Star size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Reviews</span>
+                <span className="text-xs opacity-70">Feedback & Comments</span>
+              </div>
+            </button>
+          </li>
+        </ul>
+      </div>
 
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("package")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "package" ? "bg-yellow-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-yellow-400 text-white p-2 rounded-full flex items-center justify-center">
-              <PackageIcon size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Service</span>
-              <span>Packages</span>
-            </div>
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("topic")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "topic" ? "bg-yellow-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-yellow-400 text-white p-2 rounded-full flex items-center justify-center">
-              <MessageCircle size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Topic</span>
-              <span>Conversation</span>
-            </div>
-          </button>
-        </li>
-
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("purchase")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "purchase" ? "bg-pink-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-pink-400 text-white p-2 rounded-full flex items-center justify-center">
-              <CreditCard size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Transactions</span>
-            </div>
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("feedback")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "feedback" ? "bg-orange-100" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-orange-400 text-white p-2 rounded-full flex items-center justify-center">
-              <Star size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Feedback &</span>
-              <span>Comments</span>
-            </div>
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveMenu("logout")}
-            className={`flex items-center gap-4 cursor-pointer px-3 py-2 rounded w-full ${
-              activeMenu === "logout" ? "bg-gray-200" : "hover:bg-gray-100"
-            }`}
-          >
-            <span className="bg-gray-400 text-white p-2 rounded-full flex items-center justify-center">
-              <LogOutIcon size={22} />
-            </span>
-            <div className="flex flex-col items-start justify-center">
-              <span>Logout</span>
-            </div>
-          </button>
-        </li>
-      </ul>
+      <div className="mt-auto pt-6 border-t border-slate-700 shrink-0">
+        <button
+          type="button"
+          onClick={() => setActiveMenu("logout")}
+          className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+            activeMenu === "logout" 
+              ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg" 
+              : "text-slate-400 hover:bg-slate-700/50 hover:text-red-400"
+          }`}
+        >
+          <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+            activeMenu === "logout" ? "bg-white/20" : "bg-red-500/20 group-hover:bg-red-500/30"
+          }`}>
+            <LogOutIcon size={20} />
+          </span>
+          <div className="flex flex-col items-start justify-center">
+            <span className="font-semibold text-sm">Logout</span>
+            <span className="text-xs opacity-70">Sign out</span>
+          </div>
+        </button>
+      </div>
     </nav>
   </aside>
 );
+
+const Header = ({ activeMenu }: { activeMenu: string }) => {
+  const getMenuTitle = (menu: string) => {
+    const titles: { [key: string]: { title: string; subtitle: string } } = {
+      dashboard: { title: "Dashboard", subtitle: "Welcome back! Here's what's happening." },
+      learner: { title: "Learner Management", subtitle: "Manage student accounts and progress." },
+      mentor: { title: "Mentor Management", subtitle: "Oversee tutors and their activities." },
+      skill: { title: "Skill Management", subtitle: "Configure available skills and levels." },
+      package: { title: "Service Packages", subtitle: "Manage learning packages and pricing." },
+      topic: { title: "Topic Management", subtitle: "Organize conversation topics." },
+      purchase: { title: "Transactions", subtitle: "Monitor payments and purchases." },
+      feedback: { title: "Reviews & Feedback", subtitle: "Manage user reviews and comments." },
+    };
+    return titles[menu] || { title: "Dashboard", subtitle: "Welcome back!" };
+  };
+
+  const currentMenu = getMenuTitle(activeMenu);
+
+  return (
+    <header className="bg-white border-b border-gray-200 px-8 py-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{currentMenu.title}</h1>
+          <p className="text-gray-600 text-sm mt-1">{currentMenu.subtitle}</p>
+        </div>
+       
+      </div>
+    </header>
+  );
+};
 
 const DashboardAdmin = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -228,10 +315,17 @@ const DashboardAdmin = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-      <div className="md:ml-64">
-        <main className="p-8">{renderContent()}</main>
+      <div className="md:ml-72">
+        <Header activeMenu={activeMenu} />
+        <main className="p-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              {renderContent()}
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

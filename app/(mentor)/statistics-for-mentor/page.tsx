@@ -1,8 +1,13 @@
+
+"use client";
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { useState } from "react"
 
 
 const StatisticsForMentor = () => {
+  const [showAllFeedback, setShowAllFeedback] = useState(false);
      // Sample data for mentor stats
   const mentorStats = {
     totalStudents: 42,
@@ -83,6 +88,59 @@ const StatisticsForMentor = () => {
       date: "Tomorrow",
       topic: "Grammar Review Session",
       status: "pending"
+    }
+  ];
+
+  // Chỉ hiển thị các session đã confirmed
+  const confirmedSessions = upcomingSessions.filter(session => session.status === "confirmed");
+
+  // Full feedback data cho modal
+  const allFeedbackData = [
+    ...feedbackSummary,
+    {
+      id: 6,
+      studentName: "Hoàng Văn Tùng",
+      rating: 5,
+      comment: "Outstanding mentor! The lessons are well-structured and very engaging. I've learned so much in just a few sessions.",
+      sessionType: "Advanced Speaking",
+      date: "Sept 15, 2025",
+      avatar: "HVT"
+    },
+    {
+      id: 7,
+      studentName: "Lý Thị Mai",
+      rating: 4,
+      comment: "Great pronunciation coaching. Helped me overcome my accent issues and speak more confidently.",
+      sessionType: "Pronunciation",
+      date: "Sept 14, 2025",
+      avatar: "LTM"
+    },
+    {
+      id: 8,
+      studentName: "Trương Minh Đức",
+      rating: 5,
+      comment: "Excellent TOEFL preparation. The practice tests and tips were incredibly helpful for my exam.",
+      sessionType: "TOEFL Prep",
+      date: "Sept 13, 2025",
+      avatar: "TMD"
+    },
+    {
+      id: 9,
+      studentName: "Phan Thị Hương",
+      rating: 4,
+      comment: "Very patient teacher. Explains complex grammar rules in an easy-to-understand way.",
+      sessionType: "Grammar Focus",
+      date: "Sept 12, 2025",
+      avatar: "PTH"
+    },
+    {
+      id: 10,
+      studentName: "Ngô Văn Khang",
+      rating: 5,
+      comment: "Amazing business English course! Really practical for my work environment. Highly recommended.",
+      sessionType: "Business English",
+      date: "Sept 11, 2025",
+      avatar: "NVK"
     }
   ];
 
@@ -169,14 +227,14 @@ const StatisticsForMentor = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {upcomingSessions.map((session) => (
+                      {confirmedSessions.map((session) => (
                         <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div className="flex-1">
                             <p className="font-medium text-gray-900">{session.student}</p>
                             <p className="text-sm text-gray-500">{session.topic}</p>
                             <p className="text-xs text-gray-400">{session.date} at {session.time}</p>
                           </div>
-                          <Badge variant={session.status === 'confirmed' ? 'default' : 'secondary'}>
+                          <Badge variant="default">
                             {session.status}
                           </Badge>
                         </div>
@@ -189,7 +247,7 @@ const StatisticsForMentor = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>Feedback Summary</CardTitle>
-                    <p className="text-sm text-gray-500">Recent feedback from your students</p>
+                    <p className="text-sm text-gray-500">Recent feedback from your learners</p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -219,13 +277,92 @@ const StatisticsForMentor = () => {
                       ))}
                     </div>
                     <div className="mt-4 pt-3 border-t">
-                      <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                      <button 
+                        onClick={() => setShowAllFeedback(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                      >
                         View all feedback →
                       </button>
                     </div>
                   </CardContent>
                 </Card>
               </div>
+
+              {/* All Feedback Modal */}
+              {showAllFeedback && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                    {/* Modal Header */}
+                    <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">All Student Feedback</h2>
+                        <p className="text-sm text-gray-500">Complete feedback history from your students</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAllFeedback(false)}
+                        className="h-8 w-8 p-0 cursor-pointer"
+                      >
+                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </Button>
+                    </div>
+
+                    {/* Modal Content */}
+                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                      <div className="grid gap-4">
+                        {allFeedbackData.map((feedback) => (
+                          <div key={feedback.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-white font-medium text-sm">{feedback.avatar}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h3 className="text-base font-semibold text-gray-900">{feedback.studentName}</h3>
+                                  <div className="flex items-center space-x-1">
+                                    {[...Array(5)].map((_, i) => (
+                                      <svg key={i} width="16" height="16" fill={i < feedback.rating ? "#fbbf24" : "#e5e7eb"} viewBox="0 0 24 24">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                      </svg>
+                                    ))}
+                                    <span className="text-sm text-gray-600 ml-1">({feedback.rating}/5)</span>
+                                  </div>
+                                </div>
+                                <p className="text-gray-700 mb-3 leading-relaxed">&quot;{feedback.comment}&quot;</p>
+                                <div className="flex items-center justify-between">
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {feedback.sessionType}
+                                  </span>
+                                  <span className="text-sm text-gray-500">{feedback.date}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-600">
+                          Total feedback: <span className="font-semibold">{allFeedbackData.length}</span> reviews
+                        </p>
+                        <Button
+                          onClick={() => setShowAllFeedback(false)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
   )
 }

@@ -51,6 +51,7 @@ const ScheduleMentor = () => {
   const [showEntryTestModal, setShowEntryTestModal] = useState(false);
   const [selectedStudentTest, setSelectedStudentTest] = useState<StudentTestData | null>(null);
   const [selectedDay, setSelectedDay] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
@@ -343,10 +344,15 @@ const ScheduleMentor = () => {
   };
 
   const handleAddTimeSlot = () => {
-    if (selectedDay && startTime && endTime) {
+    if (selectedDate && startTime && endTime) {
+      // Convert selected date to day of week
+      const date = new Date(selectedDate);
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayOfWeek = dayNames[date.getDay()];
+      
       const newSlot: TimeSlot = {
-        id: `${selectedDay}-${startTime.replace(':', '')}-${endTime.replace(':', '')}`,
-        day: selectedDay,
+        id: `${dayOfWeek}-${startTime.replace(':', '')}-${endTime.replace(':', '')}-${selectedDate}`,
+        day: dayOfWeek,
         startTime,
         endTime,
         isAvailable: true,
@@ -354,6 +360,7 @@ const ScheduleMentor = () => {
       };
       setScheduleData([...scheduleData, newSlot]);
       setSelectedDay("");
+      setSelectedDate("");
       setStartTime("");
       setEndTime("");
       setShowAddSlotModal(false);
@@ -588,20 +595,15 @@ const ScheduleMentor = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Day of Week
+                    Chọn ngày
                   </label>
-                  <select
-                    value={selectedDay}
-                    onChange={(e) => setSelectedDay(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select a day</option>
-                    {daysOfWeek.map((day) => (
-                      <option key={day.key} value={day.key}>
-                        {day.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
@@ -649,6 +651,7 @@ const ScheduleMentor = () => {
                   onClick={() => {
                     setShowAddSlotModal(false);
                     setSelectedDay("");
+                    setSelectedDate("");
                     setStartTime("");
                     setEndTime("");
                   }}
@@ -687,65 +690,122 @@ const ScheduleMentor = () => {
               </div>
               
               {/* Overall Score */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-600">Overall Score</p>
-                      <p className="text-3xl font-bold text-blue-600">{selectedStudentTest.overallScore}/10</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-600">Level</p>
-                      <p className="text-2xl font-bold text-green-600">{selectedStudentTest.level}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-600">Test Date</p>
-                      <p className="text-lg font-semibold text-gray-700">{selectedStudentTest.testDate}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="text-center group">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full mb-3 group-hover:scale-105 transition-transform duration-200">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Tổng điểm</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{selectedStudentTest.overallScore}/10</p>
+                </div>
+                <div className="text-center group">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-full mb-3 group-hover:scale-105 transition-transform duration-200">
+                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Trình độ</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">{selectedStudentTest.level}</p>
+                </div>
+                <div className="text-center group">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full mb-3 group-hover:scale-105 transition-transform duration-200">
+                    <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Ngày test</p>
+                  <p className="text-lg font-semibold text-slate-700">{selectedStudentTest.testDate}</p>
+                </div>
               </div>
 
               {/* Detailed Scores */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Detailed Assessment</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {Object.entries(selectedStudentTest.details).map(([skill, data]: [string, { score: number; level: string; notes: string }]) => (
-                      <div key={skill} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-gray-900 capitalize">{skill}</h4>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-lg font-bold text-blue-600">{data.score}/10</span>
-                            <Badge variant="outline">{data.level}</Badge>
+              <div className="mb-8">
+                <div className="flex items-center mb-8">
+                  <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full mr-4"></div>
+                  <h3 className="text-2xl font-bold text-slate-800">Chi tiết đánh giá</h3>
+                </div>
+                
+                <div className="space-y-5">
+                  {Object.entries(selectedStudentTest.details)
+                    .filter(([skill]) => skill === 'speaking')
+                    .map(([skill, data]: [string, { score: number; level: string; notes: string }], index) => (
+                    <div 
+                      key={skill} 
+                      className="group relative bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-0.5"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      {/* Skill Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm bg-gradient-to-br from-rose-100 to-pink-100">
+                            <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-semibold text-slate-800 capitalize mb-1">Speaking</h4>
+                            <p className="text-sm text-slate-500">Kỹ năng nói</p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600">{data.notes}</p>
                         
-                        {/* Progress Bar */}
-                        <div className="mt-3">
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                              style={{ width: `${(data.score / 10) * 100}%` }}
-                            ></div>
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                              {data.score}
+                            </p>
+                            <p className="text-sm text-slate-500">/10</p>
+                          </div>
+                          <div className={`px-4 py-2 rounded-full text-sm font-medium shadow-sm ${
+                            data.level === 'Advanced' ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border border-emerald-200' :
+                            data.level === 'Upper-Intermediate' ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-200' :
+                            data.level === 'Intermediate' ? 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-200' :
+                            'bg-gradient-to-r from-rose-100 to-rose-200 text-rose-800 border border-rose-200'
+                          }`}>
+                            {data.level}
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      
+                      {/* Notes */}
+                      <div className="mb-5 p-4 bg-slate-50/70 rounded-xl border border-slate-100">
+                        <p className="text-slate-700 leading-relaxed text-sm">{data.notes}</p>
+                      </div>
+                      
+                      {/* Enhanced Progress Bar */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-slate-600">Điểm đánh giá</span>
+                          <span className="text-sm font-semibold text-slate-800">{data.score}/10</span>
+                        </div>
+                        <div className="relative">
+                          <div className="w-full bg-slate-200/60 rounded-full h-2 overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-700 ease-out ${
+                                data.score >= 8 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' :
+                                data.score >= 6 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                                'bg-gradient-to-r from-rose-400 to-rose-500'
+                              } shadow-sm`}
+                              style={{ width: `${(data.score / 10) * 100}%` }}
+                            ></div>
+                          </div>
+                          {/* Score markers */}
+                          <div className="absolute top-0 left-0 w-full h-2 flex justify-between items-center">
+                            {[2, 4, 6, 8].map((marker) => (
+                              <div 
+                                key={marker}
+                                className="w-0.5 h-2 bg-white/60"
+                                style={{ left: `${(marker / 10) * 100}%` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               
               <div className="flex items-center justify-end mt-6">
                 <Button 
