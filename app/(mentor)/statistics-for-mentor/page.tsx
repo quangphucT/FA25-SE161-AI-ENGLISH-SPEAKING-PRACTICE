@@ -293,10 +293,10 @@ const StatisticsForMentor = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
                     {/* Modal Header */}
-                    <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <div className="px-6 py-1.5 border-b border-gray-200 flex items-center justify-between">
                       <div>
-                        <h2 className="text-xl font-bold text-gray-900">All Student Feedback</h2>
-                        <p className="text-sm text-gray-500">Complete feedback history from your students</p>
+                        <h2 className="text-xl font-bold text-gray-900">All Learner Feedback</h2>
+                        <p className="text-sm text-gray-500">Complete feedback history from your learners</p>
                       </div>
                       <Button
                         variant="outline"

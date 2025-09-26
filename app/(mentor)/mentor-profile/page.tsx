@@ -34,15 +34,16 @@ const MentorProfile = () => {
     { name: "Grammar & Writing", isStrength: false }
   ])
   const [topics, setTopics] = useState([
-    { name: "Business" },
-    { name: "Academic" },
-    { name: "Daily Life" },
-    { name: "Test Prep" }
+    { title: "Business English", description: "Professional communication, meetings, presentations" },
+    { title: "Academic English", description: "Essay writing, research skills, academic vocabulary" },
+    { title: "Daily Conversation", description: "Everyday situations, casual speaking, practical English" },
+    { title: "Test Preparation", description: "IELTS, TOEIC, and other standardized test prep" }
   ])
   const [formData, setFormData] = useState({
     name: "Nguyễn Văn Minh",
     qualification: "TESOL Certified, Master's in English Literature",
-    specialization: "Business English, IELTS Preparation, Conversation Practice",
+    teachingStyle: "Interactive and conversational",
+    voiceAccent: "American English",
     bio: "Passionate English mentor with 5 years of experience helping Vietnamese learners achieve their language goals. Specialized in business communication and test preparation.",
     yearsExperience: 5
   })
@@ -66,7 +67,8 @@ const MentorProfile = () => {
     setFormData({
       name: mentorData.name,
       qualification: mentorData.qualification,
-      specialization: mentorData.specialization,
+      teachingStyle: mentorData.teachingStyle,
+      voiceAccent: mentorData.voiceAccent,
       bio: mentorData.bio,
       yearsExperience: mentorData.yearsExperience
     })
@@ -83,7 +85,8 @@ const MentorProfile = () => {
     totalLearners: 245,
     yearsExperience: 5,
     qualification: "TESOL Certified, Master's in English Literature",
-    specialization: "Business English, IELTS Preparation, Conversation Practice",
+    teachingStyle: "Interactive and conversational",
+    voiceAccent: "American English",
     bio: "Passionate English mentor with 5 years of experience helping Vietnamese learners achieve their language goals. Specialized in business communication and test preparation.",
     responseTime: "Usually responds within 2 hours"
   }
@@ -100,13 +103,13 @@ const MentorProfile = () => {
   ]
 
   const availableTopics = [
-    { name: "Business" },
-    { name: "Academic" },
-    { name: "Daily Life" },
-    { name: "Test Prep" },
-    { name: "Technology" },
-    { name: "Culture" },
-    { name: "Career" }
+    { title: "Business English", description: "Professional communication, meetings, presentations" },
+    { title: "Academic English", description: "Essay writing, research skills, academic vocabulary" },
+    { title: "Daily Conversation", description: "Everyday situations, casual speaking, practical English" },
+    { title: "Test Preparation", description: "IELTS, TOEIC, and other standardized test prep" },
+    { title: "Technology", description: "IT terminology, digital communication, tech trends" },
+    { title: "Culture & Society", description: "Cultural discussions, social topics, lifestyle" },
+    { title: "Career Development", description: "Job interviews, professional networking, workplace skills" }
   ]
 
   const addSkill = (skillName: string, isStrength: boolean = false) => {
@@ -117,10 +120,10 @@ const MentorProfile = () => {
     setIsAddingSkill(false)
   }
 
-  const addTopic = (topicName: string) => {
-    const availableTopic = availableTopics.find(topic => topic.name === topicName)
-    if (availableTopic && !topics.some(topic => topic.name === topicName)) {
-      setTopics([...topics, availableTopic])
+  const addTopic = (topicTitle: string, topicDescription: string) => {
+    const availableTopic = availableTopics.find(topic => topic.title === topicTitle)
+    if (availableTopic && !topics.some(topic => topic.title === topicTitle)) {
+      setTopics([...topics, { title: topicTitle, description: topicDescription }])
     }
     setIsAddingTopic(false)
   }
@@ -129,8 +132,8 @@ const MentorProfile = () => {
     setSkills(skills.filter(skill => skill.name !== skillName))
   }
 
-  const removeTopic = (topicName: string) => {
-    setTopics(topics.filter(topic => topic.name !== topicName))
+  const removeTopic = (topicTitle: string) => {
+    setTopics(topics.filter(topic => topic.title !== topicTitle))
   }
 
   return (
@@ -164,7 +167,10 @@ const MentorProfile = () => {
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
                       {mentorData.name}
                     </h1>
-                    <p className="text-lg text-gray-600 mt-2 font-medium">{mentorData.specialization}</p>
+                    <div className="mt-3 space-y-1">
+                      <p className="text-lg text-gray-700 font-medium">{mentorData.teachingStyle} Teaching Style</p>
+                      <p className="text-base text-gray-600">{mentorData.voiceAccent} Accent</p>
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-3 justify-center lg:justify-start">
@@ -209,13 +215,43 @@ const MentorProfile = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-                    <h4 className="font-bold text-gray-900 mb-2">Kinh nghiệm</h4>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-gray-700 font-semibold">{mentorData.yearsExperience} năm kinh nghiệm</span>
+                  <div className="bg-gradient-to-br from-white to-blue-50 p-5 rounded-2xl border border-blue-100 shadow-lg">
+                    <div className="space-y-4">
+                      {/* Experience */}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                          <Award className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">Kinh nghiệm</h4>
+                          <span className="text-gray-700 font-medium">{mentorData.yearsExperience} năm kinh nghiệm</span>
+                        </div>
+                      </div>
+
+                      {/* Teaching Style */}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
+                          <Star className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">Teaching Style</h4>
+                          <span className="text-gray-700 font-medium">{mentorData.teachingStyle}</span>
+                        </div>
+                      </div>
+
+                      {/* Voice Accent */}
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+                          <BookOpen className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">Voice Accent</h4>
+                          <span className="text-gray-700 font-medium">{mentorData.voiceAccent}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  
                 </div>
               </div>
 
@@ -242,15 +278,17 @@ const MentorProfile = () => {
                     </div>
                   </div>
                 
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl border border-purple-100">
-                    <div className="space-y-1">
-                      <span className="text-gray-700 font-medium block">Thời gian phản hồi:</span>
-                      <p className="text-sm text-purple-600 font-semibold">{mentorData.responseTime}</p>
-                    </div>
-                  </div>
+                
                 </div>
               </div>
+
+
+
+
             </div>
+
+
+            
 
             {/* Action Button */}
             <div className="flex flex-col gap-3">
@@ -423,15 +461,23 @@ const MentorProfile = () => {
         </TabsContent>
 
         {/* Topics Tab */}
-        <TabsContent value="topics" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">My Topics</h3>
+        <TabsContent value="topics" className="space-y-8 mt-8">
+          <div className="flex justify-between items-center p-6 bg-gradient-to-r from-green-50 to-teal-50 rounded-2xl border border-green-100">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                Chủ đề giảng dạy
+              </h3>
+              <p className="text-gray-600 mt-1">Quản lý và hiển thị các chủ đề giảng dạy</p>
+            </div>
             <Button
               onClick={() => setIsAddingTopic(true)}
-              className="flex items-center gap-2"
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 rounded-2xl font-semibold"
             >
-              <Plus className="w-4 h-4" />
-              Add Topic
+              <Plus className="w-5 h-5 mr-2" />
+              Thêm Topic
             </Button>
           </div>
           
@@ -439,9 +485,8 @@ const MentorProfile = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-green-50 to-teal-50 hover:bg-gradient-to-r hover:from-green-100 hover:to-teal-100">
-                  <TableHead className="font-bold text-gray-900">Chủ đề</TableHead>
-                  <TableHead className="font-bold text-gray-900">Loại</TableHead>
-                  <TableHead className="font-bold text-gray-900">Trạng thái</TableHead>
+                  <TableHead className="font-bold text-gray-900">Tên chủ đề</TableHead>
+                  <TableHead className="font-bold text-gray-900">Mô tả</TableHead>
                   <TableHead className="font-bold text-gray-900 text-center">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -454,27 +499,18 @@ const MentorProfile = () => {
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br from-green-400 to-teal-500">
                             <BookOpen className="w-5 h-5 text-white" />
                           </div>
-                          <span className="font-semibold text-gray-900 text-lg">{topic.name}</span>
+                          <span className="font-semibold text-gray-900 text-lg">{topic.title}</span>
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
-                        <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-green-100 to-teal-100 text-green-800">
-                          <BookOpen className="w-4 h-4 mr-2" />
-                          Chủ đề giảng dạy
-                        </span>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                          <span className="text-sm font-medium text-gray-600">Hoạt động</span>
-                        </div>
+                        <p className="text-gray-600 text-sm leading-relaxed">{topic.description}</p>
                       </TableCell>
                       <TableCell className="py-4">
                         <div className="flex items-center justify-center">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeTopic(topic.name)}
+                            onClick={() => removeTopic(topic.title)}
                             className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-700 rounded-full"
                             title="Xóa topic"
                           >
@@ -486,7 +522,7 @@ const MentorProfile = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-12">
+                    <TableCell colSpan={3} className="text-center py-12">
                       <div className="flex flex-col items-center text-gray-500">
                         <div className="w-16 h-16 bg-green-100 rounded-full mb-4 flex items-center justify-center">
                           <BookOpen className="w-8 h-8 text-green-600 opacity-50" />
@@ -538,14 +574,28 @@ const MentorProfile = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="specialization" className="text-sm font-medium text-gray-700">
-                      Specialization
+                    <Label htmlFor="teachingStyle" className="text-sm font-medium text-gray-700">
+                      Teaching Style
                     </Label>
                     <Input
-                      id="specialization"
-                      value={formData.specialization}
-                      onChange={(e) => handleInputChange('specialization', e.target.value)}
+                      id="teachingStyle"
+                      value={formData.teachingStyle}
+                      onChange={(e) => handleInputChange('teachingStyle', e.target.value)}
                       className="mt-1"
+                      placeholder="e.g., Interactive, Structured, Conversational"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="voiceAccent" className="text-sm font-medium text-gray-700">
+                      Voice Accent
+                    </Label>
+                    <Input
+                      id="voiceAccent"
+                      value={formData.voiceAccent}
+                      onChange={(e) => handleInputChange('voiceAccent', e.target.value)}
+                      className="mt-1"
+                      placeholder="e.g., American English, British English, Australian English"
                     />
                   </div>
                   
@@ -674,21 +724,23 @@ const MentorProfile = () => {
             <div className="p-6">
               <div className="space-y-3">
                 {availableTopics
-                  .filter(topic => !topics.some(t => t.name === topic.name))
+                  .filter(topic => !topics.some(t => t.title === topic.title))
                   .map((topic, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{topic.name}</h4>
+                  <div key={index} className="flex justify-between items-start p-3 border rounded-lg hover:bg-gray-50">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{topic.title}</h4>
+                      <p className="text-sm text-gray-500 mt-1">{topic.description}</p>
                     </div>
                     <Button
-                      onClick={() => addTopic(topic.name)}
+                      onClick={() => addTopic(topic.title, topic.description)}
                       size="sm"
+                      className="ml-3"
                     >
                       Add
                     </Button>
                   </div>
                 ))}
-                {availableTopics.filter(topic => !topics.some(t => t.name === topic.name)).length === 0 && (
+                {availableTopics.filter(topic => !topics.some(t => t.title === topic.title)).length === 0 && (
                   <p className="text-center text-gray-500 py-4">All available topics have been added</p>
                 )}
               </div>
