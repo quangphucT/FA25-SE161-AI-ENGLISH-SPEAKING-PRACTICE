@@ -134,6 +134,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               </div>
             </button>
           </li>
+
+
         </ul>
       </div>
       
@@ -254,6 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
           </div>
         </button>
       </div>
+      
     </nav>
   </aside>
 );
