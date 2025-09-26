@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { LogOutIcon, PackageIcon, User2Icon, BarChart3, GraduationCap, BookOpen, MessageCircle, CreditCard, Star, Bell, Search, ChevronDown } from "lucide-react";
+import { LogOutIcon, PackageIcon, User2Icon, BarChart3, GraduationCap, BookOpen, MessageCircle, CreditCard, Star } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import MentorManagement from "../mentors-management/page";
 import ServicePackageManagement from "../packages/page";
@@ -256,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
           </div>
         </button>
       </div>
-      
+
     </nav>
   </aside>
 );

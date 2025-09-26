@@ -12,17 +12,14 @@ import {
   FileText, 
   Video, 
   Link2, 
-  FileQuestion,
   Book,
   Upload,
   Edit,
   Trash2,
-  ExternalLink,
   Save,
   X,
   Share2,
   Users,
-  Eye,
   Search,
   UserPlus
 } from 'lucide-react'
@@ -354,7 +351,7 @@ const ContentLibrary = () => {
                         <Upload className="w-8 h-8 text-blue-600 opacity-50" />
                       </div>
                       <p className="text-lg font-medium text-gray-700 mb-1">Chưa có tài liệu nào</p>
-                      <p className="text-sm text-gray-500">Nhấn "Thêm tài liệu" để bắt đầu xây dựng thư viện</p>
+                      <p className="text-sm text-gray-500">Nhấn &quot;Thêm tài liệu&quot; để bắt đầu xây dựng thư viện</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -579,7 +576,7 @@ const ContentLibrary = () => {
                           {searchEmail && getFilteredLearners(content.id).length === 0 && (
                             <div className="text-center py-4">
                               <Search className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                              <p className="text-sm text-gray-500">Không tìm thấy learner với từ khóa "{searchEmail}"</p>
+                              <p className="text-sm text-gray-500">Không tìm thấy learner với từ khóa &quot;{searchEmail}&quot;</p>
                             </div>
                           )}
                           

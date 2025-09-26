@@ -2,7 +2,6 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import ScheduleMentor from "../schedule-mentor/page";
 import StatisticsForMentor from "../statistics-for-mentor/page";
 import MentorProfile from "../mentor-profile/page";
