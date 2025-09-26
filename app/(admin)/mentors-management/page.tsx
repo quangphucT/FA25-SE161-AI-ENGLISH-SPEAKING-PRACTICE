@@ -536,18 +536,7 @@ const MentorManagement = () => {
                     </svg>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <Badge 
-                    variant="outline" 
-                    className={`${
-                      mentor.mentorStatus === 'Available' ? 'text-green-600 border-green-300 bg-green-50' :
-                      mentor.mentorStatus === 'Busy' ? 'text-orange-600 border-orange-300 bg-orange-50' :
-                      'text-gray-600 border-gray-300 bg-gray-50'
-                    }`}
-                  >
-                    {mentor.mentorStatus}
-                  </Badge>
-                </TableCell>
+             
                 <TableCell className="text-center">
                   <div className="relative dropdown-container">
                     <Button 
