@@ -528,7 +528,7 @@ const PurchasesManagement = () => {
             </svg>
           </Button>
           <Input
-            placeholder="Search by learner name..."
+            placeholder="Tìm theo tên người học..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-[300px]"
@@ -538,11 +538,11 @@ const PurchasesManagement = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 border rounded-md cursor-pointer"
           >
-            <option value="All">All Status</option>
-            <option value="Success">Success</option>
-            <option value="Failed">Failed</option>
-            <option value="Pending">Pending</option>
-            <option value="Refunded">Refunded</option>
+            <option value="All">Tất cả trạng thái</option>
+            <option value="Success">Thành công</option>
+            <option value="Failed">Thất bại</option>
+            <option value="Pending">Đang xử lý</option>
+            <option value="Refunded">Hoàn tiền</option>
           </select>
         </div>
         <div className="dropdown-container relative">
@@ -563,7 +563,7 @@ const PurchasesManagement = () => {
               <polyline points="7,10 12,15 17,10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Export Report
+            Xuất báo cáo
             <svg
               width="16"
               height="16"
@@ -601,7 +601,7 @@ const PurchasesManagement = () => {
                     <line x1="16" y1="17" x2="8" y2="17" />
                     <polyline points="10,9 9,9 8,9" />
                   </svg>
-                  Export as PDF
+                  Xuất PDF
                 </button>
               </div>
             </div>
@@ -609,14 +609,16 @@ const PurchasesManagement = () => {
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* Thống kê */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">
               {samplePurchases.filter((p) => p.status === "Success").length}
             </div>
-            <p className="text-xs text-muted-foreground">Success Purchases</p>
+            <p className="text-xs text-muted-foreground">
+              Giao dịch thành công
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -624,7 +626,7 @@ const PurchasesManagement = () => {
             <div className="text-2xl font-bold">
               {samplePurchases.filter((p) => p.status === "Failed").length}
             </div>
-            <p className="text-xs text-muted-foreground">Failed Purchases</p>
+            <p className="text-xs text-muted-foreground">Giao dịch thất bại</p>
           </CardContent>
         </Card>
         <Card>
@@ -632,7 +634,7 @@ const PurchasesManagement = () => {
             <div className="text-2xl font-bold">
               {samplePurchases.filter((p) => p.status === "Pending").length}
             </div>
-            <p className="text-xs text-muted-foreground">Pending Purchases</p>
+            <p className="text-xs text-muted-foreground">Đang xử lý</p>
           </CardContent>
         </Card>
         <Card>
@@ -645,19 +647,19 @@ const PurchasesManagement = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Total Success Revenue
+              Doanh thu thành công
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Purchases Table */}
+      {/* Bảng giao dịch */}
       <Card>
         <CardHeader>
-          <CardTitle>Purchases Management</CardTitle>
+          <CardTitle>Quản lí giao dịch</CardTitle>
           <CardDescription>
-            Showing {filteredPurchases.length} of {samplePurchases.length}{" "}
-            purchases
+            Hiển thị {filteredPurchases.length} trên {samplePurchases.length}{" "}
+            giao dịch
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -673,15 +675,13 @@ const PurchasesManagement = () => {
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead>Purchase ID</TableHead>
-                <TableHead>Learner</TableHead>
-                <TableHead>Service Package</TableHead>
-                <TableHead>Final Price</TableHead>
-                <TableHead>Payment Method</TableHead>
-               
-              
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Mã giao dịch</TableHead>
+                <TableHead>Người học</TableHead>
+                <TableHead>Gói dịch vụ</TableHead>
+                <TableHead>Giá thanh toán</TableHead>
+                <TableHead>Phương thức</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -730,8 +730,7 @@ const PurchasesManagement = () => {
                       {purchase.paymentMethod}
                     </Badge>
                   </TableCell>
-               
-                
+
                   <TableCell>
                     <Badge
                       variant={
@@ -796,7 +795,7 @@ const PurchasesManagement = () => {
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                                 <circle cx="12" cy="12" r="3" />
                               </svg>
-                              View Details
+                              Xem chi tiết
                             </button>
                           </div>
                         </div>
@@ -810,13 +809,13 @@ const PurchasesManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Purchase Details Modal */}
+      {/* Modal chi tiết giao dịch */}
       {showDetailsModal && selectedPurchase && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Purchase Details</h2>
+                <h2 className="text-xl font-semibold">Chi tiết giao dịch</h2>
                 <Button
                   variant="outline"
                   size="sm"
@@ -841,18 +840,18 @@ const PurchasesManagement = () => {
               <div className="grid grid-cols-2 gap-6">
                 {/* Purchase Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Purchase Information</h3>
+                  <h3 className="text-lg font-medium">Thông tin giao dịch</h3>
                   <div className="space-y-2">
                     <div>
-                      <strong>Purchase ID:</strong>{" "}
+                      <strong>Mã giao dịch:</strong>{" "}
                       {selectedPurchase.purchaseId}
                     </div>
                     <div>
-                      <strong>Purchase Date:</strong>{" "}
+                      <strong>Ngày mua:</strong>{" "}
                       {formatDate(selectedPurchase.purchaseDate)}
                     </div>
                     <div>
-                      <strong>Status:</strong>
+                      <strong>Trạng thái:</strong>
                       <Badge
                         variant={
                           selectedPurchase.status === "Success"
@@ -870,7 +869,7 @@ const PurchasesManagement = () => {
                     </div>
                     {selectedPurchase.notes && (
                       <div>
-                        <strong>Notes:</strong> {selectedPurchase.notes}
+                        <strong>Ghi chú:</strong> {selectedPurchase.notes}
                       </div>
                     )}
                   </div>
@@ -878,37 +877,39 @@ const PurchasesManagement = () => {
 
                 {/* Learner Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Learner Information</h3>
+                  <h3 className="text-lg font-medium">Thông tin người học</h3>
                   <div className="space-y-2">
                     <div>
-                      <strong>Name:</strong> {selectedPurchase.learner.fullName}
+                      <strong>Họ tên:</strong>{" "}
+                      {selectedPurchase.learner.fullName}
                     </div>
                     <div>
                       <strong>Email:</strong> {selectedPurchase.learner.email}
                     </div>
                     <div>
-                      <strong>Phone:</strong> {selectedPurchase.learner.phone}
+                      <strong>SĐT:</strong> {selectedPurchase.learner.phone}
                     </div>
                     <div>
-                      <strong>Learner ID:</strong> {selectedPurchase.learner.id}
+                      <strong>Mã người học:</strong>{" "}
+                      {selectedPurchase.learner.id}
                     </div>
                   </div>
                 </div>
 
                 {/* Package Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Service Package</h3>
+                  <h3 className="text-lg font-medium">Gói dịch vụ</h3>
                   <div className="space-y-2">
                     <div>
-                      <strong>Package Name:</strong>{" "}
+                      <strong>Tên gói:</strong>{" "}
                       {selectedPurchase.servicePackage.packageName}
                     </div>
                     <div>
-                      <strong>Package Price:</strong>{" "}
+                      <strong>Giá gói:</strong>{" "}
                       {formatPrice(selectedPurchase.servicePackage.price)}
                     </div>
                     <div>
-                      <strong>Final Price:</strong>{" "}
+                      <strong>Giá thanh toán:</strong>{" "}
                       <span className="text-lg font-semibold text-green-600">
                         {formatPrice(selectedPurchase.finalPrice)}
                       </span>
@@ -918,10 +919,10 @@ const PurchasesManagement = () => {
 
                 {/* Payment Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Payment Information</h3>
+                  <h3 className="text-lg font-medium">Thông tin thanh toán</h3>
                   <div className="space-y-2">
                     <div>
-                      <strong>Payment Method:</strong>{" "}
+                      <strong>Phương thức thanh toán:</strong>{" "}
                       <Badge variant="secondary">
                         {selectedPurchase.paymentMethod}
                       </Badge>

@@ -1,11 +1,23 @@
-
 "use client";
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableHead,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
 // Type definitions
@@ -13,7 +25,7 @@ interface Package {
   name: string;
   duration: string;
   price: string;
-  status: 'Active' | 'Completed' | 'Expired';
+  status: "Active" | "Completed" | "Expired";
 }
 
 interface Achievement {
@@ -30,9 +42,10 @@ interface Learner {
   fullName: string;
   email: string;
   pronunciationScore: number;
-  favouriteLevelGoal: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
-  status: 'Active' | 'Inactive';
+  favouriteLevelGoal: "Beginner" | "Intermediate" | "Advanced" | "Expert";
+  status: "Active" | "Inactive";
   joinedDate: string;
+  phoneNumber: string;
   totalLessons: number;
   purchasedPackages: Package[];
   achievements: Achievement[];
@@ -47,16 +60,48 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Intermediate",
     status: "Active",
     joinedDate: "2024-01-15",
+    phoneNumber: "0909090909",
     totalLessons: 45,
     purchasedPackages: [
-      { name: "Premium", duration: "60 days", price: "1,000,000 VND", status: "Active" },
-      { name: "IELTS Preparation", duration: "30 days", price: "800,000 VND", status: "Completed" }
+      {
+        name: "Premium",
+        duration: "60 days",
+        price: "1,000,000 VND",
+        status: "Active",
+      },
+      {
+        name: "IELTS Preparation",
+        duration: "30 days",
+        price: "800,000 VND",
+        status: "Completed",
+      },
     ],
     achievements: [
-      { name: "Good Pronunciation", description: "Achieved 70%+ accuracy in 5 lessons", points: 40, icon: "�", date: "2025-09-30", requirement: "5 lessons ≥70% accuracy" },
-      { name: "Great Pronunciation", description: "Achieved 80%+ accuracy in 5 lessons", points: 60, icon: "⭐", date: "2025-08-25", requirement: "5 lessons ≥80% accuracy" },
-      { name: "Perfect Pronunciation", description: "Achieved 90%+ accuracy in 5 lessons", points: 80, icon: "🎯", date: "2025-08-15", requirement: "5 lessons ≥90% accuracy" }
-    ]
+      {
+        name: "Good Pronunciation",
+        description: "Achieved 70%+ accuracy in 5 lessons",
+        points: 40,
+        icon: "�",
+        date: "2025-09-30",
+        requirement: "5 lessons ≥70% accuracy",
+      },
+      {
+        name: "Great Pronunciation",
+        description: "Achieved 80%+ accuracy in 5 lessons",
+        points: 60,
+        icon: "⭐",
+        date: "2025-08-25",
+        requirement: "5 lessons ≥80% accuracy",
+      },
+      {
+        name: "Perfect Pronunciation",
+        description: "Achieved 90%+ accuracy in 5 lessons",
+        points: 80,
+        icon: "🎯",
+        date: "2025-08-15",
+        requirement: "5 lessons ≥90% accuracy",
+      },
+    ],
   },
   {
     id: "L002",
@@ -66,14 +111,34 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Advanced",
     status: "Active",
     joinedDate: "2024-02-20",
+    phoneNumber: "0909090909",
     totalLessons: 32,
     purchasedPackages: [
-      { name: "Starter", duration: "30 days", price: "500,000 VND", status: "Active" }
+      {
+        name: "Starter",
+        duration: "30 days",
+        price: "500,000 VND",
+        status: "Active",
+      },
     ],
     achievements: [
-      { name: "First Steps", description: "Completed first 10 lessons", points: 30, icon: "🌟", date: "2025-07-10", requirement: "Complete 10 lessons" },
-      { name: "Good Pronunciation", description: "Achieved 70%+ accuracy in 5 lessons", points: 50, icon: "🗣️", date: "2025-08-05", requirement: "5 lessons ≥70% accuracy" }
-    ]
+      {
+        name: "First Steps",
+        description: "Completed first 10 lessons",
+        points: 30,
+        icon: "🌟",
+        date: "2025-07-10",
+        requirement: "Complete 10 lessons",
+      },
+      {
+        name: "Good Pronunciation",
+        description: "Achieved 70%+ accuracy in 5 lessons",
+        points: 50,
+        icon: "🗣️",
+        date: "2025-08-05",
+        requirement: "5 lessons ≥70% accuracy",
+      },
+    ],
   },
   {
     id: "L003",
@@ -83,11 +148,17 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Beginner",
     status: "Inactive",
     joinedDate: "2023-12-05",
+    phoneNumber: "0909090909",
     totalLessons: 18,
     purchasedPackages: [
-      { name: "Basic English", duration: "15 days", price: "300,000 VND", status: "Expired" }
+      {
+        name: "Basic English",
+        duration: "15 days",
+        price: "300,000 VND",
+        status: "Expired",
+      },
     ],
-    achievements: []
+    achievements: [],
   },
   {
     id: "L004",
@@ -97,16 +168,48 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Expert",
     status: "Active",
     joinedDate: "2024-03-10",
+    phoneNumber: "0909090909",
     totalLessons: 67,
     purchasedPackages: [
-      { name: "Premium Plus", duration: "90 days", price: "1,500,000 VND", status: "Active" },
-      { name: "Business English", duration: "45 days", price: "900,000 VND", status: "Completed" }
+      {
+        name: "Premium Plus",
+        duration: "90 days",
+        price: "1,500,000 VND",
+        status: "Active",
+      },
+      {
+        name: "Business English",
+        duration: "45 days",
+        price: "900,000 VND",
+        status: "Completed",
+      },
     ],
     achievements: [
-      { name: "Expert Speaker", description: "Achieved 95%+ accuracy in 10 lessons", points: 100, icon: "🎓", date: "2025-09-01", requirement: "10 lessons ≥95% accuracy (Native Speaker Level)" },
-      { name: "Consistency King", description: "Completed lessons for 30 days straight", points: 75, icon: "📚", date: "2025-08-20", requirement: "30 consecutive days learning" },
-      { name: "Perfect Pronunciation", description: "Achieved 90%+ accuracy in 5 lessons", points: 80, icon: "🎯", date: "2025-07-15", requirement: "5 lessons ≥90% accuracy" }
-    ]
+      {
+        name: "Expert Speaker",
+        description: "Achieved 95%+ accuracy in 10 lessons",
+        points: 100,
+        icon: "🎓",
+        date: "2025-09-01",
+        requirement: "10 lessons ≥95% accuracy (Native Speaker Level)",
+      },
+      {
+        name: "Consistency King",
+        description: "Completed lessons for 30 days straight",
+        points: 75,
+        icon: "📚",
+        date: "2025-08-20",
+        requirement: "30 consecutive days learning",
+      },
+      {
+        name: "Perfect Pronunciation",
+        description: "Achieved 90%+ accuracy in 5 lessons",
+        points: 80,
+        icon: "🎯",
+        date: "2025-07-15",
+        requirement: "5 lessons ≥90% accuracy",
+      },
+    ],
   },
   {
     id: "L005",
@@ -116,9 +219,10 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Intermediate",
     status: "Inactive",
     joinedDate: "2024-01-30",
+    phoneNumber: "0909090909",
     totalLessons: 12,
     purchasedPackages: [],
-    achievements: []
+    achievements: [],
   },
   {
     id: "L006",
@@ -128,14 +232,34 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Advanced",
     status: "Active",
     joinedDate: "2024-04-12",
+    phoneNumber: "0909090909",
     totalLessons: 38,
     purchasedPackages: [
-      { name: "IELTS Premium", duration: "60 days", price: "1,200,000 VND", status: "Active" }
+      {
+        name: "IELTS Premium",
+        duration: "60 days",
+        price: "1,200,000 VND",
+        status: "Active",
+      },
     ],
     achievements: [
-      { name: "Good Pronunciation", description: "Achieved 70%+ accuracy in 5 lessons", points: 40, icon: "🌟", date: "2025-06-15", requirement: "5 lessons ≥70% accuracy" },
-      { name: "Weekly Warrior", description: "Completed 7 days streak", points: 35, icon: "🔥", date: "2025-07-20", requirement: "7 consecutive days learning" }
-    ]
+      {
+        name: "Good Pronunciation",
+        description: "Achieved 70%+ accuracy in 5 lessons",
+        points: 40,
+        icon: "🌟",
+        date: "2025-06-15",
+        requirement: "5 lessons ≥70% accuracy",
+      },
+      {
+        name: "Weekly Warrior",
+        description: "Completed 7 days streak",
+        points: 35,
+        icon: "🔥",
+        date: "2025-07-20",
+        requirement: "7 consecutive days learning",
+      },
+    ],
   },
   {
     id: "L007",
@@ -145,15 +269,40 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Expert",
     status: "Active",
     joinedDate: "2024-05-08",
+    phoneNumber: "0909090909",
     totalLessons: 52,
     purchasedPackages: [
-      { name: "Business Pro", duration: "90 days", price: "1,800,000 VND", status: "Active" },
-      { name: "Speaking Mastery", duration: "45 days", price: "750,000 VND", status: "Completed" }
+      {
+        name: "Business Pro",
+        duration: "90 days",
+        price: "1,800,000 VND",
+        status: "Active",
+      },
+      {
+        name: "Speaking Mastery",
+        duration: "45 days",
+        price: "750,000 VND",
+        status: "Completed",
+      },
     ],
     achievements: [
-      { name: "Perfect Pronunciation", description: "Achieved 90%+ accuracy in 5 lessons", points: 80, icon: "🎯", date: "2025-08-10", requirement: "5 lessons ≥90% accuracy" },
-      { name: "Speed Learner", description: "Completed 20 lessons in 10 days", points: 65, icon: "⚡", date: "2025-07-25", requirement: "High learning velocity" }
-    ]
+      {
+        name: "Perfect Pronunciation",
+        description: "Achieved 90%+ accuracy in 5 lessons",
+        points: 80,
+        icon: "🎯",
+        date: "2025-08-10",
+        requirement: "5 lessons ≥90% accuracy",
+      },
+      {
+        name: "Speed Learner",
+        description: "Completed 20 lessons in 10 days",
+        points: 65,
+        icon: "⚡",
+        date: "2025-07-25",
+        requirement: "High learning velocity",
+      },
+    ],
   },
   {
     id: "L008",
@@ -163,13 +312,26 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Intermediate",
     status: "Active",
     joinedDate: "2024-06-20",
+    phoneNumber: "0909090909",
     totalLessons: 24,
     purchasedPackages: [
-      { name: "Standard", duration: "30 days", price: "600,000 VND", status: "Active" }
+      {
+        name: "Standard",
+        duration: "30 days",
+        price: "600,000 VND",
+        status: "Active",
+      },
     ],
     achievements: [
-      { name: "First Steps", description: "Completed first 10 lessons", points: 30, icon: "🌟", date: "2025-08-01", requirement: "Complete 10 lessons" }
-    ]
+      {
+        name: "First Steps",
+        description: "Completed first 10 lessons",
+        points: 30,
+        icon: "🌟",
+        date: "2025-08-01",
+        requirement: "Complete 10 lessons",
+      },
+    ],
   },
   {
     id: "L009",
@@ -179,17 +341,54 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Expert",
     status: "Active",
     joinedDate: "2024-02-14",
+    phoneNumber: "0909090909",
     totalLessons: 78,
     purchasedPackages: [
-      { name: "Ultimate", duration: "120 days", price: "2,200,000 VND", status: "Active" },
-      { name: "TOEFL Prep", duration: "60 days", price: "1,100,000 VND", status: "Completed" },
-      { name: "Advanced Grammar", duration: "30 days", price: "500,000 VND", status: "Completed" }
+      {
+        name: "Ultimate",
+        duration: "120 days",
+        price: "2,200,000 VND",
+        status: "Active",
+      },
+      {
+        name: "TOEFL Prep",
+        duration: "60 days",
+        price: "1,100,000 VND",
+        status: "Completed",
+      },
+      {
+        name: "Advanced Grammar",
+        duration: "30 days",
+        price: "500,000 VND",
+        status: "Completed",
+      },
     ],
     achievements: [
-      { name: "Expert Speaker", description: "Achieved 95%+ accuracy in 10 lessons", points: 100, icon: "🎓", date: "2025-09-05", requirement: "10 lessons ≥95% accuracy (Native Speaker Level)" },
-      { name: "Perfect Pronunciation", description: "Achieved 90%+ accuracy in 5 lessons", points: 80, icon: "🎯", date: "2025-08-01", requirement: "5 lessons ≥90% accuracy" },
-      { name: "Marathon Runner", description: "Completed 50+ lessons", points: 90, icon: "🏃‍♂️", date: "2025-09-10", requirement: "Complete 50+ lessons" }
-    ]
+      {
+        name: "Expert Speaker",
+        description: "Achieved 95%+ accuracy in 10 lessons",
+        points: 100,
+        icon: "🎓",
+        date: "2025-09-05",
+        requirement: "10 lessons ≥95% accuracy (Native Speaker Level)",
+      },
+      {
+        name: "Perfect Pronunciation",
+        description: "Achieved 90%+ accuracy in 5 lessons",
+        points: 80,
+        icon: "🎯",
+        date: "2025-08-01",
+        requirement: "5 lessons ≥90% accuracy",
+      },
+      {
+        name: "Marathon Runner",
+        description: "Completed 50+ lessons",
+        points: 90,
+        icon: "🏃‍♂️",
+        date: "2025-09-10",
+        requirement: "Complete 50+ lessons",
+      },
+    ],
   },
   {
     id: "L010",
@@ -199,11 +398,17 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Beginner",
     status: "Inactive",
     joinedDate: "2024-03-25",
+    phoneNumber: "0909090909",
     totalLessons: 8,
     purchasedPackages: [
-      { name: "Basic Starter", duration: "15 days", price: "250,000 VND", status: "Expired" }
+      {
+        name: "Basic Starter",
+        duration: "15 days",
+        price: "250,000 VND",
+        status: "Expired",
+      },
     ],
-    achievements: []
+    achievements: [],
   },
   {
     id: "L011",
@@ -213,14 +418,34 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Advanced",
     status: "Active",
     joinedDate: "2024-07-10",
+    phoneNumber: "0909090909",
     totalLessons: 29,
     purchasedPackages: [
-      { name: "Intensive", duration: "45 days", price: "850,000 VND", status: "Active" }
+      {
+        name: "Intensive",
+        duration: "45 days",
+        price: "850,000 VND",
+        status: "Active",
+      },
     ],
     achievements: [
-      { name: "Good Pronunciation", description: "Achieved 70%+ accuracy in 5 lessons", points: 40, icon: "🌟", date: "2025-08-15", requirement: "5 lessons ≥70% accuracy" },
-      { name: "Dedicated Learner", description: "Logged in 15 consecutive days", points: 45, icon: "💪", date: "2025-09-01", requirement: "15 consecutive days active" }
-    ]
+      {
+        name: "Good Pronunciation",
+        description: "Achieved 70%+ accuracy in 5 lessons",
+        points: 40,
+        icon: "🌟",
+        date: "2025-08-15",
+        requirement: "5 lessons ≥70% accuracy",
+      },
+      {
+        name: "Dedicated Learner",
+        description: "Logged in 15 consecutive days",
+        points: 45,
+        icon: "💪",
+        date: "2025-09-01",
+        requirement: "15 consecutive days active",
+      },
+    ],
   },
   {
     id: "L012",
@@ -230,15 +455,40 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Advanced",
     status: "Active",
     joinedDate: "2024-08-05",
+    phoneNumber: "0909090909",
     totalLessons: 41,
     purchasedPackages: [
-      { name: "Premium", duration: "60 days", price: "1,000,000 VND", status: "Active" },
-      { name: "Conversation Plus", duration: "30 days", price: "650,000 VND", status: "Active" }
+      {
+        name: "Premium",
+        duration: "60 days",
+        price: "1,000,000 VND",
+        status: "Active",
+      },
+      {
+        name: "Conversation Plus",
+        duration: "30 days",
+        price: "650,000 VND",
+        status: "Active",
+      },
     ],
     achievements: [
-      { name: "Great Pronunciation", description: "Achieved 80%+ accuracy in 5 lessons", points: 60, icon: "⭐", date: "2025-09-12", requirement: "5 lessons ≥80% accuracy" },
-      { name: "Social Butterfly", description: "Participated in 20+ conversations", points: 55, icon: "🦋", date: "2025-09-18", requirement: "20+ conversation sessions" }
-    ]
+      {
+        name: "Great Pronunciation",
+        description: "Achieved 80%+ accuracy in 5 lessons",
+        points: 60,
+        icon: "⭐",
+        date: "2025-09-12",
+        requirement: "5 lessons ≥80% accuracy",
+      },
+      {
+        name: "Social Butterfly",
+        description: "Participated in 20+ conversations",
+        points: 55,
+        icon: "🦋",
+        date: "2025-09-18",
+        requirement: "20+ conversation sessions",
+      },
+    ],
   },
   {
     id: "L013",
@@ -248,13 +498,26 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Intermediate",
     status: "Inactive",
     joinedDate: "2023-11-18",
+    phoneNumber: "0909090909",
     totalLessons: 15,
     purchasedPackages: [
-      { name: "Standard", duration: "30 days", price: "600,000 VND", status: "Expired" }
+      {
+        name: "Standard",
+        duration: "30 days",
+        price: "600,000 VND",
+        status: "Expired",
+      },
     ],
     achievements: [
-      { name: "First Steps", description: "Completed first 10 lessons", points: 30, icon: "🌟", date: "2024-01-05", requirement: "Complete 10 lessons" }
-    ]
+      {
+        name: "First Steps",
+        description: "Completed first 10 lessons",
+        points: 30,
+        icon: "🌟",
+        date: "2024-01-05",
+        requirement: "Complete 10 lessons",
+      },
+    ],
   },
   {
     id: "L014",
@@ -264,13 +527,26 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Expert",
     status: "Active",
     joinedDate: "2024-09-01",
+    phoneNumber: "0909090909",
     totalLessons: 19,
     purchasedPackages: [
-      { name: "Fast Track", duration: "30 days", price: "900,000 VND", status: "Active" }
+      {
+        name: "Fast Track",
+        duration: "30 days",
+        price: "900,000 VND",
+        status: "Active",
+      },
     ],
     achievements: [
-      { name: "Quick Start", description: "Completed 15 lessons in first week", points: 50, icon: "🚀", date: "2025-09-08", requirement: "15 lessons in 7 days" }
-    ]
+      {
+        name: "Quick Start",
+        description: "Completed 15 lessons in first week",
+        points: 50,
+        icon: "🚀",
+        date: "2025-09-08",
+        requirement: "15 lessons in 7 days",
+      },
+    ],
   },
   {
     id: "L015",
@@ -280,15 +556,35 @@ const sampleLearners: Learner[] = [
     favouriteLevelGoal: "Intermediate",
     status: "Active",
     joinedDate: "2024-04-28",
+    phoneNumber: "0909090909",
     totalLessons: 33,
     purchasedPackages: [
-      { name: "Regular", duration: "45 days", price: "700,000 VND", status: "Active" }
+      {
+        name: "Regular",
+        duration: "45 days",
+        price: "700,000 VND",
+        status: "Active",
+      },
     ],
     achievements: [
-      { name: "Good Pronunciation", description: "Achieved 70%+ accuracy in 5 lessons", points: 40, icon: "🌟", date: "2025-07-12", requirement: "5 lessons ≥70% accuracy" },
-      { name: "Steady Progress", description: "Consistent learning for 20 days", points: 40, icon: "📈", date: "2025-08-28", requirement: "20 days consistent learning" }
-    ]
-  }
+      {
+        name: "Good Pronunciation",
+        description: "Achieved 70%+ accuracy in 5 lessons",
+        points: 40,
+        icon: "🌟",
+        date: "2025-07-12",
+        requirement: "5 lessons ≥70% accuracy",
+      },
+      {
+        name: "Steady Progress",
+        description: "Consistent learning for 20 days",
+        points: 40,
+        icon: "📈",
+        date: "2025-08-28",
+        requirement: "20 days consistent learning",
+      },
+    ],
+  },
 ];
 
 const LearnerManagement = () => {
@@ -298,21 +594,26 @@ const LearnerManagement = () => {
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedLearner, setSelectedLearner] = useState<Learner | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
-  const [actionType, setActionType] = useState<'block' | 'unblock'>('block');
+  const [actionType, setActionType] = useState<"block" | "unblock">("block");
   const [learnerToAction, setLearnerToAction] = useState<Learner | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Filter learners by search and status
-  const filteredLearners = sampleLearners.filter(learner => {
-    const matchesName = learner.fullName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || learner.status === statusFilter;
+  const filteredLearners = sampleLearners.filter((learner) => {
+    const matchesName = learner.fullName
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesStatus =
+      statusFilter === "All" || learner.status === statusFilter;
     return matchesName && matchesStatus;
   });
 
   const handleSelectRow = (idx: number) => {
-    setSelectedRows(selectedRows.includes(idx)
-      ? selectedRows.filter(i => i !== idx)
-      : [...selectedRows, idx]);
+    setSelectedRows(
+      selectedRows.includes(idx)
+        ? selectedRows.filter((i) => i !== idx)
+        : [...selectedRows, idx]
+    );
   };
 
   const handleSelectAll = () => {
@@ -328,7 +629,10 @@ const LearnerManagement = () => {
     setShowDetailsModal(true);
   };
 
-  const handleBlockUnblock = (learner: Learner, action: 'block' | 'unblock') => {
+  const handleBlockUnblock = (
+    learner: Learner,
+    action: "block" | "unblock"
+  ) => {
     setLearnerToAction(learner);
     setActionType(action);
     setShowConfirmDialog(true);
@@ -344,14 +648,14 @@ const LearnerManagement = () => {
   // Close dropdown when clicking outside
   const handleClickOutside = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (!target.closest('.dropdown-container')) {
+    if (!target.closest(".dropdown-container")) {
       setOpenDropdownId(null);
     }
   };
 
   useEffect(() => {
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   return (
@@ -359,45 +663,57 @@ const LearnerManagement = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm">
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
           </Button>
           <Input
-            placeholder="Search by name..."
+            placeholder="Tìm theo tên..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-[250px]"
           />
           <select
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="All">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="All">Tất cả trạng thái</option>
+            <option value="Active">Hoạt động</option>
+            <option value="Inactive">Không hoạt động</option>
           </select>
         </div>
-       
       </div>
-      
+
       <div className="overflow-x-auto rounded-xl border shadow">
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f7f9fa]">
               <TableHead>
                 <Checkbox
-                  checked={selectedRows.length === filteredLearners.length && filteredLearners.length > 0}
+                  checked={
+                    selectedRows.length === filteredLearners.length &&
+                    filteredLearners.length > 0
+                  }
                   onCheckedChange={handleSelectAll}
                   aria-label="Select all"
                 />
               </TableHead>
-              <TableHead>Learner ID</TableHead>
-              <TableHead>Full Name</TableHead>
+              <TableHead>Mã người học</TableHead>
+              <TableHead>Họ tên</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Assessment Score</TableHead>
-              <TableHead>Level Goal</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
+              <TableHead>Số điện thoại</TableHead>
+              <TableHead>Điểm đánh giá</TableHead>
+              <TableHead>Mục tiêu cấp độ</TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead className="text-center">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -410,17 +726,38 @@ const LearnerManagement = () => {
                     aria-label={`Select row ${idx}`}
                   />
                 </TableCell>
-                <TableCell className="font-medium text-blue-600">{learner.id}</TableCell>
-                <TableCell className="font-medium">{learner.fullName}</TableCell>
+                <TableCell className="font-medium text-blue-600">
+                  {learner.id}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {learner.fullName}
+                </TableCell>
                 <TableCell className="text-gray-600">{learner.email}</TableCell>
+                <TableCell className="text-gray-600">
+                  {learner.phoneNumber}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <span className={`font-semibold ${learner.pronunciationScore >= 8 ? 'text-green-600' : learner.pronunciationScore >= 6 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    <span
+                      className={`font-semibold ${
+                        learner.pronunciationScore >= 8
+                          ? "text-green-600"
+                          : learner.pronunciationScore >= 6
+                          ? "text-yellow-600"
+                          : "text-red-600"
+                      }`}
+                    >
                       {learner.pronunciationScore}/10
                     </span>
                     <div className="w-12 h-2 bg-gray-200 rounded-full">
-                      <div 
-                        className={`h-2 rounded-full ${learner.pronunciationScore >= 8 ? 'bg-green-500' : learner.pronunciationScore >= 6 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      <div
+                        className={`h-2 rounded-full ${
+                          learner.pronunciationScore >= 8
+                            ? "bg-green-500"
+                            : learner.pronunciationScore >= 6
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
                         style={{ width: `${learner.pronunciationScore * 10}%` }}
                       ></div>
                     </div>
@@ -432,28 +769,47 @@ const LearnerManagement = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge 
-                    variant={learner.status === "Active" ? "default" : "secondary"} 
-                    className={learner.status === "Active" ? "bg-green-600 text-white" : "bg-gray-400 text-white"}
+                  <Badge
+                    variant={
+                      learner.status === "Active" ? "default" : "secondary"
+                    }
+                    className={
+                      learner.status === "Active"
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-400 text-white"
+                    }
                   >
-                    {learner.status.toUpperCase()}
+                    {learner.status === "Active"
+                      ? "Hoạt động"
+                      : "Không hoạt động"}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="relative dropdown-container">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
-                      onClick={() => setOpenDropdownId(openDropdownId === learner.id ? null : learner.id)}
+                      onClick={() =>
+                        setOpenDropdownId(
+                          openDropdownId === learner.id ? null : learner.id
+                        )
+                      }
                       className="p-1 h-8 w-8 cursor-pointer"
                     >
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="1"/>
-                        <circle cx="19" cy="12" r="1"/>
-                        <circle cx="5" cy="12" r="1"/>
+                      <svg
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="19" cy="12" r="1" />
+                        <circle cx="5" cy="12" r="1" />
                       </svg>
                     </Button>
-                    
+
                     {openDropdownId === learner.id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10 ">
                         <div className="py-1 ">
@@ -464,37 +820,80 @@ const LearnerManagement = () => {
                             }}
                             className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            <svg width="16" height="16" className="inline mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
+                            <svg
+                              width="16"
+                              height="16"
+                              className="inline mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
                             </svg>
-                            View Details
+                            Xem chi tiết
                           </button>
                           <button
                             onClick={() => {
-                              handleBlockUnblock(learner, learner.status === 'Active' ? 'block' : 'unblock');
+                              handleBlockUnblock(
+                                learner,
+                                learner.status === "Active"
+                                  ? "block"
+                                  : "unblock"
+                              );
                               setOpenDropdownId(null);
                             }}
                             className={`block cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                              learner.status === 'Active' ? 'text-red-600' : 'text-green-600'
+                              learner.status === "Active"
+                                ? "text-red-600"
+                                : "text-green-600"
                             }`}
                           >
-                            {learner.status === 'Active' ? (
+                            {learner.status === "Active" ? (
                               <>
-                                <svg width="16" height="16" className="inline mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <rect x="3" y="11" width="18" height="10" rx="2"/>
-                                  <circle cx="12" cy="16" r="1"/>
-                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  className="inline mr-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <rect
+                                    x="3"
+                                    y="11"
+                                    width="18"
+                                    height="10"
+                                    rx="2"
+                                  />
+                                  <circle cx="12" cy="16" r="1" />
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                                 </svg>
-                                Block User
+                                Chặn người dùng
                               </>
                             ) : (
                               <>
-                                <svg width="16" height="16" className="inline mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <rect x="3" y="11" width="18" height="10" rx="2"/>
-                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  className="inline mr-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <rect
+                                    x="3"
+                                    y="11"
+                                    width="18"
+                                    height="10"
+                                    rx="2"
+                                  />
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                                 </svg>
-                                Unblock User
+                                Bỏ chặn người dùng
                               </>
                             )}
                           </button>
@@ -508,92 +907,136 @@ const LearnerManagement = () => {
           </TableBody>
         </Table>
       </div>
-      
-      {/* Pagination & Info */}
+
+      {/* Phân trang & Thông tin */}
       <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
-        <div>ACTIVE LEARNERS: {filteredLearners.filter(l => l.status === "Active").length}/{filteredLearners.length}</div>
-        <div>Rows per page: <span className="font-semibold">10</span> &nbsp; 1-10 of {filteredLearners.length}</div>
+        <div>
+          NGƯỜI HỌC HOẠT ĐỘNG:{" "}
+          {filteredLearners.filter((l) => l.status === "Active").length}/
+          {filteredLearners.length}
+        </div>
+        <div>
+          Hàng mỗi trang: <span className="font-semibold">10</span> &nbsp; 1-10
+          trên {filteredLearners.length}
+        </div>
       </div>
 
-      {/* Learner Details Modal */}
+      {/* Chi tiết người học */}
       {showDetailsModal && selectedLearner && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)]  flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] overflow-y-auto w-full mx-4">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">Learner Details Information</h2>
-                <Button 
-                  variant="ghost" 
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Thông tin chi tiết người học
+                </h2>
+                <Button
+                  variant="ghost"
                   onClick={() => setShowDetailsModal(false)}
                   className="text-gray-500 hover:text-gray-700 cursor-pointer"
                 >
-                  <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M18 6L6 18M6 6l12 12"/>
+                  <svg
+                    width="24"
+                    height="24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
                   </svg>
                 </Button>
               </div>
             </div>
-            
+
             <div className="p-6 space-y-8">
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Thông tin cơ bản
+                  </h3>
                   <div className="space-y-3">
-                    <div><span className="font-medium">ID:</span> {selectedLearner.id}</div>
-                    <div><span className="font-medium">Full Name:</span> {selectedLearner.fullName}</div>
-                    <div><span className="font-medium">Email:</span> {selectedLearner.email}</div>
-                    <div><span className="font-medium">Status:</span> 
-                      <Badge className={`ml-2 ${selectedLearner.status === 'Active' ? 'bg-green-600' : 'bg-gray-400'}`}>
-                        {selectedLearner.status}
+                    <div>
+                      <span className="font-medium">Mã:</span>{" "}
+                      {selectedLearner.id}
+                    </div>
+                    <div>
+                      <span className="font-medium">Họ tên:</span>{" "}
+                      {selectedLearner.fullName}
+                    </div>
+                    <div>
+                      <span className="font-medium">Email:</span>{" "}
+                      {selectedLearner.email}
+                    </div>
+                    <div>
+                      <span className="font-medium">Số điện thoại:</span>{" "}
+                      {selectedLearner.phoneNumber}
+                    </div>
+                    <div>
+                      <span className="font-medium">Trạng thái:</span>
+                      <Badge
+                        className={`ml-2 ${
+                          selectedLearner.status === "Active"
+                            ? "bg-green-600"
+                            : "bg-gray-400"
+                        }`}
+                      >
+                        {selectedLearner.status === "Active"
+                          ? "Hoạt động"
+                          : "Không hoạt động"}
                       </Badge>
                     </div>
-                    <div><span className="font-medium">Joined:</span> {selectedLearner.joinedDate}</div>
+                    <div>
+                      <span className="font-medium">Ngày tham gia:</span>{" "}
+                      {selectedLearner.joinedDate}
+                    </div>
                   </div>
                 </div>
                 <div>
-                  
                   <div className="space-y-4">
-                
-                     
-                  
-
-                    {/* Level Goal */}
+                    {/* Mục tiêu cấp độ */}
                     <div>
-                      <span className="font-medium">Mục tiêu (Target Level):</span> 
+                      <span className="font-medium">Mục tiêu (Cấp độ):</span>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-sm px-3 py-1">
                           {selectedLearner.favouriteLevelGoal}
                         </Badge>
                         <span className="text-xs text-gray-500">
-                          {selectedLearner.favouriteLevelGoal === 'Beginner' && '(Mới bắt đầu)'}
-                          {selectedLearner.favouriteLevelGoal === 'Intermediate' && '(Trung bình)'}
-                          {selectedLearner.favouriteLevelGoal === 'Advanced' && '(Nâng cao)'}
-                          {selectedLearner.favouriteLevelGoal === 'Expert' && '(Chuyên gia)'}
+                          {selectedLearner.favouriteLevelGoal === "Beginner" &&
+                            "(Mới bắt đầu)"}
+                          {selectedLearner.favouriteLevelGoal ===
+                            "Intermediate" && "(Trung bình)"}
+                          {selectedLearner.favouriteLevelGoal === "Advanced" &&
+                            "(Nâng cao)"}
+                          {selectedLearner.favouriteLevelGoal === "Expert" &&
+                            "(Chuyên gia)"}
                         </span>
                       </div>
                     </div>
 
-              
-                 
-
-                    {/* Package status */}
+                    {/* Trạng thái gói */}
                     <div>
                       <span className="font-medium">Gói học hiện tại:</span>
                       <div className="mt-2">
-                        {selectedLearner.purchasedPackages.filter(pkg => pkg.status === 'Active').length > 0 ? (
+                        {selectedLearner.purchasedPackages.filter(
+                          (pkg) => pkg.status === "Active"
+                        ).length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {selectedLearner.purchasedPackages
-                              .filter(pkg => pkg.status === 'Active')
+                              .filter((pkg) => pkg.status === "Active")
                               .map((pkg, index) => (
-                                <Badge key={index} className="bg-green-100 text-green-800 border-green-300">
+                                <Badge
+                                  key={index}
+                                  className="bg-green-100 text-green-800 border-green-300"
+                                >
                                   ✅ {pkg.name}
                                 </Badge>
                               ))}
                           </div>
                         ) : (
                           <Badge variant="outline" className="text-gray-500">
-                            Không có gói active
+                            Không có gói hoạt động
                           </Badge>
                         )}
                       </div>
@@ -604,38 +1047,62 @@ const LearnerManagement = () => {
 
               {/* Purchased Packages */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Các gói dịch vụ đã mua (Purchase)</h3>
+                <h3 className="text-lg font-semibold mb-4">
+                  Các gói dịch vụ đã mua
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedLearner.purchasedPackages.map((pkg: Package, index: number) => (
-                    <Card key={index} className="border-2">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className={`text-lg ${pkg.name === 'Premium' ? 'text-blue-600' : 'text-orange-500'}`}>
-                            {pkg.name}
-                          </CardTitle>
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${pkg.status === 'Active' ? 'bg-blue-500' : 'bg-gray-400'}`}>
-                            {pkg.status === 'Active' && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                  {selectedLearner.purchasedPackages.map(
+                    (pkg: Package, index: number) => (
+                      <Card key={index} className="border-2">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle
+                              className={`text-lg ${
+                                pkg.name === "Premium"
+                                  ? "text-blue-600"
+                                  : "text-orange-500"
+                              }`}
+                            >
+                              {pkg.name}
+                            </CardTitle>
+                            <div
+                              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                pkg.status === "Active"
+                                  ? "bg-blue-500"
+                                  : "bg-gray-400"
+                              }`}
+                            >
+                              {pkg.status === "Active" && (
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <CardDescription>{pkg.duration}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className={`text-center py-2 px-4 rounded text-white font-semibold ${pkg.name === 'Premium' ? 'bg-orange-500' : 'bg-purple-600'}`}>
-                          {pkg.price}
-                        </div>
-                        <div className="text-center mt-2 text-sm text-gray-600">
-                          {pkg.status === 'Active' ? '2 Months' : '1 Month'}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          <CardDescription>{pkg.duration}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div
+                            className={`text-center py-2 px-4 rounded text-white font-semibold ${
+                              pkg.name === "Premium"
+                                ? "bg-orange-500"
+                                : "bg-purple-600"
+                            }`}
+                          >
+                            {pkg.price}
+                          </div>
+                          <div className="text-center mt-2 text-sm text-gray-600">
+                            {pkg.status === "Active" ? "2 tháng" : "1 tháng"}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  )}
                 </div>
                 {selectedLearner.purchasedPackages.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">No packages purchased yet</div>
+                  <div className="text-center py-8 text-gray-500">
+                    Chưa mua gói nào
+                  </div>
                 )}
               </div>
-
-           
             </div>
           </div>
         </div>
@@ -646,26 +1113,32 @@ const LearnerManagement = () => {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
             <h3 className="text-lg font-semibold mb-4">
-              Confirm {actionType === 'block' ? 'Block' : 'Unblock'} User
+            Xác nhận   {actionType === "block" ? "Block" : "Unblock"} Người dùng
             </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to {actionType} <strong>{learnerToAction.fullName}</strong>? 
-              {actionType === 'block' 
-                ? ' This will prevent them from accessing the platform.' 
-                : ' This will restore their access to the platform.'}
+              Bạn có chắc chắn muốn {actionType}{" "}
+              <strong>{learnerToAction.fullName}</strong> không?
+              {actionType === "block"
+                ? " Thao tác này sẽ ngăn họ truy cập vào nền tảng."
+                : " Thao tác này sẽ khôi phục quyền truy cập vào nền tảng của họ."}
             </p>
             <div className="flex gap-3 justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowConfirmDialog(false)} className="cursor-pointer"
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmDialog(false)}
+                className="cursor-pointer"
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={confirmAction}
-                className={actionType === 'block' ? 'bg-red-600 hover:bg-red-700 cursor-pointer' : 'bg-green-600 hover:bg-green-700 cursor-pointer'}
+                className={
+                  actionType === "block"
+                    ? "bg-red-600 hover:bg-red-700 cursor-pointer"
+                    : "bg-green-600 hover:bg-green-700 cursor-pointer"
+                }
               >
-                {actionType === 'block' ? 'Block User' : 'Unblock User'}
+                {actionType === "block" ? "Block User" : "Unblock User"}
               </Button>
             </div>
           </div>

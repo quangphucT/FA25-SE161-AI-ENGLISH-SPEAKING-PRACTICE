@@ -14,7 +14,7 @@ import {
   Tooltip,
   Legend,
   Filler,
-} from 'chart.js';
+} from "chart.js";
 
 ChartJS.register(
   CategoryScale,
@@ -30,7 +30,7 @@ ChartJS.register(
 
 const PageStatistics = () => {
   const [selectedYear, setSelectedYear] = useState(2025);
-  
+
   // Dữ liệu mẫu cho biểu đồ cột theo từng năm
   const packageData: { [key: number]: number[] } = {
     2025: [20, 40, 35, 50, 64, 30, 45, 60, 55, 48, 42, 38],
@@ -53,15 +53,15 @@ const PageStatistics = () => {
       totalStars: 485,
       totalFeedbacks: 98,
       rating: 4.95,
-      speciality: "Business English"
+      speciality: "Business English",
     },
     {
       name: "Trần Thị Bình",
-      avatar: "/avatars/mentor2.jpg", 
+      avatar: "/avatars/mentor2.jpg",
       totalStars: 456,
       totalFeedbacks: 95,
       rating: 4.8,
-      speciality: "IELTS Preparation"
+      speciality: "IELTS Preparation",
     },
     {
       name: "Lê Minh Cường",
@@ -69,7 +69,7 @@ const PageStatistics = () => {
       totalStars: 438,
       totalFeedbacks: 92,
       rating: 4.76,
-      speciality: "Conversation Practice"
+      speciality: "Conversation Practice",
     },
     {
       name: "Phạm Thu Dung",
@@ -77,7 +77,7 @@ const PageStatistics = () => {
       totalStars: 425,
       totalFeedbacks: 90,
       rating: 4.72,
-      speciality: "Grammar & Writing"
+      speciality: "Grammar & Writing",
     },
     {
       name: "Hoàng Văn Em",
@@ -85,8 +85,8 @@ const PageStatistics = () => {
       totalStars: 410,
       totalFeedbacks: 88,
       rating: 4.66,
-      speciality: "Pronunciation"
-    }
+      speciality: "Pronunciation",
+    },
   ];
 
   // Dữ liệu top 3 gói được mua nhiều nhất
@@ -97,68 +97,68 @@ const PageStatistics = () => {
       price: "1,200,000 VND",
       totalPurchases: 156,
       growthRate: "+12%",
-      category: "AI-only Practice"
+      category: "AI-only Practice",
     },
     {
-      name: "Mentor Guided - Monthly", 
+      name: "Mentor Guided - Monthly",
       description: "1-on-1 mentor support with AI practice.",
       price: "980,000 VND",
       totalPurchases: 134,
       growthRate: "+8%",
-      category: "Mentor-guided"
+      category: "Mentor-guided",
     },
     {
       name: "Business English Hybrid",
-      description: "AI practice + mentor sessions focused on business scenarios",
-      price: "750,000 VND", 
+      description:
+        "AI practice + mentor sessions focused on business scenarios",
+      price: "750,000 VND",
       totalPurchases: 98,
       growthRate: "+15%",
-      category: "Business English"
-    }
+      category: "Business English",
+    },
   ];
-  
+
   const stats = [
     {
-      label: "Total Learners",
+      label: "Tổng người học",
       value: "489",
       icon: <FaUser />,
       color: "bg-violet-100",
       iconBg: "bg-violet-500",
-      change: "+8.5% Up from yesterday",
+      change: "+8.5% so với hôm qua",
       trendColor: "text-green-500",
     },
     {
-      label: "Total Mentors",
+      label: "Tổng người đánh giá",
       value: "293",
       icon: <FaBox />,
       color: "bg-yellow-100",
       iconBg: "bg-yellow-500",
-      change: "+1.3% Up from yesterday",
+      change: "+1.3% so với hôm qua",
       trendColor: "text-green-500",
     },
     {
-      label: "Total Services Packages",
+      label: "Tổng gói dịch vụ",
       value: "10",
       icon: <FaChartLine />,
       color: "bg-green-100",
       iconBg: "bg-green-500",
-      change: "-4.3% Down from yesterday",
+      change: "-4.3% so với hôm qua",
       trendColor: "text-red-500",
     },
     {
-      label: "Total Revenue",
+      label: "Tổng doanh thu",
       value: "1,000,000 VND",
       icon: <FaClock />,
       color: "bg-red-100",
       iconBg: "bg-red-500",
-      change: "+1.8% Up from yesterday",
+      change: "+1.8% so với hôm qua",
       trendColor: "text-green-500",
     },
   ];
 
   return (
     <div>
-      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat) => (
           <Card
@@ -174,21 +174,20 @@ const PageStatistics = () => {
               <span className="font-semibold text-gray-600">{stat.label}</span>
             </div>
             <span className="text-3xl font-bold mt-2">{stat.value}</span>
-           
           </Card>
         ))}
       </div>
 
-  {/* Top 3 gói được mua nhiều nhất */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <div className="flex justify-between items-center mb-6">
+      {/* Top 3 gói được mua nhiều nhất */}
+      {/* <div className="bg-white rounded-lg shadow p-6 mb-8">
+        {/* <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Top 3 Most Popular Packages</h2>
 
-        </div>
+        </div> 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {topPackages.map((pkg, index) => (
             <div key={pkg.name} className="relative p-6 border border-gray-200 rounded-xl hover:shadow-lg transition-shadow">
-              {/* Ranking Badge */}
+              
               <div className={`absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white ${
                 index === 0 ? 'bg-yellow-500' :
                 index === 1 ? 'bg-gray-400' :
@@ -198,14 +197,14 @@ const PageStatistics = () => {
               </div>
 
              
-              {/* Package Info */}
+             
               <h3 className="font-bold text-gray-800 mb-2">{pkg.name}</h3>
               <p className="text-sm text-gray-600 mb-4 line-clamp-2">{pkg.description}</p>
               
-              {/* Price */}
+         
               <div className="text-lg font-bold text-blue-600 mb-3">{pkg.price}</div>
               
-              {/* Stats */}
+        
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-gray-800">{pkg.totalPurchases}</div>
@@ -218,19 +217,23 @@ const PageStatistics = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Statistics of packages sold per month</h2>
+          <h2 className="text-xl font-semibold">
+            Thống kê số gói bán theo tháng
+          </h2>
 
-          <select 
+          <select
             className="border rounded px-3 py-2 text-sm bg-white"
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
           >
             {[2025, 2024, 2023].map((year) => (
-              <option key={year} value={year}>{year}</option>
+              <option key={year} value={year}>
+                {year}
+              </option>
             ))}
           </select>
         </div>
@@ -238,12 +241,22 @@ const PageStatistics = () => {
           <Bar
             data={{
               labels: [
-                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                "Th1",
+                "Th2",
+                "Th3",
+                "Th4",
+                "Th5",
+                "Th6",
+                "Th7",
+                "Th8",
+                "Th9",
+                "Th10",
+                "Th11",
+                "Th12",
               ],
               datasets: [
                 {
-                  label: "Packages Sold",
+                  label: "Gói bán ra",
                   data: packageData[selectedYear],
                   backgroundColor: "#C8A8E9",
                   borderColor: "#B794E6",
@@ -267,24 +280,24 @@ const PageStatistics = () => {
                   cornerRadius: 8,
                   displayColors: false,
                   callbacks: {
-                    title: function(context) {
-                      return context[0].label;
+                    title: function (context) {
+                      return context[0].label + " " + selectedYear;
                     },
-                    label: function(context) {
-                      return `Packages sold: ${context.parsed.y}`;
-                    }
-                  }
+                    label: function (context) {
+                      return `Gói bán ra: ${context.parsed.y}`;
+                    },
+                  },
                 },
               },
               scales: {
-                y: { 
-                  beginAtZero: true, 
+                y: {
+                  beginAtZero: true,
                   grid: { color: "#e5e7eb" },
                   ticks: {
                     stepSize: 100,
-                  }
+                  },
                 },
-                x: { 
+                x: {
                   grid: { display: false },
                 },
               },
@@ -292,11 +305,13 @@ const PageStatistics = () => {
                 if (activeElements.length > 0) {
                   // Hiển thị cursor pointer khi hover vào cột
                   if (event.native?.target) {
-                    (event.native.target as HTMLElement).style.cursor = 'pointer';
+                    (event.native.target as HTMLElement).style.cursor =
+                      "pointer";
                   }
                 } else {
                   if (event.native?.target) {
-                    (event.native.target as HTMLElement).style.cursor = 'default';
+                    (event.native.target as HTMLElement).style.cursor =
+                      "default";
                   }
                 }
               },
@@ -304,19 +319,23 @@ const PageStatistics = () => {
           />
         </div>
       </div>
-      
+
       {/* Biểu đồ doanh thu theo tháng */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Monthly Revenue Statistics</h2>
+          <h2 className="text-xl font-semibold">
+            Thống kê doanh thu theo tháng
+          </h2>
 
-          <select 
+          <select
             className="border rounded px-3 py-2 text-sm bg-white"
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
           >
             {[2025, 2024, 2023].map((year) => (
-              <option key={year} value={year}>{year}</option>
+              <option key={year} value={year}>
+                {year}
+              </option>
             ))}
           </select>
         </div>
@@ -324,12 +343,22 @@ const PageStatistics = () => {
           <Line
             data={{
               labels: [
-                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                "Th1",
+                "Th2",
+                "Th3",
+                "Th4",
+                "Th5",
+                "Th6",
+                "Th7",
+                "Th8",
+                "Th9",
+                "Th10",
+                "Th11",
+                "Th12",
               ],
               datasets: [
                 {
-                  label: "Revenue",
+                  label: "Doanh thu",
                   data: revenueData[selectedYear],
                   borderColor: "#A855F7",
                   backgroundColor: "rgba(168, 85, 247, 0.1)",
@@ -363,29 +392,29 @@ const PageStatistics = () => {
                   padding: 12,
                   titleFont: {
                     size: 14,
-                    weight: 'bold',
+                    weight: "bold",
                   },
                   bodyFont: {
                     size: 13,
                   },
                   callbacks: {
-                    title: function(context) {
-                      return context[0].label + ' 2025';
+                    title: function (context) {
+                      return context[0].label + " " + selectedYear;
                     },
-                    label: function(context) {
-                      return `Revenue: ${context.parsed.y}K VND`;
-                    }
+                    label: function (context) {
+                      return `Doanh thu: ${context.parsed.y}K VND`;
+                    },
                   },
-                  filter: function(tooltipItem) {
+                  filter: function (tooltipItem) {
                     return tooltipItem.datasetIndex === 0;
                   },
                 },
               },
               scales: {
-                y: { 
+                y: {
                   beginAtZero: true,
                   max: 30,
-                  grid: { 
+                  grid: {
                     color: "#F3F4F6",
                   },
                   border: {
@@ -393,9 +422,9 @@ const PageStatistics = () => {
                   },
                   ticks: {
                     display: false,
-                  }
+                  },
                 },
-                x: { 
+                x: {
                   grid: { display: false },
                   ticks: {
                     color: "#9CA3AF",
@@ -416,11 +445,13 @@ const PageStatistics = () => {
               onHover: (event, activeElements) => {
                 if (activeElements.length > 0) {
                   if (event.native?.target) {
-                    (event.native.target as HTMLElement).style.cursor = 'pointer';
+                    (event.native.target as HTMLElement).style.cursor =
+                      "pointer";
                   }
                 } else {
                   if (event.native?.target) {
-                    (event.native.target as HTMLElement).style.cursor = 'default';
+                    (event.native.target as HTMLElement).style.cursor =
+                      "default";
                   }
                 }
               },
@@ -430,7 +461,7 @@ const PageStatistics = () => {
       </div>
 
       {/* Top 5 Mentors với rating cao nhất */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
+      {/* <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Top 5 Highest Rated Mentors</h2>
         </div>
@@ -479,9 +510,7 @@ const PageStatistics = () => {
             </div>
           ))}
         </div>
-      </div>
-
-    
+      </div> */}
     </div>
   );
 };
