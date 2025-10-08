@@ -29,6 +29,7 @@ import PurchasesManagement from "../purchases-management/page";
 import FeedbacksCommentsManagement from "../feedbacks-comments-management/page";
 // import TopicConversationManagement from "../topic-conversation-management/page";
 import ManagerManagement from "../managers-management/page";
+import Certificate from "../certificate/page";
 // import SoldPackages from './../soldpackages-management/page';
 // import SoldPackagesManagement from "./../soldpackages-management/page";
 Chart.register(
@@ -171,6 +172,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               </div>
             </button>
           </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("certificate")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "certificate"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "certificate"
+                    ? "bg-white/20"
+                    : "bg-amber-500/20 group-hover:bg-amber-500/30"
+                }`}
+              >
+                <PackageIcon size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Chứng chỉ</span>
+                <span className="text-xs opacity-70">Quản lí Chứng chỉ</span>
+              </div>
+            </button>
+          </li>
           {/* <li>
             <button
               type="button"
@@ -225,27 +251,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               </div>
             </button>
           </li>
-          {/* <li>
-            <button
-              type="button"
-              onClick={() => setActiveMenu("soldpackages")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "soldpackages" 
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg transform scale-105" 
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                activeMenu === "package" ? "bg-white/20" : "bg-amber-500/20 group-hover:bg-amber-500/30"
-              }`}>
-                <PackageIcon size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Sold Packages</span>
-                <span className="text-xs opacity-70">Sold Packages</span>
-              </div>
-            </button>
-          </li> */}
+
           {/* <li>
             <button
               type="button"
@@ -370,6 +376,10 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
         subtitle: "Theo dõi hoạt động của người đánh giá.",
       },
       //skill: { title: "Quản lí kĩ năng", subtitle: "Cấu hình kĩ năng và cấp độ." },
+      certificate: {
+        title: "Chứng chỉ",
+        subtitle: "Quản lí chứng chỉ và hoạt động.",
+      },
       package: {
         title: "Gói dịch vụ",
         subtitle: "Quản lí các gói học và giá.",
@@ -436,6 +446,8 @@ const DashboardAdmin = () => {
         return <FeedbacksCommentsManagement />;
       case "manager":
         return <ManagerManagement />;
+      case "certificate":
+        return <Certificate />;
       // case "soldpackages":
       //   return <SoldPackagesManagement />;
       default:
