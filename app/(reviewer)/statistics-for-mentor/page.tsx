@@ -2,7 +2,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect, useMemo } from "react";
+import { useSelectedReviewsStore } from "@/store/selectedReviewsStore";
 
 const StatisticsForMentor = () => {
   const [showAllFeedback, setShowAllFeedback] = useState(false);
@@ -67,48 +69,162 @@ const StatisticsForMentor = () => {
     },
   ];
 
-  const withdrawalRequests = [
-    {
-      id: 1,
-      amountOfMoney: "2,500,000",
-      accountNumber: "1234567890",
-      bankName: "Vietcombank",
-      status: "Pending",
-      createAt: "15/01/2024",
-    },
-    {
-      id: 2,
-      amountOfMoney: "1,800,000",
-      accountNumber: "0987654321",
-      bankName: "Techcombank",
-      status: "Approved",
-      createAt: "10/01/2024",
-    },
-    {
-      id: 3,
-      amountOfMoney: "3,200,000",
-      accountNumber: "1122334455",
-      bankName: "BIDV",
-      status: "Rejected",
-      createAt: "05/01/2024",
-    },
-    {
-      id: 4,
-      amountOfMoney: "1,500,000",
-      accountNumber: "5566778899",
-      bankName: "Agribank",
-      status: "Processing",
-      createAt: "20/01/2024",
-    },
-    {
-      id: 5,
-      amountOfMoney: "4,000,000",
-      accountNumber: "9988776655",
-      bankName: "MB Bank",
-      status: "Pending",
-      createAt: "22/01/2024",
-    },
-  ];
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
+  const [reviewedAnswers, setReviewedAnswers] = useState<number[]>([]);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const { setSelectedReviews } = useSelectedReviewsStore();
+
+  const handleSelectAnswer = (id: number) => {
+    setSelectedAnswers((prev) =>
+      prev.includes(id)
+        ? prev.filter((answerId) => answerId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const pendingReviews = useMemo(
+    () => [
+      {
+        id: 1,
+        question: "Describe your favorite hobby and explain why you enjoy it.",
+
+        audioUrl: "https://example.com/audio1.mp3",
+        duration: "2:30",
+
+        submittedAt: "15/01/2024",
+        status: "Pending",
+      },
+      {
+        id: 2,
+        question:
+          "What are the advantages and disadvantages of living in a big city?",
+
+        audioUrl: "https://example.com/audio2.mp3",
+        duration: "3:15",
+
+        submittedAt: "14/01/2024",
+        status: "Pending",
+      },
+      {
+        id: 3,
+        question: "Explain the process of photosynthesis in plants.",
+
+        audioUrl: "https://example.com/audio3.mp3",
+        duration: "4:20",
+
+        submittedAt: "13/01/2024",
+        status: "Pending",
+      },
+      {
+        id: 4,
+        question:
+          "What is your opinion about social media's impact on society?",
+
+        audioUrl: "https://example.com/audio4.mp3",
+        duration: "2:45",
+
+        submittedAt: "12/01/2024",
+        status: "Pending",
+      },
+      {
+        id: 5,
+        question: "Describe a memorable trip you have taken.",
+
+        audioUrl: "https://example.com/audio5.mp3",
+        duration: "3:00",
+
+        submittedAt: "11/01/2024",
+        status: "Pending",
+      },
+    ],
+    []
+  );
+
+  const handleSelectAll = () => {
+    if (selectedAnswers.length === availableReviews.length) {
+      setSelectedAnswers([]);
+    } else {
+      setSelectedAnswers(availableReviews.map((review) => review.id));
+    }
+  };
+
+  const handleReviewSelected = async () => {
+    if (selectedAnswers.length === 0) return;
+
+    setIsReviewing(true);
+
+    // Simulate WebSocket call to review answers
+    try {
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Add to reviewed answers (they will disappear from the list)
+      setReviewedAnswers((prev) => [...prev, ...selectedAnswers]);
+
+      // Clear selected answers
+      setSelectedAnswers([]);
+
+      // Show notification
+      setNotificationMessage(
+        `Đã review thành công ${selectedAnswers.length} câu trả lời!`
+      );
+      setShowNotification(true);
+
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
+
+      // Simulate WebSocket notification
+      console.log(`Reviewed ${selectedAnswers.length} answers via WebSocket`);
+    } catch (error) {
+      console.error("Error reviewing answers:", error);
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
+  // Filter out reviewed answers
+  const availableReviews = pendingReviews.filter(
+    (review) => !reviewedAnswers.includes(review.id)
+  );
+
+  // Sync selected answers to global store for cross-page usage
+  useEffect(() => {
+    const selected = pendingReviews
+      .filter((r) => selectedAnswers.includes(r.id))
+      .map((r) => ({ id: r.id, question: r.question, audioUrl: r.audioUrl }));
+    setSelectedReviews(selected);
+  }, [selectedAnswers, pendingReviews, setSelectedReviews]);
+
+  // Simulate WebSocket connection
+  useEffect(() => {
+    // Simulate WebSocket connection
+    const ws = new WebSocket("ws://localhost:8080/reviews");
+
+    ws.onopen = () => {
+      console.log("WebSocket connected");
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "review_completed") {
+        // Remove completed reviews from the list
+        setReviewedAnswers((prev) => [...prev, data.reviewId]);
+        console.log(`Review ${data.reviewId} completed via WebSocket`);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   // Full feedback data cho modal
   const allFeedbackData = [
@@ -260,7 +376,7 @@ const StatisticsForMentor = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Số tiền kiếm được
+                  Số tiền trong ví
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {mentorStats.AmountOfMoneyEarned} VND
@@ -287,47 +403,148 @@ const StatisticsForMentor = () => {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Withdrawal Requests */}
+        {/* Pending Reviews */}
         <Card>
           <CardHeader>
-            <CardTitle>Yêu cầu rút tiền</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Câu trả lời cần review</CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="text-xs"
+                >
+                  {selectedAnswers.length === availableReviews.length
+                    ? "Bỏ chọn tất cả"
+                    : "Chọn tất cả"}
+                </Button>
+                {selectedAnswers.length > 0 && (
+                  <Button
+                    size="sm"
+                    onClick={handleReviewSelected}
+                    disabled={isReviewing}
+                    className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isReviewing
+                      ? "Đang review..."
+                      : `Review đã chọn (${selectedAnswers.length})`}
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {withdrawalRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">
-                      {request.amountOfMoney} VND
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {request.bankName} - {request.accountNumber}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Ngày tạo: {request.createAt}
-                    </p>
+              {availableReviews.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-6xl mb-4">✅</div>
+                  <div className="text-gray-500 text-lg font-medium">
+                    Tất cả câu trả lời đã được review
                   </div>
-                  <Badge
-                    variant={
-                      request.status === "Approved"
-                        ? "default"
-                        : request.status === "Rejected"
-                        ? "destructive"
-                        : request.status === "Processing"
-                        ? "secondary"
-                        : "outline"
-                    }
-                  >
-                    {request.status === "Approved" && "Đã duyệt"}
-                    {request.status === "Pending" && "Chờ duyệt"}
-                    {request.status === "Rejected" && "Bị từ chối"}
-                    {request.status === "Processing" && "Đang xử lý"}
-                  </Badge>
+                  <div className="text-gray-400 text-sm mt-2">
+                    Không còn câu trả lời nào cần review
+                  </div>
                 </div>
-              ))}
+              ) : (
+                availableReviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                      selectedAnswers.includes(review.id)
+                        ? "border-blue-500 bg-blue-50 shadow-md"
+                        : "border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300"
+                    }`}
+                    onClick={() => handleSelectAnswer(review.id)}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Checkbox */}
+                      <div className="flex items-center pt-1">
+                        <div className="relative">
+                          <Checkbox
+                            checked={selectedAnswers.includes(review.id)}
+                            onCheckedChange={() =>
+                              handleSelectAnswer(review.id)
+                            }
+                            className="w-5 h-5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 hover:border-blue-400 transition-colors"
+                          />
+                          {selectedAnswers.includes(review.id) && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full flex items-center justify-center">
+                              <svg
+                                width="8"
+                                height="8"
+                                fill="white"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        {/* Question */}
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-gray-900">
+                              Câu hỏi:
+                            </h4>
+                            {selectedAnswers.includes(review.id) && (
+                              <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+                                Đã chọn
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {review.question}
+                          </p>
+                        </div>
+
+                        {/* Audio Player */}
+                        <div className="mb-3">
+                          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                            <button className="w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-colors">
+                              <svg
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </button>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-medium text-gray-900">
+                                  Audio Response
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  ({review.duration})
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-blue-600 h-2 rounded-full"
+                                  style={{ width: "0%" }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Meta Info */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-gray-500">
+                            {review.submittedAt}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -504,6 +721,31 @@ const StatisticsForMentor = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification */}
+      {showNotification && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-in slide-in-from-right">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+            </svg>
+            <span className="font-medium">{notificationMessage}</span>
+            <button
+              onClick={() => setShowNotification(false)}
+              className="ml-2 text-white hover:text-gray-200"
+            >
+              <svg
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}

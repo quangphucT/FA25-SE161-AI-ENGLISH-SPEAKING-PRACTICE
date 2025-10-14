@@ -337,18 +337,7 @@ const FeedbacksCommentsManagement = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </Button>
+          
           <Input
             placeholder="Tìm theo nội dung..."
             value={search}
@@ -417,20 +406,11 @@ const FeedbacksCommentsManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>
-                  <Checkbox
-                    checked={
-                      selectedRows.length === filteredFeedbacks.length &&
-                      filteredFeedbacks.length > 0
-                    }
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
+                
                 <TableHead>ID</TableHead>
                 <TableHead>Người đánh giá</TableHead>
                 <TableHead>Mục tiêu</TableHead>
                 <TableHead>Điểm</TableHead>
-                <TableHead>Loại</TableHead>
                 <TableHead>Ngày tạo</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Hành động</TableHead>
@@ -439,12 +419,7 @@ const FeedbacksCommentsManagement = () => {
             <TableBody>
               {filteredFeedbacks.map((feedback, idx) => (
                 <TableRow key={feedback.feedbackId}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedRows.includes(idx)}
-                      onCheckedChange={() => handleSelectRow(idx)}
-                    />
-                  </TableCell>
+                  
                   <TableCell>
                     <span className="font-mono text-sm">
                       {feedback.feedbackId}
@@ -485,16 +460,7 @@ const FeedbacksCommentsManagement = () => {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        feedback.type === "feedback" ? "default" : "secondary"
-                      }
-                      className="text-xs"
-                    >
-                      {feedback.type === "feedback" ? "phản hồi" : "bình luận"}
-                    </Badge>
-                  </TableCell>
+                  
                   <TableCell className="text-sm">
                     {formatDate(feedback.createdAt)}
                   </TableCell>

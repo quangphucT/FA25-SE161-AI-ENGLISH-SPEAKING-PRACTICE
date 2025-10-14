@@ -30,6 +30,8 @@ import FeedbacksCommentsManagement from "../feedbacks-comments-management/page";
 // import TopicConversationManagement from "../topic-conversation-management/page";
 import ManagerManagement from "../managers-management/page";
 import Certificate from "../certificate/page";
+import WithdrawRequest from "../withdraw-request/page";
+import ReviewMoneyManagement from "../review-money-management/page";
 // import SoldPackages from './../soldpackages-management/page';
 // import SoldPackagesManagement from "./../soldpackages-management/page";
 Chart.register(
@@ -175,49 +177,28 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
           <li>
             <button
               type="button"
-              onClick={() => setActiveMenu("certificate")}
+              onClick={() => setActiveMenu("reviewMoney")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "certificate"
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg transform scale-105"
+                activeMenu === "reviewMoney"
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
                   : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
               }`}
             >
               <span
                 className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "certificate"
+                  activeMenu === "reviewMoney"
                     ? "bg-white/20"
-                    : "bg-amber-500/20 group-hover:bg-amber-500/30"
+                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
                 }`}
               >
-                <PackageIcon size={20} />
+                <CreditCard size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Chứng chỉ</span>
-                <span className="text-xs opacity-70">Quản lí Chứng chỉ</span>
+                <span className="font-semibold text-sm">Tiền đánh giá</span>
+                <span className="text-xs opacity-70">Quản lí tiền đánh giá.</span>
               </div>
             </button>
           </li>
-          {/* <li>
-            <button
-              type="button"
-              onClick={() => setActiveMenu("skill")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "skill" 
-                  ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg transform scale-105" 
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                activeMenu === "skill" ? "bg-white/20" : "bg-teal-500/20 group-hover:bg-teal-500/30"
-              }`}>
-                <BookOpen size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Skills</span>
-                <span className="text-xs opacity-70">Skill Management</span>
-              </div>
-            </button>
-          </li> */}
         </ul>
       </div>
 
@@ -251,28 +232,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               </div>
             </button>
           </li>
-
-          {/* <li>
-            <button
-              type="button"
-              onClick={() => setActiveMenu("topic")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "topic" 
-                  ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg transform scale-105" 
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                activeMenu === "topic" ? "bg-white/20" : "bg-indigo-500/20 group-hover:bg-indigo-500/30"
-              }`}>
-                <MessageCircle size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Topics</span>
-                <span className="text-xs opacity-70">Conversation Topics</span>
-              </div>
-            </button>
-          </li> */}
         </ul>
       </div>
 
@@ -301,8 +260,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
                 <CreditCard size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Giao dịch</span>
-                <span className="text-xs opacity-70">Lịch sử thanh toán</span>
+                <span className="font-semibold text-sm">Quản lí mua gói </span>
+                <span className="text-xs opacity-70">Lịch sử mua gói</span>
               </div>
             </button>
           </li>
@@ -328,6 +287,33 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Đánh giá</span>
                 <span className="text-xs opacity-70">Phản hồi & bình luận</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("withdraw")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "withdraw"
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "withdraw"
+                    ? "bg-white/20"
+                    : "bg-green-500/20 group-hover:bg-green-500/30"
+                }`}
+              >
+                <CreditCard size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Yêu cầu rút tiền</span>
+                <span className="text-xs opacity-70">
+                  Quản lí yêu cầu rút tiền.
+                </span>
               </div>
             </button>
           </li>
@@ -376,10 +362,7 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
         subtitle: "Theo dõi hoạt động của người đánh giá.",
       },
       //skill: { title: "Quản lí kĩ năng", subtitle: "Cấu hình kĩ năng và cấp độ." },
-      certificate: {
-        title: "Chứng chỉ",
-        subtitle: "Quản lí chứng chỉ và hoạt động.",
-      },
+
       package: {
         title: "Gói dịch vụ",
         subtitle: "Quản lí các gói học và giá.",
@@ -396,6 +379,14 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
       manager: {
         title: "Quản lí quản trị viên",
         subtitle: "Quản lí tài khoản quản trị và hoạt động.",
+      },
+      withdraw: {
+        title: "Yêu cầu rút tiền",
+        subtitle: "Quản lí yêu cầu rút tiền.",
+      },
+      reviewMoney: {
+        title: "Quản lí tiền đánh giá",
+        subtitle: "Quản lí tiền đánh giá.",
       },
       //soldpackages: { title: "Gói đã bán", subtitle: "Quản lí gói đã bán và hoạt động." },
     };
@@ -446,8 +437,10 @@ const DashboardAdmin = () => {
         return <FeedbacksCommentsManagement />;
       case "manager":
         return <ManagerManagement />;
-      case "certificate":
-        return <Certificate />;
+      case "withdraw":
+        return <WithdrawRequest />;
+      case "reviewMoney":
+        return <ReviewMoneyManagement />;
       // case "soldpackages":
       //   return <SoldPackagesManagement />;
       default:

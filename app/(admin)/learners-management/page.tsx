@@ -19,6 +19,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useState, useEffect } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 // Type definitions
 interface Package {
@@ -41,9 +50,10 @@ interface Learner {
   id: string;
   fullName: string;
   email: string;
+  avatar: string;
   pronunciationScore: number;
   favouriteLevelGoal: "Beginner" | "Intermediate" | "Advanced" | "Expert";
-  status: "Active" | "Inactive";
+  status: "Active" | "Inactive" | "IsBanned";
   joinedDate: string;
   phoneNumber: string;
   totalLessons: number;
@@ -56,6 +66,7 @@ const sampleLearners: Learner[] = [
     id: "L001",
     fullName: "Nguyễn Văn An",
     email: "nguyenvanan@gmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 8.5,
     favouriteLevelGoal: "Intermediate",
     status: "Active",
@@ -75,6 +86,12 @@ const sampleLearners: Learner[] = [
         price: "800,000 VND",
         status: "Completed",
       },
+      {
+        name: "IELTS Preparation",
+        duration: "30 days",
+        price: "800,000 VND",
+        status: "Completed",
+      },  
     ],
     achievements: [
       {
@@ -107,9 +124,10 @@ const sampleLearners: Learner[] = [
     id: "L002",
     fullName: "Trần Thị Bình",
     email: "tranthibinh@email.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 7.2,
     favouriteLevelGoal: "Advanced",
-    status: "Active",
+    status: "IsBanned",
     joinedDate: "2024-02-20",
     phoneNumber: "0909090909",
     totalLessons: 32,
@@ -144,6 +162,7 @@ const sampleLearners: Learner[] = [
     id: "L003",
     fullName: "Lê Minh Cường",
     email: "leminhcuong@yahoo.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 6.8,
     favouriteLevelGoal: "Beginner",
     status: "Inactive",
@@ -164,6 +183,7 @@ const sampleLearners: Learner[] = [
     id: "L004",
     fullName: "Phạm Thu Dung",
     email: "phamthudung@hotmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 9.1,
     favouriteLevelGoal: "Expert",
     status: "Active",
@@ -215,6 +235,7 @@ const sampleLearners: Learner[] = [
     id: "L005",
     fullName: "Hoàng Văn Em",
     email: "hoangvanem@gmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 5.9,
     favouriteLevelGoal: "Intermediate",
     status: "Inactive",
@@ -228,6 +249,7 @@ const sampleLearners: Learner[] = [
     id: "L006",
     fullName: "Đỗ Thị Hoa",
     email: "dothihoa@gmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 7.8,
     favouriteLevelGoal: "Advanced",
     status: "Active",
@@ -265,6 +287,7 @@ const sampleLearners: Learner[] = [
     id: "L007",
     fullName: "Vũ Minh Khôi",
     email: "vuminhkhoi@yahoo.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 8.9,
     favouriteLevelGoal: "Expert",
     status: "Active",
@@ -308,6 +331,7 @@ const sampleLearners: Learner[] = [
     id: "L008",
     fullName: "Bùi Thị Lan",
     email: "buithilan@outlook.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 6.3,
     favouriteLevelGoal: "Intermediate",
     status: "Active",
@@ -337,6 +361,7 @@ const sampleLearners: Learner[] = [
     id: "L009",
     fullName: "Ngô Văn Minh",
     email: "ngovanminh@gmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 9.3,
     favouriteLevelGoal: "Expert",
     status: "Active",
@@ -394,6 +419,7 @@ const sampleLearners: Learner[] = [
     id: "L010",
     fullName: "Lương Thị Phương",
     email: "luongthiphuong@hotmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 5.4,
     favouriteLevelGoal: "Beginner",
     status: "Inactive",
@@ -414,6 +440,7 @@ const sampleLearners: Learner[] = [
     id: "L011",
     fullName: "Trịnh Văn Đức",
     email: "trinhvanduc@gmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 7.5,
     favouriteLevelGoal: "Advanced",
     status: "Active",
@@ -451,6 +478,7 @@ const sampleLearners: Learner[] = [
     id: "L012",
     fullName: "Phạm Thị Mai",
     email: "phamthimai@yahoo.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 8.2,
     favouriteLevelGoal: "Advanced",
     status: "Active",
@@ -494,6 +522,7 @@ const sampleLearners: Learner[] = [
     id: "L013",
     fullName: "Đinh Văn Hùng",
     email: "dinhvanhung@outlook.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 6.9,
     favouriteLevelGoal: "Intermediate",
     status: "Inactive",
@@ -523,6 +552,7 @@ const sampleLearners: Learner[] = [
     id: "L014",
     fullName: "Võ Thị Thu",
     email: "vothithu@gmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 8.7,
     favouriteLevelGoal: "Expert",
     status: "Active",
@@ -552,6 +582,7 @@ const sampleLearners: Learner[] = [
     id: "L015",
     fullName: "Hồ Văn Tài",
     email: "hovantai@hotmail.com",
+    avatar: "https://via.placeholder.com/150",
     pronunciationScore: 7.1,
     favouriteLevelGoal: "Intermediate",
     status: "Active",
@@ -590,7 +621,7 @@ const sampleLearners: Learner[] = [
 const LearnerManagement = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<string>("Active");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedLearner, setSelectedLearner] = useState<Learner | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
@@ -603,8 +634,7 @@ const LearnerManagement = () => {
     const matchesName = learner.fullName
       .toLowerCase()
       .includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "All" || learner.status === statusFilter;
+    const matchesStatus = learner.status === statusFilter;
     return matchesName && matchesStatus;
   });
 
@@ -652,7 +682,14 @@ const LearnerManagement = () => {
       setOpenDropdownId(null);
     }
   };
-
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
   useEffect(() => {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
@@ -662,112 +699,100 @@ const LearnerManagement = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </Button>
           <Input
-            placeholder="Tìm theo tên..."
+            placeholder="Tìm theo mã, họ tên, email hoặc số điện thoại..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-[250px]"
+            className="w-lg"
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="All">Tất cả trạng thái</option>
-            <option value="Active">Hoạt động</option>
-            <option value="Inactive">Không hoạt động</option>
-          </select>
+          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+            <TabsList className="grid grid-cols-3 w-[400px]">
+              <TabsTrigger value="Active">Hoạt động</TabsTrigger>
+              <TabsTrigger value="Inactive">Ngưng hoạt động</TabsTrigger>
+              <TabsTrigger value="IsBanned">Bị chặn</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border shadow">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#f7f9fa]">
-              <TableHead>
-                <Checkbox
-                  checked={
-                    selectedRows.length === filteredLearners.length &&
-                    filteredLearners.length > 0
-                  }
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                />
+            <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-100">
+              
+              <TableHead className="text-gray-700 font-semibold">
+                Thông tin
               </TableHead>
-              <TableHead>Mã người học</TableHead>
-              <TableHead>Họ tên</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Số điện thoại</TableHead>
-              <TableHead>Điểm đánh giá</TableHead>
-              <TableHead>Mục tiêu cấp độ</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead className="text-center">Hành động</TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Họ tên
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Liên hệ
+              </TableHead>
+
+              <TableHead className="text-gray-700 font-semibold">
+                Trạng thái
+              </TableHead>
+              <TableHead className="text-center text-gray-700 font-semibold">
+                Hành động
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredLearners.map((learner, idx) => (
-              <TableRow key={learner.id} className="hover:bg-[#f0f7e6]">
-                <TableCell>
-                  <Checkbox
-                    checked={selectedRows.includes(idx)}
-                    onCheckedChange={() => handleSelectRow(idx)}
-                    aria-label={`Select row ${idx}`}
-                  />
-                </TableCell>
-                <TableCell className="font-medium text-blue-600">
-                  {learner.id}
-                </TableCell>
+              <TableRow
+                key={learner.id}
+                className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
+              >
+                
                 <TableCell className="font-medium">
-                  {learner.fullName}
-                </TableCell>
-                <TableCell className="text-gray-600">{learner.email}</TableCell>
-                <TableCell className="text-gray-600">
-                  {learner.phoneNumber}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`font-semibold ${
-                        learner.pronunciationScore >= 8
-                          ? "text-green-600"
-                          : learner.pronunciationScore >= 6
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {learner.pronunciationScore}/10
-                    </span>
-                    <div className="w-12 h-2 bg-gray-200 rounded-full">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
+                        <AvatarImage
+                          src={learner.avatar}
+                          alt={learner.fullName}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
+                          {getInitials(learner.fullName)}
+                        </AvatarFallback>
+                      </Avatar>
                       <div
-                        className={`h-2 rounded-full ${
-                          learner.pronunciationScore >= 8
+                        className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
+                          learner.status === "Active"
                             ? "bg-green-500"
-                            : learner.pronunciationScore >= 6
-                            ? "bg-yellow-500"
+                            : learner.status === "Inactive"
+                            ? "bg-gray-400"
                             : "bg-red-500"
                         }`}
-                        style={{ width: `${learner.pronunciationScore * 10}%` }}
                       ></div>
+                    </div>
+                    <div>
+                      <div className="text-blue-600 font-semibold text-sm">
+                        {learner.id}
+                      </div>
+                      {/* <div className="text-gray-500 text-xs">Learner</div> */}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {learner.favouriteLevelGoal}
-                  </Badge>
+
+                <TableCell className="font-medium">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900">
+                      {learner.fullName}
+                    </span>
+                  </div>
                 </TableCell>
+                <TableCell className="text-gray-600">
+                  <div className="flex flex-col">
+                    <span className="text-sm">{learner.email}</span>
+                    <span className="text-xs text-gray-500">
+                      {learner.phoneNumber}
+                    </span>
+                  </div>
+                </TableCell>
+
                 <TableCell>
                   <Badge
                     variant={
@@ -775,13 +800,29 @@ const LearnerManagement = () => {
                     }
                     className={
                       learner.status === "Active"
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-400 text-white"
+                        ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
+                        : learner.status === "Inactive"
+                        ? "bg-gray-100 text-gray-600 border-gray-200"
+                        : "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"
+                        
                     }
                   >
-                    {learner.status === "Active"
-                      ? "Hoạt động"
-                      : "Không hoạt động"}
+                    <div className="flex items-center gap-1">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          learner.status === "Active"
+                            ? "bg-green-500"
+                            : learner.status === "Inactive"
+                            ? "bg-gray-400"
+                            : "bg-red-500"
+                        }`}
+                      ></div>
+                      {learner.status === "Active"
+                        ? "Hoạt động"
+                        : learner.status === "Inactive"
+                        ? "Ngưng hoạt động"
+                        : "Bị chặn"}
+                    </div>
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
@@ -838,19 +879,19 @@ const LearnerManagement = () => {
                             onClick={() => {
                               handleBlockUnblock(
                                 learner,
-                                learner.status === "Active"
+                                learner.status === "Active" || learner.status === "Inactive" 
                                   ? "block"
                                   : "unblock"
                               );
                               setOpenDropdownId(null);
                             }}
                             className={`block cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                              learner.status === "Active"
+                              learner.status === "Active" || learner.status === "Inactive" 
                                 ? "text-red-600"
                                 : "text-green-600"
                             }`}
                           >
-                            {learner.status === "Active" ? (
+                            {learner.status === "Active" || learner.status === "Inactive" ? (
                               <>
                                 <svg
                                   width="16"
@@ -977,14 +1018,18 @@ const LearnerManagement = () => {
                       <span className="font-medium">Trạng thái:</span>
                       <Badge
                         className={`ml-2 ${
-                          selectedLearner.status === "Active"
+                          selectedLearner.status === "Active" || selectedLearner.status === "Inactive" || selectedLearner.status === "IsBanned"
                             ? "bg-green-600"
-                            : "bg-gray-400"
+                            : selectedLearner.status === "Inactive"
+                            ? "bg-gray-400"
+                            : "bg-red-500"
                         }`}
                       >
-                        {selectedLearner.status === "Active"
+                        {selectedLearner.status === "Active" || selectedLearner.status === "Inactive" || selectedLearner.status === "IsBanned"
                           ? "Hoạt động"
-                          : "Không hoạt động"}
+                          : selectedLearner.status === "Inactive" || selectedLearner.status === "IsBanned"
+                          ? "Ngưng hoạt động"
+                          : "Bị chặn"}
                       </Badge>
                     </div>
                     <div>
@@ -997,7 +1042,7 @@ const LearnerManagement = () => {
                   <div className="space-y-4">
                     {/* Mục tiêu cấp độ */}
                     <div>
-                      <span className="font-medium">Mục tiêu (Cấp độ):</span>
+                      <span className="font-medium">Trình độ phát âm:</span>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-sm px-3 py-1">
                           {selectedLearner.favouriteLevelGoal}
@@ -1014,7 +1059,14 @@ const LearnerManagement = () => {
                         </span>
                       </div>
                     </div>
-
+                    <div>
+                      <span className="font-medium">Điểm đánh giá:</span>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className="text-sm px-3 py-1">
+                          {selectedLearner.pronunciationScore}
+                        </Badge>
+                      </div>
+                    </div>
                     {/* Trạng thái gói */}
                     <div>
                       <span className="font-medium">Gói học hiện tại:</span>
@@ -1047,59 +1099,171 @@ const LearnerManagement = () => {
 
               {/* Purchased Packages */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">
-                  Các gói dịch vụ đã mua
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedLearner.purchasedPackages.map(
-                    (pkg: Package, index: number) => (
-                      <Card key={index} className="border-2">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <CardTitle
-                              className={`text-lg ${
-                                pkg.name === "Premium"
-                                  ? "text-blue-600"
-                                  : "text-orange-500"
-                              }`}
-                            >
-                              {pkg.name}
-                            </CardTitle>
-                            <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                pkg.status === "Active"
-                                  ? "bg-blue-500"
-                                  : "bg-gray-400"
-                              }`}
-                            >
-                              {pkg.status === "Active" && (
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              )}
-                            </div>
-                          </div>
-                          <CardDescription>{pkg.duration}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div
-                            className={`text-center py-2 px-4 rounded text-white font-semibold ${
-                              pkg.name === "Premium"
-                                ? "bg-orange-500"
-                                : "bg-purple-600"
-                            }`}
-                          >
-                            {pkg.price}
-                          </div>
-                          <div className="text-center mt-2 text-sm text-gray-600">
-                            {pkg.status === "Active" ? "2 tháng" : "1 tháng"}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  )}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">
+                    Các gói dịch vụ đã mua
+                  </h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <span>{selectedLearner.purchasedPackages.length} gói</span>
+                    <span>•</span>
+                    <span>
+                      {
+                        selectedLearner.purchasedPackages.filter(
+                          (pkg) => pkg.status === "Active"
+                        ).length
+                      }{" "}
+                      đang học
+                    </span>
+                  </div>
                 </div>
-                {selectedLearner.purchasedPackages.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    Chưa mua gói nào
+
+                {selectedLearner.purchasedPackages.length > 0 ? (
+                  <Carousel
+                    opts={{
+                      align: "start",
+                      loop: true,
+                    }}
+                    className="w-full"
+                  >
+                    <CarouselContent className="-ml-2 md:-ml-4">
+                      {selectedLearner.purchasedPackages.map(
+                        (pkg: Package, index: number) => (
+                          <CarouselItem
+                            key={index}
+                            className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
+                          >
+                            <Card
+                              className={`border-2 shadow-lg transition-all duration-300 hover:shadow-xl h-full ${
+                                pkg.status === "Active"
+                                  ? "border-green-200 bg-gradient-to-br from-green-50 to-emerald-50"
+                                  : pkg.status === "Completed"
+                                  ? "border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50"
+                                  : "border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50"
+                              }`}
+                            >
+                              <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                  <CardTitle
+                                    className={`text-lg font-bold ${
+                                      pkg.status === "Active"
+                                        ? "text-green-700"
+                                        : pkg.status === "Completed"
+                                        ? "text-blue-700"
+                                        : "text-gray-600"
+                                    }`}
+                                  >
+                                    {pkg.name}
+                                  </CardTitle>
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className={`w-3 h-3 rounded-full ${
+                                        pkg.status === "Active"
+                                          ? "bg-green-500 animate-pulse"
+                                          : pkg.status === "Completed"
+                                          ? "bg-blue-500"
+                                          : "bg-gray-400"
+                                      }`}
+                                    ></div>
+                                    <Badge
+                                      className={`text-xs font-medium ${
+                                        pkg.status === "Active"
+                                          ? "bg-green-100 text-green-700 border-green-300"
+                                          : pkg.status === "Completed"
+                                          ? "bg-blue-100 text-blue-700 border-blue-300"
+                                          : "bg-gray-100 text-gray-600 border-gray-300"
+                                      }`}
+                                    >
+                                      {pkg.status === "Active"
+                                        ? "Đang học"
+                                        : pkg.status === "Completed"
+                                        ? "Hoàn thành"
+                                        : "Hết hạn"}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <CardDescription className="text-sm text-gray-600">
+                                  {pkg.duration} • {pkg.price}
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                {pkg.status === "Active" ? (
+                                  <div className="space-y-3">
+                                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-lg text-center">
+                                      <div className="text-2xl font-bold">
+                                        25
+                                      </div>
+                                      <div className="text-sm opacity-90">
+                                        ngày còn lại
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">
+                                          Tiến độ
+                                        </span>
+                                        <span className="font-semibold text-green-600">
+                                          83%
+                                        </span>
+                                      </div>
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div
+                                          className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                                          style={{ width: "83%" }}
+                                        ></div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs text-gray-500">
+                                      <span>Bắt đầu: 15/01/2024</span>
+                                      <span>Kết thúc: 15/03/2024</span>
+                                    </div>
+                                  </div>
+                                ) : pkg.status === "Completed" ? (
+                                  <div className="space-y-3">
+                                    <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 px-4 rounded-lg text-center">
+                                      <div className="text-lg font-bold">
+                                        ✅ Hoàn thành
+                                      </div>
+                                      <div className="text-sm opacity-90">
+                                        Đã kết thúc
+                                      </div>
+                                    </div>
+                                    <div className="text-center text-sm text-gray-600">
+                                      Gói đã được hoàn thành thành công
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3">
+                                    <div className="bg-gradient-to-r from-gray-400 to-gray-500 text-white py-3 px-4 rounded-lg text-center">
+                                      <div className="text-lg font-bold">
+                                        ⏰ Hết hạn
+                                      </div>
+                                      <div className="text-sm opacity-90">
+                                        Đã kết thúc
+                                      </div>
+                                    </div>
+                                    <div className="text-center text-sm text-gray-600">
+                                      Gói đã hết hạn, cần gia hạn
+                                    </div>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </CarouselItem>
+                        )
+                      )}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-4 bg-white/80 hover:bg-white shadow-lg" />
+                    <CarouselNext className="right-4 bg-white/80 hover:bg-white shadow-lg" />
+                  </Carousel>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-6xl mb-4">📚</div>
+                    <div className="text-gray-500 text-lg font-medium">
+                      Chưa mua gói nào
+                    </div>
+                    <div className="text-gray-400 text-sm mt-2">
+                      Học viên chưa đăng ký gói học nào
+                    </div>
                   </div>
                 )}
               </div>
@@ -1113,7 +1277,7 @@ const LearnerManagement = () => {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
             <h3 className="text-lg font-semibold mb-4">
-            Xác nhận   {actionType === "block" ? "Block" : "Unblock"} Người dùng
+              Xác nhận {actionType === "block" ? "Block" : "Unblock"} Người dùng
             </h3>
             <p className="text-gray-600 mb-6">
               Bạn có chắc chắn muốn {actionType}{" "}

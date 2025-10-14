@@ -426,16 +426,6 @@ const ServicePackageManagement = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f7f9fa]">
-              <TableHead>
-                <Checkbox
-                  checked={
-                    selectedRows.length === filteredPackages.length &&
-                    filteredPackages.length > 0
-                  }
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                />
-              </TableHead>
               <TableHead>Mã gói</TableHead>
               <TableHead>Tên gói</TableHead>
               <TableHead>Mô tả</TableHead>
@@ -449,13 +439,7 @@ const ServicePackageManagement = () => {
           <TableBody>
             {filteredPackages.map((pkg, idx) => (
               <TableRow key={pkg.packageId} className="hover:bg-[#f0f7e6]">
-                <TableCell>
-                  <Checkbox
-                    checked={selectedRows.includes(idx)}
-                    onCheckedChange={() => handleSelectRow(idx)}
-                    aria-label={`Select row ${idx}`}
-                  />
-                </TableCell>
+                
                 <TableCell className="font-medium text-blue-600">
                   {pkg.packageId}
                 </TableCell>
@@ -480,7 +464,7 @@ const ServicePackageManagement = () => {
                         : "bg-red-400 text-white"
                     }
                   >
-                    {pkg.status === "Active" ? "Hoạt động" : "Không hoạt động"}
+                    {pkg.status === "Active" ? "Hoạt động" : "Ngưng hoạt động"}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
@@ -605,9 +589,9 @@ const ServicePackageManagement = () => {
       {/* Package Details Modal */}
       {showDetailsModal && selectedPackage && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] overflow-y-auto w-full mx-4">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] overflow-y-auto w-full mx-4 ">
+            <div className="p-6 border-b sticky top-0 z-10 bg-white">
+              <div className="flex items-center justify-between ">
                 <h2 className="text-2xl font-bold text-gray-800">
                   Thông tin gói dịch vụ
                 </h2>
@@ -661,7 +645,7 @@ const ServicePackageManagement = () => {
                       >
                         {selectedPackage.status === "Active"
                           ? "Hoạt động"
-                          : "Không hoạt động"}
+                          : "Ngưng hoạt động"}
                       </Badge>
                     </div>
                   </div>
@@ -723,12 +707,12 @@ const ServicePackageManagement = () => {
                       <div className="flex items-center mb-2">
                         <span className="text-2xl mr-2">👨‍🏫</span>
                         <h4 className="font-semibold text-green-700">
-                          Buổi đánh giá
+                          Số lượt đánh giá
                         </h4>
                       </div>
                       <p className="text-sm text-gray-600">
-                        {selectedPackage.numberOfReview} buổi học 1-1 với
-                        reviewer
+                        {selectedPackage.numberOfReview} lượt đánh giá bởi
+                        người đánh giá
                       </p>
                     </div>
                   )}
@@ -763,7 +747,7 @@ const ServicePackageManagement = () => {
               {/* Learners who have bought this package */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">
-                  Người học đã mua gói
+                  Danh sách người học đã mua gói 
                 </h3>
                 {selectedPackage.purchasers &&
                 selectedPackage.purchasers.length > 0 ? (
@@ -1085,7 +1069,7 @@ const ServicePackageManagement = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="Active">Hoạt động</option>
-                      <option value="Inactive">Không hoạt động</option>
+                      <option value="Inactive">Ngưng hoạt động</option>
                       <option value="Pending">Đang xử lý</option>
                     </select>
                   </div>

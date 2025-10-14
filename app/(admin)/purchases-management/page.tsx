@@ -515,18 +515,7 @@ const PurchasesManagement = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </Button>
+          
           <Input
             placeholder="Tìm theo tên người học..."
             value={search}
@@ -666,15 +655,7 @@ const PurchasesManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>
-                  <Checkbox
-                    checked={
-                      selectedRows.length === filteredPurchases.length &&
-                      filteredPurchases.length > 0
-                    }
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
+                
                 <TableHead>Mã giao dịch</TableHead>
                 <TableHead>Người học</TableHead>
                 <TableHead>Gói dịch vụ</TableHead>
@@ -687,12 +668,7 @@ const PurchasesManagement = () => {
             <TableBody>
               {filteredPurchases.map((purchase, idx) => (
                 <TableRow key={purchase.purchaseId}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedRows.includes(idx)}
-                      onCheckedChange={() => handleSelectRow(idx)}
-                    />
-                  </TableCell>
+                  
                   <TableCell>
                     <span className="font-mono text-sm">
                       {purchase.purchaseId}

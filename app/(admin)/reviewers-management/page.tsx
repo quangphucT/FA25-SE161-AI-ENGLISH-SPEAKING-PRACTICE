@@ -10,9 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Type definitions
 interface Schedule {
@@ -50,12 +51,12 @@ interface Reviewer {
   id: string;
   fullName: string;
   email: string;
-  status: "Active" | "Inactive";
+  status: "Active" | "Inactive" | "IsBanned";
   experience: number;
   phone: string;
+  avatar: string;
   rating: number;
   level: string;
-  ReviewerStatus: "Available" | "Busy" | "Offline";
   joinedDate: string;
   specializations: string[];
   primarySkills?: string[]; // Skill điểm mạnh của Reviewer (optional)
@@ -71,11 +72,12 @@ const sampleReviewers: Reviewer[] = [
     fullName: "Dr. Sarah Johnson",
     email: "sarah.johnson@example.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     experience: 8,
     rating: 4.8,
     phone: "0335785100",
     level: "C1",
-    ReviewerStatus: "Available",
+
     joinedDate: "2024-01-15",
     specializations: ["IELTS Preparation", "Business English", "Pronunciation"],
     primarySkills: ["IELTS Preparation", "Business English"], // Skill điểm mạnh
@@ -138,13 +140,14 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M002",
     fullName: "Prof. Michael Chen",
+    avatar: "https://via.placeholder.com/150",
     phone: "0123456789",
     level: "C2",
     email: "michael.chen@example.com",
-    status: "Active",
+    status: "IsBanned",
     experience: 12,
     rating: 4.9,
-    ReviewerStatus: "Busy",
+
     joinedDate: "2023-11-20",
     specializations: ["TOEFL", "Academic Writing", "Speaking Skills"],
     primarySkills: ["TOEFL", "Academic Writing"],
@@ -216,13 +219,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M003",
     fullName: "Ms. Emma Wilson",
+    avatar: "https://via.placeholder.com/150",
     phone: "0987654321",
     level: "C1",
     email: "emma.wilson@example.com",
     status: "Inactive",
     experience: 5,
     rating: 4.3,
-    ReviewerStatus: "Offline",
     joinedDate: "2024-03-10",
     specializations: ["Conversational English", "Grammar"],
     primarySkills: ["Conversational English"],
@@ -248,13 +251,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M004",
     fullName: "Dr. James Rodriguez",
+    avatar: "https://via.placeholder.com/150",
     phone: "0987654321",
     level: "C2",
     email: "james.rodriguez@example.com",
     status: "Active",
     experience: 10,
     rating: 4.7,
-    ReviewerStatus: "Available",
     joinedDate: "2023-08-05",
     specializations: [
       "Business English",
@@ -331,13 +334,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M005",
     fullName: "Ms. Lisa Anderson",
+    avatar: "https://via.placeholder.com/150",
     level: "C1",
     phone: "0987654321",
     email: "lisa.anderson@example.com",
     status: "Active",
     experience: 6,
     rating: 4.5,
-    ReviewerStatus: "Available",
     joinedDate: "2024-02-28",
     specializations: ["Pronunciation", "Accent Reduction", "Phonetics"],
     primarySkills: ["Pronunciation", "Accent Reduction"],
@@ -394,13 +397,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M006",
     fullName: "Dr. David Kim",
+    avatar: "https://via.placeholder.com/150",
     level: "C2",
     phone: "0987654321",
     email: "david.kim@example.com",
     status: "Active",
     experience: 15,
     rating: 4.9,
-    ReviewerStatus: "Busy",
     joinedDate: "2022-05-12",
     specializations: [
       "IELTS",
@@ -490,13 +493,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M007",
     fullName: "Ms. Sophie Martinez",
+    avatar: "https://via.placeholder.com/150",
     level: "C1",
     phone: "0987654321",
     email: "sophie.martinez@example.com",
     status: "Active",
     experience: 7,
     rating: 4.6,
-    ReviewerStatus: "Available",
     joinedDate: "2023-09-18",
     specializations: ["Conversation", "Cultural English", "Travel English"],
     schedules: [
@@ -552,13 +555,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M008",
     fullName: "Prof. Robert Taylor",
-    level: "C2",
+    avatar: "https://via.placeholder.com/150",
+    level: "C1",
     phone: "0987654321",
     email: "robert.taylor@example.com",
     status: "Active",
     experience: 20,
     rating: 4.8,
-    ReviewerStatus: "Available",
     joinedDate: "2021-11-30",
     specializations: [
       "Advanced Grammar",
@@ -641,13 +644,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M009",
     fullName: "Ms. Anna Thompson",
+    avatar: "https://via.placeholder.com/150",
     level: "C1",
     phone: "0987654321",
     email: "anna.thompson@example.com",
     status: "Inactive",
     experience: 4,
     rating: 4.2,
-    ReviewerStatus: "Offline",
     joinedDate: "2024-06-15",
     specializations: ["Basic English", "Kids English"],
     schedules: [],
@@ -682,13 +685,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M010",
     fullName: "Dr. William Foster",
+    avatar: "https://via.placeholder.com/150",
     level: "C2",
     phone: "0987654321",
     email: "william.foster@example.com",
     status: "Active",
     experience: 14,
     rating: 4.7,
-    ReviewerStatus: "Busy",
     joinedDate: "2022-12-08",
     specializations: [
       "Medical English",
@@ -754,13 +757,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M011",
     fullName: "Ms. Jennifer Lee",
+    avatar: "https://via.placeholder.com/150",
     level: "C1",
     phone: "0987654321",
     email: "jennifer.lee@example.com",
     status: "Active",
     experience: 9,
     rating: 4.5,
-    ReviewerStatus: "Available",
     joinedDate: "2023-03-22",
     specializations: [
       "Public Speaking",
@@ -830,13 +833,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M012",
     fullName: "Prof. Mark Brown",
+    avatar: "https://via.placeholder.com/150",
     level: "C2",
     phone: "0987654321",
     email: "mark.brown@example.com",
     status: "Active",
     experience: 18,
     rating: 4.9,
-    ReviewerStatus: "Available",
     joinedDate: "2021-07-14",
     specializations: [
       "Linguistics",
@@ -909,13 +912,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M013",
     fullName: "Ms. Rachel Green",
+    avatar: "https://via.placeholder.com/150",
     level: "C1",
     phone: "0987654321",
     email: "rachel.green@example.com",
     status: "Active",
     experience: 6,
     rating: 4.4,
-    ReviewerStatus: "Available",
     joinedDate: "2023-12-01",
     specializations: [
       "Vocabulary Building",
@@ -975,13 +978,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M014",
     fullName: "Dr. Alex Johnson",
+    avatar: "https://via.placeholder.com/150",
     level: "C2",
     phone: "0987654321",
     email: "alex.johnson@example.com",
     status: "Active",
     experience: 11,
     rating: 4.6,
-    ReviewerStatus: "Busy",
     joinedDate: "2022-08-20",
     specializations: ["Cambridge Exams", "FCE", "CAE", "CPE"],
     schedules: [
@@ -1059,13 +1062,13 @@ const sampleReviewers: Reviewer[] = [
   {
     id: "M015",
     fullName: "Ms. Olivia Davis",
+    avatar: "https://via.placeholder.com/150",
     level: "C1",
     phone: "0987654321",
     email: "olivia.davis@example.com",
     status: "Active",
     experience: 8,
     rating: 4.3,
-    ReviewerStatus: "Available",
     joinedDate: "2023-04-10",
     specializations: [
       "Creative Writing",
@@ -1140,9 +1143,8 @@ const sampleReviewers: Reviewer[] = [
 ];
 
 const ReviewerManagement = () => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<string>("Active");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedReviewer, setSelectedReviewer] = useState<Reviewer | null>(
     null
@@ -1174,22 +1176,6 @@ const ReviewerManagement = () => {
     return matchesName && matchesStatus;
   });
 
-  const handleSelectRow = (idx: number) => {
-    setSelectedRows(
-      selectedRows.includes(idx)
-        ? selectedRows.filter((i) => i !== idx)
-        : [...selectedRows, idx]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredReviewers.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredReviewers.map((_, idx) => idx));
-    }
-  };
-
   const handleViewDetails = (Reviewer: Reviewer) => {
     setSelectedReviewer(Reviewer);
     setShowDetailsModal(true);
@@ -1218,7 +1204,14 @@ const ReviewerManagement = () => {
       setOpenDropdownId(null);
     }
   };
-
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
   useEffect(() => {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
@@ -1228,33 +1221,19 @@ const ReviewerManagement = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </Button>
           <Input
             placeholder="Tìm theo tên..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-[250px]"
+            className="w-lg"
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="All">Tất cả trạng thái</option>
-            <option value="Active">Hoạt động</option>
-            <option value="Inactive">Không hoạt động</option>
-          </select>
+          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+            <TabsList className="grid grid-cols-3 w-[400px]">
+              <TabsTrigger value="Active">Hoạt động</TabsTrigger>
+              <TabsTrigger value="Inactive">Ngưng hoạt động</TabsTrigger>
+              <TabsTrigger value="IsBanned">Bị chặn</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
@@ -1262,68 +1241,116 @@ const ReviewerManagement = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f7f9fa]">
-              <TableHead>
-                <Checkbox
-                  checked={
-                    selectedRows.length === filteredReviewers.length &&
-                    filteredReviewers.length > 0
-                  }
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                />
+              <TableHead className="text-gray-700 font-semibold">
+                Thông tin
               </TableHead>
-              <TableHead>Mã người đánh giá</TableHead>
-              <TableHead>Họ tên</TableHead>
-              <TableHead>SĐT</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Kinh nghiệm</TableHead>
-              <TableHead>Trình độ</TableHead>
-              <TableHead>Đánh giá</TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Họ tên
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Liên hệ
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Trình độ
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Kinh nghiệm
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Trạng thái
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Đánh giá
+              </TableHead>
 
-              <TableHead className="text-center">Hành động</TableHead>
+              <TableHead className="ext-center text-gray-700 font-semibold">
+                Hành động
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredReviewers.map((Reviewer, idx) => (
+            {filteredReviewers.map((Reviewer) => (
               <TableRow key={Reviewer.id} className="hover:bg-[#f0f7e6]">
-                <TableCell>
-                  <Checkbox
-                    checked={selectedRows.includes(idx)}
-                    onCheckedChange={() => handleSelectRow(idx)}
-                    aria-label={`Select row ${idx}`}
-                  />
-                </TableCell>
-                <TableCell className="font-medium text-blue-600">
-                  {Reviewer.id}
-                </TableCell>
                 <TableCell className="font-medium">
-                  {Reviewer.fullName}
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
+                        <AvatarImage
+                          src={Reviewer.avatar}
+                          alt={Reviewer.fullName}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
+                          {getInitials(Reviewer.fullName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div
+                        className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
+                          Reviewer.status === "Active"
+                            ? "bg-green-500"
+                            :  Reviewer.status === "Inactive"
+                            ? "bg-gray-400"
+                            : "bg-red-500"
+                        }`}
+                      ></div>
+                    </div>
+                    <div>
+                      <div className="text-blue-600 font-semibold text-sm">
+                        {Reviewer.id}
+                      </div>
+                      {/* <div className="text-gray-500 text-xs">Learner</div> */}
+                    </div>
+                  </div>
+                </TableCell>
+
+                <TableCell className="font-medium">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900">
+                      {Reviewer.fullName}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-gray-600">
-                  {Reviewer.phone}
+                  <div className="flex flex-col">
+                    <span className="text-sm">{Reviewer.email}</span>
+                    <span className="text-xs text-gray-500">
+                      {Reviewer.phone}
+                    </span>
+                  </div>
                 </TableCell>
-                <TableCell className="text-gray-600">
-                  {Reviewer.email}
-                </TableCell>
+                <TableCell>{Reviewer.level}</TableCell>
+                <TableCell>{Reviewer.experience} năm</TableCell>
                 <TableCell>
                   <Badge
                     variant={
-                      Reviewer.status === "Active" ? "default" : "secondary"
+                      Reviewer.status === "Active" ? "default" :  Reviewer.status === "Inactive" ? "secondary" : "destructive"
                     }
                     className={
                       Reviewer.status === "Active"
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-400 text-white"
+                        ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
+                        : Reviewer.status === "Inactive"
+                        ? "bg-gray-100 text-gray-600 border-gray-200"
+                        : "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"
                     }
                   >
-                    {Reviewer.status === "Active"
-                      ? "Hoạt động"
-                      : "Không hoạt động"}
+                    <div className="flex items-center gap-1">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          Reviewer.status === "Active"
+                            ? "bg-green-500"
+                            : Reviewer.status === "Inactive"
+                            ? "bg-gray-400"
+                            : "bg-red-500"
+                        }`}
+                      ></div>
+                      {Reviewer.status === "Active"
+                        ? "Hoạt động"
+                        : Reviewer.status === "Inactive"
+                        ? "Ngưng hoạt động"
+                        : "Bị chặn"}
+                    </div>
                   </Badge>
                 </TableCell>
-                <TableCell>{Reviewer.experience} năm</TableCell>
-                <TableCell>{Reviewer.level}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <span className="font-semibold text-yellow-600">
@@ -1402,12 +1429,12 @@ const ReviewerManagement = () => {
                               setOpenDropdownId(null);
                             }}
                             className={`block cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                              Reviewer.status === "Active"
+                              Reviewer.status === "Active" || Reviewer.status === "Inactive"
                                 ? "text-red-600"
                                 : "text-green-600"
                             }`}
                           >
-                            {Reviewer.status === "Active" ? (
+                            {Reviewer.status === "Active" || Reviewer.status === "Inactive" ? (
                               <>
                                 <svg
                                   width="16"
@@ -1483,7 +1510,7 @@ const ReviewerManagement = () => {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-y-auto no-scrollbar">
             {/* Header with gradient */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl sticky top-0 z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
@@ -1673,7 +1700,7 @@ const ReviewerManagement = () => {
                       >
                         {selectedReviewer.status === "Active"
                           ? "Hoạt động"
-                          : "Không hoạt động"}
+                          : "Ngưng hoạt động"}
                       </Badge>
                     </div>
                   </div>
@@ -1697,9 +1724,8 @@ const ReviewerManagement = () => {
                   </div>
                 </div>
               </div>
-
               {/* Certificates Section */}
-              <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6 mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <svg
                     width="20"
@@ -1749,6 +1775,165 @@ const ReviewerManagement = () => {
                   </div>
                 )}
               </div>
+              {/* Feedbacks Section */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M15 17l-3 3-3-3m3 3V10m6-6H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2z" />
+                    </svg>
+                    Đánh giá từ học viên ({selectedReviewer.feedbacks.length})
+                  </h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600">
+                        Đánh giá cao (4-5⭐)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600">
+                        Đánh giá trung bình (3⭐)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedReviewer.feedbacks.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-100">
+                          <TableHead className="text-gray-700 font-semibold">
+                            Học viên
+                          </TableHead>
+                          <TableHead className="text-gray-700 font-semibold">
+                            Đánh giá
+                          </TableHead>
+                          <TableHead className="text-gray-700 font-semibold">
+                            Nội dung
+                          </TableHead>
+                          <TableHead className="text-gray-700 font-semibold">
+                            Ngày gửi
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedReviewer.feedbacks.map((feedback) => (
+                          <TableRow
+                            key={feedback.id}
+                            className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
+                          >
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                  {feedback.fullName
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase()
+                                    .slice(0, 2)}
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-gray-900">
+                                    {feedback.fullName}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {feedback.email}
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    {feedback.phone}
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <svg
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < feedback.rating
+                                          ? "text-yellow-400"
+                                          : "text-gray-300"
+                                      }`}
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                  ))}
+                                </div>
+                                <Badge
+                                  className={`text-xs font-medium ${
+                                    feedback.rating >= 4
+                                      ? "bg-green-100 text-green-700 border-green-300"
+                                      : feedback.rating >= 3
+                                      ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                                      : "bg-red-100 text-red-700 border-red-300"
+                                  }`}
+                                >
+                                  {feedback.rating}/5
+                                </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-xs">
+                                <p className="text-sm text-gray-700 line-clamp-2">
+                                  {feedback.content}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm text-gray-600">
+                                {feedback.createdAt}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-6xl mb-4">💬</div>
+                    <div className="text-gray-500 text-lg font-medium">
+                      Chưa có đánh giá
+                    </div>
+                    <div className="text-gray-400 text-sm mt-2">
+                      Học viên chưa gửi đánh giá nào cho reviewer này
+                    </div>
+                  </div>
+                )}
+
+                {selectedReviewer.feedbacks.length > 0 && (
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <div className="text-sm text-gray-600">
+                      Hiển thị {selectedReviewer.feedbacks.length} đánh giá
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" disabled>
+                        Trước
+                      </Button>
+                      <Button variant="default" size="sm">
+                        1
+                      </Button>
+                      <Button variant="outline" size="sm" disabled>
+                        Sau
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1769,6 +1954,9 @@ const ReviewerManagement = () => {
                 ? " Thao tác này sẽ ngăn họ truy cập hệ thống."
                 : " Thao tác này sẽ khôi phục quyền truy cập của họ."}
             </p>
+            <div className="text-gray-600 mb-6 mb-6">
+              <Input placeholder="Lí do chặn " />
+            </div>
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"

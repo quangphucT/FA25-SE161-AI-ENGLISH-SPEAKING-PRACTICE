@@ -12,12 +12,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Manager {
   id: string;
   fullName: string;
   email: string;
   status: "Active" | "Inactive";
+  avatar: string;
   phoneNumber: string;
   password: string;
 }
@@ -28,6 +31,7 @@ const sampleManagers: Manager[] = [
     fullName: "Nguyễn Văn An",
     email: "nguyenvanan@gmail.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -36,6 +40,7 @@ const sampleManagers: Manager[] = [
     fullName: "Trần Thị Bình",
     email: "tranthibinh@email.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -44,6 +49,7 @@ const sampleManagers: Manager[] = [
     fullName: "Lê Minh Cường",
     email: "leminhcuong@yahoo.com",
     status: "Inactive",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -52,6 +58,7 @@ const sampleManagers: Manager[] = [
     fullName: "Phạm Thu Dung",
     email: "phamthudung@hotmail.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -60,6 +67,7 @@ const sampleManagers: Manager[] = [
     fullName: "Hoàng Văn Em",
     email: "hoangvanem@gmail.com",
     status: "Inactive",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -68,6 +76,7 @@ const sampleManagers: Manager[] = [
     fullName: "Đỗ Thị Hoa",
     email: "dothihoa@gmail.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -76,6 +85,7 @@ const sampleManagers: Manager[] = [
     fullName: "Vũ Minh Khôi",
     email: "vuminhkhoi@yahoo.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -84,6 +94,7 @@ const sampleManagers: Manager[] = [
     fullName: "Bùi Thị Lan",
     email: "buithilan@outlook.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -92,6 +103,7 @@ const sampleManagers: Manager[] = [
     fullName: "Ngô Văn Minh",
     email: "ngovanminh@gmail.com",
     status: "Active",
+    avatar: "https://via.placeholder.com/150",
     phoneNumber: "0909090909",
     password: "123456",
   },
@@ -100,7 +112,7 @@ const sampleManagers: Manager[] = [
 const ManagerManagement = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<string>("Active");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedManager, setSelectedManager] = useState<Manager | null>(null);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
@@ -164,7 +176,14 @@ const ManagerManagement = () => {
       setOpenDropdownId(null);
     }
   };
-
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
   useEffect(() => {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
@@ -174,33 +193,18 @@ const ManagerManagement = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </Button>
           <Input
             placeholder="Search by name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-[250px]"
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="All">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+            <TabsList className="grid grid-cols-2 w-[400px]">
+              <TabsTrigger value="Active">Hoạt động</TabsTrigger>
+              <TabsTrigger value="Inactive">Ngưng hoạt động</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
         <Button
           onClick={() => setShowCreateModal(true)}
@@ -226,45 +230,70 @@ const ManagerManagement = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f7f9fa]">
-              <TableHead>
-                <Checkbox
-                  checked={
-                    selectedRows.length === filteredManagers.length &&
-                    filteredManagers.length > 0
-                  }
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                />
+              <TableHead className="text-gray-700 font-semibold">
+                Thông tin
               </TableHead>
-              <TableHead>Manager ID</TableHead>
-              <TableHead>Họ tên</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Số điện thoại</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead className="text-center">Hành động</TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Họ tên
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Liên hệ
+              </TableHead>
+              <TableHead className="text-gray-700 font-semibold">
+                Trạng thái
+              </TableHead>
+              <TableHead className="text-center text-gray-700 font-semibold">
+                Hành động
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredManagers.map((Manager, idx) => (
               <TableRow key={Manager.id} className="hover:bg-[#f0f7e6]">
-                <TableCell>
-                  <Checkbox
-                    checked={selectedRows.includes(idx)}
-                    onCheckedChange={() => handleSelectRow(idx)}
-                    aria-label={`Select row ${idx}`}
-                  />
-                </TableCell>
-                <TableCell className="font-medium text-blue-600">
-                  {Manager.id}
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
+                        <AvatarImage
+                          src={Manager.avatar}
+                          alt={Manager.fullName}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
+                          {getInitials(Manager.fullName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div
+                        className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
+                          Manager.status === "Active"
+                            ? "bg-green-500"
+                            : "bg-gray-400"
+                        }`}
+                      ></div>
+                    </div>
+                    <div>
+                      <div className="text-blue-600 font-semibold text-sm">
+                        {Manager.id}
+                      </div>
+                      {/* <div className="text-gray-500 text-xs">Manager</div> */}
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium">
-                  {Manager.fullName}
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900">
+                      {Manager.fullName}
+                    </span>
+                  </div>
                 </TableCell>
-                <TableCell className="text-gray-600">{Manager.email}</TableCell>
                 <TableCell className="text-gray-600">
-                  {Manager.phoneNumber}
+                  <div className="flex flex-col">
+                    <span className="text-sm">{Manager.email}</span>
+                    <span className="text-xs text-gray-500">
+                      {Manager.phoneNumber}
+                    </span>
+                  </div>
                 </TableCell>
-
                 <TableCell>
                   <Badge
                     variant={
@@ -272,11 +301,22 @@ const ManagerManagement = () => {
                     }
                     className={
                       Manager.status === "Active"
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-400 text-white"
+                        ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
+                        : "bg-gray-100 text-gray-600 border-gray-200"
                     }
                   >
-                    {Manager.status.toUpperCase()}
+                    <div className="flex items-center gap-1">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          Manager.status === "Active"
+                            ? "bg-green-500"
+                            : "bg-gray-400"
+                        }`}
+                      ></div>
+                      {Manager.status === "Active"
+                        ? "Hoạt động"
+                        : "Ngưng hoạt động"}
+                    </div>
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
@@ -500,7 +540,7 @@ const ManagerManagement = () => {
                       >
                         {selectedManager.status === "Active"
                           ? "Hoạt động"
-                          : "Không hoạt động"}
+                          : "Ngưng hoạt động"}
                       </Badge>
                     </div>
                   </div>

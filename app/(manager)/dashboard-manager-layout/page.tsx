@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { FaBook } from "react-icons/fa";
 import AssesmentManagement from "../assesment-management/page";
 import StatisticsForManagers from "../statistics-for-managers/page";
-
+import CurriculumManagementPage from "../curriculum-management/page";
+import QuestionForAssessmentPage from "../question-for-assessment/page";
 
 const DashboardManagerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForManagers");
@@ -35,9 +36,19 @@ const DashboardManagerLayout = () => {
       label: "Assesment Management",
       icon: <FaBook />,
       path: "/assesment-management",
-    },  
-    
-    
+    },
+    {
+      id: "curriculumManagement",
+      label: "Curriculum Management",
+      icon: <FaBook />,
+      path: "/curriculum-management",
+    },
+    {
+      id: "questionForAssessment",
+      label: "Question For Assessment",
+      icon: <FaBook />,
+      path: "/question-for-assessment",
+    },
   ];
 
   return (
@@ -64,7 +75,7 @@ const DashboardManagerLayout = () => {
                   </svg>
                 </div>
                 <div>
-                  <h1 className="font-bold text-lg text-white">Reviewer Hub</h1>
+                  <h1 className="font-bold text-lg text-white">Manager Hub</h1>
                   <p className="text-xs text-slate-400">Teaching Excellence</p>
                 </div>
               </div>
@@ -218,8 +229,16 @@ const DashboardManagerLayout = () => {
                 <AssesmentManagement />
               </div>
             )}
-
-           
+            {activeTab === "curriculumManagement" && (
+              <div className="h-full">
+                <CurriculumManagementPage />
+              </div>
+            )}
+            {activeTab === "questionForAssessment" && (
+              <div className="h-full">
+                <QuestionForAssessmentPage />
+              </div>
+            )}
           </div>
         </div>
       </main>
