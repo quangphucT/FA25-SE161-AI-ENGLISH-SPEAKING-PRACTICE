@@ -20,19 +20,15 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify(body),
     }); 
-    let data: any = null;
-    try {
-      data = await response.json();
-    } catch (_) {
-      data = null;
-    }
-    // Trả về status code đúng từ BE thay vì luôn 200
+    const data = await response.json();
+    
+    // Kiểm tra nếu backend trả về lỗi
     if (!response.ok) {
-      const message = (data && (data.message || data.error || data.title)) || "Register failed";
-      return NextResponse.json(data ?? { message }, { status: response.status });
+      return NextResponse.json(data, { status: response.status });
     }
-    // Success, chuyển nguyên status từ BE (200/201)
-    return NextResponse.json(data ?? { success: true }, { status: response.status });
+    
+    // Trả về thành công
+    return NextResponse.json(data, { status: 200 });
   } catch (error: unknown) {
     const e = error as CustomError;
     const message = e.response?.data?.message || e.message || "Register failed";
