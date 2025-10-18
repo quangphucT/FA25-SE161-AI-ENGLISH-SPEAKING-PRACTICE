@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const response = await fetch(
-      `${process.env.BE_API_URL}/auth/login`,
+      `${process.env.BE_API_URL}/Auth/login`,
       {
         method: "POST",
         headers: {
@@ -26,23 +26,24 @@ export async function POST(request: Request) {
     );
     
     const data = await response.json();
-    const {accessToken, refreshToken} = data.account;
+    console.log("Data:", data)
+    const {accessToken, refreshToken} = data;
 
-    const res = NextResponse.json(data, { status: 200 });
+    const res = NextResponse.json(data, { status: response.status });
 
     res.cookies.set("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
       path: "/",
       sameSite: "lax",
-      maxAge: 60 * 60, // 1 hour
+      maxAge: 60 , // 1 minutes
     });
     res.cookies.set("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       path: "/",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 120, // 2 minutes
     });
     return res;
   } catch (error: unknown) {
