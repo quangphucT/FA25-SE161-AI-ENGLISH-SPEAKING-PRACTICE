@@ -132,21 +132,21 @@ const ManagerManagement = () => {
     return matchesName && matchesStatus;
   });
 
-  const handleSelectRow = (idx: number) => {
-    setSelectedRows(
-      selectedRows.includes(idx)
-        ? selectedRows.filter((i) => i !== idx)
-        : [...selectedRows, idx]
-    );
-  };
+  // const handleSelectRow = (idx: number) => {
+  //   setSelectedRows(
+  //     selectedRows.includes(idx)
+  //       ? selectedRows.filter((i) => i !== idx)
+  //       : [...selectedRows, idx]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredManagers.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredManagers.map((_, idx) => idx));
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedRows.length === filteredManagers.length) {
+  //     setSelectedRows([]);
+  //   } else {
+  //     setSelectedRows(filteredManagers.map((_, idx) => idx));
+  //   }
+  // };
 
   const handleViewDetails = (Manager: Manager) => {
     setSelectedManager(Manager);

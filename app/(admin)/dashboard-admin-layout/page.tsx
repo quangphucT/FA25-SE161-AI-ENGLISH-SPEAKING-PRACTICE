@@ -29,7 +29,6 @@ import PurchasesManagement from "../purchases-management/page";
 import FeedbacksCommentsManagement from "../feedbacks-comments-management/page";
 // import TopicConversationManagement from "../topic-conversation-management/page";
 import ManagerManagement from "../managers-management/page";
-import Certificate from "../certificate/page";
 import WithdrawRequest from "../withdraw-request/page";
 import ReviewMoneyManagement from "../review-money-management/page";
 // import SoldPackages from './../soldpackages-management/page';

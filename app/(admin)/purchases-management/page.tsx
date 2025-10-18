@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -388,21 +387,21 @@ const PurchasesManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleSelectRow = (idx: number) => {
-    setSelectedRows(
-      selectedRows.includes(idx)
-        ? selectedRows.filter((i) => i !== idx)
-        : [...selectedRows, idx]
-    );
-  };
+  // const handleSelectRow = (idx: number) => {
+  //   setSelectedRows(
+  //     selectedRows.includes(idx)
+  //       ? selectedRows.filter((i) => i !== idx)
+  //       : [...selectedRows, idx]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredPurchases.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredPurchases.map((_, idx) => idx));
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedRows.length === filteredPurchases.length) {
+  //     setSelectedRows([]);
+  //   } else {
+  //     setSelectedRows(filteredPurchases.map((_, idx) => idx));
+  //   }
+  // };
 
   const handleViewDetails = (purchase: Purchase) => {
     setSelectedPurchase(purchase);

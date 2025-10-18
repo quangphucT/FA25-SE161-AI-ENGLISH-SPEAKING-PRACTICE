@@ -20,43 +20,106 @@ import { useState } from "react";
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import AdvertisingMessage from "@/components/AdvertisingMessage";
 import Link from "next/link";
+import { OTPPopup } from "@/components/PopUpVerifyToken";
+import { useVerifyOTPMutation } from "@/hooks/useVerifyOTPMutation";
+import { useResendOTPMutation } from "@/hooks/useResendOTPMutation";
+
 const formSchema = z.object({
-  firstName: z.string().min(1, "Vui lòng nhập tên").max(50),
-  lastName: z.string().min(1, "Vui lòng nhập họ").max(50),
+  fullName: z.string().min(1, "Vui lòng nhập tên đầy đủ").max(100),
   email: z.string().email("Email không hợp lệ"),
-  phone: z.string().min(8, "Số điện thoại không hợp lệ").max(15),
+  phoneNumber: z.string().min(8, "Số điện thoại không hợp lệ").max(15),
   password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
+  role: z.enum(["LEARNER", "REVIEWER"]),
 });
 
 export default function RegisterPage() {
   const router = useRouter();
   const { mutate, isPending } = useRegisterMutation();
   const [step, setStep] = useState(1);
+  const [userEmail, setUserEmail] = useState("");
+  const [showOTPPopup, setShowOTPPopup] = useState(false);
+  const [resendOTPSuccess, setResendOTPSuccess] = useState<(() => void) | undefined>(undefined);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      fullName: "",
       email: "",
-      phone: "",
+      phoneNumber: "",
       password: "",
+      role: "LEARNER",
     },
   });
 
+
+  const { mutate: verifyOTPMutate, isPending: isVerifyingOTPPending } = useVerifyOTPMutation();
+  const { mutate: resendOTPMutate, isPending: isResendingOTPPending } = useResendOTPMutation();
+
   function handleNext() {
     if (step === 1) {
-      // Validate firstName, lastName
-      form.trigger(["firstName", "lastName"]).then((valid) => {
+      // Validate full name
+      form.trigger("fullName").then((valid) => {
         if (valid) setStep(2);
+      });
+    } else if (step === 2) {
+      // Validate role
+      form.trigger("role").then((valid) => {
+        if (valid) setStep(3);
       });
     }
   }
 
+
+  const handleLogicWhenCloseOTPPopup = () => {
+    setShowOTPPopup(false);
+    router.push("/sign-in");
+  };
+
+  const handleOTPVerify = async (otpInput: string) => {
+    verifyOTPMutate(
+      { email: userEmail, otpInput },
+      {
+        onSuccess: () => {
+          toast.success("Xác thực thành công!");
+          setShowOTPPopup(false);
+          router.push("/sign-in");
+        },
+        onError: (err) => {
+          toast.error(err.message);
+        },
+      }
+    );
+  };
+
+  const handleResendOTP = async () => {
+    // Call API to resend OTP
+    resendOTPMutate(
+      { email: userEmail },
+      {
+        onSuccess: () => {
+          // Tạo callback function để báo cho OTPPopup biết thành công
+          setResendOTPSuccess(() => () => {
+            // Reset callback sau khi sử dụng
+            setResendOTPSuccess(undefined);
+          });
+        },
+        onError: (err) => {
+          toast.error(
+            err.message || "Không thể gửi lại mã OTP. Vui lòng thử lại."
+          );
+        },
+      }
+    );
+  };
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     mutate(values, {
       onSuccess: () => {
-        toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-        router.push("/sign-in");
+        toast.success(
+          "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP."
+        );
+        setUserEmail(values.email);
+        setShowOTPPopup(true);
       },
       onError: (err) => {
         toast.error(err.message);
@@ -85,13 +148,23 @@ export default function RegisterPage() {
         </>
       )}
       <div className="w-full max-w-md rounded-2xl  p-10 flex flex-col items-center relative">
-        {step === 1 ? (
+        {step === 1 && (
           <>
             <h1 className="text-2xl font-bold text-white mb-8 text-center">
-              Nhập họ và tên
+              Tên đầy đủ của bạn là gì?
             </h1>
           </>
-        ) : (
+        )}
+
+        {step === 2 && (
+          <>
+            <h1 className="text-2xl font-bold text-white mb-8 text-center">
+              Chọn vai trò
+            </h1>
+          </>
+        )}
+
+        {step === 3 && (
           <>
             <h1 className="text-2xl font-bold text-white mb-8 text-center">
               Tạo hồ sơ
@@ -109,30 +182,14 @@ export default function RegisterPage() {
                 <div className="flex flex-col gap-4">
                   <FormField
                     control={form.control}
-                    name="firstName"
+                    name="fullName"
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormControl>
                           <Input
-                            placeholder="Tên"
+                            placeholder="Tên đầy đủ"
                             {...field}
                             className="bg-[#18232a]  text-white border border-[#616163] rounded-xl px-4 py-[23px] text-lg "
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <Input
-                            placeholder="Họ"
-                            {...field}
-                            className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] text-lg"
                           />
                         </FormControl>
                         <FormMessage />
@@ -149,7 +206,66 @@ export default function RegisterPage() {
                 </Button>
               </>
             )}
+
             {step === 2 && (
+              <>
+                <div className="flex flex-col gap-4">
+                  {/* --- Card chọn Role --- */}
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex gap-4 mt-2">
+                          <div
+                            onClick={() => field.onChange("LEARNER")}
+                            className={`flex-1 cursor-pointer border rounded-xl p-6 text-center transition ${
+                              field.value === "LEARNER"
+                                ? "border-[#2ed7ff] bg-[#22303a]"
+                                : "border-[#616163] bg-[#18232a]"
+                            }`}
+                          >
+                            <h3 className="text-white font-semibold text-lg">
+                              👨‍🎓 Learner
+                            </h3>
+                            <p className="text-gray-400 text-sm mt-2">
+                              Dành cho học viên tham gia bài test.
+                            </p>
+                          </div>
+
+                          <div
+                            onClick={() => field.onChange("REVIEWER")}
+                            className={`flex-1 cursor-pointer border rounded-xl p-6 text-center transition ${
+                              field.value === "REVIEWER"
+                                ? "border-[#2ed7ff] bg-[#22303a]"
+                                : "border-[#616163] bg-[#18232a]"
+                            }`}
+                          >
+                            <h3 className="text-white font-semibold text-lg">
+                              🧑‍🏫 Reviewer
+                            </h3>
+                            <p className="text-gray-400 text-sm mt-2">
+                              Dành cho người chấm bài, đánh giá học viên.
+                            </p>
+                          </div>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-full bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
+                >
+                  Tiếp theo
+                </Button>
+              </>
+            )}
+
+            {step === 3 && (
               <>
                 <FormField
                   control={form.control}
@@ -169,7 +285,7 @@ export default function RegisterPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="phone"
+                  name="phoneNumber"
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
@@ -209,8 +325,10 @@ export default function RegisterPage() {
                 </Button>
               </>
             )}
-             
-            <GoogleLoginButton onClick={() => toast.error("Chức năng đang phát triển")} />
+
+            <GoogleLoginButton
+              onClick={() => toast.error("Chức năng đang phát triển")}
+            />
           </form>
         </Form>
         <div className="mt-8 text-center text-gray-400 text-sm">
@@ -219,8 +337,18 @@ export default function RegisterPage() {
             Đăng nhập
           </Link>
         </div>
-        <AdvertisingMessage/>
+        <AdvertisingMessage />
       </div>
+      {/* OTP Popup */}
+      <OTPPopup
+        isOpen={showOTPPopup}
+        onClose={handleLogicWhenCloseOTPPopup}
+        onVerify={handleOTPVerify}
+        onResendOTP={handleResendOTP}
+        onResendOTPSuccess={resendOTPSuccess}
+        isVerifying={isVerifyingOTPPending}
+        isResendingOTP={isResendingOTPPending}
+      />
     </div>
   );
 }
