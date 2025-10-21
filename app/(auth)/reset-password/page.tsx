@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +21,7 @@ const schema = z
     path: ["confirmPassword"],
   });
 
-export default function ResetPasswordPage() {
+function ResetPasswordInner() {
   const search = useSearchParams();
   const router = useRouter();
   const token = search.get("token") || "";
@@ -50,7 +51,7 @@ export default function ResetPasswordPage() {
       }
       toast.success(data?.message || "Đặt lại mật khẩu thành công");
       router.push("/sign-in");
-    } catch (e) {
+    } catch {
       toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
     } finally {
       setIsSubmitting(false);
@@ -106,6 +107,14 @@ export default function ResetPasswordPage() {
         </Form>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Đang tải...</div>}>
+      <ResetPasswordInner />
+    </Suspense>
   );
 }
 
