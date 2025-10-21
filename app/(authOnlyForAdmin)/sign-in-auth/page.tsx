@@ -13,23 +13,14 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import Link from "next/link";
 import { useLoginMutation } from "@/hooks/useLoginMutation";
 import { Loader2 } from "lucide-react";
-import { GoogleLoginButton } from "@/components/GoogleLoginButton";
-import AdvertisingMessage from "@/components/AdvertisingMessage";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebaseConfig";
-import { useLoginWithGoogle } from "@/hooks/useLoginWithGoogle";
-import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function LoginForm() {
   const { mutate, isPending } = useLoginMutation();
-  const { mutate: mutateGoogleLoginForLearner } = useLoginWithGoogle();
-  const { mutate: mutateGoogleLoginForReviewer } = useLoginWithGoogle();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<"LEARNER" | "REVIEWER">(
-    "LEARNER"
+  const [selectedRole, setSelectedRole] = useState<"ADMIN" | "MANAGER">(
+    "ADMIN"
   );
 
   const formSchema = z.object({
@@ -53,21 +44,11 @@ export default function LoginForm() {
     };
     mutate(payload, {
       onSuccess: (data) => {
-        // const { role } = data;
-        // if (selectedRole !== role) {
-        //   toast.warning(
-        //     `Vai trò tài khoản là ${role}, khác với lựa chọn ${selectedRole}. Hệ thống sẽ điều hướng theo vai trò tài khoản.`
-        //   );
-        // }
         // Điều hướng dựa vào trạng thái
-        if (data.role === "LEARNER") {
-          if (!data.isPlacementTestDone) {
-            router.push("/entrance_test");
-          } else {
-            router.push("/dashboard-learner-layout");
-          }
-        } else if (data.role === "REVIEWER") {
-          router.push("/dashboard-reviewer-layout");
+        if (data.role === "ADMIN") {
+          router.push("/dashboard-admin-layout");
+        } else if (data.role === "MANAGER") {
+          router.push("/dashboard-manager-layout");
         } else {
           router.push("/sign-in");
         }
@@ -75,43 +56,9 @@ export default function LoginForm() {
     });
   }
 
-  // Google Login handler
-  const handleLoginWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    const idToken = await user.getIdToken();
-    if (selectedRole === "LEARNER") {
-      mutateGoogleLoginForLearner(
-        { idToken, role: selectedRole },
-        {
-          onSuccess: (data) => {
-            toast.success("Đăng nhập với Google thành công!");
-            // if (!data?.isPlacementTestDone) {
-            //   router.push("/entrance-test");
-            // }
-          },
-        }
-      ); // 🔑 gửi idToken qua hook
-    } else {
-      mutateGoogleLoginForReviewer(
-        { idToken, role: selectedRole },
-        {
-          onSuccess: (data) => {
-            toast.success("Đăng nhập với Google thành công!");
-          },
-        }
-      );
-    }
-  };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#18232a]">
-      <button
-        className="absolute left-6 top-6 cursor-pointer text-gray-400 hover:text-white text-3xl font-bold"
-        aria-label="Quay về đăng nhập"
-        onClick={() => router.push("/landing")}
-      >
-        ×
-      </button>
+    
       <div className="w-full max-w-md bg-[#18232a] rounded-xl shadow-lg p-8 flex flex-col items-center">
         <h1 className="text-3xl font-bold text-white mb-8 text-center">
           Đăng nhập
@@ -125,21 +72,21 @@ export default function LoginForm() {
         >
           <TabsList className="grid grid-cols-2 w-full bg-[#22313c] rounded-xl">
             <TabsTrigger
-              value="LEARNER"
+              value="ADMIN"
               className="text-white data-[state=active]:bg-[#2ed7ff] data-[state=active]:text-[#18232a] rounded-xl cursor-pointer"
             >
-              Người học
+              Quản trị viên
             </TabsTrigger>
             <TabsTrigger
-              value="REVIEWER"
+              value="MANAGER"
               className="text-white data-[state=active]:bg-[#2ed7ff] data-[state=active]:text-[#18232a] rounded-xl cursor-pointer"
             >
-              Người đánh giá
+              Người quản lý
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab: Học viên */}
-          <TabsContent value="LEARNER">
+          {/* Tab: Admin */}
+          <TabsContent value="ADMIN">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -200,7 +147,7 @@ export default function LoginForm() {
                   />
                   ĐĂNG NHẬP
                 </Button>
-                <GoogleLoginButton onClick={handleLoginWithGoogle} />
+                {/* <GoogleLoginButton onClick={handleLoginWithGoogle} />
                 <div className="mt-6 text-center text-gray-400 text-sm">
                   Chưa có tài khoản?{" "}
                   <Link
@@ -209,13 +156,13 @@ export default function LoginForm() {
                   >
                     Đăng ký ngay
                   </Link>
-                </div>
+                </div> */}
               </form>
             </Form>
           </TabsContent>
 
-          {/* Tab: Reviewer */}
-          <TabsContent value="REVIEWER">
+          {/* Tab: Manager */}
+          <TabsContent value="MANAGER">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -276,7 +223,7 @@ export default function LoginForm() {
                   />
                   ĐĂNG NHẬP
                 </Button>
-                <GoogleLoginButton onClick={handleLoginWithGoogle} />
+                {/* <GoogleLoginButton onClick={handleLoginWithGoogle} />
                 <div className="mt-6 text-center text-gray-400 text-sm">
                   Chưa có tài khoản?{" "}
                   <Link
@@ -285,13 +232,13 @@ export default function LoginForm() {
                   >
                     Đăng ký ngay
                   </Link>
-                </div>
+                </div> */}
               </form>
             </Form>
           </TabsContent>
         </Tabs>
 
-        <AdvertisingMessage />
+        {/* <AdvertisingMessage /> */}
       </div>
     </div>
   );

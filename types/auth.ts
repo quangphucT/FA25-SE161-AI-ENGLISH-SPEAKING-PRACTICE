@@ -13,6 +13,7 @@ export interface LoginResponse {
 }
 export interface GoogleLoginRequest {
   idToken: string;
+  role: "LEARNER" | "REVIEWER";
 }
 export interface GoogleLoginResponse {
   message: string;
@@ -52,5 +53,15 @@ export interface ResendOTPRequest {
 }
 
 export interface ResendOTPResponse {
+  message: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordResponse {
   message: string;
 }

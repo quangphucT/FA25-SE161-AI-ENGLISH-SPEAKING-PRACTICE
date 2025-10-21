@@ -4,6 +4,7 @@ import { loginService } from "@/features/shared/services/authService";
 import { LoginRequest, LoginResponse } from "@/types/auth";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 
 export const useLoginMutation = () => {
@@ -35,5 +36,8 @@ export const useLoginMutation = () => {
     //       break;
     //   }
     // },
+      onError: (error) => {
+        toast.error(`Đăng nhập thất bại: ${error.message}`);
+      }
   });
 };

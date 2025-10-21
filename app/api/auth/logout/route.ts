@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       path: '/',
       maxAge: 0, // Expires immediately
       expires: new Date(0),
+      
     });
     
     successResponse.cookies.set('refreshToken', '', {
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
       sameSite: 'strict',
       path: '/',
       maxAge: 0, // Expires immediately
+
       expires: new Date(0),
     });
     

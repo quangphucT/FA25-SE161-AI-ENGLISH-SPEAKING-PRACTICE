@@ -26,7 +26,6 @@ export async function POST(request: Request) {
     );
     
     const data = await response.json();
-    console.log("Data:", data)
     const {accessToken, refreshToken} = data;
 
     const res = NextResponse.json(data, { status: response.status });

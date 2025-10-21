@@ -105,12 +105,14 @@ export const loginWithGoogleService = async (
   credentials: GoogleLoginRequest
 ): Promise<GoogleLoginResponse> => {
   try {
-    const response = await fetch("/api/auth/google-login", {
+    const { idToken, role } = credentials;
+    const endpoint = role === "LEARNER" ? "/api/auth/google-login-learner" : "/api/auth/google-login-reviewer";
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(credentials),
+      body: JSON.stringify({idToken}),
     });
     const data = await response.json();
     if (!response.ok)

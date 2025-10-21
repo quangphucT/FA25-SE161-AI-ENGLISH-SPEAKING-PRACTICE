@@ -38,7 +38,9 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [userEmail, setUserEmail] = useState("");
   const [showOTPPopup, setShowOTPPopup] = useState(false);
-  const [resendOTPSuccess, setResendOTPSuccess] = useState<(() => void) | undefined>(undefined);
+  const [resendOTPSuccess, setResendOTPSuccess] = useState<
+    (() => void) | undefined
+  >(undefined);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,24 +53,24 @@ export default function RegisterPage() {
     },
   });
 
-
-  const { mutate: verifyOTPMutate, isPending: isVerifyingOTPPending } = useVerifyOTPMutation();
-  const { mutate: resendOTPMutate, isPending: isResendingOTPPending } = useResendOTPMutation();
+  const { mutate: verifyOTPMutate, isPending: isVerifyingOTPPending } =
+    useVerifyOTPMutation();
+  const { mutate: resendOTPMutate, isPending: isResendingOTPPending } =
+    useResendOTPMutation();
 
   function handleNext() {
     if (step === 1) {
       // Validate full name
-      form.trigger("fullName").then((valid) => {
+      form.trigger("role").then((valid) => {
         if (valid) setStep(2);
       });
     } else if (step === 2) {
       // Validate role
-      form.trigger("role").then((valid) => {
+      form.trigger("fullName").then((valid) => {
         if (valid) setStep(3);
       });
     }
   }
-
 
   const handleLogicWhenCloseOTPPopup = () => {
     setShowOTPPopup(false);
@@ -129,55 +131,92 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#18232a]">
-      {step === 1 ? (
+      {step === 1 && (
         <>
-          {" "}
-          <button
-            className="absolute left-6 top-6 cursor-pointer text-gray-400 hover:text-white text-3xl font-bold"
-            aria-label="Quay về đăng nhập"
-            onClick={() => router.push("/landing")}
-          >
-            ×
-          </button>
+          <h1 className="text-2xl font-bold text-white mb-0.5 text-center">
+            Chọn vai trò
+          </h1>
         </>
-      ) : (
+      )}
+      {step === 2 && (
         <>
-          <button className="absolute left-6 top-6 text-gray-400 hover:text-white text-3xl font-bold">
-            <ArrowLeft className="text-white" onClick={() => setStep(1)} />
-          </button>
+          <h1 className="text-2xl font-bold text-white mb-0.5 text-center">
+            Tên đầy đủ
+          </h1>
+        </>
+      )}
+      {step === 3 && (
+        <>
+          <h1 className="text-2xl font-bold text-white mb-0.5 text-center">
+            Tạo hồ sơ
+          </h1>
         </>
       )}
       <div className="w-full max-w-md rounded-2xl  p-10 flex flex-col items-center relative">
-        {step === 1 && (
-          <>
-            <h1 className="text-2xl font-bold text-white mb-8 text-center">
-              Tên đầy đủ của bạn là gì?
-            </h1>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <h1 className="text-2xl font-bold text-white mb-8 text-center">
-              Chọn vai trò
-            </h1>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <h1 className="text-2xl font-bold text-white mb-8 text-center">
-              Tạo hồ sơ
-            </h1>
-          </>
-        )}
-
+      
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 w-full"
           >
             {step === 1 && (
+              <>
+                <div className="flex flex-col gap-4">
+                  {/* --- Card chọn Role --- */}
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex gap-4 mt-2">
+                          <div
+                            onClick={() => field.onChange("LEARNER")}
+                            className={`flex-1 cursor-pointer border rounded-xl p-6 text-center transition ${
+                              field.value === "LEARNER"
+                                ? "border-[#2ed7ff] bg-[#22303a]"
+                                : "border-[#616163] bg-[#18232a]"
+                            }`}
+                          >
+                            <h3 className="text-white font-semibold text-lg">
+                              Learner
+                            </h3>
+                            <p className="text-gray-400 text-sm mt-2">
+                              Dành cho học viên tham gia bài test.
+                            </p>
+                          </div>
+
+                          <div
+                            onClick={() => field.onChange("REVIEWER")}
+                            className={`flex-1 cursor-pointer border rounded-xl p-6 text-center transition ${
+                              field.value === "REVIEWER"
+                                ? "border-[#2ed7ff] bg-[#22303a]"
+                                : "border-[#616163] bg-[#18232a]"
+                            }`}
+                          >
+                            <h3 className="text-white font-semibold text-lg">
+                              Reviewer
+                            </h3>
+                            <p className="text-gray-400 text-sm mt-2">
+                              Dành cho người chấm bài, đánh giá học viên.
+                            </p>
+                          </div>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-full cursor-pointer bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
+                >
+                  Tiếp theo
+                </Button>
+              </>
+            )}
+            {step === 2 && (
               <>
                 <div className="flex flex-col gap-4">
                   <FormField
@@ -200,71 +239,12 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className="w-full bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
+                  className="w-full cursor-pointer bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
                 >
                   Tiếp theo
                 </Button>
               </>
             )}
-
-            {step === 2 && (
-              <>
-                <div className="flex flex-col gap-4">
-                  {/* --- Card chọn Role --- */}
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex gap-4 mt-2">
-                          <div
-                            onClick={() => field.onChange("LEARNER")}
-                            className={`flex-1 cursor-pointer border rounded-xl p-6 text-center transition ${
-                              field.value === "LEARNER"
-                                ? "border-[#2ed7ff] bg-[#22303a]"
-                                : "border-[#616163] bg-[#18232a]"
-                            }`}
-                          >
-                            <h3 className="text-white font-semibold text-lg">
-                              👨‍🎓 Learner
-                            </h3>
-                            <p className="text-gray-400 text-sm mt-2">
-                              Dành cho học viên tham gia bài test.
-                            </p>
-                          </div>
-
-                          <div
-                            onClick={() => field.onChange("REVIEWER")}
-                            className={`flex-1 cursor-pointer border rounded-xl p-6 text-center transition ${
-                              field.value === "REVIEWER"
-                                ? "border-[#2ed7ff] bg-[#22303a]"
-                                : "border-[#616163] bg-[#18232a]"
-                            }`}
-                          >
-                            <h3 className="text-white font-semibold text-lg">
-                              🧑‍🏫 Reviewer
-                            </h3>
-                            <p className="text-gray-400 text-sm mt-2">
-                              Dành cho người chấm bài, đánh giá học viên.
-                            </p>
-                          </div>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  className="w-full bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
-                >
-                  Tiếp theo
-                </Button>
-              </>
-            )}
-
             {step === 3 && (
               <>
                 <FormField
@@ -319,16 +299,14 @@ export default function RegisterPage() {
                 <Button
                   disabled={isPending}
                   type="submit"
-                  className="w-full bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
+                  className="w-full cursor-pointer bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
                 >
                   Tạo tài khoản
                 </Button>
               </>
             )}
 
-            <GoogleLoginButton
-              onClick={() => toast.error("Chức năng đang phát triển")}
-            />
+           
           </form>
         </Form>
         <div className="mt-8 text-center text-gray-400 text-sm">
