@@ -6,10 +6,19 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { useResetPassword } from "@/hooks/useResetPassword";
+import { Loader2 } from "lucide-react";
+import { resetPasswordSchema, ResetPasswordSchema } from "@/lib/validators/passwordValidator";
 
 const schema = z
   .object({
@@ -25,37 +34,37 @@ function ResetPasswordInner() {
   const search = useSearchParams();
   const router = useRouter();
   const token = search.get("token") || "";
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
+  const {mutate:resetPassword, isPending } = useResetPassword();
+
+  const form = useForm<ResetPasswordSchema>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: { newPassword: "", confirmPassword: "" },
   });
 
-  const onSubmit = async (values: z.infer<typeof schema>) => {
+  const onSubmit = async (values: ResetPasswordSchema) => {
     if (!token) {
       toast.error("Thiếu token đặt lại mật khẩu. Vui lòng kiểm tra email.");
       return;
     }
-    try {
-      setIsSubmitting(true);
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, ...values }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(data?.message || "Đặt lại mật khẩu thất bại");
-        return;
+    resetPassword(
+      {
+        credentials: {
+          newPassword: values.newPassword,
+          confirmPassword: values.confirmPassword,
+        },
+        token,
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message || "Đặt lại mật khẩu thành công");
+          router.push("/sign-in");
+        },
+        onError: (data) => {
+          toast.error(data?.message || "Đặt lại mật khẩu thất bại");
+        },
       }
-      toast.success(data?.message || "Đặt lại mật khẩu thành công");
-      router.push("/sign-in");
-    } catch {
-      toast.error("Có lỗi xảy ra. Vui lòng thử lại sau.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    );
   };
 
   return (
@@ -100,8 +109,18 @@ function ResetPasswordInner() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmitting} className="w-full bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition cursor-pointer">
-              {isSubmitting ? "Đang xử lý..." : "XÁC NHẬN"}
+            <Button
+              type="submit"
+              className="w-full bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition cursor-pointer"
+            >
+              {isPending ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="animate-spin" />
+                  <span>Đang xử lý...</span>
+                </div>
+              ) : (
+                "Xác nhận"
+              )}
             </Button>
           </form>
         </Form>
@@ -112,9 +131,14 @@ function ResetPasswordInner() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Đang tải...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-white">
+          Đang tải...
+        </div>
+      }
+    >
       <ResetPasswordInner />
     </Suspense>
   );
 }
-

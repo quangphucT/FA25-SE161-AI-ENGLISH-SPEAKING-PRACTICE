@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       `${process.env.BE_API_URL}/Auth/google-login-reviewer`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json"
+         },
         body: JSON.stringify(body),
       }
     );

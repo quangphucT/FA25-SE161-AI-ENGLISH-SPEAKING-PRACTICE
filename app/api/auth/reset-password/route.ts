@@ -5,31 +5,45 @@ import { CustomError } from "@/types/auth";
 
 export async function POST(request: Request) {
   try {
+    const url = new URL(request.url);
+    const token = url.searchParams.get('token') || '';
     const body = await request.json();
-    const { token, newPassword, confirmPassword } = body ?? {};
+    const { newPassword, confirmPassword } = body ?? {};
+    const payload = { newPassword, confirmPassword };
 
-    if (!token || !newPassword || !confirmPassword) {
+    if (!token) {
       return NextResponse.json(
-        { message: "Token, mật khẩu mới và xác nhận mật khẩu là bắt buộc" },
+        { message: "Thiếu token đặt lại mật khẩu" },
         { status: 400 }
       );
     }
 
-    const response = await fetch(`${process.env.BE_API_URL}/Auth/reset-password`, {
+    if (!newPassword || !confirmPassword ) {
+      return NextResponse.json(
+        { message: "Mật khẩu mới, xác nhận mật khẩu và mật khẩu hiện tại là bắt buộc" },
+        { status: 400 }
+      );
+    }
+
+    const response = await fetch(`${process.env.BE_API_URL}/Auth/reset-password-by-link`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
       },
-      body: JSON.stringify({ token, newPassword, confirmPassword }),
+      body: JSON.stringify(payload),
     });
 
-    const data = await response.json().catch(() => ({}));
-
+     const data = await response.json();
+    
+    // Kiểm tra nếu backend trả về lỗi
     if (!response.ok) {
-      return NextResponse.json(data || { message: "Reset password failed" }, { status: response.status });
+      return NextResponse.json(data, { status: response.status });
     }
+    
+    // Trả về thành công
+    return NextResponse.json(data, { status: 200 });
 
-    return NextResponse.json(data || { message: "Reset password successful" }, { status: response.status });
   } catch (error: unknown) {
     const e = error as CustomError;
     const message = e.response?.data?.message || e.message || "Reset password failed";
