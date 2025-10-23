@@ -57,11 +57,24 @@ export interface ResendOTPResponse {
 }
 
 export interface ResetPasswordRequest {
-  token: string;
   newPassword: string;
   confirmPassword: string;
 }
+export interface ResetPasswordVars {
+  credentials: ResetPasswordRequest;
+  token: string;
+};
 
 export interface ResetPasswordResponse {
   message: string;
 }
+
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
