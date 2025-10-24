@@ -249,7 +249,6 @@ const sampleFeedbacks: Feedback[] = [
 ];
 
 const FeedbacksCommentsManagement = () => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);

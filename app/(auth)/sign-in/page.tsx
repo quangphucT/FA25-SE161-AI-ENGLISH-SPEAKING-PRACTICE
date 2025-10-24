@@ -37,6 +37,9 @@ export default function LoginForm() {
   const [selectedRole, setSelectedRole] = useState<"LEARNER" | "REVIEWER">(
     "LEARNER"
   );
+  // Move showPassword state to top-level to satisfy hooks rules
+  const [showPasswordLearner, setShowPasswordLearner] = useState(false);
+  const [showPasswordReviewer, setShowPasswordReviewer] = useState(false);
 
   const formSchema = z.object({
     email: z.string().min(2).max(100).email(),
@@ -183,49 +186,41 @@ export default function LoginForm() {
                 <FormField
                   control={form.control}
                   name="password"
-                  render={({ field }) => {
-                    const [showPassword, setShowPassword] = useState(false);
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <div className="relative w-full">
+                          <FormControl>
+                            <Input
+                              type={showPasswordLearner ? "text" : "password"}
+                              placeholder="Mật khẩu"
+                              {...field}
+                              className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] pr-12 focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg w-full"
+                            />
+                          </FormControl>
 
-                    return (
-                      <FormItem>
-                        <div className="flex items-center justify-between">
-                          <div className="relative w-full">
-                            <FormControl>
-                              <Input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Mật khẩu"
-                                {...field}
-                                className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] pr-12 focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg w-full"
-                              />
-                            </FormControl>
-
-                            {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
-                            >
-                              {showPassword ? (
-                                <EyeOff size={22} />
-                              ) : (
-                                <Eye size={22} />
-                              )}
-                            </button>
-                          </div>
-
-                          {/* Link QUÊN? */}
-                          <span
-                            onClick={() => router.push("/forgot-password")}
-                            className="ml-3 text-gray-400 text-sm cursor-pointer whitespace-nowrap"
+                          {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordLearner(!showPasswordLearner)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
                           >
-                            QUÊN?
-                          </span>
+                            {showPasswordLearner ? <EyeOff size={22} /> : <Eye size={22} />}
+                          </button>
                         </div>
 
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
+                        {/* Link QUÊN? */}
+                        <span
+                          onClick={() => router.push("/forgot-password")}
+                          className="ml-3 text-gray-400 text-sm cursor-pointer whitespace-nowrap"
+                        >
+                          QUÊN?
+                        </span>
+                      </div>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
                 <Button
                   disabled={isPending}
@@ -286,49 +281,41 @@ export default function LoginForm() {
                 <FormField
                   control={form.control}
                   name="password"
-                  render={({ field }) => {
-                    const [showPassword, setShowPassword] = useState(false);
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <div className="relative w-full">
+                          <FormControl>
+                            <Input
+                              type={showPasswordReviewer ? "text" : "password"}
+                              placeholder="Mật khẩu"
+                              {...field}
+                              className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] pr-12 focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg w-full"
+                            />
+                          </FormControl>
 
-                    return (
-                      <FormItem>
-                        <div className="flex items-center justify-between">
-                          <div className="relative w-full">
-                            <FormControl>
-                              <Input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Mật khẩu"
-                                {...field}
-                                className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] pr-12 focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg w-full"
-                              />
-                            </FormControl>
-
-                            {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
-                            >
-                              {showPassword ? (
-                                <EyeOff size={22} />
-                              ) : (
-                                <Eye size={22} />
-                              )}
-                            </button>
-                          </div>
-
-                          {/* Link QUÊN? */}
-                          <span
-                            onClick={() => router.push("/forgot-password")}
-                            className="ml-3 text-gray-400 text-sm cursor-pointer whitespace-nowrap"
+                          {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordReviewer(!showPasswordReviewer)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
                           >
-                            QUÊN?
-                          </span>
+                            {showPasswordReviewer ? <EyeOff size={22} /> : <Eye size={22} />}
+                          </button>
                         </div>
 
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
+                        {/* Link QUÊN? */}
+                        <span
+                          onClick={() => router.push("/forgot-password")}
+                          className="ml-3 text-gray-400 text-sm cursor-pointer whitespace-nowrap"
+                        >
+                          QUÊN?
+                        </span>
+                      </div>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
                 <Button
                   disabled={isPending}

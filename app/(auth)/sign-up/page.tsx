@@ -40,6 +40,7 @@ export default function RegisterPage() {
   const [resendOTPSuccess, setResendOTPSuccess] = useState<
     (() => void) | undefined
   >(undefined);
+  const [showPasswordRegister, setShowPasswordRegister] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -280,39 +281,31 @@ export default function RegisterPage() {
                 <FormField
                   control={form.control}
                   name="password"
-                  render={({ field }) => {
-                    const [showPassword, setShowPassword] = useState(false);
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPasswordRegister ? "text" : "password"}
+                            placeholder="Mật khẩu"
+                            {...field}
+                            className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] pr-12 text-lg w-full focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400"
+                          />
+                        </FormControl>
 
-                    return (
-                      <FormItem>
-                        <div className="relative">
-                          <FormControl>
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              placeholder="Mật khẩu"
-                              {...field}
-                              className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] pr-12 text-lg w-full focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400"
-                            />
-                          </FormControl>
+                        {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordRegister(!showPasswordRegister)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
+                        >
+                          {showPasswordRegister ? <EyeOff size={22} /> : <Eye size={22} />}
+                        </button>
+                      </div>
 
-                          {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
-                          >
-                            {showPassword ? (
-                              <EyeOff size={22} />
-                            ) : (
-                              <Eye size={22} />
-                            )}
-                          </button>
-                        </div>
-
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
                 <Button

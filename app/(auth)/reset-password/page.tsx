@@ -2,7 +2,6 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -20,15 +19,7 @@ import { useResetPassword } from "@/hooks/useResetPassword";
 import { Loader2 } from "lucide-react";
 import { resetPasswordSchema, ResetPasswordSchema } from "@/lib/validators/passwordValidator";
 
-const schema = z
-  .object({
-    newPassword: z.string().min(8, "Mật khẩu tối thiểu 8 ký tự"),
-    confirmPassword: z.string().min(8, "Xác nhận mật khẩu tối thiểu 8 ký tự"),
-  })
-  .refine((vals) => vals.newPassword === vals.confirmPassword, {
-    message: "Mật khẩu xác nhận không khớp",
-    path: ["confirmPassword"],
-  });
+
 
 function ResetPasswordInner() {
   const search = useSearchParams();
