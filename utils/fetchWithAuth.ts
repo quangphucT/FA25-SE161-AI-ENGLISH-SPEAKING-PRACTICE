@@ -1,4 +1,4 @@
-import { handleLogout } from "./auth";
+import { handleTokenExpiration, handleLogout } from "./auth";
 
 // utils/fetchWithAuth.ts
 interface FetchQueue {
@@ -21,14 +21,17 @@ class AuthFetch {
         fetch(input, init).then(resolve).catch(reject);
       }
     });
-    
+
     this.failedQueue = [];
   }
 
-  async fetchWithAuth(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  async fetchWithAuth(
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ): Promise<Response> {
     const response = await fetch(input, {
       ...init,
-      credentials: 'include', // Always include cookies
+      credentials: "include", // Always include cookies
     });
 
     // If 401 and not already refreshing
@@ -37,37 +40,39 @@ class AuthFetch {
 
       try {
         // Try to refresh token
-        const refreshResponse = await fetch('/api/auth/refresh-token', {
-          method: 'POST',
-          credentials: 'include',
+        const refreshResponse = await fetch("/api/auth/refresh-token", {
+          method: "POST",
+          credentials: "include",
         });
 
         if (refreshResponse.ok) {
           // Refresh successful, retry all queued requests
           this.isRefreshing = false;
           this.processQueue(null);
-          
+
           // Retry current request
           return fetch(input, {
             ...init,
-            credentials: 'include',
+            credentials: "include",
           });
         } else {
           // Refresh failed
           const refreshData = await refreshResponse.json();
-          if (refreshData.errorCode === 'TOKEN_EXPIRED' || refreshData.redirectToLogin) {
-            // Gọi logout để BE invalidate và FE dọn dẹp + redirect
-            handleLogout();
+
+          if (refreshData.status === 401) {
+            // Call full logout to invalidate server-side session and clear cookies
+            // Then redirect to sign-in via handleTokenExpiration inside handleLogout
+            await handleLogout();
           }
-          
+
           this.isRefreshing = false;
-          const error = new Error('Authentication failed');
+          const error = new Error("Authentication failed");
           this.processQueue(error);
           throw error;
         }
       } catch (error) {
         this.isRefreshing = false;
-        const authError = new Error('Refresh token failed');
+        const authError = new Error("Refresh token failed");
         this.processQueue(authError);
         throw authError;
       }

@@ -637,21 +637,7 @@ const LearnerManagement = () => {
     return matchesName && matchesStatus;
   });
 
-  const handleSelectRow = (idx: number) => {
-    setSelectedRows(
-      selectedRows.includes(idx)
-        ? selectedRows.filter((i) => i !== idx)
-        : [...selectedRows, idx]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredLearners.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredLearners.map((_, idx) => idx));
-    }
-  };
+ 
 
   const handleViewDetails = (learner: Learner) => {
     setSelectedLearner(learner);

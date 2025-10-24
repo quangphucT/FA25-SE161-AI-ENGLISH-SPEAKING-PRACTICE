@@ -12,17 +12,16 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRegisterMutation } from "@/hooks/useRegisterMutation";
-import { ArrowLeft } from "lucide-react";
 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import AdvertisingMessage from "@/components/AdvertisingMessage";
 import Link from "next/link";
 import { OTPPopup } from "@/components/PopUpVerifyToken";
 import { useVerifyOTPMutation } from "@/hooks/useVerifyOTPMutation";
 import { useResendOTPMutation } from "@/hooks/useResendOTPMutation";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   fullName: z.string().min(1, "Vui lòng nhập tên đầy đủ").max(100),
@@ -41,6 +40,7 @@ export default function RegisterPage() {
   const [resendOTPSuccess, setResendOTPSuccess] = useState<
     (() => void) | undefined
   >(undefined);
+  const [showPasswordRegister, setShowPasswordRegister] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -153,7 +153,6 @@ export default function RegisterPage() {
         </>
       )}
       <div className="w-full max-w-md rounded-2xl  p-10 flex flex-col items-center relative">
-      
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -284,29 +283,45 @@ export default function RegisterPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Mật khẩu"
-                          {...field}
-                          className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] text-lg"
-                        />
-                      </FormControl>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPasswordRegister ? "text" : "password"}
+                            placeholder="Mật khẩu"
+                            {...field}
+                            className="bg-[#18232a] text-white border border-[#616163] rounded-xl px-4 py-[23px] pr-12 text-lg w-full focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400"
+                          />
+                        </FormControl>
+
+                        {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordRegister(!showPasswordRegister)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
+                        >
+                          {showPasswordRegister ? <EyeOff size={22} /> : <Eye size={22} />}
+                        </button>
+                      </div>
+
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <Button
                   disabled={isPending}
                   type="submit"
                   className="w-full cursor-pointer bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition"
                 >
+                  <Loader2
+                    className={
+                      isPending ? "inline-block mr-2 animate-spin" : "hidden"
+                    }
+                  />
                   Tạo tài khoản
                 </Button>
               </>
             )}
-
-           
           </form>
         </Form>
         <div className="mt-8 text-center text-gray-400 text-sm">
