@@ -1,4 +1,6 @@
 import {
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
   GoogleLoginRequest,
   GoogleLoginResponse,
   LoginRequest,
@@ -7,6 +9,8 @@ import {
   RegisterResponse,
   ResendOTPRequest,
   ResendOTPResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
   VerifyOTPRequest,
   VerifyOTPResponse,
 } from "@/types/auth";
@@ -123,6 +127,57 @@ export const loginWithGoogleService = async (
       error?.response?.data?.message ||
       error.message ||
       "Login with Google failed";
+    throw new Error(message);
+  }
+};
+
+// Forgot Password Service
+export const forgotPasswordService = async (
+  credentials: ForgotPasswordRequest
+): Promise<ForgotPasswordResponse> => {
+  try {
+    const response = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+
+      },
+      body: JSON.stringify(credentials),
+    });
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.message || "Forgot password failed");
+    return data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message ||
+      error.message ||
+      "Forgot password failed";
+    throw new Error(message);
+  }
+};
+
+export const resetPasswordService = async (
+  credentials: ResetPasswordRequest,
+  token: string
+): Promise<ResetPasswordResponse> => {
+  try {
+    const response = await fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}` , {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    });
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.message || "Reset password failed");
+    return data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message ||
+      error.message ||
+      "Reset password failed";
     throw new Error(message);
   }
 };

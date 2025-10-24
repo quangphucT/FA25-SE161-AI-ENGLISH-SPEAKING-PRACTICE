@@ -366,7 +366,6 @@ const samplePurchases: Purchase[] = [
 ];
 
 const PurchasesManagement = () => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);

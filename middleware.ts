@@ -1,3 +1,4 @@
+import { is } from "date-fns/locale";
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
@@ -5,24 +6,71 @@ export function middleware(request: NextRequest) {
   const pathName = request.nextUrl.pathname;
 
   // Nếu không có token và đang truy cập dashboard → redirect về login
-  if (!accessToken && pathName.startsWith("/dashboard")) {
+  if (
+    !accessToken &&
+    pathName.startsWith("/dashboard") &&
+    pathName.startsWith("/entrance")
+  ) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
+  // Nếu có token thì decode để lấy role + flag
   if (accessToken) {
     try {
       const base64 = accessToken.split(".")[1];
       const decodedPayload = JSON.parse(
         Buffer.from(base64, "base64").toString()
       );
+      console.log("Decodingdfffff:", decodedPayload);
+
+      // lấy role + flag
       const role =
         decodedPayload[
           "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
         ];
-      console.log("Role:", role);
+
+      // ⚙️ Chuyển string "False"/"True" về boolean thật
+      const isPlacementTestDone =
+        decodedPayload["IsPlacementTestDone"] === "True";
+      const isReviewerActive = decodedPayload["IsReviewerActive"] === "True";
+
+      // Nếu LEARNER chưa làm placement test → chuyển hướng tới trang test
+      if (role === "LEARNER" && !isPlacementTestDone) {
+        return NextResponse.redirect(new URL("/entrance_test", request.url));
+      }
+
+      // Nếu REVIEWER chưa hoàn tất chứng chỉ → chuyển hướng tới trang upload
+      if (role === "REVIEWER" && !isReviewerActive) {
+        return NextResponse.redirect(
+          new URL("/entrance_information", request.url)
+        );
+      }
 
       // Nếu có token mà vẫn truy cập auth pages → redirect dashboard
       if (["/sign-in", "/sign-up", "/forgot-password"].includes(pathName)) {
+        if (role === "LEARNER") {
+          if (!isPlacementTestDone) {
+            return NextResponse.redirect(
+              new URL("/entrance_test", request.url)
+            );
+          }
+          return NextResponse.redirect(
+            new URL(`/dashboard-${role?.toLowerCase()}-layout`, request.url)
+          );
+        }
+        if (role === "REVIEWER") {
+          // Nếu reviewer chưa verify → đi trang verify
+          if (!isReviewerActive) {
+            return NextResponse.redirect(
+              new URL("/entrance_information", request.url)
+            );
+          }
+          return NextResponse.redirect(
+            new URL("/dashboard-reviewer-layout", request.url)
+          );
+        }
+
+        // Admin / Manager
         return NextResponse.redirect(
           new URL(`/dashboard-${role?.toLowerCase()}-layout`, request.url)
         );
@@ -30,6 +78,14 @@ export function middleware(request: NextRequest) {
 
       // Check role với dashboard route
       if (pathName.startsWith("/dashboard-admin-layout") && role !== "ADMIN") {
+        return NextResponse.redirect(
+          new URL(`/dashboard-${role?.toLowerCase()}-layout`, request.url)
+        );
+      }
+      if (
+        pathName.startsWith("/dashboard-manager-layout") &&
+        role !== "MANAGER"
+      ) {
         return NextResponse.redirect(
           new URL(`/dashboard-${role?.toLowerCase()}-layout`, request.url)
         );
@@ -44,7 +100,10 @@ export function middleware(request: NextRequest) {
         );
       }
 
-      if (pathName.startsWith("/dashboard-learner-layout") && role !== "LEARNER") {
+      if (
+        pathName.startsWith("/dashboard-learner-layout") &&
+        role !== "LEARNER"
+      ) {
         return NextResponse.redirect(
           new URL(`/dashboard-${role?.toLowerCase()}-layout`, request.url)
         );
@@ -66,5 +125,6 @@ export const config = {
     "/dashboard-admin-layout/:path*",
     "/dashboard-reviewer-layout/:path*",
     "/dashboard-learner-layout/:path*",
+    "/entrance",
   ],
 };
