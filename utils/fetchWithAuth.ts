@@ -1,4 +1,6 @@
+import { use } from "react";
 import { handleTokenExpiration, handleLogout } from "./auth";
+import { useRouter } from "next/navigation";
 
 // utils/fetchWithAuth.ts
 interface FetchQueue {
@@ -33,7 +35,7 @@ class AuthFetch {
       ...init,
       credentials: "include", // Always include cookies
     });
-
+    const router = useRouter();
     // If 401 and not already refreshing
     if (response.status === 401 && !this.isRefreshing) {
       this.isRefreshing = true;
@@ -59,12 +61,10 @@ class AuthFetch {
           // Refresh failed
           const refreshData = await refreshResponse.json();
 
-          if (refreshData.status === 401) {
-            // Call full logout to invalidate server-side session and clear cookies
-            // Then redirect to sign-in via handleTokenExpiration inside handleLogout
+          if (refreshData.status === 401 || refreshData.status === 403 || refreshData.status === 400) {
             await handleLogout();
+         
           }
-
           this.isRefreshing = false;
           const error = new Error("Authentication failed");
           this.processQueue(error);
