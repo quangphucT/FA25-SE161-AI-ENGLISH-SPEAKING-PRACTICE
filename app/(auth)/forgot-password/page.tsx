@@ -1,5 +1,4 @@
 "use client";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, ForgotPasswordSchema } from "@/lib/validators/emailValidator";
@@ -20,12 +19,10 @@ import { Button } from "@/components/ui/button";
 
 const Page = () => {
   const { mutate: forgotPassword, isPending } = useForgotPassword();
-
   const form = useForm<ForgotPasswordSchema>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: "" },
   });
-
   const onSubmit = (values: ForgotPasswordSchema) => {
     forgotPassword(
       { email: values.email },
@@ -40,7 +37,6 @@ const Page = () => {
       }
     );
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#16232d]">
       <div className="w-full max-w-md mx-auto px-6 py-8">

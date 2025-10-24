@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import { useLoginMutation } from "@/hooks/useLoginMutation";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 export default function LoginForm() {
   const { mutate, isPending } = useLoginMutation();
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function LoginForm() {
     };
     mutate(payload, {
       onSuccess: (data) => {
+        toast.success(data.message || "Đăng nhập thành công!");
         // Điều hướng dựa vào trạng thái
         if (data.role === "ADMIN") {
           router.push("/dashboard-admin-layout");
@@ -52,6 +54,9 @@ export default function LoginForm() {
         } else {
           router.push("/sign-in");
         }
+      },
+      onError: (error) => {
+        toast.error(error.message);
       },
     });
   }

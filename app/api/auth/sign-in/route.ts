@@ -1,14 +1,8 @@
 
 
+import { CustomError } from "@/types/auth";
 import { NextResponse } from "next/server";
 
-interface CustomError {
-  response?: {
-    data?: { message?: string };
-    status?: number;
-  };
-  message?: string;
-}
 
 export async function POST(request: Request) {
   try {
@@ -35,14 +29,12 @@ export async function POST(request: Request) {
       secure: true,
       path: "/",
       sameSite: "lax",
-      maxAge: 60 , // 1 minutes
     });
     res.cookies.set("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       path: "/",
       sameSite: "lax",
-      maxAge: 120, // 2 minutes
     });
     return res;
   } catch (error: unknown) {
