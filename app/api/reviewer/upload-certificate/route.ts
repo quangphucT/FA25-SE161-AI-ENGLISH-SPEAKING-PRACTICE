@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Upload failed" }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message || "Upload failed" }, { status: 500 });
+    }
+    return NextResponse.json({ message: "Upload failed" }, { status: 500 });
   }
 }
