@@ -24,23 +24,21 @@ export async function POST(request: NextRequest) {
       { status: response.status }
     );
 
-    // Clear authentication cookies
+    // Clear cookies
     nextRes.cookies.set("accessToken", "", {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
       path: "/",
-      maxAge: 0, // Expires immediately
-      expires: new Date(0),
+      sameSite: "lax",
+      maxAge: 0,
     });
 
     nextRes.cookies.set("refreshToken", "", {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
       path: "/",
-      maxAge: 0, // Expires immediately
-      expires: new Date(0),
+      sameSite: "lax",
+      maxAge: 0,
     });
     return nextRes;
   } catch (error: unknown) {

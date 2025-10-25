@@ -1,15 +1,19 @@
-import { is } from "date-fns/locale";
+
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const accessToken = request.cookies.get("accessToken")?.value;
   const pathName = request.nextUrl.pathname;
 
-  // Nếu không có token và đang truy cập dashboard → redirect về login
+  // Nếu không có token và truy cập trang root → chuyển thẳng tới login
+  if (!accessToken && pathName === "/") {
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  // Nếu không có token và đang truy cập dashboard hoặc trang entrance → redirect về login
   if (
     !accessToken &&
-    pathName.startsWith("/dashboard") &&
-    pathName.startsWith("/entrance")
+    (pathName.startsWith("/dashboard") || pathName.startsWith("/entrance"))
   ) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
@@ -119,6 +123,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/sign-in",
     "/sign-up",
     "/forgot-password",

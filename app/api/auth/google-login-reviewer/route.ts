@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       secure: true,
       path: "/",
       sameSite: "lax",
-      maxAge: 120, // 2 minutes
+      maxAge: 60 * 60, // 60 minutes
     });
     return res;
   } catch (error) {
