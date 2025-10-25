@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -110,7 +109,6 @@ const sampleManagers: Manager[] = [
 ];
 
 const ManagerManagement = () => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("Active");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
@@ -132,21 +130,21 @@ const ManagerManagement = () => {
     return matchesName && matchesStatus;
   });
 
-  const handleSelectRow = (idx: number) => {
-    setSelectedRows(
-      selectedRows.includes(idx)
-        ? selectedRows.filter((i) => i !== idx)
-        : [...selectedRows, idx]
-    );
-  };
+  // const handleSelectRow = (idx: number) => {
+  //   setSelectedRows(
+  //     selectedRows.includes(idx)
+  //       ? selectedRows.filter((i) => i !== idx)
+  //       : [...selectedRows, idx]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredManagers.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredManagers.map((_, idx) => idx));
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedRows.length === filteredManagers.length) {
+  //     setSelectedRows([]);
+  //   } else {
+  //     setSelectedRows(filteredManagers.map((_, idx) => idx));
+  //   }
+  // };
 
   const handleViewDetails = (Manager: Manager) => {
     setSelectedManager(Manager);

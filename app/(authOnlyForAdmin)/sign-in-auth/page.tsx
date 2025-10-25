@@ -13,33 +13,16 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import Link from "next/link";
 import { useLoginMutation } from "@/hooks/useLoginMutation";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { GoogleLoginButton } from "@/components/GoogleLoginButton";
-import AdvertisingMessage from "@/components/AdvertisingMessage";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebaseConfig";
-import { useLoginWithGoogle } from "@/hooks/useLoginWithGoogle";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 export default function LoginForm() {
   const { mutate, isPending } = useLoginMutation();
-  const {
-    mutate: mutateGoogleLoginForLearner,
-    isPending: isPendingGoogleLoginForLearner,
-  } = useLoginWithGoogle();
-  const {
-    mutate: mutateGoogleLoginForReviewer,
-    isPending: isPendingGoogleLoginForReviewer,
-  } = useLoginWithGoogle();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<"LEARNER" | "REVIEWER">(
-    "LEARNER"
+  const [selectedRole, setSelectedRole] = useState<"ADMIN" | "MANAGER">(
+    "ADMIN"
   );
-  // Move showPassword state to top-level to satisfy hooks rules
-  const [showPasswordLearner, setShowPasswordLearner] = useState(false);
-  const [showPasswordReviewer, setShowPasswordReviewer] = useState(false);
 
   const formSchema = z.object({
     email: z.string().min(2).max(100).email(),
@@ -64,18 +47,10 @@ export default function LoginForm() {
       onSuccess: (data) => {
         toast.success(data.message || "Đăng nhập thành công!");
         // Điều hướng dựa vào trạng thái
-        if (data.role === "LEARNER") {
-          if (!data.isPlacementTestDone) {
-            router.push("/entrance_test");
-          } else {
-            router.push("/dashboard-learner-layout");
-          }
-        } else if (data.role === "REVIEWER") {
-          if (!data.isReviewerActive) {
-            router.push("/entrance_information");
-          } else {
-            router.push("/dashboard-reviewer-layout");
-          }
+        if (data.role === "ADMIN") {
+          router.push("/dashboard-admin-layout");
+        } else if (data.role === "MANAGER") {
+          router.push("/dashboard-manager-layout");
         } else {
           router.push("/sign-in");
         }
@@ -86,54 +61,9 @@ export default function LoginForm() {
     });
   }
 
-  // Google Login handler
-  const handleLoginWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    const idToken = await user.getIdToken();
-    if (selectedRole === "LEARNER") {
-      mutateGoogleLoginForLearner(
-        { idToken, role: selectedRole },
-        {
-          onSuccess: (data) => {
-            toast.success("Đăng nhập với Google thành công!");
-            if (!data?.isPlacementTestDone) {
-              router.push("/entrance_test");
-            } else {
-              router.push("/dashboard-learner-layout");
-            }
-          },
-          onError: (error) => {
-            toast.error(error.message);
-          },
-        }
-      ); // 🔑 gửi idToken qua hook
-    } else {
-      mutateGoogleLoginForReviewer(
-        { idToken, role: selectedRole },
-        {
-          onSuccess: (data) => {
-            toast.success("Đăng nhập với Google thành công!");
-            if (!data.isReviewerActive) {
-              router.push("/entrance_information");
-            }
-          },
-          onError: (error) => {
-            toast.error(error.message);
-          }
-        }
-      );
-    }
-  };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#18232a]">
-      <button
-        className="absolute left-6 top-6 cursor-pointer text-gray-400 hover:text-white text-3xl font-bold"
-        aria-label="Quay về đăng nhập"
-        onClick={() => router.push("/landing")}
-      >
-        ×
-      </button>
+    
       <div className="w-full max-w-md bg-[#18232a] rounded-xl shadow-lg p-8 flex flex-col items-center">
         <h1 className="text-3xl font-bold text-white mb-8 text-center">
           Đăng nhập
@@ -147,21 +77,21 @@ export default function LoginForm() {
         >
           <TabsList className="grid grid-cols-2 w-full bg-[#22313c] rounded-xl">
             <TabsTrigger
-              value="LEARNER"
+              value="ADMIN"
               className="text-white data-[state=active]:bg-[#2ed7ff] data-[state=active]:text-[#18232a] rounded-xl cursor-pointer"
             >
-              Người học
+              Quản trị viên
             </TabsTrigger>
             <TabsTrigger
-              value="REVIEWER"
+              value="MANAGER"
               className="text-white data-[state=active]:bg-[#2ed7ff] data-[state=active]:text-[#18232a] rounded-xl cursor-pointer"
             >
-              Người đánh giá
+              Người quản lý
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab: Học viên */}
-          <TabsContent value="LEARNER">
+          {/* Tab: Admin */}
+          <TabsContent value="ADMIN">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -189,35 +119,23 @@ export default function LoginForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center justify-between">
-                        <div className="relative w-full">
-                          <FormControl>
-                            <Input
-                              type={showPasswordLearner ? "text" : "password"}
-                              placeholder="Mật khẩu"
-                              {...field}
-                              className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] pr-12 focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg w-full"
-                            />
-                          </FormControl>
-
-                          {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
-                          <button
-                            type="button"
-                            onClick={() => setShowPasswordLearner(!showPasswordLearner)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
-                          >
-                            {showPasswordLearner ? <EyeOff size={22} /> : <Eye size={22} />}
-                          </button>
-                        </div>
-
-                        {/* Link QUÊN? */}
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Mật khẩu"
+                            {...field}
+                            className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg"
+                          />
+                        </FormControl>
                         <span
-                          onClick={() => router.push("/forgot-password")}
-                          className="ml-3 text-gray-400 text-sm cursor-pointer whitespace-nowrap"
+                          onClick={() => {
+                            router.push("/forgot-password");
+                          }}
+                          className="ml-2 text-gray-400 text-sm cursor-pointer"
                         >
                           QUÊN?
                         </span>
                       </div>
-
                       <FormMessage />
                     </FormItem>
                   )}
@@ -234,14 +152,7 @@ export default function LoginForm() {
                   />
                   ĐĂNG NHẬP
                 </Button>
-                {isPendingGoogleLoginForLearner ? (
-                  <div className="flex justify-center mt-4">
-                    <Loader2 className="inline-block animate-spin text-white" />
-                  </div>
-                ) : (
-                  <GoogleLoginButton onClick={handleLoginWithGoogle} />
-                )}
-
+                {/* <GoogleLoginButton onClick={handleLoginWithGoogle} />
                 <div className="mt-6 text-center text-gray-400 text-sm">
                   Chưa có tài khoản?{" "}
                   <Link
@@ -250,13 +161,13 @@ export default function LoginForm() {
                   >
                     Đăng ký ngay
                   </Link>
-                </div>
+                </div> */}
               </form>
             </Form>
           </TabsContent>
 
-          {/* Tab: Reviewer */}
-          <TabsContent value="REVIEWER">
+          {/* Tab: Manager */}
+          <TabsContent value="MANAGER">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -284,35 +195,23 @@ export default function LoginForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center justify-between">
-                        <div className="relative w-full">
-                          <FormControl>
-                            <Input
-                              type={showPasswordReviewer ? "text" : "password"}
-                              placeholder="Mật khẩu"
-                              {...field}
-                              className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] pr-12 focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg w-full"
-                            />
-                          </FormControl>
-
-                          {/* 👁 Icon bật/tắt hiển thị mật khẩu */}
-                          <button
-                            type="button"
-                            onClick={() => setShowPasswordReviewer(!showPasswordReviewer)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2ed7ff]"
-                          >
-                            {showPasswordReviewer ? <EyeOff size={22} /> : <Eye size={22} />}
-                          </button>
-                        </div>
-
-                        {/* Link QUÊN? */}
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Mật khẩu"
+                            {...field}
+                            className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg"
+                          />
+                        </FormControl>
                         <span
-                          onClick={() => router.push("/forgot-password")}
-                          className="ml-3 text-gray-400 text-sm cursor-pointer whitespace-nowrap"
+                          onClick={() => {
+                            router.push("/forgot-password");
+                          }}
+                          className="ml-2 text-gray-400 text-sm cursor-pointer"
                         >
                           QUÊN?
                         </span>
                       </div>
-
                       <FormMessage />
                     </FormItem>
                   )}
@@ -329,13 +228,7 @@ export default function LoginForm() {
                   />
                   ĐĂNG NHẬP
                 </Button>
-                {isPendingGoogleLoginForReviewer ? (
-                  <div className="flex justify-center mt-4">
-                    <Loader2 className="inline-block animate-spin text-white" />
-                  </div>
-                ) : (
-                  <GoogleLoginButton onClick={handleLoginWithGoogle} />
-                )}
+                {/* <GoogleLoginButton onClick={handleLoginWithGoogle} />
                 <div className="mt-6 text-center text-gray-400 text-sm">
                   Chưa có tài khoản?{" "}
                   <Link
@@ -344,13 +237,13 @@ export default function LoginForm() {
                   >
                     Đăng ký ngay
                   </Link>
-                </div>
+                </div> */}
               </form>
             </Form>
           </TabsContent>
         </Tabs>
 
-        <AdvertisingMessage />
+        {/* <AdvertisingMessage /> */}
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ const OnBoardingMeeting = () => {
       // Generate new room ID và redirect
       const newRoomId = uuidv4();
       router.push(`/room/${newRoomId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       setIsCreatingRoom(false);
     }
   };

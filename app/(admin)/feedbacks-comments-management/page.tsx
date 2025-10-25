@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -250,7 +249,6 @@ const sampleFeedbacks: Feedback[] = [
 ];
 
 const FeedbacksCommentsManagement = () => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
@@ -271,21 +269,21 @@ const FeedbacksCommentsManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleSelectRow = (idx: number) => {
-    setSelectedRows(
-      selectedRows.includes(idx)
-        ? selectedRows.filter((i) => i !== idx)
-        : [...selectedRows, idx]
-    );
-  };
+  // const handleSelectRow = (idx: number) => {
+  //   setSelectedRows(
+  //     selectedRows.includes(idx)
+  //       ? selectedRows.filter((i) => i !== idx)
+  //       : [...selectedRows, idx]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredFeedbacks.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredFeedbacks.map((_, idx) => idx));
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedRows.length === filteredFeedbacks.length) {
+  //     setSelectedRows([]);
+  //   } else {
+  //     setSelectedRows(filteredFeedbacks.map((_, idx) => idx));
+  //   }
+  // };
 
   const handleViewDetails = (feedback: Feedback) => {
     setSelectedFeedback(feedback);
