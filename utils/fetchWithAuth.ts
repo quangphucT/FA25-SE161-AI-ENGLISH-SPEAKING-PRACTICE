@@ -1,6 +1,4 @@
-import { use } from "react";
 import { handleTokenExpiration, handleLogout } from "./auth";
-import { useRouter } from "next/navigation";
 
 // utils/fetchWithAuth.ts
 interface FetchQueue {
@@ -35,7 +33,6 @@ class AuthFetch {
       ...init,
       credentials: "include", // Always include cookies
     });
-    const router = useRouter();
     // If 401 and not already refreshing
     if (response.status === 401 && !this.isRefreshing) {
       this.isRefreshing = true;
