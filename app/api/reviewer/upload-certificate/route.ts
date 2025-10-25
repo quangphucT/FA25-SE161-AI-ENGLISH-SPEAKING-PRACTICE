@@ -1,0 +1,27 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
+  const accessToken = request.cookies.get("accessToken")?.value;
+  try {
+    const formData = await request.formData();
+    const backendResponse = await fetch(
+      `${process.env.BE_API_URL}/Certificate/upload`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`, 
+        },
+        body: formData,
+        credentials: "include",
+      }
+    );
+    const data = await backendResponse.json();
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
+    }
+
+    return NextResponse.json(data, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message || "Upload failed" }, { status: 500 });
+  }
+}
