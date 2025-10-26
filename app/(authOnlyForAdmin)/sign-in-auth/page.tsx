@@ -17,6 +17,7 @@ import { useLoginMutation } from "@/hooks/useLoginMutation";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { is } from "date-fns/locale";
 export default function LoginForm() {
   const { mutate, isPending } = useLoginMutation();
   const router = useRouter();
@@ -63,7 +64,6 @@ export default function LoginForm() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#18232a]">
-    
       <div className="w-full max-w-md bg-[#18232a] rounded-xl shadow-lg p-8 flex flex-col items-center">
         <h1 className="text-3xl font-bold text-white mb-8 text-center">
           Đăng nhập
@@ -141,16 +141,14 @@ export default function LoginForm() {
                   )}
                 />
                 <Button
-                  disabled={isPending}
                   type="submit"
                   className="w-full bg-[#2ed7ff] text-[#18232a] font-bold text-lg py-[23px] rounded-xl shadow hover:bg-[#1ec6e6] transition cursor-pointer"
                 >
-                  <Loader2
-                    className={
-                      isPending ? "inline-block mr-2 animate-spin" : "hidden"
-                    }
-                  />
-                  ĐĂNG NHẬP
+                  {isPending ? (
+                    <Loader2 className="inline-block mr-2 animate-spin" />
+                  ) : (
+                    <span>ĐĂNG NHẬP</span>
+                  )}
                 </Button>
                 {/* <GoogleLoginButton onClick={handleLoginWithGoogle} />
                 <div className="mt-6 text-center text-gray-400 text-sm">

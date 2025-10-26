@@ -32,9 +32,12 @@ const EntranceInformation = () => {
     formData.append("file", file);
 
     uploadCertificate(formData, {
-      onSuccess: (data) => {
+      onSuccess: async(data) => {
         toast.success(data.message || "Upload thành công");
-        router.push("/dashboard-reviewer-layout");
+        if (typeof (window as any).forceRefreshToken === "function") {
+          await(window as any).forceRefreshToken();
+          router.push("/dashboard-reviewer-layout");
+        }
       },
       onError: (error) => {
         toast.error(error.message || "Upload thất bại");

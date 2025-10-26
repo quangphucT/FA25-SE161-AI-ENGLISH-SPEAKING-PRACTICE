@@ -8,7 +8,7 @@ import Wallet from "../wallet/page";
 import ReviewHistory from "../review-history/page";
 import ReviewLearnerSubmission from "../review-learner-submission/page";
 
-const DashboardMentorLayout = () => {
+const DashboardReviewerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForMentor");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -307,4 +307,4 @@ const DashboardMentorLayout = () => {
   );
 };
 
-export default DashboardMentorLayout;
+export default DashboardReviewerLayout;
