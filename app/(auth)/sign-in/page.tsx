@@ -114,8 +114,10 @@ export default function LoginForm() {
         {
           onSuccess: (data) => {
             toast.success("Đăng nhập với Google thành công!");
-            if (!data.isReviewerActive) {
+            if (data.isReviewerActive === false) {
               router.push("/entrance_information");
+            } else if (data.isReviewerActive === true) {
+              router.push("/dashboard-reviewer-layout");
             }
           },
           onError: (error) => {
