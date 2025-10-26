@@ -32,10 +32,11 @@ const EntranceInformation = () => {
     formData.append("file", file);
 
     uploadCertificate(formData, {
-      onSuccess: async(data) => {
+      onSuccess: async (data) => {
         toast.success(data.message || "Upload thành công");
-        if (typeof (window as any).forceRefreshToken === "function") {
-          await(window as any).forceRefreshToken();
+
+        if (typeof window.forceRefreshToken === "function") {
+          await window.forceRefreshToken();
           router.push("/dashboard-reviewer-layout");
         }
       },
