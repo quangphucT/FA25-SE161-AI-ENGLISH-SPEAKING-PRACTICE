@@ -946,7 +946,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
             />
             <p
               id="ipa_script"
-              className="text-muted text-[1.8em] max-w-[87%] text-gray-500"
+              className="text-[1.8em] max-w-[87%] text-gray-500"
             >
               {ipaScript}
             </p>

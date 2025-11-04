@@ -6,7 +6,7 @@ import StatisticsForMentor from "../statistics-for-mentor/page";
 import Wallet from "../wallet/page";
 import ReviewHistory from "../review-history/page";
 import ReviewLearnerSubmission from "../review-learner-submission/page";
-import ReviewerProfile from "../reviewer-profile/page";
+
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 
 const DashboardReviewerLayout = () => {
@@ -278,7 +278,7 @@ const DashboardReviewerLayout = () => {
 
             {activeTab === "profileMentor" && (
               <div className="h-full">
-                <ReviewerProfile />
+                {/* <ReviewerProfile /> */}
               </div>
             )}
 

@@ -37,7 +37,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useChooseQuestionForTestAssessment } from "@/features/manager/hook/useChooseQuestionForTest";
-import { toast } from "sonner";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 export default function QuestionForAssessmentPage() {
@@ -64,9 +63,9 @@ export default function QuestionForAssessmentPage() {
   // gọi hook API tạo câu hỏi mới
   const { mutate: createQuestionTest, isPending } = useCreateQuestionTest();
   // gọi hook API cập nhật câu hỏi
-  const { mutate: useUpdateQuestionTest } = updateQuestionTest();
+  const { mutate: updateQuestionMutation } = updateQuestionTest();
  // gọi hook API chọn câu hỏi
-  const { mutate: useChooseQuestionTest } = useChooseQuestionForTestAssessment();
+  const { mutate: chooseQuestionMutation } = useChooseQuestionForTestAssessment();
   function openAddModal() {
     setEditing(null);
     setFormType("word");
@@ -91,7 +90,7 @@ export default function QuestionForAssessmentPage() {
       content: formContent.trim(),
     };
     if (editing) {
-      useUpdateQuestionTest(
+      updateQuestionMutation(
         { ...payload, id: editing.questionAssessmentId },
         {
           onSuccess: () => {
@@ -135,7 +134,7 @@ export default function QuestionForAssessmentPage() {
     //   status: !status, 
     // }
     // console.log("Status:", payload)
-    useChooseQuestionTest({questionId: id, status: !status});
+    chooseQuestionMutation({questionId: id, status: !status});
     // ví dụ gọi API update status
     // useUpdateQuestionTest(
     //   { id, status: true },

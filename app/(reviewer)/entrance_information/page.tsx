@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useUploadCertificate } from "@/features/reviewer/hooks/useUploadCertificateMutation";
+// import { useUploadCertificate } from "@/features/reviewer/hooks/useUploadCertificateMutation";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -18,7 +18,7 @@ import { Loader2 } from "lucide-react";
 const EntranceInformation = () => {
   const [name, setName] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const { mutate: uploadCertificate, isPending } = useUploadCertificate();
+  // const { mutate: uploadCertificate, isPending } = useUploadCertificate();
   const router = useRouter();
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,19 +31,19 @@ const EntranceInformation = () => {
     formData.append("name", name);
     formData.append("file", file);
 
-    uploadCertificate(formData, {
-      onSuccess: async (data) => {
-        toast.success(data.message || "Upload thành công");
+    // uploadCertificate(formData, {
+    //   onSuccess: async (data) => {
+    //     toast.success(data.message || "Upload thành công");
 
-        if (typeof window.forceRefreshToken === "function") {
-          await window.forceRefreshToken();
-          router.push("/dashboard-reviewer-layout");
-        }
-      },
-      onError: (error) => {
-        toast.error(error.message || "Upload thất bại");
-      },
-    });
+    //     if (typeof window.forceRefreshToken === "function") {
+    //       await window.forceRefreshToken();
+    //       router.push("/dashboard-reviewer-layout");
+    //     }
+    //   },
+    //   onError: (error) => {
+    //     toast.error(error.message || "Upload thất bại");
+    //   },
+    // });
   };
 
   return (
@@ -82,11 +82,11 @@ const EntranceInformation = () => {
               type="submit"
               className="w-full cursor-pointer h-11 text-base bg-[#2ed7ff] text-[#18232a] hover:bg-[#1ec6e6] rounded-xl font-semibold transition-all"
             >
-              {isPending ? (
+              {/* {isPending ? (
                 <Loader2 className="animate-spin h-5 w-5" />
               ) : (
                 "Upload"
-              )}
+              )} */}
             </Button>
           </form>
         </CardContent>

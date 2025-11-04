@@ -2,19 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const accessToken = request.cookies.get("accessToken")?.value;
-  const id = params.id;
+  const { id } = await params;
 
   try {
     // Lấy status từ query param
     const url = new URL(request.url);
     const statusParam = url.searchParams.get("status");
     const status = statusParam === "true"; // chuyển thành boolean
-
-    // Tạo payload gửi lên backend
-    const payload = { status };
 
     const backendResponse = await fetch(
       `${process.env.BE_API_URL}/ManagerQuestionAssessment/set-status/${id}?status=${status}`,

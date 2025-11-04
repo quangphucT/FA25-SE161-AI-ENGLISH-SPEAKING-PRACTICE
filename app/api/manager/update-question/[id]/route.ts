@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const accessToken = request.cookies.get("accessToken")?.value;
-  const id = params.id;
+  const { id } = await params;
 
   try {
     const body = await request.json();
