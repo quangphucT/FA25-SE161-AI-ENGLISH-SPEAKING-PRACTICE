@@ -618,7 +618,6 @@ const sampleLearners: Learner[] = [
 ];
 
 const LearnerManagement = () => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("Active");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);

@@ -1,15 +1,21 @@
 "use client";
-import { useState } from "react";
+import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FaBook } from "react-icons/fa";
 import AssesmentManagement from "../assesment-management/page";
 import StatisticsForManagers from "../statistics-for-managers/page";
 import CurriculumManagementPage from "../curriculum-management/page";
 import QuestionForAssessmentPage from "../question-for-assessment/page";
+import { useGetMeQuery } from "@/hooks/useGetMeQuery";
+import CourseFollowingLevelManagement from "../manage-courses/courses-following-level/page";
+import ChapterCoursesManagement from "../manage-courses/chapter-list/page";
+import QuestionsCoursesManagement from "../manage-courses/question-course/page";
 
 const DashboardManagerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForManagers");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const { data: getMe } = useGetMeQuery();
 
   const navigationItems = [
     {
@@ -49,6 +55,25 @@ const DashboardManagerLayout = () => {
       icon: <FaBook />,
       path: "/question-for-assessment",
     },
+    {
+      id: "courseFollowingLevel",
+      label: "Course Following Level",
+      icon: <FaBook />,
+      // 👇 Thêm menu con ở đây
+      children: [
+        {
+          id: "courseList",
+          label: "Course List",
+          path: "/courses-following-level",
+        },
+        { id: "chapterList", label: "Chapter List", path: "/chapter-list" },
+        {
+          id: "questionCourse",
+          label: "Question Course",
+          path: "/question-course",
+        },
+      ],
+    },
   ];
 
   return (
@@ -76,7 +101,7 @@ const DashboardManagerLayout = () => {
                 </div>
                 <div>
                   <h1 className="font-bold text-lg text-white">Manager Hub</h1>
-                  <p className="text-xs text-slate-400">Teaching Excellence</p>
+                  <p className="text-xs text-slate-400">{getMe?.email}</p>
                 </div>
               </div>
             )}
@@ -114,31 +139,75 @@ const DashboardManagerLayout = () => {
               )}
               <div className="space-y-2">
                 {navigationItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center transition-all duration-200 rounded-xl ${
-                      activeTab === item.id
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                    } ${
-                      sidebarOpen
-                        ? "px-4 py-3 space-x-3"
-                        : "px-3 py-3 justify-center"
-                    }`}
-                    title={!sidebarOpen ? item.label : ""}
-                  >
-                    <span
-                      className={
-                        activeTab === item.id ? "text-white" : "text-slate-400"
-                      }
+                  <div key={item.id}>
+                    <button
+                      onClick={() => {
+                        if (item.children) {
+                          setOpenSubmenu(
+                            openSubmenu === item.id ? null : item.id
+                          ); // toggle submenu
+                        } else {
+                          setActiveTab(item.id);
+                          setOpenSubmenu(null);
+                        }
+                      }}
+                      className={`w-full flex items-center transition-all duration-200 rounded-xl ${
+                        activeTab === item.id
+                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                          : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                      } ${
+                        sidebarOpen
+                          ? "px-4 py-3 space-x-3"
+                          : "px-3 py-3 justify-center"
+                      }`}
+                      title={!sidebarOpen ? item.label : ""}
                     >
-                      {item.icon}
-                    </span>
-                    {sidebarOpen && (
-                      <span className="font-medium text-sm">{item.label}</span>
-                    )}
-                  </button>
+                      <span
+                        className={
+                          activeTab === item.id
+                            ? "text-white"
+                            : "text-slate-400"
+                        }
+                      >
+                        {item.icon}
+                      </span>
+                      {sidebarOpen && (
+                        <span className="font-medium text-sm">
+                          {item.label}
+                        </span>
+                      )}
+                      {item.children && sidebarOpen && (
+                        <span className="ml-auto text-xs">
+                          {openSubmenu === item.id ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* 👇 Render submenu nếu có */}
+                    {item.children &&
+                      openSubmenu === item.id &&
+                      sidebarOpen && (
+                        <div className="ml-8 mt-1 space-y-1">
+                          {item.children.map((child) => (
+                            <button
+                              key={child.id}
+                              onClick={() => {
+                                setActiveTab(child.id);
+
+                                setOpenSubmenu(null);
+                              }}
+                              className={`w-full text-left text-sm rounded-lg px-3 py-2 transition-all duration-150 ${
+                                activeTab === child.id
+                                  ? "bg-blue-600 text-white"
+                                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                              }`}
+                            >
+                              {child.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -158,9 +227,9 @@ const DashboardManagerLayout = () => {
             {sidebarOpen && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  Sarah Miller
+                  {getMe?.fullName}
                 </p>
-                <p className="text-xs text-slate-400 truncate">Senior Mentor</p>
+                <p className="text-xs text-slate-400 truncate">{getMe?.role}</p>
               </div>
             )}
             {sidebarOpen && (
@@ -237,6 +306,24 @@ const DashboardManagerLayout = () => {
             {activeTab === "questionForAssessment" && (
               <div className="h-full">
                 <QuestionForAssessmentPage />
+              </div>
+            )}
+            {activeTab === "courseList" && (
+              <div className="h-full">
+                <CourseFollowingLevelManagement />
+              </div>
+            )}
+
+            {activeTab === "chapterList" && (
+              <div className="h-full">
+                  <ChapterCoursesManagement/>
+              </div>
+            )}
+
+            {activeTab === "questionCourse" && (
+              <div className="h-full">
+                <QuestionsCoursesManagement />
+                
               </div>
             )}
           </div>

@@ -53,6 +53,8 @@ export default function TokenRefresher() {
 			} catch {
 				// Lỗi mạng: giữ nguyên interval; sẽ thử lại ở tick kế tiếp
 			}
+			 // ✅ expose global để trang khác gọi ngay lập tức
+    (window as any).forceRefreshToken = runOnce;
 		};
 
 		// Chạy ngay khi mount

@@ -1,48 +1,72 @@
-import { is } from "date-fns/locale";
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
+
   const accessToken = request.cookies.get("accessToken")?.value;
   const pathName = request.nextUrl.pathname;
-
-  // Nếu không có token và đang truy cập dashboard → redirect về login
-  if (
-    !accessToken &&
-    pathName.startsWith("/dashboard") &&
-    pathName.startsWith("/entrance")
-  ) {
+   
+  // Nếu không có token và truy cập trang root → chuyển thẳng tới login
+  if (!accessToken && pathName === "/") {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // Nếu có token thì decode để lấy role + flag
+  // Nếu không có token và đang truy cập dashboard hoặc trang entrance → redirect về login
+  if (!accessToken && (pathName.startsWith("/dashboard") || pathName.startsWith("/entrance"))) {
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
   if (accessToken) {
     try {
       const base64 = accessToken.split(".")[1];
-      const decodedPayload = JSON.parse(
-        Buffer.from(base64, "base64").toString()
-      );
-      console.log("Decodingdfffff:", decodedPayload);
-
-      // lấy role + flag
-      const role =
-        decodedPayload[
-          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        ];
-
-      // ⚙️ Chuyển string "False"/"True" về boolean thật
-      const isPlacementTestDone =
-        decodedPayload["IsPlacementTestDone"] === "True";
-      const isReviewerActive = decodedPayload["IsReviewerActive"] === "True";
+      const decodedPayload = JSON.parse(Buffer.from(base64, "base64").toString());
+      console.log("Decoded:", decodedPayload)
+      const role = decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      const isPlacementTestDone = decodedPayload["IsPlacementTestDone"];
+      const isReviewerActive = decodedPayload["IsReviewerActive"];
 
       // Nếu LEARNER chưa làm placement test → chuyển hướng tới trang test
-      if (role === "LEARNER" && !isPlacementTestDone) {
-        return NextResponse.redirect(new URL("/entrance_test", request.url));
+      if (
+        role === "LEARNER" &&
+        !isPlacementTestDone &&
+        pathName !== "/dashboard-learner-layout"
+      ) {
+        return NextResponse.redirect(new URL("/dashboard-learner-layout", request.url));
       }
 
       // Nếu REVIEWER chưa hoàn tất chứng chỉ → chuyển hướng tới trang upload
-      if (role === "REVIEWER" && !isReviewerActive) {
+      if (
+        role === "REVIEWER" &&
+        !isReviewerActive &&
+        pathName !== "/entrance_information"
+      ) {
         return NextResponse.redirect(
           new URL("/entrance_information", request.url)
+        );
+      }
+      // Nếu REVIEWER đã active nhưng vẫn cố vào trang /entrance_information → đá về dashboard-reviewer-layout
+      if (
+        role === "REVIEWER" &&
+        isReviewerActive &&
+        pathName === "/entrance_information"
+      ) {
+        return NextResponse.redirect(
+          new URL("/dashboard-reviewer-layout", request.url)
+        );
+      }
+      // Reviewer active thì KHÔNG ĐƯỢC vào trang entrance_test (dành riêng cho Learner)
+      if (role === "REVIEWER" && pathName === "/entrance_test") {
+        return NextResponse.redirect(
+          new URL("/dashboard-reviewer-layout", request.url)
+        );
+      }
+
+      // Nếu REVIEWER đã active nhưng vẫn cố vào trang /entrance_information → đá về dashboard-reviewer-layout
+      if (
+        role === "LEARNER" &&
+        isPlacementTestDone &&
+        pathName === "/entrance_test"
+      ) {
+        return NextResponse.redirect(
+          new URL("/dashboard-learner-layout", request.url)
         );
       }
 
@@ -66,7 +90,7 @@ export function middleware(request: NextRequest) {
             );
           }
           return NextResponse.redirect(
-            new URL("/dashboard-reviewer-layout", request.url)
+            new URL(`/dashboard-${role?.toLowerCase()}-layout`, request.url)
           );
         }
 
@@ -119,6 +143,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/sign-in",
     "/sign-up",
     "/forgot-password",
@@ -126,5 +151,7 @@ export const config = {
     "/dashboard-reviewer-layout/:path*",
     "/dashboard-learner-layout/:path*",
     "/entrance",
+    "/entrance_test",
+    "/entrance_information",
   ],
 };
