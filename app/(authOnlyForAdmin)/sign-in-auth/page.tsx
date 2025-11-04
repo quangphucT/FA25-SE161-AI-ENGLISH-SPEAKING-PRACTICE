@@ -17,7 +17,6 @@ import { useLoginMutation } from "@/hooks/useLoginMutation";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { is } from "date-fns/locale";
 export default function LoginForm() {
   const { mutate, isPending } = useLoginMutation();
   const router = useRouter();

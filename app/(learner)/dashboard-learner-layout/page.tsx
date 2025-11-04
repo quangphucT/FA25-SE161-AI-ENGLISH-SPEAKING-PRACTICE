@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { use, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -18,18 +18,25 @@ import {
   Coins,
   CheckCircle2,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { useGetCoinServicePackage } from "@/hooks/coin-hooks/useGetCoinServicePackage";
 import PaymentInforSection from "@/components/PaymentInforSection";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
+import { useBuyingCoinServicePackages } from "@/features/learner/hooks/servicePackages/useBuyingServicePackageMutation";
+import { toast } from "sonner";
+
 export default function LearnerDashboard() {
   const [activeMenu, setActiveMenu] = useState("overview");
+  const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
   const [showCoinModal, setShowCoinModal] = useState(false);
+  const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
   const { data: userData } = useGetMeQuery();
   const { data: coinPackages } = useGetCoinServicePackage();
-
+  const { mutate: buyCoin, isPending } = useBuyingCoinServicePackages();
   const sidebarMenu = [
     { id: "overview", label: "Tổng quan", icon: Home },
     { id: "courses", label: "Lộ trình học", icon: BookOpen },
@@ -153,8 +160,49 @@ export default function LearnerDashboard() {
     },
   ];
   const handleBuyCoin = (servicePackageId: string) => {
-     
-  }
+    // set loading for this package id so the button shows spinner/disabled state
+    setLoadingPackageId(servicePackageId);
+
+    // Trigger mutation and clear loading only when mutation finishes (success or error)
+    buyCoin(
+      { servicePackageId },
+      {
+        onSuccess: (data) => {
+          setQrCodeImage(data.checkoutUrl.qrBase64);
+          setShowCoinModal(false);
+          setShowQrModal(true);
+        },
+    
+        onSettled: () => {
+          // always clear loading state when mutation is settled
+          setLoadingPackageId(null);
+        },
+      }
+    );
+  };
+
+  // Copy current QR (data URL) to clipboard
+  const copyQrToClipboard = async () => {
+    if (!qrCodeImage) return;
+    try {
+      await navigator.clipboard.writeText(qrCodeImage);
+      toast.success("Đã sao chép QR vào clipboard");
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể sao chép QR");
+    }
+  };
+
+  // Download current QR as an image file
+  const downloadQrImage = () => {
+    if (!qrCodeImage) return;
+    const link = document.createElement("a");
+    link.href = qrCodeImage;
+    link.download = "speakai_qr.png";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* SIDEBAR */}
@@ -570,7 +618,7 @@ export default function LearnerDashboard() {
                           </div>
                           <p className="text-gray-600 font-semibold">Coin</p>
 
-                          {hasBonus && (
+                          {/* {hasBonus && (
                             <div className="mt-3 pt-3 border-t border-yellow-300">
                               <div className="inline-flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
                                 <span className="text-sm text-gray-700">
@@ -586,7 +634,7 @@ export default function LearnerDashboard() {
                                 </span>
                               </div>
                             </div>
-                          )}
+                          )} */}
                         </div>
 
                         {/* Price Section */}
@@ -599,20 +647,26 @@ export default function LearnerDashboard() {
                               ₫
                             </span>
                           </div>
-                          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                            <span>Chỉ</span>
-                            <span className="font-semibold text-blue-600">
-                              {(pkg.price / pkg.numberOfCoin).toFixed(0)}₫
-                            </span>
-                            <span>/ 1 coin</span>
-                          </div>
                         </div>
 
                         {/* Buy Button */}
-                        <Button onClick={() => {handleBuyCoin(pkg.servicePackageId)}} className="w-full h-12 cursor-pointer font-bold text-base transition-all duration-300 shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                          <Wallet className="w-5 h-5 mr-2" />
-                          Mua ngay
-                          <ChevronRight className="w-5 h-5 ml-1" />
+                        <Button
+                          onClick={() => handleBuyCoin(pkg.servicePackageId)}
+                          disabled={loadingPackageId === pkg.servicePackageId}
+                          className="w-full h-12 cursor-pointer font-bold text-base transition-all duration-300 shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                          {loadingPackageId === pkg.servicePackageId ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              Đang xử lý...
+                            </>
+                          ) : (
+                            <>
+                              <Wallet className="w-5 h-5 mr-2" />
+                              Mua ngay
+                              <ChevronRight className="w-5 h-5 ml-1" />
+                            </>
+                          )}
                         </Button>
                       </div>
                     </Card>
@@ -645,6 +699,119 @@ export default function LearnerDashboard() {
 
             {/* Payment Info Section */}
             <PaymentInforSection />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Payment Modal */}
+      <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
+        <DialogContent className="max-w-3xl">
+          <VisuallyHidden>
+            <DialogTitle>QR Code Thanh Toán</DialogTitle>
+          </VisuallyHidden>
+
+          <div className="p-6">
+            <div className="flex items-start gap-6">
+              {/* LEFT: QR container */}
+              <div className="flex-shrink-0">
+                <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
+                  <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
+                    <img
+                      src={qrCodeImage || ""}
+                      alt="QR Code thanh toán"
+                      className="w-full h-full object-contain rounded"
+                    />
+                  </div>
+
+                  {/* Scanning Line */}
+                  <div className="absolute inset-0 pointer-events-none rounded-3xl">
+                    <div className="absolute left-4 right-4 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-scan shadow-[0_0_20px_rgba(59,130,246,0.6)] rounded-full" />
+                  </div>
+                </div>
+
+                {/* small actions */}
+                <div className="mt-4 flex gap-3">
+                  <Button variant="outline" onClick={downloadQrImage} className="flex-1">
+                    Tải xuống
+                  </Button>
+                  <Button variant="ghost" onClick={copyQrToClipboard} className="flex-1">
+                    Sao chép
+                  </Button>
+                </div>
+              </div>
+
+              {/* RIGHT: Payment details / instructions */}
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                      <Wallet className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Quét mã QR để thanh toán</h3>
+                      <p className="text-sm text-gray-500">Mở ứng dụng ngân hàng, chọn quét mã QR và quét mã phía bên trái.</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">Số tiền</p>
+                      <p className="font-semibold text-gray-900">Xác nhận trong app ngân hàng</p>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">Giao dịch sẽ được ghi có tự động khi hoàn tất thanh toán.</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Hướng dẫn nhanh</p>
+                    <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
+                      <li>Mở app ngân hàng hoặc ví có hỗ trợ quét QR</li>
+                      <li>Chọn chức năng Quét QR</li>
+                      <li>Hướng camera tới mã QR bên trái</li>
+                      <li>Xác nhận thanh toán trong app</li>
+                    </ol>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <span className="inline-block px-3 py-1 rounded bg-green-50 text-green-800 font-medium">An toàn • mã hóa</span>
+                    <span>Hết hạn sau: <strong className="text-gray-900">15 phút</strong></span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-6 flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowQrModal(false);
+                      setQrCodeImage(null);
+                    }}
+                    className="flex-1"
+                  >
+                    Đóng
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      setShowQrModal(false);
+                      setShowCoinModal(true);
+                    }}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Chọn gói khác
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Loading overlay kept so user knows mutation is in progress */}
+            {isPending && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                <div className="text-center">
+                  <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                  <p className="text-gray-600 font-medium">Đang xử lý...</p>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

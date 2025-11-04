@@ -18,8 +18,11 @@ export interface CoinPackage {
 export interface BuyCoinRequest {
     servicePackageId: string;   
 }
-export interface BuyCoinResponse {
-    isSuccess: boolean; 
-    message: string;
-    
+export interface PayOSCheckoutResponse {
+  checkoutUrl: {
+    checkoutUrl: string;  
+    orderCode: number;
+    vietQR: string;
+    qrBase64: string;
+  };
 }
