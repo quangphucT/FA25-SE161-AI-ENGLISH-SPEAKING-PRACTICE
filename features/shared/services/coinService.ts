@@ -1,4 +1,4 @@
-import { BuyCoinRequest, BuyCoinResponse, CoinServicePackageResponse } from "@/types/coin_servicePackage";
+import { BuyCoinRequest, CoinServicePackageResponse, PayOSCheckoutResponse } from "@/types/coin_servicePackage";
 import fetchWithAuth from "@/utils/fetchWithAuth";
 
 export const getCoinPackageService = async (): Promise<CoinServicePackageResponse> => {
@@ -20,7 +20,7 @@ export const getCoinPackageService = async (): Promise<CoinServicePackageRespons
   }
 };
 
-export const buyCoinService = async (credentials: BuyCoinRequest): Promise<BuyCoinResponse> => {
+export const buyCoinService = async (credentials: BuyCoinRequest): Promise<PayOSCheckoutResponse> => {
   try {
     const response = await fetchWithAuth("/api/coin/buyCoin", {
       method: "POST",
@@ -32,7 +32,7 @@ export const buyCoinService = async (credentials: BuyCoinRequest): Promise<BuyCo
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "Buy coin failed");
-    return data as BuyCoinResponse;
+    return data as PayOSCheckoutResponse;
   }
   catch (error: any) {
     const message =
