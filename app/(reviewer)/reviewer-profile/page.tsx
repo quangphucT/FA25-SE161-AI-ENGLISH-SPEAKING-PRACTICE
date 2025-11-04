@@ -19,6 +19,8 @@ import {
   Upload,
 } from "lucide-react";
 import Image from "next/image";
+import { useGetMeQuery } from "@/hooks/useGetMeQuery";
+import { useGetCertificationQuery } from "@/features/reviewer/hooks/useGetCertificationQuery";
 const FileDropZone = ({
   onDrop,
   children,
@@ -62,9 +64,11 @@ const FileDropZone = ({
   );
 };
 
-const MentorProfile = () => {
+const ReviewerProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingCert, setIsAddingCert] = useState(false);
+  const {data: reviewerData} = useGetMeQuery();
+  const {data: certificationData} = useGetCertificationQuery();
   const [certFormData, setCertFormData] = useState({
     name: "",
     imageUrl: "",
@@ -243,12 +247,12 @@ const MentorProfile = () => {
 
                 <div className="text-center lg:text-left space-y-4">
                   <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
-                      {mentorData.name}
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent pb-3.5">
+                      {reviewerData?.fullName}
                     </h1>
                     <div className="mt-3 space-y-1">
                       <p className="text-lg text-gray-700 font-medium">
-                        Level: {mentorData.level}
+                        Level: {reviewerData?.reviewerProfile?.levels}
                       </p>
                       <p className="text-base text-gray-600">
                         {mentorData.yearsExperience} năm kinh nghiệm
@@ -685,4 +689,4 @@ const MentorProfile = () => {
   );
 };
 
-export default MentorProfile;
+export default ReviewerProfile;

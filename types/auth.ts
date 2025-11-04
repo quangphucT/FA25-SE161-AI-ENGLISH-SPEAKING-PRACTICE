@@ -82,3 +82,45 @@ export interface ForgotPasswordResponse {
   message: string;
 }
 
+export interface UserResponse {
+  userId: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  role: "LEARNER" | "REVIEWER" | "ADMIN" | "MANAGER"; // union type cho rõ ràng
+  avatarUrl: string;
+  status: "Active" | "Pending" | "Banned";
+
+  learnerProfile: LearnerProfile | null;
+  reviewerProfile: ReviewerProfile | null;
+
+}
+
+export interface ReviewerProfile {
+  reviewerProfileId: string;
+  userId: string;
+  experience: string;
+  rating: number;
+  status: "Pending" | "Approved" | "Rejected"; // optional chuẩn hóa luôn
+  levels: string;
+  walletId: string;
+  balance: number;
+  createdAt: string; // nếu muốn Date → thì convert sau
+  updatedAt: string | null;
+  isDeleted: boolean;
+}
+export interface LearnerProfile {
+  learnerProfileId: string;
+  userId: string;
+  experience: string;
+  rating: number;
+  status: "Pending" | "Approved" | "Rejected"; // optional chuẩn hóa luôn
+  levels: string;
+  walletId: string;
+  balance: number;
+  createdAt: string; // nếu muốn Date → thì convert sau
+  updatedAt: string | null;
+  isDeleted: boolean;
+}
+
+

@@ -1,4 +1,4 @@
-import { UploadCertificateRequest, UploadCertificateResponse } from "@/types/uploadCertificate";
+import { UploadCertificateRequest, UploadCertificateResponse } from "@/types/certificate";
 import fetchWithAuth from "@/utils/fetchWithAuth";
 
 export const uploadCertificateService = async (

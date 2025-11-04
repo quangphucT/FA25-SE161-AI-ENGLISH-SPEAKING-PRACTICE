@@ -3,15 +3,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import StatisticsForMentor from "../statistics-for-mentor/page";
-import MentorProfile from "../mentor-profile/page";
 import Wallet from "../wallet/page";
 import ReviewHistory from "../review-history/page";
 import ReviewLearnerSubmission from "../review-learner-submission/page";
+import ReviewerProfile from "../reviewer-profile/page";
+import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 
 const DashboardReviewerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForMentor");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
+  const {data: meData} = useGetMeQuery();
+  console.log("meData", meData)
   const navigationItems = [
     {
       id: "statisticsForMentor",
@@ -127,7 +129,7 @@ const DashboardReviewerLayout = () => {
                 </div>
                 <div>
                   <h1 className="font-bold text-lg text-white">Reviewer Hub</h1>
-                  <p className="text-xs text-slate-400">Teaching Excellence</p>
+                  <p className="text-xs text-slate-400">{meData?.fullName}</p>
                 </div>
               </div>
             )}
@@ -168,7 +170,7 @@ const DashboardReviewerLayout = () => {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center transition-all duration-200 rounded-xl ${
+                    className={`w-full cursor-pointer flex items-center transition-all duration-200 rounded-xl ${
                       activeTab === item.id
                         ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
                         : "text-slate-300 hover:text-white hover:bg-slate-700/50"
@@ -257,8 +259,7 @@ const DashboardReviewerLayout = () => {
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 mt-1">
-                    Welcome back, Sarah! Here&apos;s what&apos;s happening
-                    today.
+                    Chào mừng đã trở lại <strong>{meData?.fullName}</strong>! Đây là những cập nhật hôm nay.
                   </p>
                 </div>
               </div>
@@ -277,7 +278,7 @@ const DashboardReviewerLayout = () => {
 
             {activeTab === "profileMentor" && (
               <div className="h-full">
-                <MentorProfile />
+                <ReviewerProfile />
               </div>
             )}
 
