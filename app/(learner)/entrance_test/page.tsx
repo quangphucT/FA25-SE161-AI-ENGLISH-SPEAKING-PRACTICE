@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useGetMeQuery } from "@/hooks/useGetMeQuery";
+import { useGetQuestionTestQuery } from "@/features/manager/hook/useGetQuestionTestAssessment";
 
 const steps = [
   {
-    desc: 'Hãy đọc to từ sau: &quot;apple&quot;',
+    desc: 'Hãy đọc to từ sau :',
     type: "word",
-    sample: "apple",
+    sample: "Apple",
   },
   {
     desc: 'Hãy đọc to câu sau: &quot;I like learning English.&quot;',

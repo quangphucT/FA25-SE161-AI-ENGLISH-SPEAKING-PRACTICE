@@ -4,7 +4,7 @@ export function middleware(request: NextRequest) {
 
   const accessToken = request.cookies.get("accessToken")?.value;
   const pathName = request.nextUrl.pathname;
-
+   
   // Nếu không có token và truy cập trang root → chuyển thẳng tới login
   if (!accessToken && pathName === "/") {
     return NextResponse.redirect(new URL("/sign-in", request.url));
@@ -18,6 +18,7 @@ export function middleware(request: NextRequest) {
     try {
       const base64 = accessToken.split(".")[1];
       const decodedPayload = JSON.parse(Buffer.from(base64, "base64").toString());
+      console.log("Decoded:", decodedPayload)
       const role = decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
       const isPlacementTestDone = decodedPayload["IsPlacementTestDone"];
       const isReviewerActive = decodedPayload["IsReviewerActive"];
@@ -26,9 +27,9 @@ export function middleware(request: NextRequest) {
       if (
         role === "LEARNER" &&
         !isPlacementTestDone &&
-        pathName !== "/entrance_test"
+        pathName !== "/dashboard-learner-layout"
       ) {
-        return NextResponse.redirect(new URL("/entrance_test", request.url));
+        return NextResponse.redirect(new URL("/dashboard-learner-layout", request.url));
       }
 
       // Nếu REVIEWER chưa hoàn tất chứng chỉ → chuyển hướng tới trang upload
