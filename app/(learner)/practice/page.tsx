@@ -77,10 +77,9 @@ const PracticeMainLayout = () => {
 
   // API config - matching original code
   const AILanguage = language; // "de" | "en"
-  const STScoreAPIKey = "http://127.0.0.1:8000"; // Empty like original
-  const apiMainPathSample = "http://127.0.0.1:8000"; // Empty like original
-  const apiMainPathSTS = "http://127.0.0.1:8000"; // Empty like original
-
+  const STScoreAPIKey = ""; // Empty like original
+const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
+  const apiMainPathSTS = "https://api.aespwithai.com/"; // Empty like original
   const languageLabel = useMemo(
     () => (language === "de" ? "German" : "English"),
     [language]
@@ -336,6 +335,7 @@ const PracticeMainLayout = () => {
         body: JSON.stringify({
           category: String(difficultyIdx),
           language: AILanguage,
+          question: "work",
         }),
         headers: { "X-Api-Key": STScoreAPIKey },
       });

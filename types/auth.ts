@@ -90,7 +90,7 @@ export interface UserResponse {
   role: "LEARNER" | "REVIEWER" | "ADMIN" | "MANAGER"; // union type cho rõ ràng
   avatarUrl: string;
   status: "Active" | "Pending" | "Banned";
-
+  coinBalance: number;
   learnerProfile: LearnerProfile | null;
   reviewerProfile: ReviewerProfile | null;
 
@@ -111,11 +111,12 @@ export interface ReviewerProfile {
 }
 export interface LearnerProfile {
   learnerProfileId: string;
+  pronunciationScore: number;
   userId: string;
   experience: string;
   rating: number;
   status: "Pending" | "Approved" | "Rejected"; // optional chuẩn hóa luôn
-  levels: string;
+  level: string;
   walletId: string;
   balance: number;
   createdAt: string; // nếu muốn Date → thì convert sau

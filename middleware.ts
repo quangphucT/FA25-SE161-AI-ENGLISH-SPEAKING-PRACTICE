@@ -27,9 +27,9 @@ export function middleware(request: NextRequest) {
       if (
         role === "LEARNER" &&
         !isPlacementTestDone &&
-        pathName !== "/entrance_test"
+        pathName !== "/dashboard-learner-layout"
       ) {
-        return NextResponse.redirect(new URL("/entrance_test", request.url));
+        return NextResponse.redirect(new URL("/dashboard-learner-layout", request.url));
       }
 
       // Nếu REVIEWER chưa hoàn tất chứng chỉ → chuyển hướng tới trang upload
