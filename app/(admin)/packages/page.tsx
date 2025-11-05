@@ -25,23 +25,26 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import { useCreateCoinServicePackage } from "@/features/admin/hooks/createNewCoinServicePackage";
+import { deleteCoinServicePackageMutation } from "@/features/admin/hooks/deleteCoinServicePackageMutation";
+import { useUpdateCoinServicePackage } from "@/features/admin/hooks/updateCoinServicePackage";
+import { CreateCoinServicePackageRequest } from "@/types/coin_servicePackage";
 
 const ServicePackageManagement = () => {
   // call hooks
   const {
-    data: servicePackagesData,
-    isLoading,
-    isError,
-    refetch,
+    data: servicePackagesData
   } = useGetServicePackages();
-
+const {mutateAsync: createServicePackage} = useCreateCoinServicePackage();
+const {mutateAsync: deleteServicePackage} = deleteCoinServicePackageMutation();
+const {mutateAsync: updateServicePackage} = useUpdateCoinServicePackage();
 const createPackageSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập tên gói"),
   description: z.string().min(1, "Vui lòng nhập mô tả"),
   price: z.number().min(1, "Giá phải lớn hơn 0"),
   numberOfCoin: z.number().min(1, "Phải có ít nhất 1 xu"),
   bonusPercent: z.number().min(0).max(100, "Bonus trong khoảng 0 - 100"),
-  status: z.enum(["Active", "InActive"]),
+  status: z.enum(["Active", "Inactive"]),
 });
 
 type CreatePackageFormData = z.infer<typeof createPackageSchema>;
@@ -60,8 +63,7 @@ const form = useForm<CreatePackageFormData>({
 
 
   const onSubmit = (values: z.infer<typeof createPackageSchema>) => {
-    console.log("📦 Tạo gói mới:", values);
-    // TODO: gọi API tạo gói
+    createServicePackage(values);
     setShowCreateModal(false);
   };
 
@@ -72,6 +74,14 @@ const form = useForm<CreatePackageFormData>({
   const [packageToUpdate, setPackageToUpdate] = useState<ServicePackage | null>(
     null
   );
+  const [updateForm, setUpdateForm] = useState<CreateCoinServicePackageRequest>({
+    name: "",
+    description: "",
+    price: 0,
+    numberOfCoin: 0,
+    bonusPercent: 0,
+    status: "Active",
+  });
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [actionType, setActionType] = useState<"delete">("delete");
   const [packageToAction, setPackageToAction] = useState<ServicePackage | null>(
@@ -92,6 +102,15 @@ const form = useForm<CreatePackageFormData>({
 
   const handleUpdate = (pkg: ServicePackage) => {
     setPackageToUpdate(pkg);
+    // prefill update form
+    setUpdateForm({
+      name: pkg.name,
+      description: pkg.description,
+      price: pkg.price,
+      numberOfCoin: pkg.numberOfCoin,
+      bonusPercent: pkg.bonusPercent,
+      status: pkg.status as "Active" | "Inactive",
+    });
     setShowUpdateModal(true);
   };
 
@@ -101,11 +120,26 @@ const form = useForm<CreatePackageFormData>({
     setShowConfirmDialog(true);
   };
 
-  // const confirmAction = () => {
-  //   console.log(`${actionType}ing package:`, packageToAction);
-  //   setShowConfirmDialog(false);
-  //   setPackageToAction(null);
-  // };
+  const confirmAction = () => {
+    deleteServicePackage(packageToAction!.servicePackageId);
+    setShowConfirmDialog(false);
+    setPackageToAction(null);
+  };
+
+  const handleUpdateSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!packageToUpdate) return;
+    try {
+      await updateServicePackage({
+        servicePackageId: packageToUpdate.servicePackageId,
+        ...updateForm,
+      });
+      setShowUpdateModal(false);
+      setPackageToUpdate(null);
+    } catch (err) {
+      // errors are handled in hook via toast
+    }
+  };
 
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + " VND";
@@ -118,7 +152,7 @@ const form = useForm<CreatePackageFormData>({
       setOpenDropdownId(null);
     }
   };
-
+  
   useEffect(() => {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
@@ -257,10 +291,10 @@ const form = useForm<CreatePackageFormData>({
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
                         <div className="py-1">
                           <button
-                            // onClick={() => {
-                            //   handleUpdate(pkg);
-                            //   setOpenDropdownId(null);
-                            // }}
+                            onClick={() => {
+                              handleUpdate(pkg);
+                              setOpenDropdownId(null);
+                            }}
                             className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100"
                           >
                             <svg
@@ -278,10 +312,10 @@ const form = useForm<CreatePackageFormData>({
                             Cập nhật
                           </button>
                           <button
-                            // onClick={() => {
-                            //   handleAction(pkg, "delete");
-                            //   setOpenDropdownId(null);
-                            // }}
+                            onClick={() => {
+                              handleAction(pkg, "delete");
+                              setOpenDropdownId(null);
+                            }}
                             className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                           >
                             <svg
@@ -310,13 +344,13 @@ const form = useForm<CreatePackageFormData>({
       </div>
 
       {/* Confirm Dialog */}
-      {/* {showConfirmDialog && packageToAction && (
+      {showConfirmDialog && packageToAction && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
             <h3 className="text-lg font-semibold mb-4">Xác nhận xoá gói</h3>
             <p className="text-gray-600 mb-6">
               Bạn có chắc muốn xoá{" "}
-              <strong>{packageToAction.packageName}</strong>? Hành động này
+              <strong>{packageToAction.name}</strong>? Hành động này
               không thể hoàn tác.
             </p>
             <div className="flex gap-3 justify-end">
@@ -336,7 +370,7 @@ const form = useForm<CreatePackageFormData>({
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       {/* Add Package Modal */}
       {showCreateModal && (
@@ -502,7 +536,7 @@ const form = useForm<CreatePackageFormData>({
       )}
 
       {/* Update Package Modal */}
-      {/* {showUpdateModal && packageToUpdate && (
+      {showUpdateModal && packageToUpdate && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between p-6 border-b">
@@ -528,14 +562,15 @@ const form = useForm<CreatePackageFormData>({
             </div>
 
             <div className="p-6">
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleUpdateSubmit}>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tên gói
                   </label>
                   <input
                     type="text"
-                    defaultValue={packageToUpdate.packageName}
+                    value={updateForm.name}
+                    onChange={(e) => setUpdateForm({ ...updateForm, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Nhập tên gói"
                   />
@@ -544,30 +579,30 @@ const form = useForm<CreatePackageFormData>({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Số buổi review
+                      Phần trăm bonus (%)
                     </label>
                     <input
                       type="number"
-                      defaultValue={packageToUpdate.numberOfReview}
+                      value={updateForm.bonusPercent}
+                      onChange={(e) => setUpdateForm({ ...updateForm, bonusPercent: Number(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="VD: 8"
                       min="0"
                     />
                   </div>
 
-                  <div>
+                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Thời hạn
+                      Số lượng xu
                     </label>
-                    <select
-                      defaultValue={packageToUpdate.duration}
+                    <input
+                      type="number"
+                      value={updateForm.numberOfCoin}
+                      onChange={(e) => setUpdateForm({ ...updateForm, numberOfCoin: Number(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="1 Month">1 tháng</option>
-                      <option value="3 Months">3 tháng</option>
-                      <option value="6 Months">6 tháng</option>
-                      <option value="12 Months">12 tháng</option>
-                    </select>
+                      placeholder="VD: 8"
+                      min="0"
+                    />
                   </div>
                 </div>
 
@@ -578,7 +613,8 @@ const form = useForm<CreatePackageFormData>({
                     </label>
                     <input
                       type="number"
-                      defaultValue={packageToUpdate.price}
+                      value={updateForm.price}
+                      onChange={(e) => setUpdateForm({ ...updateForm, price: Number(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="VD: 500000"
                     />
@@ -589,12 +625,12 @@ const form = useForm<CreatePackageFormData>({
                       Trạng thái
                     </label>
                     <select
-                      defaultValue={packageToUpdate.status}
+                      value={updateForm.status}
+                      onChange={(e) => setUpdateForm({ ...updateForm, status: e.target.value as "Active" | "Inactive" })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="Active">Hoạt động</option>
                       <option value="Inactive">Ngưng hoạt động</option>
-                      <option value="Pending">Đang xử lý</option>
                     </select>
                   </div>
                 </div>
@@ -607,14 +643,15 @@ const form = useForm<CreatePackageFormData>({
                   </label>
                   <textarea
                     rows={4}
-                    defaultValue={packageToUpdate.description}
+                    value={updateForm.description}
+                    onChange={(e) => setUpdateForm({ ...updateForm, description: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Nhập mô tả gói"
                   />
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <Button
+                <div className="flex  justify-end space-x-3 pt-4 border-t">
+                  <Button className="cursor-pointer"
                     type="button"
                     variant="outline"
                     onClick={() => setShowUpdateModal(false)}
@@ -623,7 +660,7 @@ const form = useForm<CreatePackageFormData>({
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
                   >
                     Cập nhật gói
                   </Button>
@@ -632,7 +669,7 @@ const form = useForm<CreatePackageFormData>({
             </div>
           </div>
         </div>
-      )} */}
+      )}
     </div>
   );
 };

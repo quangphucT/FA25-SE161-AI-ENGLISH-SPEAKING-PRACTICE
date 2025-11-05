@@ -5,7 +5,7 @@ import { getServicePackages } from "../services/getServicePackages";
 
 export const useGetServicePackages = () => {
   return useQuery<GetServicePackagesResponse, Error>({
-    queryKey: ["getServicePackages"],
+    queryKey: ["getCoinServicePackages"],
     queryFn: () => getServicePackages(),
   });
 };
