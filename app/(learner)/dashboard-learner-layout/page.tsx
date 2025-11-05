@@ -37,6 +37,7 @@ export default function LearnerDashboard() {
   const { data: userData } = useGetMeQuery();
   const { data: coinPackages } = useGetCoinServicePackage();
   const { mutate: buyCoin, isPending } = useBuyingCoinServicePackages();
+
   const sidebarMenu = [
     { id: "overview", label: "Tổng quan", icon: Home },
     { id: "courses", label: "Lộ trình học", icon: BookOpen },
@@ -168,9 +169,10 @@ export default function LearnerDashboard() {
       { servicePackageId },
       {
         onSuccess: (data) => {
-          setQrCodeImage(data.checkoutUrl.qrBase64);
+          setQrCodeImage(data.qrBase64);
           setShowCoinModal(false);
           setShowQrModal(true);
+          console.log("QR url:", data.qrBase64);
         },
     
         onSettled: () => {
@@ -731,10 +733,10 @@ export default function LearnerDashboard() {
 
                 {/* small actions */}
                 <div className="mt-4 flex gap-3">
-                  <Button variant="outline" onClick={downloadQrImage} className="flex-1">
+                  <Button  variant="outline" onClick={downloadQrImage} className="flex-1 cursor-pointer">
                     Tải xuống
                   </Button>
-                  <Button variant="ghost" onClick={copyQrToClipboard} className="flex-1">
+                  <Button variant="ghost" onClick={copyQrToClipboard} className="flex-1 cursor-pointer">
                     Sao chép
                   </Button>
                 </div>
@@ -785,7 +787,7 @@ export default function LearnerDashboard() {
                       setShowQrModal(false);
                       setQrCodeImage(null);
                     }}
-                    className="flex-1"
+                    className="flex-1 cursor-pointer"
                   >
                     Đóng
                   </Button>
@@ -795,7 +797,7 @@ export default function LearnerDashboard() {
                       setShowQrModal(false);
                       setShowCoinModal(true);
                     }}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
                   >
                     Chọn gói khác
                   </Button>
