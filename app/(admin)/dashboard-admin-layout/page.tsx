@@ -166,9 +166,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
                 <User2Icon size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Quản trị viên</span>
+                <span className="font-semibold text-sm">Người quản lý</span>
                 <span className="text-xs opacity-70">
-                  Quản lí tài khoản quản trị
+                  Quản lí người quản lý
                 </span>
               </div>
             </button>
