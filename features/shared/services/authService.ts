@@ -11,9 +11,11 @@ import {
   ResendOTPResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  UserResponse,
   VerifyOTPRequest,
   VerifyOTPResponse,
 } from "@/types/auth";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 // Login Service
 export const loginService = async (
@@ -178,6 +180,25 @@ export const resetPasswordService = async (
       error?.response?.data?.message ||
       error.message ||
       "Reset password failed";
+    throw new Error(message);
+  }
+};
+
+export const getMeService = async (): Promise<UserResponse> => {
+  try {
+    const response = await fetchWithAuth("/api/auth/getMe", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Get me failed");
+    return data as UserResponse;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || error.message || "Get me failed";
     throw new Error(message);
   }
 };
