@@ -720,32 +720,16 @@ export default function LearnerDashboard() {
               <div className="flex-shrink-0">
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
-                    {qrCodeImage ? (
-                      !imageError ? (
-                        <Image
-                          src={qrCodeImage || "https://png.pngtree.com/png-vector/20250111/ourmid/pngtree-golden-retriever-dog-pictures-png-image_15147078.png"}
-                          alt="QR Code thanh toán"
-                          width={288}
-                          height={288}
-                          className="w-full h-full object-contain rounded"
-                          unoptimized
-                          priority
-                        
-                        />
-                      ) : (
-                      
-                        <img
-                          src={qrCodeImage}
-                          alt="QR Code thanh toán"
+                    <img
+                      src={qrCodeImage || "https://res.cloudinary.com/ddqfq0jut/image/upload/v1762427601/qr_codes/payqr_466192.png"}
+                      alt="QR Code thanh toán"
                           className="w-full h-full object-contain rounded"
                     
                         />
-                      )
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
-                      </div>
-                    )}
+                  
+                
+              
+          
                   </div>
 
                   {/* Scanning Line */}
