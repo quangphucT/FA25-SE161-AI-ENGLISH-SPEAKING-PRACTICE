@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useGetMeQuery } from "@/hooks/useGetMeQuery";
-import { useGetQuestionTestQuery } from "@/features/manager/hook/useGetQuestionTestAssessment";
+import { useGetTestAssessment } from "@/features/learner/hooks/testAssessmentHooks/useGetTestAssessment";
 
 const steps = [
   {
@@ -33,17 +32,18 @@ const EntranceTest = () => {
   const [done, setDone] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recorded, setRecorded] = useState([false, false, false]);
+  // call hooks
+  const {data: testData } =  useGetTestAssessment();
 
-  // Demo: simulate recording
-  const handleRecord = () => {
-    setIsRecording(true);
-    setTimeout(() => {
-      setIsRecording(false);
-      const newRec = [...recorded];
-      newRec[step] = true;
-      setRecorded(newRec);
-    }, 2000); // Simulate 2s recording
-  };
+  // const handleRecord = () => {
+  //   setIsRecording(true);
+  //   setTimeout(() => {
+  //     setIsRecording(false);
+  //     const newRec = [...recorded];
+  //     newRec[step] = true;
+  //     setRecorded(newRec);
+  //   }, 2000); // Simulate 2s recording
+  // };
 
   const handleNext = () => {
     if (step < steps.length - 1) {
@@ -80,7 +80,7 @@ const EntranceTest = () => {
               className={`rounded-full w-20 h-20 flex items-center justify-center text-3xl bg-[#4fc3f7] shadow-lg ${
                 isRecording ? "animate-pulse" : ""
               }`}
-              onClick={handleRecord}
+              // onClick={handleRecord}
               disabled={isRecording || recorded[step]}
               aria-label="Ghi âm"
             >
@@ -135,33 +135,7 @@ const EntranceTest = () => {
 
       {/* Footer kiểu Duolingo */}
       <footer className="fixed bottom-0 left-0 w-full bg-[#22313f] py-6 px-[350px] flex items-center justify-between z-50">
-        <div className="flex items-center gap-6">
-          <div className="rounded-full bg-[#181f2a] w-16 h-16 flex items-center justify-center">
-            {recorded[step] ? (
-              // Icon check xanh khi đã ghi âm xong
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#58cc02" />
-                <path d="M8 12l2.5 2.5L16 9" stroke="#181f2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            ) : (
-              // Icon micro khi chưa ghi âm
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                <rect x="9" y="2" width="6" height="14" rx="3" fill="#58cc02" />
-                <path d="M5 10v2a7 7 0 0 0 14 0v-2" stroke="#181f2a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="12" y1="22" x2="12" y2="16" stroke="#181f2a" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            )}
-          </div>
-          {step < steps.length - 1 ? (
-            <div>
-              <div className="text-2xl font-bold text-[#58cc02]">
-                {recorded[step] ? "Great!" : "Keep going!"}
-              </div>
-            </div>
-          ) : (
-            <></>
-          )}
-        </div>
+    
         <Button
           className={`${
             recorded[step]

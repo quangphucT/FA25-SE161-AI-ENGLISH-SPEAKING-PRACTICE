@@ -174,7 +174,6 @@ export default function LearnerDashboard() {
           setShowCoinModal(false);
           setShowQrModal(true);
         },
-
         onSettled: () => {
           // always clear loading state when mutation is settled
           setLoadingPackageId(null);
