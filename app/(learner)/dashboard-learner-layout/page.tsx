@@ -170,12 +170,26 @@ export default function LearnerDashboard() {
       { servicePackageId },
       {
         onSuccess: (data) => {
-          setQrCodeImage(data.qrBase64);
+          console.log("Raw QR data:", data.qrBase64?.substring(0, 100));
+          
+          // Ensure proper base64 format
+          let qrImage = data.qrBase64;
+          
+          // If doesn't have data URI prefix, add it
+          if (qrImage && !qrImage.startsWith('data:image')) {
+            qrImage = `data:image/png;base64,${qrImage}`;
+            console.log("Added data URI prefix");
+          }
+          
+          console.log("Final QR format:", qrImage?.substring(0, 100));
+          setQrCodeImage(qrImage);
           setShowCoinModal(false);
           setShowQrModal(true);
-          console.log("QR url:", data.qrBase64);
         },
-
+        onError: (error) => {
+          console.error("Error buying coin:", error);
+          toast.error("Không thể tạo mã QR. Vui lòng thử lại.");
+        },
         onSettled: () => {
           // always clear loading state when mutation is settled
           setLoadingPackageId(null);
@@ -719,11 +733,27 @@ export default function LearnerDashboard() {
               <div className="flex-shrink-0">
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
-                    <img
-                      src={qrCodeImage || ""}
-                      alt="QR Code thanh toán"
-                      className="w-full h-full object-contain rounded"
-                    />
+                    {qrCodeImage ? (
+                      // Use regular img tag for base64 - more reliable on Vercel
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={qrCodeImage}
+                        alt="QR Code thanh toán"
+                        className="w-full h-full object-contain rounded"
+                        onError={(e) => {
+                          console.error("QR Image failed to load");
+                          console.error("QR data length:", qrCodeImage?.length);
+                          console.error("QR starts with:", qrCodeImage?.substring(0, 50));
+                        }}
+                        onLoad={() => {
+                          console.log("QR Image loaded successfully");
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Scanning Line */}
