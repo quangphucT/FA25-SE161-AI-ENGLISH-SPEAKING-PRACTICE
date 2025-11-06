@@ -734,30 +734,21 @@ export default function LearnerDashboard() {
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
                     {qrCodeImage ? (
-                      <div className="relative w-full h-full">
-                        <Image
-                          src={qrCodeImage}
-                          alt="QR Code thanh toán"
-                          width={288}
-                          height={288}
-                          className="w-full h-full object-contain rounded"
-                          unoptimized
-                          priority
-                          onError={(e) => {
-                            console.error("Image load error, falling back to background-image");
-                            // Fallback: use background-image if Image component fails
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent && qrCodeImage) {
-                              parent.style.backgroundImage = `url(${qrCodeImage})`;
-                              parent.style.backgroundSize = 'contain';
-                              parent.style.backgroundPosition = 'center';
-                              parent.style.backgroundRepeat = 'no-repeat';
-                            }
-                          }}
-                        />
-                      </div>
+                      // Use regular img tag for base64 - more reliable on Vercel
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={qrCodeImage}
+                        alt="QR Code thanh toán"
+                        className="w-full h-full object-contain rounded"
+                        onError={(e) => {
+                          console.error("QR Image failed to load");
+                          console.error("QR data length:", qrCodeImage?.length);
+                          console.error("QR starts with:", qrCodeImage?.substring(0, 50));
+                        }}
+                        onLoad={() => {
+                          console.log("QR Image loaded successfully");
+                        }}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
