@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const PracticeMainLayout = () => {
-  const [language, setLanguage] = useState<"de" | "en">("en");
+  const [language, setLanguage] = useState<"en-gb" | "en">("en-gb");
   const [score, setScore] = useState<number>(0);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<
@@ -18,16 +18,16 @@ const PracticeMainLayout = () => {
   const [pronunciationAccuracy, setPronunciationAccuracy] =
     useState<string>("");
   const [originalScriptHtml, setOriginalScriptHtml] = useState<string>(
-    "Click on the bar on the right to generate a new sentence (please use chrome web browser)."
+   // "Click on t
   );
   const [ipaScript, setIpaScript] = useState<string>(
-    "Before speaking, click on the mic button below to start recording and then click again when you're done."
+
   );
   const [recordedIpaScript, setRecordedIpaScript] = useState<string>(
-    "On the left bottom you can choose the difficult. On the upper left you can choose the language."
+
   );
   const [translatedScript, setTranslatedScript] = useState<string>(
-    "The corresponding IPA reading of each sentence will also be displayed. If you never heard from IPA, you can check out this playlist. Try to get at least 690 points a day. Don't be shy! You can do it :)"
+  
   );
   const [singleWordPair, setSingleWordPair] =
     useState<string>("Reference | Spoken");
@@ -71,40 +71,42 @@ const PracticeMainLayout = () => {
 
   // Content and timings
   const [currentText, setCurrentText] = useState<string[]>([
-    originalScriptHtml,
+    originalScriptHtml || "",
   ]);
   // removed word timing state (unused in current UI)
 
   // API config - matching original code
   const AILanguage = language; // "de" | "en"
   const STScoreAPIKey = ""; // Empty like original
-const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
-  const apiMainPathSTS = "https://api.aespwithai.com/"; // Empty like original
-  const languageLabel = useMemo(
-    () => (language === "de" ? "German" : "English"),
-    [language]
-  );
+  const apiMainPathSample = "https://ai.aespwithai.com";// "https://ai.aespwithai.com"; // Empty like original
+  const apiMainPathSTS = "https://ai.aespwithai.com";// "https://ai.aespwithai.com"; // Empty like original
+
+  const languageLabel = useMemo(() => (language === "en-gb" ? "English-UK" : "English-USA"), [language]);
 
   const changeLanguage = useCallback(
-    (lang: "de" | "en", generateNewSample = false) => {
+    (lang: "en-gb" | "en", generateNewSample = true) => {
       setLanguage(lang);
       setDropdownOpen(false);
-      const languageIdentifier = lang;
-      // Try to pick a specific voice if available, else any of same language
+      // Map to preferred voice names from legacy implementation
+      const preferredVoiceName =
+        lang === "en-gb"
+          ? "Google UK English Female"
+          : "Microsoft David - English (United States)";
+
+      // Try exact preferred voice first
       let selected: SpeechSynthesisVoice | null = null;
-      const targetName = lang === "de" ? "Anna" : "Daniel";
       for (const v of voices) {
-        if (
-          v.lang.slice(0, 2) === languageIdentifier &&
-          v.name === targetName
-        ) {
+        if (v.name === preferredVoiceName) {
           selected = v;
           break;
         }
       }
+
+      // Fallback: any voice matching language family
+      const languagePrefix = lang === "en-gb" ? "en" : "en";
       if (!selected) {
         for (const v of voices) {
-          if (v.lang.slice(0, 2) === languageIdentifier) {
+          if (v.lang.slice(0, 2).toLowerCase() === languagePrefix) {
             selected = v;
             break;
           }
@@ -149,7 +151,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
         return;
       }
       setUiBlocked(true);
-      if (!voiceRef.current) changeLanguage(AILanguage);
+      if (!voiceRef.current) changeLanguage(AILanguage, false);
       const utter = new SpeechSynthesisUtterance(text);
       if (voiceRef.current) utter.voice = voiceRef.current;
       utter.rate = 0.7;
@@ -206,9 +208,9 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
       setRecording(false);
       if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
       setMainTitle("Processing audio...");
+      setUiBlocked(true);
     } else {
       setMainTitle("Recording... click again when done speaking");
-      setUiBlocked(true);
       if (
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state !== "recording"
@@ -219,6 +221,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
       }
     }
   }, [recording]);
+  
   const cacheSoundFiles = useCallback(async () => {
     try {
       if (!audioContextRef.current) return;
@@ -271,6 +274,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
       }
     }
   }, [AILanguage, STScoreAPIKey, apiMainPathSTS]);
+
   const getNextSample = useCallback(async () => {
     setUiBlocked(true);
     if (!serverIsInitialized) {
@@ -278,7 +282,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
     }
     if (!serverWorking) {
       setMainTitle("Server Error");
-      setRecordedIpaScript("");
+      setRecordedIpaScript(""); 
       setSingleWordPair("Error");
       setIpaScript("Error");
       setUiBlocked(false);
@@ -315,27 +319,27 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
     setScoreMultiplier(nextMultiplier);
 
     try {
-      // Try to fetch from API
-      if (!apiMainPathSample || !STScoreAPIKey) {
-        setMainTitle("API not configured - using demo mode");
-        setOriginalScriptHtml(
-          "Demo: This is a sample sentence for pronunciation practice."
-        );
-        setIpaScript("/ ˈsæmpl̩ ˈsentəns fər prəˌnʌnsiˈeɪʃən ˈpræktɪs /");
-        setTranslatedScript("This is a demo translation.");
-        setCurrentSample((s) => s + 1);
-        setMainTitle("AI Pronunciation Trainer");
-        setCurrentSoundRecorded(false);
-        setUiBlocked(false);
-        return;
-      }
+      // // Try to fetch from API
+      // if (!apiMainPathSample || !STScoreAPIKey) {
+      //   setMainTitle("API not configured - using demo mode");
+      //   setOriginalScriptHtml(
+      //     "Demo: This is a sample sentence for pronunciation practice."
+      //   );
+      //   setIpaScript("/ ˈsæmpl̩ ˈsentəns fər prəˌnʌnsiˈeɪʃən ˈpræktɪs /");
+      //   setTranslatedScript("This is a demo translation.");
+      //   setCurrentSample((s) => s + 1);
+      //   setMainTitle("AI Pronunciation Trainer");
+      //   setCurrentSoundRecorded(false);
+      //   setUiBlocked(false);
+      //   return;
+      // }
 
       const res = await fetch(apiMainPathSample + "/getSample", {
         method: "post",
         body: JSON.stringify({
           category: String(difficultyIdx),
           language: AILanguage,
-          question: "work",
+          question: "I love to learn new languages.",
         }),
         headers: { "X-Api-Key": STScoreAPIKey },
       });
@@ -513,6 +517,11 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
       getNextSample();
     }
   }, [shouldFetchNext, getNextSample]);
+
+  // Fetch initial sample on component mount
+  useEffect(() => {
+    getNextSample();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     audioContextRef.current = new AudioContext();
@@ -698,16 +707,16 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
             console.log("originalScriptHtml value:", originalScriptHtml);
 
             // Check if API is configured
-            if (!apiMainPathSTS || !STScoreAPIKey) {
-              console.log("Using demo mode - API not configured");
-              setMainTitle("API not configured - demo mode");
-              setRecordedIpaScript("/ demo ˈrekɔrdɪŋ /");
-              setPronunciationAccuracy("85%");
-              setMainTitle("AI Pronunciation Trainer");
-              setCurrentSoundRecorded(true);
-              setUiBlocked(false);
-              return;
-            }
+            // if (!apiMainPathSTS || !STScoreAPIKey) {
+            //   console.log("Using demo mode - API not configured");
+            //   setMainTitle("API not configured - demo mode");
+            //   setRecordedIpaScript("/ demo ˈrekɔrdɪŋ /");
+            //   setPronunciationAccuracy("85%");
+            //   setMainTitle("AI Pronunciation Trainer");
+            //   setCurrentSoundRecorded(true);
+            //   setUiBlocked(false);
+            //   return;
+            // }
 
             // Get text content from originalScriptHtml, handling both string and HTML
             let text = "";
@@ -876,23 +885,26 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
               <button
                 id="languageBox"
                 onClick={() => setDropdownOpen((o) => !o)}
-                className="text-transparent bg-clip-text bg-gradient-to-r from-[#363850] to-[#153C57] text-base px-2 py-1 border border-transparent rounded hover:bg-gray-50"
+                disabled={uiBlocked}
+                className="text-transparent bg-clip-text bg-gradient-to-r from-[#363850] to-[#153C57] text-base px-2 py-1 border border-transparent rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {languageLabel}
               </button>
               {dropdownOpen && (
                 <div className="absolute mt-1 w-40 bg-white rounded shadow-md z-10">
                   <button
-                    onClick={() => changeLanguage("de")}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    onClick={() => changeLanguage("en-gb")}
+                    disabled={uiBlocked}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    German
+                    English-UK
                   </button>
                   <button
                     onClick={() => changeLanguage("en")}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    disabled={uiBlocked}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    English
+                    English-USA
                   </button>
                 </div>
               )}
@@ -942,7 +954,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
               id="original_script"
               className="text-[2.5em] text-blue-600 max-w-[87%]"
               contentEditable
-              dangerouslySetInnerHTML={{ __html: originalScriptHtml }}
+              dangerouslySetInnerHTML={{ __html: originalScriptHtml || "" }}
             />
             <p
               id="ipa_script"
@@ -970,7 +982,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
               id="buttonNext"
               onClick={getNextSample}
               disabled={uiBlocked}
-              className="rounded block border-0 text-white text-left text-[3em] box-border absolute top-0 left-0 right-[2%] bottom-[2%] bg-[#58636d] w-[10em] transition-all hover:bg-[#6383a1]"
+              className="rounded block border-0 text-white text-left text-[3em] box-border absolute top-0 left-0 right-[2%] bottom-[2%] bg-[#58636d] w-[10em] transition-all hover:bg-[#6383a1] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span></span>
             </button>
@@ -994,7 +1006,8 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
           <button
             id="recordAudio"
             onClick={updateRecordingState}
-            className={`box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition ${
+            disabled={uiBlocked && !recording}
+            className={`box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition disabled:opacity-50 disabled:cursor-not-allowed ${
               recording ? "bg-[#477c5b]" : "bg-[#49d67d]"
             }`}
           >
@@ -1055,6 +1068,7 @@ const apiMainPathSample = "https://api.aespwithai.com/"; // Empty like original
                 getNextSample();
               }}
             />
+
             <span className="ml-1">Hard</span>
           </label>
         </div>
