@@ -718,14 +718,12 @@ export default function LearnerDashboard() {
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
                     {qrCodeImage ? (
-                      <Image
+                      // Use native img tag for better compatibility with Cloudinary URLs
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
                         src={qrCodeImage}
                         alt="QR Code thanh toán"
-                        width={288}
-                        height={288}
                         className="w-full h-full object-contain rounded"
-                        unoptimized
-                        priority
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
