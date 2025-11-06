@@ -730,15 +730,16 @@ export default function LearnerDashboard() {
                           className="w-full h-full object-contain rounded"
                           unoptimized
                           priority
-                        
+                          onError={() => setImageError(true)}
                         />
                       ) : (
-                      
+                        // Fallback native img if Next/Image fails (helps on some prod setups)
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={qrCodeImage}
                           alt="QR Code thanh toán"
                           className="w-full h-full object-contain rounded"
-                    
+                          crossOrigin="anonymous"
                         />
                       )
                     ) : (
@@ -747,6 +748,20 @@ export default function LearnerDashboard() {
                       </div>
                     )}
                   </div>
+
+                  {/* Small debug helper: show URL and open in new tab */}
+                  {qrCodeImage && (
+                    <div className="mt-2 text-center">
+                      <a
+                        href={qrCodeImage}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Mở ảnh QR trong tab mới
+                      </a>
+                    </div>
+                  )}
 
                   {/* Scanning Line */}
                   <div className="absolute inset-0 pointer-events-none rounded-3xl">
@@ -833,6 +848,7 @@ export default function LearnerDashboard() {
                     onClick={() => {
                       setShowQrModal(false);
                       setQrCodeImage(null);
+                      setImageError(false);
                     }}
                     className="flex-1 cursor-pointer"
                   >
@@ -843,6 +859,7 @@ export default function LearnerDashboard() {
                     onClick={() => {
                       setShowQrModal(false);
                       setShowCoinModal(true);
+                      setImageError(false);
                     }}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
                   >
