@@ -312,7 +312,7 @@ export default function LearnerDashboard() {
                 className="bg-white cursor-pointer text-indigo-600 hover:bg-indigo-50 font-semibold"
               >
                 <Wallet className="w-4 h-4 mr-2" />
-                Nạp Coin
+                Nạp Coin (Xu)
               </Button>
             </div>
           </Card>
