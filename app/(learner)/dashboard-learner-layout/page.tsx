@@ -171,22 +171,11 @@ export default function LearnerDashboard() {
       { servicePackageId },
       {
         onSuccess: (data) => {
-          console.log('QR Response:', data); // Debug log
-          console.log('QR URL:', data?.qrBase64); // Debug log
-          
-          if (!data?.qrBase64) {
-            toast.error('Không nhận được mã QR từ server');
-            return;
-          }
-          
+      
           setQrCodeImage(data?.qrBase64);
           setImageError(false); // Reset error state
           setShowCoinModal(false);
           setShowQrModal(true);
-        },
-        onError: (error) => {
-          console.error('Buy coin error:', error);
-          toast.error('Có lỗi xảy ra khi tạo QR code');
         },
         onSettled: () => {
           // always clear loading state when mutation is settled
@@ -741,28 +730,15 @@ export default function LearnerDashboard() {
                           className="w-full h-full object-contain rounded"
                           unoptimized
                           priority
-                          onError={(e) => {
-                            console.error('Next.js Image load error:', e);
-                            setImageError(true); // Switch to fallback
-                          }}
-                          onLoad={() => {
-                            console.log('QR Image loaded successfully via Next.js Image');
-                          }}
+                        
                         />
                       ) : (
-                        // Fallback to native img tag if Next.js Image fails
-                        // eslint-disable-next-line @next/next/no-img-element
+                      
                         <img
                           src={qrCodeImage}
                           alt="QR Code thanh toán"
                           className="w-full h-full object-contain rounded"
-                          onError={(e) => {
-                            console.error('Native img load error:', e);
-                            toast.error('Không thể tải QR code');
-                          }}
-                          onLoad={() => {
-                            console.log('QR Image loaded successfully via native img');
-                          }}
+                    
                         />
                       )
                     ) : (
