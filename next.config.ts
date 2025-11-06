@@ -3,17 +3,23 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "sununi.edu.vn" },
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { 
-        protocol: "https", 
+      {
+        protocol: "https",
+        hostname: "sununi.edu.vn",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
         hostname: "res.cloudinary.com",
-        pathname: "/**" // Accept all paths from Cloudinary
+        port: "",
+        pathname: "/**",
       },
     ],
-    unoptimized: true,
+    unoptimized: false, // để Next xử lý ảnh đúng cách
     dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
   },
 };
 
