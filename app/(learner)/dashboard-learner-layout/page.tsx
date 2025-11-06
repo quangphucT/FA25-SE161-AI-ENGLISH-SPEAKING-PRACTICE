@@ -312,7 +312,7 @@ export default function LearnerDashboard() {
                 className="bg-white cursor-pointer text-indigo-600 hover:bg-indigo-50 font-semibold"
               >
                 <Wallet className="w-4 h-4 mr-2" />
-                Nạp Coin (Xu)
+                Nạp Coin
               </Button>
             </div>
           </Card>
@@ -707,17 +707,151 @@ export default function LearnerDashboard() {
         </DialogContent>
       </Dialog>
 
-
-
       {/* QR Code Payment Modal */}
-     
+      <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
+        <DialogContent className="max-w-3xl">
+          <VisuallyHidden>
+            <DialogTitle>QR Code Thanh Toán</DialogTitle>
+          </VisuallyHidden>
 
+          <div className="p-6">
+            <div className="flex items-start gap-6">
+              {/* LEFT: QR container */}
+              <div className="flex-shrink-0">
+                <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
+                  <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
+                    {qrCodeImage ? (
+                    
+                        <img
+                          src={qrCodeImage}
+                          alt="QR Code thanh toán"
+                          className="w-full h-full object-contain rounded"
+                    
+                        />
+                      
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
+                      </div>
+                    )}
+                  </div>
 
-         
-        <div className="w-30 h-30">
-          <img src={qrCodeImage || ""} alt="QR Code" />
-        </div>
-       
+                  {/* Scanning Line */}
+                  <div className="absolute inset-0 pointer-events-none rounded-3xl">
+                    <div className="absolute left-4 right-4 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-scan shadow-[0_0_20px_rgba(59,130,246,0.6)] rounded-full" />
+                  </div>
+                </div>
+
+                {/* small actions */}
+                <div className="mt-4 flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={downloadQrImage}
+                    className="flex-1 cursor-pointer"
+                  >
+                    Tải xuống
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={copyQrToClipboard}
+                    className="flex-1 cursor-pointer"
+                  >
+                    Sao chép
+                  </Button>
+                </div>
+              </div>
+
+              {/* RIGHT: Payment details / instructions */}
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                      <Wallet className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">
+                        Quét mã QR để thanh toán
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Mở ứng dụng ngân hàng, chọn quét mã QR và quét mã phía
+                        bên trái.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">Số tiền</p>
+                      <p className="font-semibold text-gray-900">
+                        Xác nhận trong app ngân hàng
+                      </p>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Giao dịch sẽ được ghi có tự động khi hoàn tất thanh toán.
+                    </p>
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Hướng dẫn nhanh
+                    </p>
+                    <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
+                      <li>Mở app ngân hàng hoặc ví có hỗ trợ quét QR</li>
+                      <li>Chọn chức năng Quét QR</li>
+                      <li>Hướng camera tới mã QR bên trái</li>
+                      <li>Xác nhận thanh toán trong app</li>
+                    </ol>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <span className="inline-block px-3 py-1 rounded bg-green-50 text-green-800 font-medium">
+                      An toàn • mã hóa
+                    </span>
+                    <span>
+                      Hết hạn sau:{" "}
+                      <strong className="text-gray-900">15 phút</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-6 flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowQrModal(false);
+                      setQrCodeImage(null);
+                    }}
+                    className="flex-1 cursor-pointer"
+                  >
+                    Đóng
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      setShowQrModal(false);
+                      setShowCoinModal(true);
+                    }}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                  >
+                    Chọn gói khác
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Loading overlay kept so user knows mutation is in progress */}
+            {isPending && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                <div className="text-center">
+                  <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                  <p className="text-gray-600 font-medium">Đang xử lý...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
