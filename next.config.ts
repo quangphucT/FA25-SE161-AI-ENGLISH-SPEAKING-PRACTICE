@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "sununi.edu.vn" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
-     unoptimized: true,
   },
 };
 
