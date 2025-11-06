@@ -27,6 +27,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 import { useBuyingCoinServicePackages } from "@/features/learner/hooks/servicePackages/useBuyingServicePackageMutation";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function LearnerDashboard() {
   const [activeMenu, setActiveMenu] = useState("overview");
@@ -718,10 +719,14 @@ export default function LearnerDashboard() {
               <div className="flex-shrink-0">
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
-                    <img
+                    <Image 
                       src={qrCodeImage || ""}
                       alt="QR Code thanh toán"
                       className="w-full h-full object-contain rounded"
+                      unoptimized
+                      width={288}
+                      height={288}
+                      
                     />
                   </div>
 
