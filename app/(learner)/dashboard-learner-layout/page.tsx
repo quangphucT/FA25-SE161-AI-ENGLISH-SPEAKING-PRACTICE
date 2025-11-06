@@ -714,7 +714,7 @@ export default function LearnerDashboard() {
 
 
          
-        <div>
+        <div className="w-30 h-30">
           <img src={qrCodeImage || ""} alt="QR Code" />
         </div>
        
