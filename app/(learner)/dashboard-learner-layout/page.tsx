@@ -35,6 +35,7 @@ export default function LearnerDashboard() {
   const [showCoinModal, setShowCoinModal] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { data: userData } = useGetMeQuery();
   const { data: coinPackages } = useGetCoinServicePackage();
   const { mutate: buyCoin, isPending } = useBuyingCoinServicePackages();
@@ -170,9 +171,22 @@ export default function LearnerDashboard() {
       { servicePackageId },
       {
         onSuccess: (data) => {
-          setQrCodeImage(data.qrBase64);
+          console.log('QR Response:', data); // Debug log
+          console.log('QR URL:', data?.qrBase64); // Debug log
+          
+          if (!data?.qrBase64) {
+            toast.error('Không nhận được mã QR từ server');
+            return;
+          }
+          
+          setQrCodeImage(data?.qrBase64);
+          setImageError(false); // Reset error state
           setShowCoinModal(false);
           setShowQrModal(true);
+        },
+        onError: (error) => {
+          console.error('Buy coin error:', error);
+          toast.error('Có lỗi xảy ra khi tạo QR code');
         },
         onSettled: () => {
           // always clear loading state when mutation is settled
@@ -718,13 +732,39 @@ export default function LearnerDashboard() {
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
                     {qrCodeImage ? (
-                      // Use native img tag for better compatibility with Cloudinary URLs
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={qrCodeImage}
-                        alt="QR Code thanh toán"
-                        className="w-full h-full object-contain rounded"
-                      />
+                      !imageError ? (
+                        <Image
+                          src={qrCodeImage}
+                          alt="QR Code thanh toán"
+                          width={288}
+                          height={288}
+                          className="w-full h-full object-contain rounded"
+                          unoptimized
+                          priority
+                          onError={(e) => {
+                            console.error('Next.js Image load error:', e);
+                            setImageError(true); // Switch to fallback
+                          }}
+                          onLoad={() => {
+                            console.log('QR Image loaded successfully via Next.js Image');
+                          }}
+                        />
+                      ) : (
+                        // Fallback to native img tag if Next.js Image fails
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={qrCodeImage}
+                          alt="QR Code thanh toán"
+                          className="w-full h-full object-contain rounded"
+                          onError={(e) => {
+                            console.error('Native img load error:', e);
+                            toast.error('Không thể tải QR code');
+                          }}
+                          onLoad={() => {
+                            console.log('QR Image loaded successfully via native img');
+                          }}
+                        />
+                      )
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
