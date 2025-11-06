@@ -721,11 +721,10 @@ export default function LearnerDashboard() {
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
                     <img
-                      src={qrCodeImage || "https://res.cloudinary.com/ddqfq0jut/image/upload/v1762427601/qr_codes/payqr_466192.png"}
+                      src={"https://res.cloudinary.com/ddqfq0jut/image/upload/v1762427601/qr_codes/payqr_466192.png"}
                       alt="QR Code thanh toán"
-                          className="w-full h-full object-contain rounded"
-                    
-                        />
+                      className="w-full h-full object-contain rounded"
+                    />
                   
                 
               
