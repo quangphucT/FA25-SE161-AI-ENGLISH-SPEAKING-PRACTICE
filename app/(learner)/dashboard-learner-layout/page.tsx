@@ -723,7 +723,7 @@ export default function LearnerDashboard() {
                     {qrCodeImage ? (
                       !imageError ? (
                         <Image
-                          src={qrCodeImage}
+                          src={qrCodeImage || "https://res.cloudinary.com/ddqfq0jut/image/upload/v1762429512/qr_codes/payqr_823872.png"}
                           alt="QR Code thanh toán"
                           width={288}
                           height={288}
