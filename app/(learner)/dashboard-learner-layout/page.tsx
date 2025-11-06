@@ -28,7 +28,6 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useBuyingCoinServicePackages } from "@/features/learner/hooks/servicePackages/useBuyingServicePackageMutation";
 import { toast } from "sonner";
 import Image from "next/image";
-import { logQRDebug, fixBase64QR } from "@/utils/qr-debug";
 
 export default function LearnerDashboard() {
   const [activeMenu, setActiveMenu] = useState("overview");
@@ -171,44 +170,11 @@ export default function LearnerDashboard() {
       { servicePackageId },
       {
         onSuccess: (data) => {
-          console.log("=== QR CODE PAYMENT SUCCESS ===");
-          
-          // Validate raw QR data
-          const validation = logQRDebug(data.qrBase64, "Raw API Response");
-          
-          if (!data.qrBase64) {
-            console.error("❌ No QR data received from API");
-            toast.error("Không nhận được mã QR từ server");
-            return;
-          }
-          
-          // Fix and validate QR format
-          const fixedQR = fixBase64QR(data.qrBase64);
-          
-          if (!fixedQR) {
-            console.error("❌ Could not fix QR data");
-            toast.error("Định dạng mã QR không hợp lệ");
-            return;
-          }
-          
-          // Final validation
-          const finalValidation = logQRDebug(fixedQR, "Fixed QR Data");
-          
-          if (!finalValidation.isValid) {
-            console.warn("⚠️ QR validation warnings:", finalValidation.issues);
-          }
-          
-          console.log("✅ Setting QR image state");
-          setQrCodeImage(fixedQR);
+          setQrCodeImage(data.qrBase64);
           setShowCoinModal(false);
           setShowQrModal(true);
-          
-          console.log("✅ QR modal opened");
         },
-        onError: (error) => {
-          console.error("Error buying coin:", error);
-          toast.error("Không thể tạo mã QR. Vui lòng thử lại.");
-        },
+
         onSettled: () => {
           // always clear loading state when mutation is settled
           setLoadingPackageId(null);
@@ -747,48 +713,21 @@ export default function LearnerDashboard() {
           </VisuallyHidden>
 
           <div className="p-6">
-            {/* Debug Info - Remove after fixing */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>Debug Info:</strong>
-                <div>QR exists: {qrCodeImage ? 'YES' : 'NO'}</div>
-                <div>QR length: {qrCodeImage?.length || 0}</div>
-                <div>QR prefix: {qrCodeImage?.substring(0, 30)}...</div>
-              </div>
-            )}
-            
             <div className="flex items-start gap-6">
               {/* LEFT: QR container */}
               <div className="flex-shrink-0">
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
                     {qrCodeImage ? (
-                      <>
-                        {/* Use native img tag for better base64 support on Vercel */}
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={qrCodeImage}
-                          alt="QR Code thanh toán"
-                          className="w-full h-full object-contain rounded"
-                          onLoad={() => {
-                            console.log("✅ QR Image loaded successfully");
-                          }}
-                          onError={(e) => {
-                            console.error("❌ QR Image failed to load");
-                            console.error("QR data length:", qrCodeImage?.length);
-                            console.error("QR prefix:", qrCodeImage?.substring(0, 30));
-                            console.error("Error:", e);
-                            // Show error to user
-                            toast.error("Không thể tải mã QR. Vui lòng thử lại.");
-                          }}
-                        />
-                        {/* Fallback: Canvas rendering if img fails on some browsers */}
-                        {process.env.NODE_ENV === 'development' && (
-                          <div className="absolute bottom-2 right-2 text-xs bg-blue-500 text-white px-2 py-1 rounded">
-                            QR Active
-                          </div>
-                        )}
-                      </>
+                      <Image
+                        src={qrCodeImage}
+                        alt="QR Code thanh toán"
+                        width={288}
+                        height={288}
+                        className="w-full h-full object-contain rounded"
+                        unoptimized
+                        priority
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
