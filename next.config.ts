@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
-    unoptimized: false, // để Next xử lý ảnh đúng cách
+    unoptimized: true, 
     dangerouslyAllowSVG: true,
   },
 };
