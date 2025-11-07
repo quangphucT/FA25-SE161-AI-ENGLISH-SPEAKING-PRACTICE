@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+// Adapted to Next.js validator which expects params as a Promise in context
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   const accessToken = request.cookies.get("accessToken")?.value;
-  const { id } = params;
+  const { id } = await context.params;
 
   try {
     const backendResponse = await fetch(
