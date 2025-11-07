@@ -27,6 +27,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 import { useBuyingCoinServicePackages } from "@/features/learner/hooks/servicePackages/useBuyingServicePackageMutation";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function LearnerDashboard() {
   const [activeMenu, setActiveMenu] = useState("overview");
@@ -34,9 +35,11 @@ export default function LearnerDashboard() {
   const [showCoinModal, setShowCoinModal] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { data: userData } = useGetMeQuery();
   const { data: coinPackages } = useGetCoinServicePackage();
   const { mutate: buyCoin, isPending } = useBuyingCoinServicePackages();
+
   const sidebarMenu = [
     { id: "overview", label: "Tổng quan", icon: Home },
     { id: "courses", label: "Lộ trình học", icon: BookOpen },
@@ -168,11 +171,12 @@ export default function LearnerDashboard() {
       { servicePackageId },
       {
         onSuccess: (data) => {
-          setQrCodeImage(data.checkoutUrl.qrBase64);
+      
+          setQrCodeImage(data?.qrBase64);
+          setImageError(false); // Reset error state
           setShowCoinModal(false);
           setShowQrModal(true);
         },
-    
         onSettled: () => {
           // always clear loading state when mutation is settled
           setLoadingPackageId(null);
@@ -716,11 +720,20 @@ export default function LearnerDashboard() {
               <div className="flex-shrink-0">
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex items-center justify-center">
-                    <img
-                      src={qrCodeImage || ""}
-                      alt="QR Code thanh toán"
-                      className="w-full h-full object-contain rounded"
-                    />
+                    {qrCodeImage ? (
+                    
+                        <img
+                          src={qrCodeImage}
+                          alt="QR Code thanh toán"
+                          className="w-full h-full object-contain rounded"
+                    
+                        />
+                      
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Scanning Line */}
@@ -731,10 +744,18 @@ export default function LearnerDashboard() {
 
                 {/* small actions */}
                 <div className="mt-4 flex gap-3">
-                  <Button variant="outline" onClick={downloadQrImage} className="flex-1">
+                  <Button
+                    variant="outline"
+                    onClick={downloadQrImage}
+                    className="flex-1 cursor-pointer"
+                  >
                     Tải xuống
                   </Button>
-                  <Button variant="ghost" onClick={copyQrToClipboard} className="flex-1">
+                  <Button
+                    variant="ghost"
+                    onClick={copyQrToClipboard}
+                    className="flex-1 cursor-pointer"
+                  >
                     Sao chép
                   </Button>
                 </div>
@@ -748,21 +769,32 @@ export default function LearnerDashboard() {
                       <Wallet className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">Quét mã QR để thanh toán</h3>
-                      <p className="text-sm text-gray-500">Mở ứng dụng ngân hàng, chọn quét mã QR và quét mã phía bên trái.</p>
+                      <h3 className="text-xl font-bold text-gray-900">
+                        Quét mã QR để thanh toán
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Mở ứng dụng ngân hàng, chọn quét mã QR và quét mã phía
+                        bên trái.
+                      </p>
                     </div>
                   </div>
 
                   <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-4">
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-600">Số tiền</p>
-                      <p className="font-semibold text-gray-900">Xác nhận trong app ngân hàng</p>
+                      <p className="font-semibold text-gray-900">
+                        Xác nhận trong app ngân hàng
+                      </p>
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">Giao dịch sẽ được ghi có tự động khi hoàn tất thanh toán.</p>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Giao dịch sẽ được ghi có tự động khi hoàn tất thanh toán.
+                    </p>
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Hướng dẫn nhanh</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Hướng dẫn nhanh
+                    </p>
                     <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
                       <li>Mở app ngân hàng hoặc ví có hỗ trợ quét QR</li>
                       <li>Chọn chức năng Quét QR</li>
@@ -772,8 +804,13 @@ export default function LearnerDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3 text-sm text-gray-500">
-                    <span className="inline-block px-3 py-1 rounded bg-green-50 text-green-800 font-medium">An toàn • mã hóa</span>
-                    <span>Hết hạn sau: <strong className="text-gray-900">15 phút</strong></span>
+                    <span className="inline-block px-3 py-1 rounded bg-green-50 text-green-800 font-medium">
+                      An toàn • mã hóa
+                    </span>
+                    <span>
+                      Hết hạn sau:{" "}
+                      <strong className="text-gray-900">15 phút</strong>
+                    </span>
                   </div>
                 </div>
 
@@ -785,7 +822,7 @@ export default function LearnerDashboard() {
                       setShowQrModal(false);
                       setQrCodeImage(null);
                     }}
-                    className="flex-1"
+                    className="flex-1 cursor-pointer"
                   >
                     Đóng
                   </Button>
@@ -795,7 +832,7 @@ export default function LearnerDashboard() {
                       setShowQrModal(false);
                       setShowCoinModal(true);
                     }}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
                   >
                     Chọn gói khác
                   </Button>

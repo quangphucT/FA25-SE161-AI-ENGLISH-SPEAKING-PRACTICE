@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
       if (
         role === "LEARNER" &&
         !isPlacementTestDone &&
-        pathName !== "/dashboard-learner-layout"
+        pathName !== "/dashboard-learner-layout" 
       ) {
         return NextResponse.redirect(new URL("/dashboard-learner-layout", request.url));
       }

@@ -7,10 +7,7 @@ import StatisticsForManagers from "../statistics-for-managers/page";
 import CurriculumManagementPage from "../curriculum-management/page";
 import QuestionForAssessmentPage from "../question-for-assessment/page";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
-import CourseFollowingLevelManagement from "../manage-courses/courses-following-level/page";
-import ChapterCoursesManagement from "../manage-courses/chapter-list/page";
-import QuestionsCoursesManagement from "../manage-courses/question-course/page";
-
+import LevelA1 from "../levels/levelA1";
 const DashboardManagerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForManagers");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -23,8 +20,8 @@ const DashboardManagerLayout = () => {
       label: "Statistics",
       icon: (
         <svg
-          width="18"
-          height="18"
+          width="20"
+          height="20"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -39,38 +36,111 @@ const DashboardManagerLayout = () => {
     },
     {
       id: "assesmentManagement",
-      label: "Assesment Management",
-      icon: <FaBook />,
+      label: "Assessment Management",
+      icon: (
+        <svg
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+      ),
       path: "/assesment-management",
     },
     {
       id: "curriculumManagement",
       label: "Curriculum Management",
-      icon: <FaBook />,
+      icon: (
+        <svg
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ),
       path: "/curriculum-management",
     },
+
     {
       id: "questionForAssessment",
       label: "Question For Assessment",
-      icon: <FaBook />,
+      icon: (
+        <svg
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      ),
       path: "/question-for-assessment",
     },
+
     {
-      id: "courseFollowingLevel",
-      label: "Course Following Level",
-      icon: <FaBook />,
-      // 👇 Thêm menu con ở đây
+      id: "levels",
+      label: "Levels",
+      icon: (
+        <svg
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path d="M3 3v18h18" />
+          <path d="M7 12l4-4 4 4 5-5" />
+        </svg>
+      ),
       children: [
         {
-          id: "courseList",
-          label: "Course List",
-          path: "/courses-following-level",
+          id: "level-a1",
+          label: "A1 - Beginner",
+          level: "A1",
+          path: "/levels/a1",
         },
-        { id: "chapterList", label: "Chapter List", path: "/chapter-list" },
         {
-          id: "questionCourse",
-          label: "Question Course",
-          path: "/question-course",
+          id: "level-a2",
+          label: "A2 - Elementary",
+          level: "A2",
+          path: "/levels/a2",
+        },
+        {
+          id: "level-b1",
+          label: "B1 - Intermediate",
+          level: "B1",
+          path: "/levels/b1",
+        },
+        {
+          id: "level-b2",
+          label: "B2 - Upper Intermediate",
+          level: "B2",
+          path: "/levels/b2",
+        },
+        {
+          id: "level-c1",
+          label: "C1 - Advanced",
+          level: "C1",
+          path: "/levels/c1",
+        },
+        {
+          id: "level-c2",
+          label: "C2 - Mastery",
+          level: "C2",
+          path: "/levels/c2",
         },
       ],
     },
@@ -145,64 +215,85 @@ const DashboardManagerLayout = () => {
                         if (item.children) {
                           setOpenSubmenu(
                             openSubmenu === item.id ? null : item.id
-                          ); // toggle submenu
+                          );
                         } else {
                           setActiveTab(item.id);
                           setOpenSubmenu(null);
                         }
                       }}
-                      className={`w-full flex items-center transition-all duration-200 rounded-xl ${
+                      className={`w-full cursor-pointer flex items-center transition-all duration-300 rounded-lg group ${
                         activeTab === item.id
-                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                          : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                          ? "bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30"
+                          : openSubmenu === item.id
+                          ? "bg-slate-700/70 text-white"
+                          : "text-slate-300 hover:text-white hover:bg-slate-700/60"
                       } ${
                         sidebarOpen
-                          ? "px-4 py-3 space-x-3"
-                          : "px-3 py-3 justify-center"
+                          ? "px-4 py-3.5 space-x-3"
+                          : "px-3 py-3.5 justify-center"
                       }`}
                       title={!sidebarOpen ? item.label : ""}
                     >
                       <span
-                        className={
+                        className={`${
                           activeTab === item.id
                             ? "text-white"
-                            : "text-slate-400"
-                        }
+                            : "text-slate-400 group-hover:text-white"
+                        } transition-colors duration-300`}
                       >
                         {item.icon}
                       </span>
                       {sidebarOpen && (
-                        <span className="font-medium text-sm">
-                          {item.label}
-                        </span>
-                      )}
-                      {item.children && sidebarOpen && (
-                        <span className="ml-auto text-xs">
-                          {openSubmenu === item.id ? "▲" : "▼"}
-                        </span>
+                        <>
+                          <span className="font-medium text-sm flex-1">
+                            {item.label}
+                          </span>
+                          {item.children && (
+                            <svg
+                              width="16"
+                              height="16"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                              className={`transition-transform duration-300 ${
+                                openSubmenu === item.id ? "rotate-180" : ""
+                              }`}
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          )}
+                        </>
                       )}
                     </button>
 
-                    {/* 👇 Render submenu nếu có */}
+                    {/* Submenu with smooth animation */}
                     {item.children &&
                       openSubmenu === item.id &&
                       sidebarOpen && (
-                        <div className="ml-8 mt-1 space-y-1">
-                          {item.children.map((child) => (
+                        <div className="ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-300">
+                          {item.children.map((child, idx) => (
                             <button
                               key={child.id}
                               onClick={() => {
                                 setActiveTab(child.id);
-
                                 setOpenSubmenu(null);
                               }}
-                              className={`w-full text-left text-sm rounded-lg px-3 py-2 transition-all duration-150 ${
+                              style={{ animationDelay: `${idx * 50}ms` }}
+                              className={`w-full cursor-pointer text-left text-sm rounded-lg px-4 py-2.5 transition-all duration-200 flex items-center space-x-3 group ${
                                 activeTab === child.id
-                                  ? "bg-blue-600 text-white"
-                                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+                                  : "text-slate-400 hover:text-white hover:bg-slate-700/60 hover:pl-5"
                               }`}
                             >
-                              {child.label}
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                                  activeTab === child.id
+                                    ? "bg-white"
+                                    : "bg-slate-500 group-hover:bg-blue-400"
+                                }`}
+                              />
+                              <span>{child.label}</span>
                             </button>
                           ))}
                         </div>
@@ -308,22 +399,138 @@ const DashboardManagerLayout = () => {
                 <QuestionForAssessmentPage />
               </div>
             )}
-            {activeTab === "courseList" && (
+
+            {/* Level Pages */}
+            {activeTab === "level-a1" && <LevelA1 />}
+
+            {activeTab === "level-a2" && (
               <div className="h-full">
-                <CourseFollowingLevelManagement />
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-2xl">A2</span>
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-800">
+                        A2 - Elementary Level
+                      </h2>
+                      <p className="text-slate-600">
+                        Elementary level for basic communication
+                      </p>
+                    </div>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-slate-700">
+                      Content for A2 level will be displayed here. This level
+                      focuses on building basic communication skills.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {activeTab === "chapterList" && (
+            {activeTab === "level-b1" && (
               <div className="h-full">
-                  <ChapterCoursesManagement/>
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-2xl">B1</span>
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-800">
+                        B1 - Intermediate Level
+                      </h2>
+                      <p className="text-slate-600">
+                        Intermediate level for confident communication
+                      </p>
+                    </div>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-slate-700">
+                      Content for B1 level will be displayed here. This level
+                      helps learners become more confident in everyday
+                      situations.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {activeTab === "questionCourse" && (
+            {activeTab === "level-b2" && (
               <div className="h-full">
-                <QuestionsCoursesManagement />
-                
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-2xl">B2</span>
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-800">
+                        B2 - Upper Intermediate Level
+                      </h2>
+                      <p className="text-slate-600">
+                        Upper intermediate for advanced communication
+                      </p>
+                    </div>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-slate-700">
+                      Content for B2 level will be displayed here. This level
+                      prepares learners for professional and academic contexts.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "level-c1" && (
+              <div className="h-full">
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-2xl">C1</span>
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-800">
+                        C1 - Advanced Level
+                      </h2>
+                      <p className="text-slate-600">
+                        Advanced level for fluent communication
+                      </p>
+                    </div>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-slate-700">
+                      Content for C1 level will be displayed here. This level
+                      focuses on achieving fluency and natural expression.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "level-c2" && (
+              <div className="h-full">
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-2xl">C2</span>
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-800">
+                        C2 - Mastery Level
+                      </h2>
+                      <p className="text-slate-600">
+                        Mastery level for native-like proficiency
+                      </p>
+                    </div>
+                  </div>
+                  <div className="prose max-w-none">
+                    <p className="text-slate-700">
+                      Content for C2 level will be displayed here. This level
+                      represents near-native proficiency and mastery.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

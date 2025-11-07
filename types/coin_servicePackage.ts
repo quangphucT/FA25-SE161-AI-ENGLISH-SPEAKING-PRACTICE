@@ -19,10 +19,42 @@ export interface BuyCoinRequest {
     servicePackageId: string;   
 }
 export interface PayOSCheckoutResponse {
-  checkoutUrl: {
+
     checkoutUrl: string;  
     orderCode: number;
-    vietQR: string;
+    qrCode: string;
     qrBase64: string;
-  };
+
+}
+
+export interface CreateCoinServicePackageRequest {
+    name: string;
+    description: string; 
+    price: number; 
+    numberOfCoin: number; 
+    bonusPercent: number;
+    status: "Active" | "Inactive";
+}
+export interface CreateCoinServicePackageResponse {
+    isSuccess: boolean; 
+    data: CoinPackage;
+    message: string;
+}
+export interface DeleteCoinServicePackageResponse {
+    isSuccess: boolean; 
+    message: string;
+}
+export interface UpdateCoinServicePackageRequest {
+  servicePackageId: string;
+  name: string;
+  description: string;
+  price: number;
+  numberOfCoin: number;
+  bonusPercent: number;
+  status: "Active" | "Inactive";
+}
+
+export interface UpdateCoinServicePackageResponse {
+  isSuccess: boolean;
+  message: string;
 }

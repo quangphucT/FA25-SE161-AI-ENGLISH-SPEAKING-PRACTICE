@@ -78,8 +78,8 @@ const PracticeMainLayout = () => {
   // API config - matching original code
   const AILanguage = language; // "de" | "en"
   const STScoreAPIKey = ""; // Empty like original
-  const apiMainPathSample = "http://127.0.0.1:8000/";// "https://ai.aespwithai.com"; // Empty like original
-  const apiMainPathSTS = "http://127.0.0.1:8000/";// "https://ai.aespwithai.com"; // Empty like original
+  const apiMainPathSample = "https://ai.aespwithai.com";// "https://ai.aespwithai.com"; // Empty like original
+  const apiMainPathSTS = "https://ai.aespwithai.com";// "https://ai.aespwithai.com"; // Empty like original
 
   const languageLabel = useMemo(() => (language === "en-gb" ? "English-UK" : "English-USA"), [language]);
 
@@ -221,6 +221,7 @@ const PracticeMainLayout = () => {
       }
     }
   }, [recording]);
+  
   const cacheSoundFiles = useCallback(async () => {
     try {
       if (!audioContextRef.current) return;
