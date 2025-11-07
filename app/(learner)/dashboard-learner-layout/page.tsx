@@ -36,7 +36,7 @@ export default function LearnerDashboard() {
   const [showCoinModal, setShowCoinModal] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  // imageError no longer used after simplifying QR rendering; remove to silence unused var warning
   const { data: userData } = useGetMeQuery();
   const { data: coinPackages } = useGetCoinServicePackage();
   const { mutate: buyCoin, isPending } = useBuyingCoinServicePackages();
@@ -178,7 +178,7 @@ export default function LearnerDashboard() {
       
           setQrCodeImage(data?.qrBase64);
           setOrderCode(data?.orderCode);
-          setImageError(false); // Reset error state
+          // reset any previous image error state (no-op since we removed imageError)
           setShowCoinModal(false);
           setShowQrModal(true);
           setIsPollingStatus(true); 
@@ -191,16 +191,13 @@ export default function LearnerDashboard() {
     );
   };
 
-  // Polling trạng thái thanh toán cho tới khi Paid / Cancelled
-  // Giảm tải: mỗi 3s check một lần, auto dừng khi đạt trạng thái cuối.
-  const FINAL_STATUSES = ["Paid", "Cancelled"] as const;
-  type FinalStatus = typeof FINAL_STATUSES[number];
+  // Polling trạng thái thanh toán cho tới khi đạt trạng thái cuối (Paid/Cancelled)
 
   const clearPaymentState = (options?: { reopenPackages?: boolean }) => {
     setShowQrModal(false);
     setQrCodeImage(null);
     setOrderCode(null);
-    setImageError(false);
+  // no image error state to reset
     setIsPollingStatus(false);
     if (options?.reopenPackages) setShowCoinModal(true);
   };
@@ -210,13 +207,15 @@ export default function LearnerDashboard() {
     if (!orderCode || !showQrModal) return; 
     if (!isPollingStatus) return;
 
-    let intervalId: ReturnType<typeof setInterval>;
     const poll = async () => {
       try {
         const res = await refetchOrderStatus();
         const status: string | undefined = res.data?.status;
         if (!status) return;
-        if (FINAL_STATUSES.includes(status as FinalStatus)) {
+        if (
+          status === "Paid" ||
+          status === "Cancelled"
+        ) {
           // Dừng polling ngay
           setIsPollingStatus(false);
           if (status === "Paid") {
@@ -233,7 +232,7 @@ export default function LearnerDashboard() {
     };
 
     poll();
-    intervalId = setInterval(poll, 3000);
+    const intervalId = setInterval(poll, 3000);
     return () => clearInterval(intervalId);
   }, [orderCode, showQrModal, isPollingStatus, refetchOrderStatus]);
 
@@ -772,7 +771,7 @@ export default function LearnerDashboard() {
             }
             setQrCodeImage(null);
             setOrderCode(null);
-            setImageError(false);
+            // no image error state to reset
             setIsPollingStatus(false);
           }
           setShowQrModal(open);
@@ -790,14 +789,12 @@ export default function LearnerDashboard() {
                 <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 flex items-center justify-center">
                   <div className="w-72 h-72 bg-white p-4 rounded-xl flex flex-col items-center justify-center">
                     {qrCodeImage ? (
-                    
-                        <img
-                          src={qrCodeImage}
-                          alt="QR Code thanh toán"
-                          className="w-full h-full object-contain rounded"
-                    
-                        />
-                      
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={qrCodeImage}
+                        alt="QR Code thanh toán"
+                        className="w-full h-full object-contain rounded"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
@@ -911,7 +908,7 @@ export default function LearnerDashboard() {
                       setShowQrModal(false);
                       setQrCodeImage(null);
                       setOrderCode(null);
-                      setImageError(false);
+                      // no image error state to reset
                       setIsPollingStatus(false);
                     }}
                     className="flex-1 cursor-pointer"
@@ -928,7 +925,7 @@ export default function LearnerDashboard() {
                       setShowCoinModal(true);
                       setQrCodeImage(null);
                       setOrderCode(null);
-                      setImageError(false);
+                      // no image error state to reset
                        setIsPollingStatus(false);
                     }}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
