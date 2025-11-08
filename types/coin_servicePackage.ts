@@ -21,7 +21,7 @@ export interface BuyCoinRequest {
 export interface PayOSCheckoutResponse {
 
     checkoutUrl: string;  
-    orderCode: number;
+    orderCode: string;
     qrCode: string;
     qrBase64: string;
 
@@ -57,4 +57,14 @@ export interface UpdateCoinServicePackageRequest {
 export interface UpdateCoinServicePackageResponse {
   isSuccess: boolean;
   message: string;
+}
+export interface CancelBuyingCoinRequest{
+    orderCode: string;
+}
+export interface CancelBuyingCoinResponse{
+    message: string;
+}
+export interface getOrderCodeStatusResponse{
+    orderCode: string;
+    status: string;
 }
