@@ -8,7 +8,7 @@ export interface DeleteCourseResponse {
 
 export const deleteCourseService = async (id: string): Promise<DeleteCourseResponse> => {
   try {
-    const response = await fetchWithAuth(`/api/manager/coursesFollowingLevels/delete-course/${id}`, {
+    const response = await fetchWithAuth(`/api/manager/courseApiRoutes/delete-course/${id}`, {
       method: 'DELETE',
       credentials: 'include',
     });

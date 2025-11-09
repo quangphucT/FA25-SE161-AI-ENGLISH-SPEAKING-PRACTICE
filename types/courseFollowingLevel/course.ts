@@ -48,15 +48,11 @@ export interface CreateCourseResponse {
 }
 export interface CreateCourseRequest {
   title: string;
-  type: string;
   numberOfChapter: number;
   orderIndex: number;
-  level: number | string;
-  chapters: Array<{
-    title: string;
-    description?: string;
-    numberOfExercise?: number;
-  }>;
+  level: number;
+   price: number;
+  
 }
 
 // ✅ Response khi lấy danh sách khóa học

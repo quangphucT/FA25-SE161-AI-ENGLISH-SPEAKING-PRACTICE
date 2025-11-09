@@ -1,0 +1,61 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function PUT(request: NextRequest) {
+  const parts = request.nextUrl.pathname.split("/").filter(Boolean);
+  const chapterId = parts[parts.length - 1];
+  const accessToken = request.cookies.get("accessToken")?.value;
+
+  if (!chapterId || chapterId === "[id]") {
+    return NextResponse.json(
+      { message: "chapterId is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { title,description, numberOfExercise, courseId } = body;
+
+    if (!title) {
+      return NextResponse.json(
+        { message: "title is required" },
+        { status: 400 }
+      );
+    }
+
+    const backendResponse = await fetch(
+      `${process.env.BE_API_URL}/ManagerChapter/chapters/${chapterId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          numberOfExercise: numberOfExercise || 0,
+          courseId: courseId ,
+        }),
+      }
+    );
+
+    const data = await backendResponse.json();
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
+    }
+
+    return NextResponse.json(data, { status: 200 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { message: error.message || "Update course failed" },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { message: "Update course failed" },
+      { status: 500 }
+    );
+  }
+}

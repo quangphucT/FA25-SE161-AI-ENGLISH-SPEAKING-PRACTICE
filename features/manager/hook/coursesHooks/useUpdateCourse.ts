@@ -10,7 +10,7 @@ export const useUpdateCourse = () => {
     mutationFn: ({ id, payload }) => updateCourseService(id, payload),
     onSuccess: (data) => {
       toast.success(data.message || "Cập nhật khóa học thành công");
-      queryClient.invalidateQueries({ queryKey: ["getCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["getCoursesOfLevel"] });
     },
     onError: (error) => {
       toast.error(error.message || "Cập nhật khóa học thất bại");

@@ -30,10 +30,10 @@ const feedbackSamples = [
 const EntranceTest = () => {
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recorded, setRecorded] = useState([false, false, false]);
+  const [isRecording] = useState(false);
+  const [recorded] = useState([false, false, false]);
   // call hooks
-  const {data: testData } =  useGetTestAssessment();
+  useGetTestAssessment();
 
   // const handleRecord = () => {
   //   setIsRecording(true);
