@@ -46,8 +46,6 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,6 +97,7 @@ interface Chapter {
   title: string;
   description: string;
   orderIndex: number;
+  numberOfExercise?: number;
   exercises?: Exercise[];
 }
 
@@ -107,22 +106,36 @@ interface Exercise {
   title: string;
   description: string;
   orderIndex: number;
+  numberOfQuestion?: number;
   questions?: Question[];
 }
 
 interface Question {
   questionId: string;
-  content: string;
-  type: string;
+  content?: string;
+  text?: string;
+  type: string | number;
   orderIndex: number;
+  phonemeJson?: string;
 }
 
-const LevelA1 = () => {
+interface Media {
+  questionMediaId: string;
+  accent: string;
+  audioUrl: string;
+  videoUrl: string;
+  imageUrl: string;
+  source: string;
+}
+interface LevelProps {
+  level: string;
+}
+const LevelA1 = ({ level }: LevelProps) => {
   const {
     data: response,
     isLoading,
     isError,
-  } = useGetCoursesOfLevelMutation("A1");
+  } = useGetCoursesOfLevelMutation(level);
   const coursesOfLevelA1 = response?.data || [];
 
   // Modal states for each entity type
@@ -150,12 +163,12 @@ const LevelA1 = () => {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-  const [editingQuestion, setEditingQuestion] = useState<any | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
-  const [deletingChapter, setDeletingChapter] = useState<any | null>(null);
-  const [deletingExercise, setDeletingExercise] = useState<any | null>(null);
-  const [deletingQuestion, setDeletingQuestion] = useState<any | null>(null);
-  const [deletingMedia, setDeletingMedia] = useState<any | null>(null);
+  const [deletingChapter, setDeletingChapter] = useState<Chapter | null>(null);
+  const [deletingExercise, setDeletingExercise] = useState<Exercise | null>(null);
+  const [deletingQuestion, setDeletingQuestion] = useState<Question | null>(null);
+  const [deletingMedia, setDeletingMedia] = useState<Media | null>(null);
   const [viewMode, setViewMode] = useState<
     "course" | "chapter" | "exercise" | "question"
   >("course");
@@ -174,8 +187,8 @@ const LevelA1 = () => {
     null
   );
   const [showMediaModal, setShowMediaModal] = useState(false);
-  const [editingMedia, setEditingMedia] = useState<any | null>(null);
-  const [viewingMediaDetails, setViewingMediaDetails] = useState<any | null>(null);
+  const [editingMedia, setEditingMedia] = useState<Media | null>(null);
+  const [viewingMediaDetails, setViewingMediaDetails] = useState<Media | null>(null);
   const { mutate: createCourseMutation } = useCreateCourse();
   const { mutate: updateCourseMutation } = useUpdateCourse();
   const { mutate: deleteCourseMutation } = useDeleteCourse();
@@ -266,6 +279,7 @@ const LevelA1 = () => {
   type CourseFormValues = z.infer<typeof courseSchema>;
 
   const courseFormMethods = useForm<CourseFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
       title: "",
@@ -287,6 +301,7 @@ const LevelA1 = () => {
   type ChapterFormValues = z.infer<typeof chapterSchema>;
 
   const chapterFormMethods = useForm<ChapterFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(chapterSchema) as any,
     defaultValues: {
       title: "",
@@ -307,6 +322,7 @@ const LevelA1 = () => {
   type ExerciseFormValues = z.infer<typeof exerciseSchema>;
 
   const exerciseFormMethods = useForm<ExerciseFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(exerciseSchema) as any,
     defaultValues: {
       title: "",
@@ -327,6 +343,7 @@ const LevelA1 = () => {
   type QuestionFormValues = z.infer<typeof questionSchema>;
 
   const questionFormMethods = useForm<QuestionFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(questionSchema) as any,
     defaultValues: {
       text: "",
@@ -338,6 +355,7 @@ const LevelA1 = () => {
 
   // Edit Single Question Form (separate from multi-create)
   const editQuestionFormMethods = useForm<QuestionFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(questionSchema) as any,
     defaultValues: {
       text: "",
@@ -359,6 +377,7 @@ const LevelA1 = () => {
   type MediaFormValues = z.infer<typeof mediaSchema>;
 
   const mediaFormMethods = useForm<MediaFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(mediaSchema) as any,
     defaultValues: {
       accent: "",
@@ -426,12 +445,12 @@ const LevelA1 = () => {
     setShowChapterModal(true);
   };
 
-  const handleEditChapter = (chapter: any) => {
-    setEditingChapter(chapter);
+  const handleEditChapter = (chapter: Record<string, unknown>) => {
+    setEditingChapter(chapter as unknown as Chapter);
     chapterFormMethods.reset({
-      title: chapter.title,
-      description: chapter.description,
-      numberOfExercise: chapter.numberOfExercise || 0,
+      title: chapter.title as string,
+      description: chapter.description as string,
+      numberOfExercise: (chapter.numberOfExercise as number) || 0,
       courseId: selectedCourse?.courseId || "", // Set current course as default
     });
     setShowChapterModal(true);
@@ -586,6 +605,7 @@ const LevelA1 = () => {
   };
 
   // Edit Single Question Handlers
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditQuestion = (question: any) => {
     setEditingQuestion(question);
     // Parse type: could be string "0", "1", "2" or number 0, 1, 2
@@ -641,6 +661,7 @@ const LevelA1 = () => {
     setShowMediaModal(true);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditMedia = (media: any) => {
     setEditingMedia(media);
     mediaFormMethods.reset({
@@ -696,6 +717,7 @@ const LevelA1 = () => {
     setDeletingCourse(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeleteChapter = (chapter: any) => {
     setDeletingChapter(chapter);
     setShowDeleteChapterDialog(true);
@@ -709,6 +731,7 @@ const LevelA1 = () => {
     setDeletingChapter(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeleteExercise = (exercise: any) => {
     setDeletingExercise(exercise);
     setShowDeleteExerciseDialog(true);
@@ -722,6 +745,7 @@ const LevelA1 = () => {
     setDeletingExercise(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeleteQuestion = (question: any) => {
     setDeletingQuestion(question);
     setShowDeleteQuestionDialog(true);
@@ -735,6 +759,7 @@ const LevelA1 = () => {
     setDeletingQuestion(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeleteMedia = (media: any) => {
     setDeletingMedia(media);
     setShowDeleteMediaDialog(true);
@@ -776,12 +801,12 @@ const LevelA1 = () => {
     }
   };
 
-  const handleViewExercises = (chapter: Chapter) => {
-    setSelectedChapter(chapter);
-    setViewMode("exercise");
-    // Trigger refetch when switching to exercise view
-    setTimeout(() => refetchExercises(), 0);
-  };
+  // const handleViewExercises = (chapter: Chapter) => {
+  //   setSelectedChapter(chapter);
+  //   setViewMode("exercise");
+  //   // Trigger refetch when switching to exercise view
+  //   setTimeout(() => refetchExercises(), 0);
+  // };
 
   const handleViewQuestions = (exercise: Exercise) => {
     setSelectedExercise(exercise);
@@ -961,7 +986,7 @@ const LevelA1 = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedCourses.map((course: Course, index: number) => (
+                {sortedCourses.map((course: Course) => (
                   <TableRow key={course.courseId} className="hover:bg-slate-50">
                     <TableCell className="font-medium text-slate-600">
                       {course.courseId}
@@ -2164,7 +2189,7 @@ const LevelA1 = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {chaptersData.data.map((chapter, index) => (
+                  {chaptersData.data.map((chapter) => (
                     <React.Fragment key={chapter.chapterId}>
                       <TableRow className="hover:bg-slate-50">
                         <TableCell className="font-medium text-slate-600">
@@ -2217,7 +2242,7 @@ const LevelA1 = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleEditChapter(chapter)}
+                              onClick={() => handleEditChapter(chapter as unknown as Record<string, unknown>)}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -2862,7 +2887,7 @@ const LevelA1 = () => {
                 <TableBody>
                   {[...exercisesData.data]
                     .sort((a, b) => a.orderIndex - b.orderIndex)
-                    .map((exercise, index) => (
+                    .map((exercise) => (
                       <TableRow
                         key={exercise.exerciseId}
                         className="hover:bg-slate-50"

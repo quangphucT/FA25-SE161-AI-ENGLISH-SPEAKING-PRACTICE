@@ -44,7 +44,7 @@ export default function LearnerDashboard() {
   const [orderCode, setOrderCode] = useState<string | null>(null);
 
   // Chúng ta sẽ tự kiểm soát polling trong useEffect khi orderCode có giá trị.
-  const { data: orderStatusData, refetch: refetchOrderStatus } = useGetOrderCodeStatusQuery(orderCode || "");
+  const { refetch: refetchOrderStatus } = useGetOrderCodeStatusQuery(orderCode || "");
   const [isPollingStatus, setIsPollingStatus] = useState(false);
   const sidebarMenu = [
     { id: "overview", label: "Tổng quan", icon: Home },
@@ -639,7 +639,7 @@ export default function LearnerDashboard() {
 
             {/* Packages Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-              {coinPackages?.data?.map((pkg, index) => {
+              {coinPackages?.data?.map((pkg) => {
                 const hasBonus = pkg.bonusPercent > 0;
 
                 return (
