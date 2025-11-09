@@ -10,7 +10,7 @@ export const useCreateCourse = () => {
     mutationFn: createCourseService,
     onSuccess: (data) => {
       toast.success(data.message || "Tạo khóa học thành công");
-        queryClient.invalidateQueries({ queryKey: ["getCourses"] });
+        queryClient.invalidateQueries({ queryKey: ["getCoursesOfLevel"] });
     },
     onError: (error) => {
       toast.error(error.message || "Tạo khóa học thất bại");

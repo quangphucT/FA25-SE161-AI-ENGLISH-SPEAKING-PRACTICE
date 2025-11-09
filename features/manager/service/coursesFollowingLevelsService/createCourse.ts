@@ -5,7 +5,7 @@ import { CreateCourseRequest, CreateCourseResponse } from '@/types/courseFollowi
 
 export const createCourseService = async (credentials: CreateCourseRequest): Promise<CreateCourseResponse> => {
   try {
-    const response = await fetchWithAuth('/api/manager/coursesFollowingLevels/create-course', {
+    const response = await fetchWithAuth('/api/manager/courseApiRoutes/createCourseOfLevel', {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(credentials),
