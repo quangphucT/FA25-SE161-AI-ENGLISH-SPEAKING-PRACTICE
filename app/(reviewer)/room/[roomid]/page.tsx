@@ -36,7 +36,7 @@ const Room = ({ params }: { params: Promise<{ roomid: string }> }) => {
         mode: ZegoUIKitPrebuilt.GroupCall, // To implement 1-on-1 calls, modify the parameter here to [ZegoUIKitPrebuilt.OneONoneCall].
       },
     });
-  }, [roomID]);
+  }, [roomID, fullName]);
   return <div ref={container} style={{ width: '100vw', height: '100vh' }}></div>;
 };
 

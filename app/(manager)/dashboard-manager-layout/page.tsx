@@ -1,7 +1,6 @@
 "use client";
-import { use, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FaBook } from "react-icons/fa";
 import AssesmentManagement from "../assesment-management/page";
 import StatisticsForManagers from "../statistics-for-managers/page";
 import CurriculumManagementPage from "../curriculum-management/page";
@@ -401,138 +400,13 @@ const DashboardManagerLayout = () => {
             )}
 
             {/* Level Pages */}
-            {activeTab === "level-a1" && <LevelA1 />}
-
-            {activeTab === "level-a2" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">A2</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        A2 - Elementary Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Elementary level for basic communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for A2 level will be displayed here. This level
-                      focuses on building basic communication skills.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-b1" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">B1</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        B1 - Intermediate Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Intermediate level for confident communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for B1 level will be displayed here. This level
-                      helps learners become more confident in everyday
-                      situations.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-b2" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">B2</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        B2 - Upper Intermediate Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Upper intermediate for advanced communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for B2 level will be displayed here. This level
-                      prepares learners for professional and academic contexts.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-c1" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">C1</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        C1 - Advanced Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Advanced level for fluent communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for C1 level will be displayed here. This level
-                      focuses on achieving fluency and natural expression.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-c2" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">C2</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        C2 - Mastery Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Mastery level for native-like proficiency
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for C2 level will be displayed here. This level
-                      represents near-native proficiency and mastery.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {activeTab === "level-a1" && <LevelA1 level="A1" />}
+            {activeTab === "level-a2" && <LevelA1 level="A2"/>}
+            {activeTab === "level-b1" && <LevelA1 level="B1" />}
+            {activeTab === "level-b2" && <LevelA1 level="B2"/>}
+            {activeTab === "level-c1" && <LevelA1 level="C1"/>}
+            {activeTab === "level-c2" && <LevelA1 level="C2" />}
+            
           </div>
         </div>
       </main>

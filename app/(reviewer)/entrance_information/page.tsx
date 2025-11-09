@@ -12,14 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 // import { useUploadCertificate } from "@/features/reviewer/hooks/useUploadCertificateMutation";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 
 const EntranceInformation = () => {
   const [name, setName] = useState("");
   const [file, setFile] = useState<File | null>(null);
   // const { mutate: uploadCertificate, isPending } = useUploadCertificate();
-  const router = useRouter();
+  // const router = useRouter();
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {

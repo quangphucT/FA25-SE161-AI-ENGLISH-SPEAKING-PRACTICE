@@ -6,7 +6,7 @@ export const updateCourseService = async (
   payload: CreateCourseRequest
 ): Promise<CreateCourseResponse> => {
   try {
-    const response = await fetchWithAuth(`/api/manager/coursesFollowingLevels/update-course/${id}`, {
+    const response = await fetchWithAuth(`/api/manager/courseApiRoutes/update-course/${id}`, {
       method: 'PUT',
       credentials: 'include',
       body: JSON.stringify(payload),
