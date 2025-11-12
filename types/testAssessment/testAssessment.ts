@@ -1,7 +1,7 @@
 export interface AssessmentResponse {
   isSucess: boolean;
-  data: Assessment[];
-  businessCode: number;
+  data: Assessment;
+  businessCode: string;
   message: string;
 }
 
@@ -15,7 +15,7 @@ export interface Assessment {
 }
 
 export interface Section {
-  type: "word" | "phrase" | "sentence"; // 3 loại có thể có
+  type: "word" | "sentence" | "paragraph"; 
   questions: QuestionAssessment[];
 }
 

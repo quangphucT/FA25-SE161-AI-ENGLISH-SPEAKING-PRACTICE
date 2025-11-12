@@ -35,11 +35,10 @@ export interface Course {
   orderIndex: number;
   level: string;
   price: number;
-  isFree: boolean;
+  status: "Active" | "Inactive";
+  duration: number;
   chapters: Chapter[];
 }
-
-// ✅ Response khi tạo 1 khóa học
 export interface CreateCourseResponse {
   isSucess: boolean;
   data: Course;
@@ -50,9 +49,10 @@ export interface CreateCourseRequest {
   title: string;
   numberOfChapter: number;
   orderIndex: number;
-  level: number;
+  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
    price: number;
-  
+  duration: number;
+  status: "Active" | "Inactive";
 }
 
 // ✅ Response khi lấy danh sách khóa học
