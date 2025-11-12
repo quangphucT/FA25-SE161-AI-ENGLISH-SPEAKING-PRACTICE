@@ -49,18 +49,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  BookOpen,
-  Layers,
-  ChevronRight,
-  FolderOpen,
-  FileText,
-  HelpCircle,
-  FileImage,
-} from "lucide-react";
+import {Plus,Pencil,Trash2,BookOpen,Layers,ChevronRight,FolderOpen,FileText,HelpCircle,FileImage,ArrowLeft} from "lucide-react";
 import { useCreateCourse } from "@/features/manager/hook/coursesHooks/useCreateCourse";
 import { useUpdateCourse } from "@/features/manager/hook/coursesHooks/useUpdateCourse";
 import { useDeleteCourse } from "@/features/manager/hook/coursesHooks/useDeleteCourse";
@@ -89,6 +78,8 @@ interface Course {
   orderIndex: number;
   level: string;
   price: number;
+  duration?: number;
+  status?: string;
   chapters?: Chapter[];
 }
 
@@ -146,11 +137,7 @@ const LevelA1 = ({ level }: LevelProps) => {
   const [showEditQuestionModal, setShowEditQuestionModal] = useState(false);
 
   // State for multiple questions
-  const [questionsList, setQuestionsList] = useState<
-    Array<{
-      text: string;
-      type: number;
-      orderIndex: number;
+  const [questionsList, setQuestionsList] = useState<Array<{text: string;type: number;orderIndex: number;
       phonemeJson: string;
     }>
   >([]);
@@ -169,9 +156,7 @@ const LevelA1 = ({ level }: LevelProps) => {
   const [deletingExercise, setDeletingExercise] = useState<Exercise | null>(null);
   const [deletingQuestion, setDeletingQuestion] = useState<Question | null>(null);
   const [deletingMedia, setDeletingMedia] = useState<Media | null>(null);
-  const [viewMode, setViewMode] = useState<
-    "course" | "chapter" | "exercise" | "question"
-  >("course");
+  const [viewMode, setViewMode] = useState<"course" | "chapter" | "exercise" | "question">("course");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
@@ -237,9 +222,6 @@ const LevelA1 = ({ level }: LevelProps) => {
     !!expandedChapterId
   );
 
-  if (isExercisesError) {
-    console.error("Failed to load exercises:", exercisesError?.message);
-  }
 
   const {
     data: chaptersData,
@@ -252,9 +234,7 @@ const LevelA1 = ({ level }: LevelProps) => {
     viewMode === "chapter" && !!selectedCourse?.courseId
   );
 
-  if (isChaptersError) {
-    console.error("Failed to load chapters:", chaptersError?.message);
-  }
+
 
   const levelOptions = ["A1", "A2", "B1", "B2", "C1", "C2"];
   const questionTypeOptions = [
@@ -266,14 +246,12 @@ const LevelA1 = ({ level }: LevelProps) => {
   // Course Schema and Form
   const courseSchema = z.object({
     title: z.string().min(1, "Title is required"),
-    level: z
-      .number()
-      .int()
-      .min(0)
-      .max(levelOptions.length - 1, "Invalid level"),
+    level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"], "Level is required"),
     numberOfChapter: z.coerce.number().int().min(0, "Must be >= 0"),
     price: z.coerce.number().min(0, "Price must be >= 0"),
     orderIndex: z.coerce.number().int().min(0, "Order index must be >= 0"),
+    duration: z.coerce.number().int().min(0, "Duration must be >= 0"),
+    status: z.enum(["Active", "Inactive"], "Status is required"),
   });
 
   type CourseFormValues = z.infer<typeof courseSchema>;
@@ -283,10 +261,12 @@ const LevelA1 = ({ level }: LevelProps) => {
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
       title: "",
-      level: 0,
+      level: "A1",
       numberOfChapter: 0,
       price: 0,
       orderIndex: 0,
+      duration: 0,
+      status: "Active",
     },
   });
 
@@ -365,7 +345,6 @@ const LevelA1 = ({ level }: LevelProps) => {
     },
   });
 
-  // Media Schema and Form
   const mediaSchema = z.object({
     accent: z.string().min(1, "Accent is required"),
     audioUrl: z.string().url("Must be valid URL").or(z.literal("")),
@@ -377,7 +356,6 @@ const LevelA1 = ({ level }: LevelProps) => {
   type MediaFormValues = z.infer<typeof mediaSchema>;
 
   const mediaFormMethods = useForm<MediaFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(mediaSchema) as any,
     defaultValues: {
       accent: "",
@@ -398,10 +376,12 @@ const LevelA1 = ({ level }: LevelProps) => {
     setEditingCourse(null);
     courseFormMethods.reset({
       title: "",
-      level: 0,
+      level: "A1",
       numberOfChapter: 0,
       price: 0,
       orderIndex: 0,
+      status: "Active",
+      duration: 0,
     });
     setShowCourseModal(true);
   };
@@ -410,13 +390,12 @@ const LevelA1 = ({ level }: LevelProps) => {
     setEditingCourse(course);
     courseFormMethods.reset({
       title: course.title,
-      level:
-        levelOptions.indexOf(course.level) >= 0
-          ? levelOptions.indexOf(course.level)
-          : 0,
+      level: course.level as "A1" | "A2" | "B1" | "B2" | "C1" | "C2",
       numberOfChapter: course.numberOfChapter,
       price: course.price,
       orderIndex: course.orderIndex ?? 0,
+      duration: course.duration || 0,
+      status: (course.status as "Active" | "Inactive") || "Active",
     });
     setShowCourseModal(true);
   };
@@ -801,12 +780,7 @@ const LevelA1 = ({ level }: LevelProps) => {
     }
   };
 
-  // const handleViewExercises = (chapter: Chapter) => {
-  //   setSelectedChapter(chapter);
-  //   setViewMode("exercise");
-  //   // Trigger refetch when switching to exercise view
-  //   setTimeout(() => refetchExercises(), 0);
-  // };
+
 
   const handleViewQuestions = (exercise: Exercise) => {
     setSelectedExercise(exercise);
@@ -821,128 +795,36 @@ const LevelA1 = ({ level }: LevelProps) => {
     setSelectedExercise(null);
   };
 
-  const handleBackToChapters = () => {
-    setViewMode("chapter");
-    setSelectedChapter(null);
-    setSelectedExercise(null);
-  };
-
-  const handleBackToExercises = () => {
-    setViewMode("exercise");
-    setSelectedExercise(null);
-  };
+ 
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb Navigation */}
-      {viewMode !== "course" && (
-        <div className="flex items-center space-x-2 text-sm">
-          <button
-            onClick={handleBackToCourses}
-            className="text-blue-600 hover:text-blue-800 hover:underline"
-          >
-            Courses
-          </button>
-          {selectedCourse && (
-            <>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-              <button
-                onClick={handleBackToChapters}
-                className={`${
-                  viewMode === "chapter"
-                    ? "text-slate-800 font-medium"
-                    : "text-blue-600 hover:text-blue-800 hover:underline"
-                }`}
-              >
-                {selectedCourse.title}
-              </button>
-            </>
-          )}
-          {viewMode !== "chapter" && selectedChapter && (
-            <>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-              <button
-                onClick={handleBackToExercises}
-                className={`${
-                  viewMode === "exercise"
-                    ? "text-slate-800 font-medium"
-                    : "text-blue-600 hover:text-blue-800 hover:underline"
-                }`}
-              >
-                {selectedChapter.title}
-              </button>
-            </>
-          )}
-          {viewMode === "question" && selectedExercise && (
-            <>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-              <span className="text-slate-800 font-medium">
-                {selectedExercise.title}
-              </span>
-            </>
-          )}
-        </div>
-      )}
+   
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-            {viewMode === "course" && (
-              <span className="text-white font-bold text-xl">A1</span>
-            )}
-            {viewMode === "chapter" && (
-              <BookOpen className="h-7 w-7 text-white" />
-            )}
-            {viewMode === "exercise" && (
-              <FileText className="h-7 w-7 text-white" />
-            )}
-            {viewMode === "question" && (
-              <HelpCircle className="h-7 w-7 text-white" />
-            )}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800">
-              {viewMode === "course" && "A1 - Beginner Level"}
-              {viewMode === "chapter" && `Chapters - ${selectedCourse?.title}`}
-              {viewMode === "exercise" &&
-                `Exercises - ${selectedChapter?.title}`}
-              {viewMode === "question" &&
-                `Questions - ${selectedExercise?.title}`}
-            </h1>
-            <p className="text-slate-600">
-              {viewMode === "course" &&
-                "Manage courses for beginner level students"}
-              {viewMode === "chapter" &&
-                `${
-                  selectedCourse?.numberOfChapter || 0
-                } chapters in this course`}
-              {viewMode === "exercise" && "Manage exercises in this chapter"}
-              {viewMode === "question" && "Manage questions in this exercise"}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Layers className="h-5 w-5" />
-            <span>Course List</span>
-            <div className="ml-auto">
-              <Button
-                onClick={handleCreateCourse}
-                size="sm"
-                className="bg-gradient-to-r cursor-pointer from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Course
-              </Button>
+      {/* Course Table */}
+      <Card className="shadow-sm border-slate-200">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Layers className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Course Management</h2>
+                <p className="text-sm text-slate-500 font-normal">Manage all courses for level {level}</p>
+              </div>
             </div>
+            <Button
+              onClick={handleCreateCourse}
+              size="sm"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white cursor-pointer shadow-md hover:shadow-lg transition-all"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Course
+            </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -965,88 +847,117 @@ const LevelA1 = ({ level }: LevelProps) => {
               <p className="text-slate-600 mb-4">
                 Get started by creating your first course
               </p>
-              <Button onClick={handleCreateCourse} variant="outline">
+              <Button onClick={handleCreateCourse} variant="outline" className="cursor-pointer">
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Course
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-center">CourseId</TableHead>
-                  <TableHead className="text-center">Title</TableHead>
-                  <TableHead className="text-center">
-                    Number of Chapters
-                  </TableHead>
-                  <TableHead className="text-center">Order Index</TableHead>
-                  <TableHead className="text-center">Price</TableHead>
-                  <TableHead className="text-center">Level</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedCourses.map((course: Course) => (
-                  <TableRow key={course.courseId} className="hover:bg-slate-50">
-                    <TableCell className="font-medium text-slate-600">
-                      {course.courseId}
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-slate-800">
-                        {course.title}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="font-normal">
-                        {course.numberOfChapter}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="secondary">{course.orderIndex}</Badge>
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      <span className="font-medium text-green-600">
-                        {course.price === 0 ? "Free" : `${course.price} xu`}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge className="bg-green-500 hover:bg-green-600">
-                        {course.level}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-blue-600 cursor-pointer hover:text-blue-700 hover:bg-blue-50"
-                          onClick={() => handleViewChapters(course)}
-                        >
-                          <FolderOpen className="h-4 w-4 mr-1" />
-                          <span className="text-xs">Chapters</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditCourse(course)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDelete(course)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="w-24 font-semibold">ID</TableHead>
+                    <TableHead className="font-semibold">Title</TableHead>
+                    <TableHead className="text-center font-semibold w-32">Chapters</TableHead>
+                    <TableHead className="text-center font-semibold w-24">Order</TableHead>
+                    <TableHead className="text-center font-semibold w-28">Price</TableHead>
+                    <TableHead className="text-center font-semibold w-20">Level</TableHead>
+                    <TableHead className="text-center font-semibold w-28">Duration</TableHead>
+                    <TableHead className="text-center font-semibold w-28">Status</TableHead>
+                    <TableHead className="text-center font-semibold w-52">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sortedCourses.map((course: Course) => (
+                    <TableRow key={course.courseId} className="hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="font-mono text-xs text-slate-500">
+                        <div className="truncate max-w-[80px]" title={course.courseId}>
+                          {course.courseId.substring(0, 8)}...
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-semibold text-slate-900">
+                          {course.title}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="font-medium bg-blue-50 text-blue-700 border-blue-200">
+                          <BookOpen className="h-3 w-3 mr-1" />
+                          {course.numberOfChapter}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="font-medium">
+                          #{course.orderIndex}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="font-semibold text-slate-700">
+                          {course.price === 0 ? (
+                            <Badge className="bg-green-100 text-green-700 border-green-200">Free</Badge>
+                          ) : (
+                            <span className="text-orange-600">{course.price} Xu</span>
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge className="bg-purple-100 text-purple-700 border-purple-200 font-semibold">
+                          {course.level}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-slate-600 font-medium">
+                          {course.duration || 0}h
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          className={
+                            course.status === "Active" 
+                              ? "bg-green-100 text-green-700 border-green-200 font-medium" 
+                              : "bg-gray-100 text-gray-600 border-gray-200 font-medium"
+                          }
+                        >
+                          {course.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer transition-all"
+                            onClick={() => handleViewChapters(course)}
+                            title="View Chapters"
+                          >
+                            <FolderOpen className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditCourse(course)}
+                            className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
+                            title="Edit Course"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
+                            onClick={() => handleDelete(course)}
+                            title="Delete Course"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -1091,15 +1002,15 @@ const LevelA1 = ({ level }: LevelProps) => {
                       <FormLabel>Level</FormLabel>
                       <FormControl>
                         <Select
-                          value={String(field.value)}
-                          onValueChange={(val) => field.onChange(Number(val))}
+                          value={field.value}
+                          onValueChange={field.onChange}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select level" />
                           </SelectTrigger>
                           <SelectContent>
-                            {levelOptions.map((lvl, idx) => (
-                              <SelectItem key={lvl} value={String(idx)}>
+                            {levelOptions.map((lvl) => (
+                              <SelectItem key={lvl} value={lvl}>
                                 {lvl}
                               </SelectItem>
                             ))}
@@ -1147,12 +1058,50 @@ const LevelA1 = ({ level }: LevelProps) => {
                     <FormItem>
                       <FormLabel>Price</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="0.01" {...field} />
+                        <Input type="number" min={0} step="5" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                 <FormField
+                  name="duration"
+                  control={courseFormMethods.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} step="5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Only show Status field when editing, not when creating */}
+                {editingCourse && (
+                  <FormField name="status" control={courseFormMethods.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Active">Active</SelectItem>
+                              <SelectItem value="Inactive">Inactive</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
               </div>
 
               <DialogFooter>
@@ -1166,7 +1115,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-green-600 cursor-pointer hover:bg-green-700 text-white"
+                  className=" text-white cursor-pointer"
                 >
                   {editingCourse ? "Update" : "Create"} Course
                 </Button>
@@ -1282,7 +1231,8 @@ const LevelA1 = ({ level }: LevelProps) => {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
+                  className=" text-white cursor-pointer"
+                  
                 >
                   {editingChapter ? "Update Chapter" : "Create Chapter"}
                 </Button>
@@ -1294,7 +1244,7 @@ const LevelA1 = ({ level }: LevelProps) => {
 
       {/* Exercise Create/Edit Modal */}
       <Dialog open={showExerciseModal} onOpenChange={setShowExerciseModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl ">
           <DialogHeader>
             <DialogTitle>
               {editingExercise ? "Edit Exercise" : "Create New Exercise"}
@@ -1373,7 +1323,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
+                  className="cursor-pointer"
                 >
                   Create Exercise
                 </Button>
@@ -1520,7 +1470,7 @@ const LevelA1 = ({ level }: LevelProps) => {
 
                   <Button
                     type="submit"
-                    className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-300"
+                    className="w-full cursor-pointer bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-300"
                   >
                     + Add Question to List
                   </Button>
@@ -1537,12 +1487,13 @@ const LevelA1 = ({ level }: LevelProps) => {
                 setShowQuestionModal(false);
                 setQuestionsList([]);
               }}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="button"
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 cursor-pointer hover:bg-purple-700 text-white"
               onClick={onSubmitQuestion}
               disabled={questionsList.length === 0}
             >
@@ -1649,6 +1600,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 <Button
                   type="button"
                   variant="outline"
+                  className="cursor-pointer"
                   onClick={() => {
                     setShowEditQuestionModal(false);
                     setEditingQuestion(null);
@@ -1658,7 +1610,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                 className="cursor-pointer "
                 >
                   Update Question
                 </Button>
@@ -1776,12 +1728,13 @@ const LevelA1 = ({ level }: LevelProps) => {
                     setEditingMedia(null);
                     mediaFormMethods.reset();
                   }}
+                  className="cursor-pointer"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  className="cursor-pointer text-white"
                 >
                   {editingMedia ? "Update Media" : "Create Media"}
                 </Button>
@@ -1898,6 +1851,7 @@ const LevelA1 = ({ level }: LevelProps) => {
             <Button
               variant="outline"
               onClick={() => setViewingMediaDetails(null)}
+              className="cursor-pointer"
             >
               Close
             </Button>
@@ -1906,7 +1860,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 handleEditMedia(viewingMediaDetails);
                 setViewingMediaDetails(null);
               }}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 cursor-pointer hover:bg-purple-700 text-white"
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit Media
@@ -1946,12 +1900,12 @@ const LevelA1 = ({ level }: LevelProps) => {
             </div>
 
             <div className="flex gap-3 w-full">
-              <AlertDialogCancel className="flex-1 h-11 border-slate-300 hover:bg-slate-50">
+              <AlertDialogCancel className="flex-1 h-11 cursor-pointer border-slate-300 hover:bg-slate-50">
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDelete}
-                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white shadow-sm"
+                className="flex-1 h-11 bg-red-600 cursor-pointer hover:bg-red-700 rounded-2xl font-bold text-white shadow-sm"
               >
                 Delete Course
               </AlertDialogAction>
@@ -1991,12 +1945,12 @@ const LevelA1 = ({ level }: LevelProps) => {
             </div>
 
             <div className="flex gap-3 w-full">
-              <AlertDialogCancel className="flex-1 h-11 border-slate-300 hover:bg-slate-50">
+              <AlertDialogCancel className="flex-1 h-11 cursor-pointer border-slate-300 hover:bg-slate-50">
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDeleteChapter}
-                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white shadow-sm"
+                className="flex-1 h-11 cursor-pointer bg-red-600 hover:bg-red-700 rounded-2xl font-bold text-white shadow-sm"
               >
                 Delete Chapter
               </AlertDialogAction>
@@ -2081,12 +2035,12 @@ const LevelA1 = ({ level }: LevelProps) => {
             </div>
 
             <div className="flex gap-3 w-full">
-              <AlertDialogCancel className="flex-1 h-11 border-slate-300 hover:bg-slate-50">
+              <AlertDialogCancel className="flex-1 h-11 cursor-pointer border-slate-300 hover:bg-slate-50">
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDeleteQuestion}
-                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white shadow-sm"
+                className="flex-1 h-11 bg-red-600 rounded-md cursor-pointer hover:bg-red-700 text-white shadow-sm"
               >
                 Delete Question
               </AlertDialogAction>
@@ -2140,24 +2094,41 @@ const LevelA1 = ({ level }: LevelProps) => {
 
       {/* Chapter View - When viewMode === 'chapter' */}
       {viewMode === "chapter" && selectedCourse && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FolderOpen className="h-5 w-5" />
-              <span>Chapters List</span>
-              <div className="ml-auto">
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
                 <Button
-                  onClick={handleCreateChapter}
+                  onClick={handleBackToCourses}
+                  variant="outline"
                   size="sm"
-                  className="bg-gradient-to-r cursor-pointer from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
+                  className="cursor-pointer hover:bg-slate-100"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Chapter
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Back
                 </Button>
+                <div className="h-8 w-px bg-slate-200"></div>
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <FolderOpen className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Chapter Management</h2>
+                  <p className="text-sm text-slate-500 font-normal">
+                    Course: <span className="font-medium text-slate-700">{selectedCourse.title}</span>
+                  </p>
+                </div>
               </div>
-            </CardTitle>
+              <Button
+                onClick={handleCreateChapter}
+                size="sm"
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white cursor-pointer shadow-md hover:shadow-lg transition-all"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Chapter
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {isChaptersLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -2172,91 +2143,93 @@ const LevelA1 = ({ level }: LevelProps) => {
                 <p className="text-slate-600 mb-4">
                   {chaptersError?.message || "Please try again later"}
                 </p>
-                <Button onClick={() => refetchChapters()} variant="outline">
+                <Button onClick={() => refetchChapters()} variant="outline" className="cursor-pointer">
                   Retry
                 </Button>
               </div>
             ) : chaptersData?.data && chaptersData.data.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">ChapterId</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-center">Exercises</TableHead>
-                    <TableHead className="text-center">Created At</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {chaptersData.data.map((chapter) => (
-                    <React.Fragment key={chapter.chapterId}>
-                      <TableRow className="hover:bg-slate-50">
-                        <TableCell className="font-medium text-slate-600">
-                          {chapter.chapterId}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-slate-800">
-                            {chapter.title}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-slate-600 max-w-md truncate">
-                            {chapter.description || "No description"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary">
-                            {chapter.numberOfExercise}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-sm text-slate-600">
-                          {new Date(chapter.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              size="sm"
-                              variant={
-                                expandedChapterId === chapter.chapterId
-                                  ? "default"
-                                  : "outline"
-                              }
-                              className={
-                                expandedChapterId === chapter.chapterId
-                                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                                  : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              }
-                              onClick={() =>
-                                handleToggleExercises(chapter.chapterId)
-                              }
-                            >
-                              <FileText className="h-4 w-4 mr-1" />
-                              <span className="text-xs">
-                                {expandedChapterId === chapter.chapterId
-                                  ? "Hide"
-                                  : "View"}{" "}
-                                Exercises
-                              </span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditChapter(chapter as unknown as Record<string, unknown>)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleDeleteChapter(chapter)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50">
+                      <TableHead className="w-24 font-semibold">ID</TableHead>
+                      <TableHead className="font-semibold">Title</TableHead>
+                      <TableHead className="font-semibold">Description</TableHead>
+                      <TableHead className="text-center font-semibold w-32">Exercises</TableHead>
+                      <TableHead className="text-center font-semibold w-32">Created</TableHead>
+                      <TableHead className="text-center font-semibold w-64">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {chaptersData.data.map((chapter) => (
+                      <React.Fragment key={chapter.chapterId}>
+                        <TableRow className="hover:bg-slate-50/50 transition-colors">
+                          <TableCell className="font-mono text-xs text-slate-500">
+                            <div className="truncate max-w-[80px]" title={chapter.chapterId}>
+                              {chapter.chapterId.substring(0, 8)}...
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-semibold text-slate-900">
+                              {chapter.title}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-slate-600 max-w-md truncate" title={chapter.description || "No description"}>
+                              {chapter.description || <span className="italic text-slate-400">No description</span>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="font-medium bg-blue-50 text-blue-700 border-blue-200">
+                              <FileText className="h-3 w-3 mr-1" />
+                              {chapter.numberOfExercise}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-sm text-slate-600 font-medium">
+                            {new Date(chapter.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <Button
+                                size="sm"
+                                variant={
+                                  expandedChapterId === chapter.chapterId
+                                    ? "default"
+                                    : "outline"
+                                }
+                                className={
+                                  expandedChapterId === chapter.chapterId
+                                    ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                                    : "bg-white border border-gray-300 text-black hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-sm transition-all"
+                                }
+                                onClick={() =>
+                                  handleToggleExercises(chapter.chapterId)
+                                }
+                                title={expandedChapterId === chapter.chapterId ? "Hide Exercises" : "View Exercises"}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditChapter(chapter as unknown as Record<string, unknown>)}
+                                title="Edit Chapter"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
+                                onClick={() => handleDeleteChapter(chapter)}
+                                title="Delete Chapter"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
 
                       {/* Expanded Exercises Row */}
                       {expandedChapterId === chapter.chapterId && (
@@ -2265,12 +2238,12 @@ const LevelA1 = ({ level }: LevelProps) => {
                             <div className="p-6">
                               <div className="mb-4 flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-slate-800 flex items-center">
-                                  <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                                  <FileText className="h-5 w-5 mr-2 " />
                                   Exercises
                                 </h3>
                                 <Button
                                   size="sm"
-                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  className="bg-white border border-gray-300 text-black hover:bg-gray-100 cursor-pointer shadow-sm"
                                   onClick={handleCreateExercise}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
@@ -2297,28 +2270,23 @@ const LevelA1 = ({ level }: LevelProps) => {
                                     onClick={() => refetchExercises()}
                                     size="sm"
                                     variant="outline"
+                                    className="cursor-pointer"
                                   >
                                     Retry
                                   </Button>
                                 </div>
                               ) : exercisesData?.data &&
                                 exercisesData.data.length > 0 ? (
-                                <div className="bg-white rounded-md border">
+                                <div className="bg-white rounded-md border overflow-x-auto">
                                   <Table>
                                     <TableHeader>
-                                      <TableRow>
-                                        <TableHead>ExerciseId</TableHead>
-                                        <TableHead>Title</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead className="text-center">
-                                          Order Index
-                                        </TableHead>
-                                        <TableHead className="text-center">
-                                          Number Of Question
-                                        </TableHead>
-                                        <TableHead className="text-right">
-                                          Actions
-                                        </TableHead>
+                                      <TableRow className="bg-slate-50">
+                                        <TableHead className="w-24 font-semibold">ID</TableHead>
+                                        <TableHead className="font-semibold">Title</TableHead>
+                                        <TableHead className="font-semibold">Description</TableHead>
+                                        <TableHead className="text-center font-semibold w-24">Order</TableHead>
+                                        <TableHead className="text-center font-semibold w-32">Questions</TableHead>
+                                        <TableHead className="text-center font-semibold w-64">Actions</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -2330,35 +2298,35 @@ const LevelA1 = ({ level }: LevelProps) => {
                                           <React.Fragment
                                             key={exercise.exerciseId}
                                           >
-                                            <TableRow className="hover:bg-slate-50">
-                                              <TableCell>
-                                                <div className="font-medium text-slate-800">
-                                                  {exercise.exerciseId}
+                                            <TableRow className="hover:bg-slate-50/50 transition-colors">
+                                              <TableCell className="font-mono text-xs text-slate-500">
+                                                <div className="truncate max-w-[80px]" title={exercise.exerciseId}>
+                                                  {exercise.exerciseId.substring(0, 8)}...
                                                 </div>
                                               </TableCell>
                                               <TableCell>
-                                                <div className="font-medium text-slate-800">
+                                                <div className="font-semibold text-slate-900">
                                                   {exercise.title}
                                                 </div>
                                               </TableCell>
                                               <TableCell>
-                                                <div className="text-sm text-slate-600 max-w-xs truncate">
-                                                  {exercise.description ||
-                                                    "No description"}
+                                                <div className="text-sm text-slate-600 max-w-xs truncate" title={exercise.description || "No description"}>
+                                                  {exercise.description || <span className="italic text-slate-400">No description</span>}
                                                 </div>
                                               </TableCell>
                                               <TableCell className="text-center">
-                                                <Badge variant="outline">
-                                                  {exercise.orderIndex}
+                                                <Badge variant="secondary" className="font-medium">
+                                                  #{exercise.orderIndex}
                                                 </Badge>
                                               </TableCell>
                                               <TableCell className="text-center">
-                                                <Badge variant="secondary">
+                                                <Badge variant="outline" className="font-medium bg-purple-50 text-purple-700 border-purple-200">
+                                                  <HelpCircle className="h-3 w-3 mr-1" />
                                                   {exercise.numberOfQuestion}
                                                 </Badge>
                                               </TableCell>
-                                              <TableCell className="text-right">
-                                                <div className="flex items-center justify-end space-x-2">
+                                              <TableCell className="text-center">
+                                                <div className="flex items-center justify-center gap-1.5">
                                                   <Button
                                                     size="sm"
                                                     variant={
@@ -2368,30 +2336,25 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                         : "outline"
                                                     }
                                                     className={
-                                                      expandedExerciseId ===
-                                                      exercise.exerciseId
-                                                        ? "bg-purple-600 text-white hover:bg-purple-700"
-                                                        : "text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                                      expandedExerciseId === exercise.exerciseId
+                                                        ? "bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
+                                                        : "bg-white border border-gray-300 text-black hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 cursor-pointer shadow-sm transition-all"
                                                     }
                                                     onClick={() =>
                                                       handleToggleQuestions(
                                                         exercise.exerciseId
                                                       )
                                                     }
+                                                    title={expandedExerciseId === exercise.exerciseId ? "Hide Questions" : "View Questions"}
                                                   >
-                                                    <HelpCircle className="h-4 w-4 mr-1" />
-                                                    <span className="text-xs">
-                                                      {expandedExerciseId ===
-                                                      exercise.exerciseId
-                                                        ? "Hide"
-                                                        : "View"}{" "}
-                                                      Questions
-                                                    </span>
+                                                    <HelpCircle className="h-4 w-4" />
                                                   </Button>
                                                   <Button
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => handleEditExercise(exercise)}
+                                                    className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
+                                                    title="Edit Exercise"
                                                   >
                                                     <Pencil className="h-4 w-4" />
                                                   </Button>
@@ -2399,7 +2362,8 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => handleDeleteExercise(exercise)}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
+                                                    title="Delete Exercise"
                                                   >
                                                     <Trash2 className="h-4 w-4" />
                                                   </Button>
@@ -2423,7 +2387,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                       </h3>
                                                       <Button
                                                         size="sm"
-                                                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                                                        className="bg-white border border-gray-300 text-black hover:bg-gray-100 cursor-pointer shadow-sm"
                                                         onClick={
                                                           handleCreateQuestion
                                                         }
@@ -2458,6 +2422,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                           }
                                                           size="sm"
                                                           variant="outline"
+                                                          className="cursor-pointer"
                                                         >
                                                           Retry
                                                         </Button>
@@ -2465,28 +2430,16 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                     ) : questionsData?.data &&
                                                       questionsData.data
                                                         .length > 0 ? (
-                                                      <div className="bg-white rounded-md border">
+                                                      <div className="bg-white rounded-md border overflow-x-auto">
                                                         <Table>
                                                           <TableHeader>
-                                                            <TableRow>
-                                                              <TableHead>
-                                                                QuestionId
-                                                              </TableHead>
-                                                              <TableHead>
-                                                                Text
-                                                              </TableHead>
-                                                              <TableHead className="text-center">
-                                                                Type
-                                                              </TableHead>
-                                                              <TableHead className="text-center">
-                                                                Order Index
-                                                              </TableHead>
-                                                              <TableHead className="text-center">
-                                                                Phoneme Json
-                                                              </TableHead>
-                                                              <TableHead className="text-right">
-                                                                Actions
-                                                              </TableHead>
+                                                            <TableRow className="bg-slate-50">
+                                                              <TableHead className="w-24 font-semibold">ID</TableHead>
+                                                              <TableHead className="font-semibold">Text</TableHead>
+                                                              <TableHead className="text-center font-semibold w-24">Type</TableHead>
+                                                              <TableHead className="text-center font-semibold w-24">Order</TableHead>
+                                                              <TableHead className="text-center font-semibold w-32">Phoneme</TableHead>
+                                                              <TableHead className="text-center font-semibold w-64">Actions</TableHead>
                                                             </TableRow>
                                                           </TableHeader>
                                                           <TableBody>
@@ -2505,44 +2458,40 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                                       question.questionId
                                                                     }
                                                                   >
-                                                                    <TableRow className="hover:bg-slate-50">
-                                                                      <TableCell>
-                                                                        <div className="font-medium text-slate-800 text-xs">
-                                                                          {
-                                                                            question.questionId
-                                                                          }
+                                                                    <TableRow className="hover:bg-slate-50/50 transition-colors">
+                                                                      <TableCell className="font-mono text-xs text-slate-500">
+                                                                        <div className="truncate max-w-[80px]" title={question.questionId}>
+                                                                          {question.questionId.substring(0, 8)}...
                                                                         </div>
                                                                       </TableCell>
                                                                       <TableCell>
-                                                                        <div className="text-sm text-slate-800">
+                                                                        <div className="text-sm font-semibold text-slate-900">
                                                                           {
                                                                             question.text
                                                                           }
                                                                         </div>
                                                                       </TableCell>
                                                                       <TableCell className="text-center">
-                                                                        <Badge variant="outline">
+                                                                        <Badge variant="outline" className="font-medium bg-indigo-50 text-indigo-700 border-indigo-200">
                                                                           {questionTypeOptions.find(
                                                                             opt => opt.value === parseInt(question.type)
                                                                           )?.label || question.type}
                                                                         </Badge>
                                                                       </TableCell>
                                                                       <TableCell className="text-center">
-                                                                        <Badge variant="secondary">
-                                                                          {
+                                                                        <Badge variant="secondary" className="font-medium">
+                                                                          #{
                                                                             question.orderIndex
                                                                           }
                                                                         </Badge>
                                                                       </TableCell>
                                                                       <TableCell className="text-center">
-                                                                        <Badge variant="outline">
-                                                                          {
-                                                                            question.phonemeJson
-                                                                          }
+                                                                        <Badge variant="outline" className="font-mono text-xs truncate max-w-[100px]" title={String(question.phonemeJson)}>
+                                                                          {String(question.phonemeJson).substring(0, 10)}...
                                                                         </Badge>
                                                                       </TableCell>
-                                                                      <TableCell className="text-right">
-                                                                        <div className="flex items-center justify-end space-x-2">
+                                                                      <TableCell className="text-center">
+                                                                        <div className="flex items-center justify-center gap-1.5">
                                                                           <Button
                                                                             size="sm"
                                                                             variant={
@@ -2552,36 +2501,34 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                                                 : "outline"
                                                                             }
                                                                             className={
-                                                                              expandedQuestionId ===
-                                                                              question.questionId
-                                                                                ? "bg-purple-600 text-white"
-                                                                                : ""
+                                                                              expandedQuestionId === question.questionId
+                                                                                ? "bg-pink-600 text-white hover:bg-pink-700 cursor-pointer"
+                                                                                : "bg-white border border-gray-300 text-black hover:bg-pink-50 hover:text-pink-700 hover:border-pink-300 cursor-pointer shadow-sm transition-all"
                                                                             }
                                                                             onClick={() =>
                                                                               handleToggleMedia(
                                                                                 question.questionId
                                                                               )
                                                                             }
+                                                                            title={expandedQuestionId === question.questionId ? "Hide Media" : "View Media"}
                                                                           >
-                                                                            <FileImage className="h-4 w-4 mr-1" />
-                                                                            {expandedQuestionId ===
-                                                                            question.questionId
-                                                                              ? "Hide"
-                                                                              : "View"}{" "}
-                                                                            Media
+                                                                            <FileImage className="h-4 w-4" />
                                                                           </Button>
                                                                           <Button
                                                                             size="sm"
                                                                             variant="outline"
                                                                             onClick={() => handleEditQuestion(question)}
+                                                                            className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
+                                                                            title="Edit Question"
                                                                           >
                                                                             <Pencil className="h-4 w-4" />
                                                                           </Button>
                                                                           <Button
                                                                             size="sm"
                                                                             variant="outline"
-                                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                            className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
                                                                             onClick={() => handleDeleteQuestion(question)}
+                                                                            title="Delete Question"
                                                                           >
                                                                             <Trash2 className="h-4 w-4" />
                                                                           </Button>
@@ -2608,7 +2555,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                                               </h4>
                                                                               <Button
                                                                                 size="sm"
-                                                                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                                                             className="bg-white border border-gray-300 text-black hover:bg-gray-100 cursor-pointer shadow-sm"
                                                                                 onClick={
                                                                                   handleCreateMedia
                                                                                 }
@@ -2640,81 +2587,85 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                                                 .data
                                                                                 .length >
                                                                                 0 ? (
-                                                                              <Table>
-                                                                                <TableHeader>
-                                                                                  <TableRow>
-                                                                                    <TableHead className="w-32">
-                                                                                      ID
-                                                                                    </TableHead>
-                                                                                    <TableHead className="w-24">
-                                                                                      Accent
-                                                                                    </TableHead>
-                                                                                   
-                                                                                    <TableHead className="text-right">
-                                                                                      Actions
-                                                                                    </TableHead>
-                                                                                  </TableRow>
-                                                                                </TableHeader>
-                                                                                <TableBody>
-                                                                                  {mediaData.data.map(
-                                                                                    (
-                                                                                      media
-                                                                                    ) => (
-                                                                                      <TableRow
-                                                                                        key={
-                                                                                          media.questionMediaId
-                                                                                        }
-                                                                                      >
-                                                                                        <TableCell className="text-xs font-mono">
-                                                                                          <div className="truncate max-w-[120px]" title={media.questionMediaId}>
-                                                                                            {media.questionMediaId.substring(0, 12)}...
-                                                                                          </div>
-                                                                                        </TableCell>
-                                                                                        <TableCell>
-                                                                                          <Badge className="text-xs">
-                                                                                            {
-                                                                                              media.accent
-                                                                                            }
-                                                                                          </Badge>
-                                                                                        </TableCell>
-                                                                                      
-                                                                                        <TableCell className="text-right">
-                                                                                          <div className="flex items-center justify-end space-x-2">
-                                                                                            <Button
-                                                                                              size="sm"
-                                                                                              variant="outline"
-                                                                                              onClick={() => setViewingMediaDetails(media)}
-                                                                                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                                                            >
-                                                                                              <FileText className="h-4 w-4 mr-1" />
-                                                                                              Details
-                                                                                            </Button>
-                                                                                            <Button
-                                                                                              size="sm"
-                                                                                              variant="outline"
-                                                                                              onClick={() =>
-                                                                                                handleEditMedia(
-                                                                                                  media
-                                                                                                )
+                                                                              <div className="overflow-x-auto">
+                                                                                <Table>
+                                                                                  <TableHeader>
+                                                                                    <TableRow className="bg-slate-50">
+                                                                                      <TableHead className="w-24 font-semibold">
+                                                                                        ID
+                                                                                      </TableHead>
+                                                                                      <TableHead className="w-24 font-semibold">
+                                                                                        Accent
+                                                                                      </TableHead>
+                                                                                      <TableHead className="text-center font-semibold">
+                                                                                        Actions
+                                                                                      </TableHead>
+                                                                                    </TableRow>
+                                                                                  </TableHeader>
+                                                                                  <TableBody>
+                                                                                    {mediaData.data.map(
+                                                                                      (
+                                                                                        media
+                                                                                      ) => (
+                                                                                        <TableRow
+                                                                                          key={
+                                                                                            media.questionMediaId
+                                                                                          }
+                                                                                          className="hover:bg-slate-50/50 transition-colors"
+                                                                                        >
+                                                                                          <TableCell className="text-xs font-mono text-slate-500">
+                                                                                            <div className="truncate max-w-[80px]" title={media.questionMediaId}>
+                                                                                              {media.questionMediaId.substring(0, 8)}...
+                                                                                            </div>
+                                                                                          </TableCell>
+                                                                                          <TableCell>
+                                                                                            <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 font-medium">
+                                                                                              {
+                                                                                                media.accent
                                                                                               }
-                                                                                            >
-                                                                                              <Pencil className="h-4 w-4" />
-                                                                                            </Button>
-                                                                                            <Button
-                                                                                              size="sm"
-                                                                                              variant="outline"
-                                                                                              onClick={() => handleDeleteMedia(media)}
-                                                                                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                                            >
-                                                                                              <Trash2 className="h-4 w-4" />
-                                                                                            </Button>
-                                                                                          </div>
-                                                                                        </TableCell>
-                                                                                      </TableRow>
-                                                                                    )
-                                                                                  )}
-                                                                                </TableBody>
-                                                                              </Table>
+                                                                                            </Badge>
+                                                                                          </TableCell>
+                                                                                          <TableCell className="text-center">
+                                                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                                              <Button
+                                                                                                size="sm"
+                                                                                                variant="outline"
+                                                                                                onClick={() => setViewingMediaDetails(media)}
+                                                                                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all"
+                                                                                                title="View Details"
+                                                                                              >
+                                                                                                <FileText className="h-4 w-4" />
+                                                                                              </Button>
+                                                                                              <Button
+                                                                                                size="sm"
+                                                                                                variant="outline"
+                                                                                                onClick={() =>
+                                                                                                  handleEditMedia(
+                                                                                                    media
+                                                                                                  )
+                                                                                                }
+                                                                                                className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
+                                                                                                title="Edit Media"
+                                                                                              >
+                                                                                                <Pencil className="h-4 w-4" />
+                                                                                              </Button>
+                                                                                              <Button
+                                                                                                size="sm"
+                                                                                                variant="outline"
+                                                                                                onClick={() => handleDeleteMedia(media)}
+                                                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 cursor-pointer transition-all"
+                                                                                                title="Delete Media"
+                                                                                              >
+                                                                                                <Trash2 className="h-4 w-4" />
+                                                                                              </Button>
+                                                                                            </div>
+                                                                                          </TableCell>
+                                                                                        </TableRow>
+                                                                                      )
+                                                                                    )}
+                                                                                  </TableBody>
+                                                                                </Table>
+                                                                              </div>
                                                                             ) : (
                                                                               <div className="text-center py-8 bg-white rounded-md">
                                                                                 <FileImage className="h-12 w-12 text-slate-300 mx-auto mb-3" />
@@ -2737,6 +2688,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                                                                                   }
                                                                                   size="sm"
                                                                                   variant="outline"
+                                                                                  className="cursor-pointer"
                                                                                 >
                                                                                   <Plus className="h-4 w-4 mr-2" />
                                                                                   Add
@@ -2814,6 +2766,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               <div className="text-center py-12">
                 <FolderOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
@@ -2823,7 +2776,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 <p className="text-slate-600 mb-4">
                   Start by creating your first chapter for this course
                 </p>
-                <Button onClick={handleCreateChapter} variant="outline">
+                <Button className="cursor-pointer" onClick={handleCreateChapter} variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Create First Chapter
                 </Button>
@@ -2867,7 +2820,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 <p className="text-slate-600 mb-4">
                   {exercisesError?.message || "Please try again later"}
                 </p>
-                <Button onClick={() => refetchExercises()} variant="outline">
+                <Button onClick={() => refetchExercises()} variant="outline" className="cursor-pointer">
                   Retry
                 </Button>
               </div>
@@ -2921,7 +2874,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
                               onClick={() =>
                                 handleViewQuestions({
                                   exerciseId: exercise.exerciseId,
@@ -2934,13 +2887,13 @@ const LevelA1 = ({ level }: LevelProps) => {
                               <HelpCircle className="h-4 w-4 mr-1" />
                               <span className="text-xs">Questions</span>
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" className="cursor-pointer">
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -2959,7 +2912,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                 <p className="text-slate-600 mb-4">
                   Start by creating your first exercise for this chapter
                 </p>
-                <Button onClick={handleCreateExercise} variant="outline">
+                <Button onClick={handleCreateExercise} variant="outline" className="cursor-pointer">
                   <Plus className="h-4 w-4 mr-2" />
                   Create First Exercise
                 </Button>
@@ -2998,7 +2951,7 @@ const LevelA1 = ({ level }: LevelProps) => {
               <p className="text-slate-600 mb-4">
                 Start by creating your first question for this exercise
               </p>
-              <Button onClick={handleCreateQuestion} variant="outline">
+              <Button onClick={handleCreateQuestion} variant="outline" className="cursor-pointer">
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Question
               </Button>
