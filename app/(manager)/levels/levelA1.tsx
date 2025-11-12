@@ -356,6 +356,7 @@ const LevelA1 = ({ level }: LevelProps) => {
   type MediaFormValues = z.infer<typeof mediaSchema>;
 
   const mediaFormMethods = useForm<MediaFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(mediaSchema) as any,
     defaultValues: {
       accent: "",
