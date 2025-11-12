@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, numberOfChapter, orderIndex, level, price } = body;
+    const { title, numberOfChapter, orderIndex, level, price, duration, status } = body;
 
     if (!title) {
       return NextResponse.json(
@@ -37,6 +37,8 @@ export async function PUT(request: NextRequest) {
           orderIndex: orderIndex || 0,
           level: level || 0,
           price: price || 0,
+          duration: duration || 0,
+          status: status || "Inactive",
         }),
       }
     );
