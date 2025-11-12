@@ -18,7 +18,6 @@ const EntranceTest = () => {
   const [uiBlocked, setUiBlocked] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [mainTitle, setMainTitle] = useState("AI Pronunciation Test");
   const [resultsAfterTest, setResultsAfterTest] = useState<ResultsAfterTest | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -27,7 +26,6 @@ const EntranceTest = () => {
   const audioRecordedRef = useRef<HTMLAudioElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [pronunciationAccuracy, setPronunciationAccuracy] = useState<string[]>([]);
   const [pronunciationScores, setPronunciationScores] = useState<number[]>([]);
   const [ipaTranscripts, setIpaTranscripts] = useState<string[]>([]);
@@ -136,7 +134,6 @@ const EntranceTest = () => {
         audio.addEventListener("ended", function handler() {
           audio.currentTime = 0;
           setIsPlayingAudio(false);
-          setMainTitle("AI Pronunciation Test");
           audio.removeEventListener("ended", handler);
         });
       })
@@ -239,12 +236,10 @@ const EntranceTest = () => {
       // Stop recording
       setIsRecording(false);
       if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
-      setMainTitle("Processing audio...");
       setIsProcessingAudio(true);
       setUiBlocked(true);
     } else {
       // Start recording
-      setMainTitle("Recording... click again when done");
       if (
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state !== "recording"
@@ -265,7 +260,6 @@ const EntranceTest = () => {
     if (synthRef.current) {
       const loadVoices = () => {
         const voiceList = synthRef.current!.getVoices();
-        setVoices(voiceList);
         // Try to find English voice
         const enVoice = voiceList.find((v) => v.lang.startsWith("en"));
         if (enVoice) voiceRef.current = enVoice;
@@ -303,7 +297,6 @@ const EntranceTest = () => {
           const base64 = await convertBlobToBase64(blob);
 
           if (!base64 || base64.length < 6) {
-            setMainTitle("Recording error, please try again");
             setUiBlocked(false);
             return;
           }
@@ -390,11 +383,9 @@ const EntranceTest = () => {
             newRecorded[currentQuestionIndex] = true;
             setRecorded(newRecorded);
 
-            setMainTitle("AI Pronunciation Test");
             setIsProcessingAudio(false);
           } catch (error) {
             console.error("Error processing audio:", error);
-            setMainTitle("Server Error: " + (error as Error).message);
             setIsProcessingAudio(false);
           } finally {
             setUiBlocked(false);
@@ -402,7 +393,6 @@ const EntranceTest = () => {
         };
       })
       .catch(() => {
-        setMainTitle("Browser unsupported - microphone access denied");
         setUiBlocked(false);
       });
   }, [
@@ -415,6 +405,9 @@ const EntranceTest = () => {
     ipaTranscripts,
     realIpaTranscripts,
     coloredContents,
+    apiMainPathSTS,
+    STScoreAPIKey,
+    AILanguage,
   ]);
 
   // Show loading state
@@ -517,13 +510,13 @@ const EntranceTest = () => {
           </div>
           {/* Mini progress indicators */}
           <div className="flex justify-between mt-2">
-            {Array.from({ length: totalQuestions }).map((_, idx) => (
+            {Array.from({ length: totalQuestions }).map((_, index) => (
               <div
-                key={idx}
+                key={index}
                 className={`h-1 flex-1 mx-0.5 rounded-full transition-all duration-300 ${
-                  idx < currentQuestionIndex
+                  index < currentQuestionIndex
                     ? "bg-green-500"
-                    : idx === currentQuestionIndex
+                    : index === currentQuestionIndex
                     ? "bg-blue-500"
                     : "bg-gray-200"
                 }`}
@@ -892,13 +885,13 @@ const EntranceTest = () => {
               {/* Progress Info */}
               <div className="hidden md:flex items-center gap-3">
                 <div className="flex gap-1">
-                  {Array.from({ length: Math.min(totalQuestions, 10) }).map((_, idx) => (
+                  {Array.from({ length: Math.min(totalQuestions, 10) }).map((_, index) => (
                     <div
-                      key={idx}
+                      key={index}
                       className={`w-2 h-2 rounded-full transition-all ${
-                        idx < currentQuestionIndex
+                        index < currentQuestionIndex
                           ? "bg-green-500"
-                          : idx === currentQuestionIndex
+                          : index === currentQuestionIndex
                           ? "bg-blue-500 w-3"
                           : "bg-gray-300"
                       }`}
