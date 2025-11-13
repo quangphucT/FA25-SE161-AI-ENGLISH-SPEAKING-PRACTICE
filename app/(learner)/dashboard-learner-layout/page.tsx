@@ -15,6 +15,7 @@ import {
   Coins,
   CheckCircle2,
   TrendingUp,
+  LogOut,
 } from "lucide-react";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import Overview from "../overview/page";
@@ -22,6 +23,8 @@ import WalletCoinPurchase from "../Wallet_coinPurchase/page";
 import { useState } from "react";
 import LearningPath from "../learningPath/page";
 import Progress from "../progress/page";
+import { handleLogout } from "@/utils/auth";
+import ConversationWithAI from "../coversation-withAI/page";
 
 export default function LearnerDashboard() {
   const [activeMenu, setActiveMenu] = useState("overview");
@@ -29,11 +32,12 @@ export default function LearnerDashboard() {
 
 
   const sidebarMenu = [
-    { id: "overview", label: "Tổng quan", icon: Home },
-    { id: "courses", label: "Lộ trình học", icon: BookOpen },
-    { id: "wallet", label: "Ví & Coin", icon: Wallet },
-    { id: "progress", label: "Tiến độ", icon: BarChart3 },
-    { id: "profile", label: "Hồ sơ", icon: User },
+    { id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
+    { id: "courses", label: "Lộ trình học", icon: BookOpen, description: "Khám phá các khoá học" },
+    { id: "wallet", label: "Ví Coin", icon: Wallet, description: "Quản lý và nạp Coin" },
+    { id: "conversationWithAI", label: "Trò chuyện với AI", icon: PlayCircle, description: "Giao tiếp và luyện tập" },
+    { id: "progress", label: "Tiến độ", icon: BarChart3, description: "Theo dõi học tập" },
+    { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
   ];
 
 
@@ -62,69 +66,56 @@ export default function LearnerDashboard() {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 p-6 ">
-        
+        <nav className="flex-1 p-6 space-y-2">
+  
           {sidebarMenu.map((item) => {
             const isActive = activeMenu === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveMenu(item.id)}
-                className={`w-full rounded-2xl bg-gray-100 flex items-center gap-4 px-4 py-4.5  mb-2 transition-all duration-300 group relative overflow-hidden cursor-pointer ${
+                className={`w-full rounded-xl flex items-center gap-3 px-4 py-3.5 transition-all duration-200 group cursor-pointer ${
                   isActive
-                    ? "bg-gradient-to-r from-gray-100 to-blue-50 text-gray-900 shadow-md border border-blue-100 scale-[1.02]"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/30"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
               >
-                {!isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                )}
-                
-                <div className="relative z-10 flex items-center gap-4 w-full">
-                  <item.icon className={`w-5 h-5 transition-transform duration-300 ${
-                    isActive ? "scale-110 text-blue-600" : "group-hover:scale-110"
-                  }`} />
-                  <span className={`font-semibold text-sm ${
-                    isActive ? "text-gray-900" : ""
+                <item.icon className={`w-5 h-5 transition-all duration-200 flex-shrink-0 ${
+                  isActive ? "text-white" : "text-gray-500 group-hover:text-blue-600"
+                }`} />
+                <div className="flex-1 text-left">
+                  <div className={`font-medium text-sm ${
+                    isActive ? "text-white font-semibold" : ""
                   }`}>
                     {item.label}
-                  </span>
-                  
-                  {isActive && (
-                    <div className="ml-auto">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                    </div>
-                  )}
+                  </div>
+                  <div className={`text-xs ${
+                    isActive ? "text-blue-100" : "text-gray-400 group-hover:text-gray-600"
+                  }`}>
+                    {item.description}
+                  </div>
                 </div>
+                
+                {isActive && (
+                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-white" />
+                )}
               </button>
             );
           })}
+
+          {/* Logout Button */}
+          <div className="pt-4 mt-4 border-t border-gray-200">
+            <button
+              onClick={handleLogout}
+              className="w-full rounded-xl flex items-center gap-3 px-4 py-3.5 transition-all duration-200 group cursor-pointer text-gray-600 hover:bg-red-50 hover:text-red-600"
+            >
+              <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-600 transition-all duration-200" />
+              <span className="font-medium text-sm">Đăng xuất</span>
+            </button>
+          </div>
         </nav>
 
-        {/* User Profile Card */}
-        <div className="p-6 border-t border-gray-100">
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50/50 p-4 rounded-2xl border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer group">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  {userData?.fullName?.charAt(0)}
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {userData?.fullName}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                    Level {userData?.learnerProfile?.level}
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
-            </div>
-          </div>
-        </div>
+  
       </aside>
 
       {/* MAIN CONTENT */}
@@ -171,6 +162,12 @@ export default function LearnerDashboard() {
           {activeMenu === "courses" && (
            <LearningPath setActiveMenu={setActiveMenu} />
           )}
+
+          {/* WALLET PAGE */}
+          {activeMenu === "conversationWithAI" && (
+           <ConversationWithAI  />
+          )}
+
 
           {/* WALLET PAGE */}
           {activeMenu === "wallet" && (
