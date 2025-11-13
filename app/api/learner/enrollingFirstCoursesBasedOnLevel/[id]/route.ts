@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const courseId = params.id;
+export async function POST(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: courseId } = await params;
   const accessToken = request.cookies.get("accessToken")?.value;
   
   if (!courseId ) {
