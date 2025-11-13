@@ -1,5 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { getCoursesBasedOnLevelLearnerService } from "../../services/coursesBasedOnLevelLearner/courseBasedOnLevelLearnerService";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  enrollingFirstCourseService,
+  getCoursesBasedOnLevelLearnerService,
+} from "../../services/coursesBasedOnLevelLearner/courseBasedOnLevelLearnerService";
+import { toast } from "sonner";
+import { useLearnerStore } from "@/store/useLearnerStore";
+import { set } from "date-fns";
 
 export interface GetCourseBasedOnLevelLearner {
   isSucess: boolean;
@@ -47,11 +53,31 @@ export interface QuestionItem {
   orderIndex: number;
   phonemeJson: string;
 }
-
 export const useGetCoursesBasedOnLevelLearner = (level: string) => {
   return useQuery<GetCourseBasedOnLevelLearner, Error>({
     queryKey: ["getCoursesBasedOnLevelLearner", level],
     queryFn: () => getCoursesBasedOnLevelLearnerService(level),
-    enabled: !!level
+    enabled: !!level,
+  });
+};
+
+export interface EnrollFirstCourseResponse {
+  isSuccess: boolean;
+  message: string;
+  businessCode: string;
+  learnerCourseId: string;
+}
+
+export const useEnrollFirstCourse = () => {
+  const { setLearnerCourseId } = useLearnerStore();
+  return useMutation<EnrollFirstCourseResponse, Error, string>({
+    mutationFn: (courseId) => enrollingFirstCourseService(courseId),
+    onSuccess: (data) => {
+      toast.success(data.message || "Tham gia khóa học thành công");
+      setLearnerCourseId(data.learnerCourseId);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Tham gia khóa học thất bại");
+    },
   });
 };
