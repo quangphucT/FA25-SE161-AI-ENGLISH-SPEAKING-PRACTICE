@@ -3,7 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSelectedReviewsStore } from "@/store/selectedReviewsStore";
 
 const StatisticsForMentor = () => {
@@ -74,6 +82,12 @@ const StatisticsForMentor = () => {
   const [isReviewing, setIsReviewing] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<typeof pendingReviews[0] | null>(null);
+  const [comment, setComment] = useState("");
+  const [score, setScore] = useState("");
+  const [showAnswer, setShowAnswer] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { setSelectedReviews } = useSelectedReviewsStore();
 
   const handleSelectAnswer = (id: number) => {
@@ -82,6 +96,36 @@ const StatisticsForMentor = () => {
         ? prev.filter((answerId) => answerId !== id)
         : [...prev, id]
     );
+  };
+
+  const handleOpenReviewModal = (reviewId: number) => {
+    const review = pendingReviews.find((r) => r.id === reviewId);
+    if (review) {
+      setSelectedReview(review);
+      setIsModalOpen(true);
+      setComment("");
+      setScore("");
+      setShowAnswer(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedReview(null);
+    setShowAnswer(false);
+    setComment("");
+    setScore("");
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  const handleSaveAndFinish = () => {
+    if (!selectedReview) return;
+    // TODO: Integrate API submit here
+    // console.log({ id: selectedReview.id, comment, score });
+    handleCloseModal();
   };
 
   const pendingReviews = useMemo(
@@ -408,30 +452,6 @@ const StatisticsForMentor = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Câu trả lời cần review</CardTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSelectAll}
-                  className="text-xs"
-                >
-                  {selectedAnswers.length === availableReviews.length
-                    ? "Bỏ chọn tất cả"
-                    : "Chọn tất cả"}
-                </Button>
-                {selectedAnswers.length > 0 && (
-                  <Button
-                    size="sm"
-                    onClick={handleReviewSelected}
-                    disabled={isReviewing}
-                    className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {isReviewing
-                      ? "Đang review..."
-                      : `Review đã chọn (${selectedAnswers.length})`}
-                  </Button>
-                )}
-              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -455,32 +475,15 @@ const StatisticsForMentor = () => {
                         ? "border-blue-500 bg-blue-50 shadow-md"
                         : "border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300"
                     }`}
-                    onClick={() => handleSelectAnswer(review.id)}
+                    onClick={() => handleOpenReviewModal(review.id)}
                   >
                     <div className="flex items-start gap-4">
                       {/* Checkbox */}
-                      <div className="flex items-center pt-1">
-                        <div className="relative">
-                          <Checkbox
-                            checked={selectedAnswers.includes(review.id)}
-                            onCheckedChange={() =>
-                              handleSelectAnswer(review.id)
-                            }
-                            className="w-5 h-5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 hover:border-blue-400 transition-colors"
-                          />
-                          {selectedAnswers.includes(review.id) && (
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full flex items-center justify-center">
-                              <svg
-                                width="8"
-                                height="8"
-                                fill="white"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
+                      <div 
+                        className="flex items-center pt-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        
                       </div>
 
                       {/* Content */}
@@ -724,6 +727,106 @@ const StatisticsForMentor = () => {
           </div>
         </div>
       )}
+
+      {/* Review Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent 
+          className="max-w-3xl max-h-[90vh] overflow-y-auto data-[state=open]:!animate-none data-[state=closed]:!animate-none"
+          
+        >
+          <DialogHeader>
+            <DialogTitle>{selectedReview?.question}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedReview && (
+            <div className="space-y-5 mt-4">
+              {selectedReview.audioUrl && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="text-xs font-medium text-slate-700 mb-2">
+                    Audio
+                  </div>
+                  <audio ref={audioRef} controls className="w-full">
+                    <source src={selectedReview.audioUrl} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                  <Label
+                    htmlFor="modal-comment"
+                    className="text-sm font-semibold text-gray-700"
+                  >
+                    Comment
+                  </Label>
+                  <textarea
+                    id="modal-comment"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Write your feedback..."
+                    className="mt-2 w-full h-28 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-xl p-3"
+                  />
+                </div>
+                <div>
+                  <Label
+                    htmlFor="modal-score"
+                    className="text-sm font-semibold text-gray-700"
+                  >
+                    Score
+                  </Label>
+                  <Input
+                    id="modal-score"
+                    value={score}
+                    onChange={(e) => setScore(e.target.value)}
+                    placeholder="0 - 10"
+                    className="mt-2 h-12 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Enter a numeric score, e.g., 8.5
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAnswer(!showAnswer)}
+                  className="cursor-pointer"
+                >
+                  {showAnswer ? "Hide Ai Feedback" : "> View Ai Feedback"}
+                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleCloseModal}
+                    className="cursor-pointer"
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleSaveAndFinish}
+                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                  >
+                    Hoàn thành (Finish)
+                  </Button>
+                </div>
+              </div>
+
+              {showAnswer && (
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="text-sm font-medium text-slate-700 mb-1">
+                    Ai Feedback
+                  </div>
+                  <p className="text-sm text-slate-700">
+                    (No text provided)
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Notification */}
       {showNotification && (

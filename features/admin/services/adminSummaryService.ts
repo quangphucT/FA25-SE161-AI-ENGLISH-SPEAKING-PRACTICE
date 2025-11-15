@@ -54,6 +54,7 @@ export interface Certificate {
   certificateId: string;
   name: string;
   url: string;
+  status: string;
 }
 
 

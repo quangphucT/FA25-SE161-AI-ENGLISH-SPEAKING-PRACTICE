@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAdminReviewerIncome, useAdminReviewerIncomeDetail, useAdminReviewerIncomeList } from "@/features/admin/hooks/useAdminReviewerIncome";
 
 // Type definitions
 interface ReviewRecord {
@@ -165,88 +166,47 @@ const sampleReviewRecords: ReviewRecord[] = [
 ];
 
 const ReviewMoneyManagement = () => {
-  const [startDate, setStartDate] = useState<string>("2024-01-01");
-  const [endDate, setEndDate] = useState<string>("2024-01-31");
-  const [filteredRecords, setFilteredRecords] = useState<ReviewRecord[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const { data: adminReviewerIncome } = useAdminReviewerIncome();
   const [showReviewerDetails, setShowReviewerDetails] =
     useState<boolean>(false);
-  const [selectedReviewerEmail, setSelectedReviewerEmail] =
+  const [selectedReviewerProfileId, setSelectedReviewerProfileId] =
     useState<string>("");
   const [selectedReviewerName, setSelectedReviewerName] = useState<string>("");
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [search, setSearch] = useState<string>("");
+  const [fromDate, setFromDate] = useState<string>("2024-01-01");
+  const [toDate, setToDate] = useState<string>("2024-01-31");
+  const { data: adminReviewerIncomeList } = useAdminReviewerIncomeList(pageNumber, pageSize, search, fromDate, toDate);
+  const { data: adminReviewerIncomeDetail } = useAdminReviewerIncomeDetail(selectedReviewerProfileId);
+  // Get reviewers from API data
+  const reviewers = adminReviewerIncomeList?.data?.items || [];
+  
+  // Calculate total pages (assuming we need to estimate if API doesn't provide totalCount)
+  const totalItems = reviewers.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
-  // Filter records by date range
+  // Handle pagination
+  const handlePreviousPage = () => {
+    if (pageNumber > 1) {
+      setPageNumber(pageNumber - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pageNumber < totalPages) {
+      setPageNumber(pageNumber + 1);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPageNumber(newPage);
+  };
+
+  // Reset to page 1 when filters change
   useEffect(() => {
-    const filtered = sampleReviewRecords.filter((record) => {
-      const recordDate = new Date(record.createdAt);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      return recordDate >= start && recordDate <= end;
-    });
-    setFilteredRecords(filtered);
-  }, [startDate, endDate]);
-
-  // Additional filtering by search and category
-  const finalFilteredRecords = filteredRecords.filter((record) => {
-    const matchesSearch =
-      record.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.reviewerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.learnerName.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
-  });
-
-  // Calculate statistics
-  const totalReviews = finalFilteredRecords.length;
-  const totalEarnings = totalReviews * 3000; // 3000 VND per review
-
-  // Group by reviewer
-  const reviewerStats = finalFilteredRecords.reduce(
-    (acc, record) => {
-      const reviewerId = record.reviewerEmail;
-      if (!acc[reviewerId]) {
-        acc[reviewerId] = {
-          name: record.reviewerName,
-          email: record.reviewerEmail,
-          avatar: record.reviewerAvatar,
-          reviews: 0,
-          earnings: 0,
-          averageScore: 0,
-        };
-      }
-      acc[reviewerId].reviews += 1;
-      acc[reviewerId].earnings += 3000;
-      return acc;
-    },
-    {} as Record<
-      string,
-      {
-        name: string;
-        email: string;
-        avatar: string;
-        reviews: number;
-        earnings: number;
-        averageScore: number;
-      }
-    >
-  );
-
-  // Calculate average scores for each reviewer
-  Object.keys(reviewerStats).forEach((reviewerId) => {
-    const reviewerRecords = finalFilteredRecords.filter(
-      (r) => r.reviewerEmail === reviewerId
-    );
-    reviewerStats[reviewerId].averageScore =
-      reviewerRecords.length > 0
-        ? parseFloat(
-            (
-              reviewerRecords.reduce((sum, r) => sum + r.score, 0) /
-              reviewerRecords.length
-            ).toFixed(1)
-          )
-        : 0;
-  });
+    setPageNumber(1);
+  }, [search, fromDate, toDate, pageSize]);
 
   const getInitials = (fullName: string) => {
     return fullName
@@ -274,34 +234,23 @@ const ReviewMoneyManagement = () => {
 
 
   const handleViewReviewerDetails = (
-    reviewerEmail: string,
+    reviewerProfileId: string,
     reviewerName: string
   ) => {
-    setSelectedReviewerEmail(reviewerEmail);
+    setSelectedReviewerProfileId(reviewerProfileId);
     setSelectedReviewerName(reviewerName);
     setShowReviewerDetails(true);
   };
 
-  // Get records for selected reviewer
-  const selectedReviewerRecords = finalFilteredRecords.filter(
-    (record) => record.reviewerEmail === selectedReviewerEmail
-  );
+  // Get records for selected reviewer (placeholder - will be replaced with API data)
+  const selectedReviewerRecords: ReviewRecord[] = [];
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Quản lý thu nhập review
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Theo dõi số lần review và thu nhập trong khoảng thời gian
-          </p>
-        </div>
-      </div>
+    
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -310,7 +259,7 @@ const ReviewMoneyManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {totalReviews}
+              {adminReviewerIncome?.data?.totalReviews}
             </div>
           </CardContent>
         </Card>
@@ -322,7 +271,7 @@ const ReviewMoneyManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(totalEarnings)}
+              {formatCurrency(adminReviewerIncome?.data?.totalIncome ?? 0)}
             </div>
           </CardContent>
         </Card>
@@ -335,172 +284,28 @@ const ReviewMoneyManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {Object.keys(reviewerStats).length}
+              {adminReviewerIncome?.data?.totalReviewer}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+             Phí review
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {formatCurrency(adminReviewerIncome?.data?.pricePerReview ?? 0)}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
-      {/* <div className="flex justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Tìm kiếm theo câu hỏi, reviewer hoặc learner..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-80"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              Từ ngày:
-            </label>
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-40"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              Đến ngày:
-            </label>
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-40"
-            />
-          </div>
-          <Button
-            onClick={() => {
-              setStartDate("2024-01-01");
-              setEndDate("2024-01-31");
-              setSearchTerm("");
-            }}
-            variant="outline"
-          >
-            Reset
-          </Button>
-        </div>
-      </div> */}
-
-      {/* Review Records Table */}
-      {/* <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-100">
-              <TableHead className="text-gray-700 font-semibold">
-                Câu hỏi
-              </TableHead>
-              <TableHead className="text-gray-700 font-semibold">
-                Reviewer
-              </TableHead>
-              <TableHead className="text-gray-700 font-semibold">
-                Learner
-              </TableHead>
-              <TableHead className="text-gray-700 font-semibold">
-                Điểm
-              </TableHead>
-
-              <TableHead className="text-gray-700 font-semibold">
-                Ngày tạo
-              </TableHead>
-              <TableHead className="text-center text-gray-700 font-semibold">
-                Thu nhập
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {finalFilteredRecords.map((record) => (
-              <TableRow
-                key={record.id}
-                className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
-              >
-                <TableCell className="max-w-xs">
-                  <div className="font-medium text-gray-900 line-clamp-2">
-                    {record.question}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    ID: {record.id}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-8">
-                      <AvatarImage
-                        src={record.reviewerAvatar}
-                        alt={record.reviewerName}
-                      />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs">
-                        {getInitials(record.reviewerName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium text-gray-900 text-sm">
-                        {record.reviewerName}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {record.reviewerEmail}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-8">
-                      <AvatarImage
-                        src={record.learnerAvatar}
-                        alt={record.learnerName}
-                      />
-                      <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-600 text-white text-xs">
-                        {getInitials(record.learnerName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium text-gray-900 text-sm">
-                        {record.learnerName}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {record.learnerEmail}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div
-                    className={`font-semibold ${getScoreColor(
-                      record.score,
-                      record.maxScore
-                    )}`}
-                  >
-                    {record.score}/{record.maxScore}
-                  </div>
-                </TableCell>
-
-                <TableCell>
-                  <div className="text-sm text-gray-600">
-                    {record.createdAt}
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="font-semibold text-green-600">
-                    {formatCurrency(3000)}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div> */}
+      
 
       {/* Reviewer Statistics */}
-      {Object.keys(reviewerStats).length > 0 && (
-        <Card className="mt-6">
+      <Card className="mt-6">
           <CardHeader>
             <CardTitle className="text-lg">Thống kê theo Reviewer</CardTitle>
           </CardHeader>
@@ -509,8 +314,8 @@ const ReviewMoneyManagement = () => {
             <div className="flex justify-between gap-4 mb-4">
               <Input
                 placeholder="Tìm kiếm theo tên reviewer..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 className="w-80"
               />
               <div className="flex items-center gap-2">
@@ -520,8 +325,8 @@ const ReviewMoneyManagement = () => {
                   </label>
                   <Input
                     type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
                     className="w-40"
                   />
                 </div>
@@ -532,17 +337,17 @@ const ReviewMoneyManagement = () => {
                   </label>
                   <Input
                     type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
                     className="w-40"
                   />
                 </div>
 
                 <Button
                   onClick={() => {
-                    setStartDate("2024-01-01");
-                    setEndDate("2024-01-31");
-                    setSearchTerm("");
+                    setFromDate("2024-01-01");
+                    setToDate("2024-01-31");
+                    setSearch("");
                   }}
                   variant="outline"
                 >
@@ -570,81 +375,133 @@ const ReviewMoneyManagement = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Object.values(reviewerStats).map((reviewer, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="size-8">
-                            <AvatarImage
-                              src={reviewer.avatar}
-                              alt={reviewer.name}
-                            />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs">
-                              {getInitials(reviewer.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {reviewer.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {reviewer.email}
+                  {reviewers.length > 0 ? (
+                    reviewers.map((reviewer) => (
+                      <TableRow key={reviewer.reviewerProfileId}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="size-8">
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs">
+                                {getInitials(reviewer.fullName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {reviewer.fullName}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {reviewer.email}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-semibold text-blue-600">
-                          {reviewer.reviews}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-semibold text-green-600">
-                          {formatCurrency(reviewer.earnings)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            handleViewReviewerDetails(
-                              reviewer.email,
-                              reviewer.name
-                            )
-                          }
-                          className="text-xs"
-                        >
-                          Xem chi tiết
-                        </Button>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-semibold text-blue-600">
+                            {/* TODO: Replace with actual review count from API */}
+                            -
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-semibold text-green-600">
+                            {/* TODO: Replace with actual earnings from API */}
+                            -
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              handleViewReviewerDetails(
+                                reviewer.email,
+                                reviewer.fullName
+                              )
+                            }
+                            className="text-xs"
+                          >
+                            Xem chi tiết
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                        Không có dữ liệu
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
+            {/* Pagination */}
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700">Hiển thị:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPageNumber(1);
+                    }}
+                    className="border rounded px-2 py-1 text-sm"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                  <span className="text-sm text-gray-700">mục mỗi trang</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Trang {pageNumber} - Hiển thị {reviewers.length} kết quả
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={pageNumber === 1}
+                >
+                  Trước
+                </Button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pageNumber <= 3) {
+                    pageNum = i + 1;
+                  } else if (pageNumber >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = pageNumber - 2 + i;
+                  }
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNumber === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={pageNumber >= totalPages}
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
-        <div>
-          Hiển thị 1-{finalFilteredRecords.length} trong tổng số{" "}
-          {finalFilteredRecords.length} review
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
-            Trước
-          </Button>
-          <Button variant="default" size="sm">
-            1
-          </Button>
-          <Button variant="outline" size="sm" disabled>
-            Sau
-          </Button>
-        </div>
-      </div>
 
       {/* Reviewer Details Modal */}
       {showReviewerDetails && (
@@ -656,9 +513,9 @@ const ReviewMoneyManagement = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                     <svg
-                      width="32"
-                      height="32"
-                      fill="currentColor"
+                        width="32"
+                        height="32"
+                        fill="currentColor"
                       viewBox="0 0 20 20"
                     >
                       <path
@@ -673,7 +530,7 @@ const ReviewMoneyManagement = () => {
                       Chi tiết review của {selectedReviewerName}
                     </h2>
                     <p className="text-blue-100">
-                      {selectedReviewerEmail} • {selectedReviewerRecords.length}{" "}
+                      {selectedReviewerProfileId} • {selectedReviewerRecords.length}{" "}
                       review
                     </p>
                   </div>

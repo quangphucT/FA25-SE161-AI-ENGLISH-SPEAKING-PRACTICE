@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     // Build URL with query parameters
     const backendUrl = new URL(
-      `${process.env.BE_API_URL}/AdminDashboard/reviewers/pending`
+      `${process.env.BE_API_URL}/AdminLearner/list`
     );
     
     if (search) {

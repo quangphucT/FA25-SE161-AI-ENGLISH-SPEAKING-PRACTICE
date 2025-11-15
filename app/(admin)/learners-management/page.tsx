@@ -17,7 +17,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -27,6 +30,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useAdminLearner, useAdminLearnerDetail, useAdminLearnerBan } from "@/features/admin/hooks/useAdminLearner";
+import {
+  Learner,
+  AdminLearnersResponse,
+  LearnerDetail,
+  Course,
+} from "@/features/admin/services/adminLearnerService";
 
 // Type definitions
 interface Package {
@@ -45,601 +55,132 @@ interface Achievement {
   requirement: string;
 }
 
-interface Learner {
-  id: string;
-  fullName: string;
-  email: string;
-  avatar: string;
-  pronunciationScore: number;
-  favouriteLevelGoal: "Beginner" | "Intermediate" | "Advanced" | "Expert";
-  status: "Active" | "Inactive" | "IsBanned";
-  joinedDate: string;
-  phoneNumber: string;
-  totalLessons: number;
-  purchasedPackages: Package[];
-  achievements: Achievement[];
-}
+// Legacy sample data has been removed; learners now come from the API.
 
-const sampleLearners: Learner[] = [
-  {
-    id: "L001",
-    fullName: "Nguyễn Văn An",
-    email: "nguyenvanan@gmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 8.5,
-    favouriteLevelGoal: "Intermediate",
-    status: "Active",
-    joinedDate: "2024-01-15",
-    phoneNumber: "0909090909",
-    totalLessons: 45,
-    purchasedPackages: [
-      {
-        name: "Premium",
-        duration: "60 days",
-        price: "1,000,000 VND",
-        status: "Active",
-      },
-      {
-        name: "IELTS Preparation",
-        duration: "30 days",
-        price: "800,000 VND",
-        status: "Completed",
-      },
-      {
-        name: "IELTS Preparation",
-        duration: "30 days",
-        price: "800,000 VND",
-        status: "Completed",
-      },  
-    ],
-    achievements: [
-      {
-        name: "Good Pronunciation",
-        description: "Achieved 70%+ accuracy in 5 lessons",
-        points: 40,
-        icon: "�",
-        date: "2025-09-30",
-        requirement: "5 lessons ≥70% accuracy",
-      },
-      {
-        name: "Great Pronunciation",
-        description: "Achieved 80%+ accuracy in 5 lessons",
-        points: 60,
-        icon: "⭐",
-        date: "2025-08-25",
-        requirement: "5 lessons ≥80% accuracy",
-      },
-      {
-        name: "Perfect Pronunciation",
-        description: "Achieved 90%+ accuracy in 5 lessons",
-        points: 80,
-        icon: "🎯",
-        date: "2025-08-15",
-        requirement: "5 lessons ≥90% accuracy",
-      },
-    ],
-  },
-  {
-    id: "L002",
-    fullName: "Trần Thị Bình",
-    email: "tranthibinh@email.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 7.2,
-    favouriteLevelGoal: "Advanced",
-    status: "IsBanned",
-    joinedDate: "2024-02-20",
-    phoneNumber: "0909090909",
-    totalLessons: 32,
-    purchasedPackages: [
-      {
-        name: "Starter",
-        duration: "30 days",
-        price: "500,000 VND",
-        status: "Active",
-      },
-    ],
-    achievements: [
-      {
-        name: "First Steps",
-        description: "Completed first 10 lessons",
-        points: 30,
-        icon: "🌟",
-        date: "2025-07-10",
-        requirement: "Complete 10 lessons",
-      },
-      {
-        name: "Good Pronunciation",
-        description: "Achieved 70%+ accuracy in 5 lessons",
-        points: 50,
-        icon: "🗣️",
-        date: "2025-08-05",
-        requirement: "5 lessons ≥70% accuracy",
-      },
-    ],
-  },
-  {
-    id: "L003",
-    fullName: "Lê Minh Cường",
-    email: "leminhcuong@yahoo.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 6.8,
-    favouriteLevelGoal: "Beginner",
-    status: "Inactive",
-    joinedDate: "2023-12-05",
-    phoneNumber: "0909090909",
-    totalLessons: 18,
-    purchasedPackages: [
-      {
-        name: "Basic English",
-        duration: "15 days",
-        price: "300,000 VND",
-        status: "Expired",
-      },
-    ],
-    achievements: [],
-  },
-  {
-    id: "L004",
-    fullName: "Phạm Thu Dung",
-    email: "phamthudung@hotmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 9.1,
-    favouriteLevelGoal: "Expert",
-    status: "Active",
-    joinedDate: "2024-03-10",
-    phoneNumber: "0909090909",
-    totalLessons: 67,
-    purchasedPackages: [
-      {
-        name: "Premium Plus",
-        duration: "90 days",
-        price: "1,500,000 VND",
-        status: "Active",
-      },
-      {
-        name: "Business English",
-        duration: "45 days",
-        price: "900,000 VND",
-        status: "Completed",
-      },
-    ],
-    achievements: [
-      {
-        name: "Expert Speaker",
-        description: "Achieved 95%+ accuracy in 10 lessons",
-        points: 100,
-        icon: "🎓",
-        date: "2025-09-01",
-        requirement: "10 lessons ≥95% accuracy (Native Speaker Level)",
-      },
-      {
-        name: "Consistency King",
-        description: "Completed lessons for 30 days straight",
-        points: 75,
-        icon: "📚",
-        date: "2025-08-20",
-        requirement: "30 consecutive days learning",
-      },
-      {
-        name: "Perfect Pronunciation",
-        description: "Achieved 90%+ accuracy in 5 lessons",
-        points: 80,
-        icon: "🎯",
-        date: "2025-07-15",
-        requirement: "5 lessons ≥90% accuracy",
-      },
-    ],
-  },
-  {
-    id: "L005",
-    fullName: "Hoàng Văn Em",
-    email: "hoangvanem@gmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 5.9,
-    favouriteLevelGoal: "Intermediate",
-    status: "Inactive",
-    joinedDate: "2024-01-30",
-    phoneNumber: "0909090909",
-    totalLessons: 12,
-    purchasedPackages: [],
-    achievements: [],
-  },
-  {
-    id: "L006",
-    fullName: "Đỗ Thị Hoa",
-    email: "dothihoa@gmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 7.8,
-    favouriteLevelGoal: "Advanced",
-    status: "Active",
-    joinedDate: "2024-04-12",
-    phoneNumber: "0909090909",
-    totalLessons: 38,
-    purchasedPackages: [
-      {
-        name: "IELTS Premium",
-        duration: "60 days",
-        price: "1,200,000 VND",
-        status: "Active",
-      },
-    ],
-    achievements: [
-      {
-        name: "Good Pronunciation",
-        description: "Achieved 70%+ accuracy in 5 lessons",
-        points: 40,
-        icon: "🌟",
-        date: "2025-06-15",
-        requirement: "5 lessons ≥70% accuracy",
-      },
-      {
-        name: "Weekly Warrior",
-        description: "Completed 7 days streak",
-        points: 35,
-        icon: "🔥",
-        date: "2025-07-20",
-        requirement: "7 consecutive days learning",
-      },
-    ],
-  },
-  {
-    id: "L007",
-    fullName: "Vũ Minh Khôi",
-    email: "vuminhkhoi@yahoo.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 8.9,
-    favouriteLevelGoal: "Expert",
-    status: "Active",
-    joinedDate: "2024-05-08",
-    phoneNumber: "0909090909",
-    totalLessons: 52,
-    purchasedPackages: [
-      {
-        name: "Business Pro",
-        duration: "90 days",
-        price: "1,800,000 VND",
-        status: "Active",
-      },
-      {
-        name: "Speaking Mastery",
-        duration: "45 days",
-        price: "750,000 VND",
-        status: "Completed",
-      },
-    ],
-    achievements: [
-      {
-        name: "Perfect Pronunciation",
-        description: "Achieved 90%+ accuracy in 5 lessons",
-        points: 80,
-        icon: "🎯",
-        date: "2025-08-10",
-        requirement: "5 lessons ≥90% accuracy",
-      },
-      {
-        name: "Speed Learner",
-        description: "Completed 20 lessons in 10 days",
-        points: 65,
-        icon: "⚡",
-        date: "2025-07-25",
-        requirement: "High learning velocity",
-      },
-    ],
-  },
-  {
-    id: "L008",
-    fullName: "Bùi Thị Lan",
-    email: "buithilan@outlook.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 6.3,
-    favouriteLevelGoal: "Intermediate",
-    status: "Active",
-    joinedDate: "2024-06-20",
-    phoneNumber: "0909090909",
-    totalLessons: 24,
-    purchasedPackages: [
-      {
-        name: "Standard",
-        duration: "30 days",
-        price: "600,000 VND",
-        status: "Active",
-      },
-    ],
-    achievements: [
-      {
-        name: "First Steps",
-        description: "Completed first 10 lessons",
-        points: 30,
-        icon: "🌟",
-        date: "2025-08-01",
-        requirement: "Complete 10 lessons",
-      },
-    ],
-  },
-  {
-    id: "L009",
-    fullName: "Ngô Văn Minh",
-    email: "ngovanminh@gmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 9.3,
-    favouriteLevelGoal: "Expert",
-    status: "Active",
-    joinedDate: "2024-02-14",
-    phoneNumber: "0909090909",
-    totalLessons: 78,
-    purchasedPackages: [
-      {
-        name: "Ultimate",
-        duration: "120 days",
-        price: "2,200,000 VND",
-        status: "Active",
-      },
-      {
-        name: "TOEFL Prep",
-        duration: "60 days",
-        price: "1,100,000 VND",
-        status: "Completed",
-      },
-      {
-        name: "Advanced Grammar",
-        duration: "30 days",
-        price: "500,000 VND",
-        status: "Completed",
-      },
-    ],
-    achievements: [
-      {
-        name: "Expert Speaker",
-        description: "Achieved 95%+ accuracy in 10 lessons",
-        points: 100,
-        icon: "🎓",
-        date: "2025-09-05",
-        requirement: "10 lessons ≥95% accuracy (Native Speaker Level)",
-      },
-      {
-        name: "Perfect Pronunciation",
-        description: "Achieved 90%+ accuracy in 5 lessons",
-        points: 80,
-        icon: "🎯",
-        date: "2025-08-01",
-        requirement: "5 lessons ≥90% accuracy",
-      },
-      {
-        name: "Marathon Runner",
-        description: "Completed 50+ lessons",
-        points: 90,
-        icon: "🏃‍♂️",
-        date: "2025-09-10",
-        requirement: "Complete 50+ lessons",
-      },
-    ],
-  },
-  {
-    id: "L010",
-    fullName: "Lương Thị Phương",
-    email: "luongthiphuong@hotmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 5.4,
-    favouriteLevelGoal: "Beginner",
-    status: "Inactive",
-    joinedDate: "2024-03-25",
-    phoneNumber: "0909090909",
-    totalLessons: 8,
-    purchasedPackages: [
-      {
-        name: "Basic Starter",
-        duration: "15 days",
-        price: "250,000 VND",
-        status: "Expired",
-      },
-    ],
-    achievements: [],
-  },
-  {
-    id: "L011",
-    fullName: "Trịnh Văn Đức",
-    email: "trinhvanduc@gmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 7.5,
-    favouriteLevelGoal: "Advanced",
-    status: "Active",
-    joinedDate: "2024-07-10",
-    phoneNumber: "0909090909",
-    totalLessons: 29,
-    purchasedPackages: [
-      {
-        name: "Intensive",
-        duration: "45 days",
-        price: "850,000 VND",
-        status: "Active",
-      },
-    ],
-    achievements: [
-      {
-        name: "Good Pronunciation",
-        description: "Achieved 70%+ accuracy in 5 lessons",
-        points: 40,
-        icon: "🌟",
-        date: "2025-08-15",
-        requirement: "5 lessons ≥70% accuracy",
-      },
-      {
-        name: "Dedicated Learner",
-        description: "Logged in 15 consecutive days",
-        points: 45,
-        icon: "💪",
-        date: "2025-09-01",
-        requirement: "15 consecutive days active",
-      },
-    ],
-  },
-  {
-    id: "L012",
-    fullName: "Phạm Thị Mai",
-    email: "phamthimai@yahoo.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 8.2,
-    favouriteLevelGoal: "Advanced",
-    status: "Active",
-    joinedDate: "2024-08-05",
-    phoneNumber: "0909090909",
-    totalLessons: 41,
-    purchasedPackages: [
-      {
-        name: "Premium",
-        duration: "60 days",
-        price: "1,000,000 VND",
-        status: "Active",
-      },
-      {
-        name: "Conversation Plus",
-        duration: "30 days",
-        price: "650,000 VND",
-        status: "Active",
-      },
-    ],
-    achievements: [
-      {
-        name: "Great Pronunciation",
-        description: "Achieved 80%+ accuracy in 5 lessons",
-        points: 60,
-        icon: "⭐",
-        date: "2025-09-12",
-        requirement: "5 lessons ≥80% accuracy",
-      },
-      {
-        name: "Social Butterfly",
-        description: "Participated in 20+ conversations",
-        points: 55,
-        icon: "🦋",
-        date: "2025-09-18",
-        requirement: "20+ conversation sessions",
-      },
-    ],
-  },
-  {
-    id: "L013",
-    fullName: "Đinh Văn Hùng",
-    email: "dinhvanhung@outlook.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 6.9,
-    favouriteLevelGoal: "Intermediate",
-    status: "Inactive",
-    joinedDate: "2023-11-18",
-    phoneNumber: "0909090909",
-    totalLessons: 15,
-    purchasedPackages: [
-      {
-        name: "Standard",
-        duration: "30 days",
-        price: "600,000 VND",
-        status: "Expired",
-      },
-    ],
-    achievements: [
-      {
-        name: "First Steps",
-        description: "Completed first 10 lessons",
-        points: 30,
-        icon: "🌟",
-        date: "2024-01-05",
-        requirement: "Complete 10 lessons",
-      },
-    ],
-  },
-  {
-    id: "L014",
-    fullName: "Võ Thị Thu",
-    email: "vothithu@gmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 8.7,
-    favouriteLevelGoal: "Expert",
-    status: "Active",
-    joinedDate: "2024-09-01",
-    phoneNumber: "0909090909",
-    totalLessons: 19,
-    purchasedPackages: [
-      {
-        name: "Fast Track",
-        duration: "30 days",
-        price: "900,000 VND",
-        status: "Active",
-      },
-    ],
-    achievements: [
-      {
-        name: "Quick Start",
-        description: "Completed 15 lessons in first week",
-        points: 50,
-        icon: "🚀",
-        date: "2025-09-08",
-        requirement: "15 lessons in 7 days",
-      },
-    ],
-  },
-  {
-    id: "L015",
-    fullName: "Hồ Văn Tài",
-    email: "hovantai@hotmail.com",
-    avatar: "https://via.placeholder.com/150",
-    pronunciationScore: 7.1,
-    favouriteLevelGoal: "Intermediate",
-    status: "Active",
-    joinedDate: "2024-04-28",
-    phoneNumber: "0909090909",
-    totalLessons: 33,
-    purchasedPackages: [
-      {
-        name: "Regular",
-        duration: "45 days",
-        price: "700,000 VND",
-        status: "Active",
-      },
-    ],
-    achievements: [
-      {
-        name: "Good Pronunciation",
-        description: "Achieved 70%+ accuracy in 5 lessons",
-        points: 40,
-        icon: "🌟",
-        date: "2025-07-12",
-        requirement: "5 lessons ≥70% accuracy",
-      },
-      {
-        name: "Steady Progress",
-        description: "Consistent learning for 20 days",
-        points: 40,
-        icon: "📈",
-        date: "2025-08-28",
-        requirement: "20 days consistent learning",
-      },
-    ],
-  },
-];
+const levelToGoal = (
+  level: string | null | undefined
+): "Beginner" | "Intermediate" | "Advanced" | "Expert" => {
+  const normalized = (level || "").toUpperCase();
+  if (["A1", "A2"].includes(normalized)) return "Beginner";
+  if (["B1"].includes(normalized)) return "Intermediate";
+  if (["B2", "C1"].includes(normalized)) return "Advanced";
+  if (["C2"].includes(normalized)) return "Expert";
+  return "Intermediate";
+};
+
+const normalizeStatus = (
+  status: string | null | undefined
+): "Active" | "Inactive" | "Banned" => {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "active") return "Active";
+  if (normalized === "banned" || normalized === "banned") return "Banned";
+  return "Inactive";
+};
+
+const mapCourseStatus = (
+  status: string | null | undefined
+): "Active" | "Completed" | "Expired" => {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "enrolled" || normalized === "active") return "Active";
+  if (normalized === "completed") return "Completed";
+  if (normalized === "expired") return "Expired";
+  return "Expired";
+};
+
+const formatDisplayDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "—";
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString("vi-VN");
+};
+
+const getAvatarUrl = (fullName: string): string =>
+  `https://ui-avatars.com/api/?background=1e293b&color=fff&name=${encodeURIComponent(
+    fullName || "User"
+  )}`;
 
 const LearnerManagement = () => {
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("Active");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
-  const [selectedLearner, setSelectedLearner] = useState<Learner | null>(null);
+  const [selectedLearnerProfileId, setSelectedLearnerProfileId] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [actionType, setActionType] = useState<"block" | "unblock">("block");
   const [learnerToAction, setLearnerToAction] = useState<Learner | null>(null);
+  const [banReason, setBanReason] = useState<string>("");
+  const queryClient = useQueryClient();
+  const { mutate: banLearner, isPending: isBanning } = useAdminLearnerBan();
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const learnersQuery = useAdminLearner(
+    pageNumber,
+    pageSize,
+    statusFilter,
+    search
+  );
+  const { data, isLoading, error } = learnersQuery;
+  const learnersResponse = data as AdminLearnersResponse | undefined;
 
-  // Filter learners by search and status
-  const filteredLearners = sampleLearners.filter((learner) => {
-    const matchesName = learner.fullName
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesStatus = learner.status === statusFilter;
-    return matchesName && matchesStatus;
-  });
+  // Fetch learner detail when a user is selected
+  const learnerDetailQuery = useAdminLearnerDetail(selectedLearnerProfileId || "");
+  const learnerDetailResponse = learnerDetailQuery.data as
+    | { isSucess: boolean; data: LearnerDetail }
+    | undefined;
+  const learnerDetail = learnerDetailResponse?.isSucess
+    ? learnerDetailResponse.data
+    : null;
 
- 
+  const apiLearners = useMemo<Learner[]>(() => {
+    if (!learnersResponse?.isSucess) return [];
+    return learnersResponse.data?.items ?? [];
+  }, [learnersResponse]);
+
+  const mappedLearners = useMemo<Learner[]>(() => {
+    return apiLearners;
+  }, [apiLearners]);
+
+  const filteredLearners = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return mappedLearners.filter((learner) => {
+      const normalizedStatus = normalizeStatus(learner.status);
+      const matchesStatus = normalizedStatus === statusFilter;
+      const matchesKeyword =
+        keyword.length === 0 ||
+        [learner.learnerProfileId, learner.fullName, learner.email, learner.phone]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(keyword));
+      return matchesStatus && matchesKeyword;
+    });
+  }, [mappedLearners, search, statusFilter]);
+
+  const totalItems = learnersResponse?.isSucess
+    ? learnersResponse.data?.totalItems ?? mappedLearners.length
+    : mappedLearners.length;
+  const totalActive = mappedLearners.filter(
+    (learner) => normalizeStatus(learner.status) === "Active"
+  ).length;
+  const startItem =
+    totalItems === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
+  const endItem =
+    totalItems === 0 ? 0 : Math.min(pageNumber * pageSize, totalItems);
+  const apiError =
+    !!error || (learnersResponse && learnersResponse.isSucess === false);
+
+  useEffect(() => {
+    if (selectedLearnerProfileId && !mappedLearners.some((learner) => learner.learnerProfileId === selectedLearnerProfileId)) {
+      setSelectedLearnerProfileId(null);
+      setShowDetailsModal(false);
+    }
+  }, [mappedLearners, selectedLearnerProfileId]);
+
+  const handleSearchInput = (value: string) => {
+    setSearch(value);
+    setPageNumber(1);
+  };
 
   const handleViewDetails = (learner: Learner) => {
-    setSelectedLearner(learner);
+    setSelectedLearnerProfileId(learner.learnerProfileId);
     setShowDetailsModal(true);
   };
 
@@ -649,14 +190,49 @@ const LearnerManagement = () => {
   ) => {
     setLearnerToAction(learner);
     setActionType(action);
+    setBanReason("");
     setShowConfirmDialog(true);
   };
 
   const confirmAction = () => {
-    // Here you would make the API call to block/unblock the user
-    console.log(`${actionType}ing user:`, learnerToAction);
-    setShowConfirmDialog(false);
-    setLearnerToAction(null);
+    if (!learnerToAction) return;
+
+    if (actionType === "block") {
+      if (!banReason.trim()) {
+        toast.error("Vui lòng nhập lý do chặn");
+        return;
+      }
+      banLearner(
+        {
+          userId: learnerToAction.userId,
+          reason: banReason.trim(),
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["adminLearner"] });
+            setShowConfirmDialog(false);
+            setLearnerToAction(null);
+            setBanReason("");
+          },
+        }
+      );
+    } else {
+      // Unban - có thể dùng reason rỗng hoặc tạo service riêng
+      banLearner(
+        {
+          userId: learnerToAction.userId,
+          reason: "Unban user",
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["adminLearner"] });
+            setShowConfirmDialog(false);
+            setLearnerToAction(null);
+            setBanReason("");
+          },
+        }
+      );
+    }
   };
 
   // Close dropdown when clicking outside
@@ -686,14 +262,20 @@ const LearnerManagement = () => {
           <Input
             placeholder="Tìm theo mã, họ tên, email hoặc số điện thoại..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
             className="w-lg"
           />
-          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+          <Tabs
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v);
+              setPageNumber(1);
+            }}
+          >
             <TabsList className="grid grid-cols-3 w-[400px]">
               <TabsTrigger value="Active">Hoạt động</TabsTrigger>
               <TabsTrigger value="Inactive">Ngưng hoạt động</TabsTrigger>
-              <TabsTrigger value="IsBanned">Bị chặn</TabsTrigger>
+              <TabsTrigger value="Banned">Bị chặn</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -723,41 +305,67 @@ const LearnerManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLearners.map((learner, idx) => (
-              <TableRow
-                key={learner.id}
-                className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
-              >
-                
+            {isLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="py-6 text-center text-gray-500"
+                >
+                  Đang tải dữ liệu...
+                </TableCell>
+              </TableRow>
+            ) : apiError ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="py-6 text-center text-red-500"
+                >
+                  Không thể tải danh sách người học. Vui lòng thử lại sau.
+                </TableCell>
+              </TableRow>
+            ) : filteredLearners.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="py-6 text-center text-gray-500"
+                >
+                  Không có người học nào phù hợp.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredLearners.map((learner) => (
+                <TableRow
+                  key={learner.learnerProfileId}
+                  className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
+                >
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
-                        <AvatarImage
-                          src={learner.avatar}
-                          alt={learner.fullName}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
-                          {getInitials(learner.fullName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div
-                        className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
-                          learner.status === "Active"
-                            ? "bg-green-500"
-                            : learner.status === "Inactive"
-                            ? "bg-gray-400"
-                            : "bg-red-500"
-                        }`}
-                      ></div>
-                    </div>
-                    <div>
-                      <div className="text-blue-600 font-semibold text-sm">
-                        {learner.id}
+                      <div className="relative">
+                        <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
+                          <AvatarImage
+                            src={getAvatarUrl(learner.fullName || "")}
+                            alt={learner.fullName}
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
+                            {getInitials(learner.fullName || "")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
+                            normalizeStatus(learner.status) === "Active"
+                              ? "bg-green-500"
+                              : normalizeStatus(learner.status) === "Inactive"
+                              ? "bg-gray-400"
+                              : "bg-red-500"
+                          }`}
+                        ></div>
                       </div>
-                      {/* <div className="text-gray-500 text-xs">Learner</div> */}
-                    </div>
+                      <div>
+                        <div className="text-blue-600 font-semibold text-sm">
+                          {learner.learnerProfileId}
+                        </div>
+                      </div>
                   </div>
                 </TableCell>
 
@@ -768,59 +376,58 @@ const LearnerManagement = () => {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-gray-600">
-                  <div className="flex flex-col">
-                    <span className="text-sm">{learner.email}</span>
-                    <span className="text-xs text-gray-500">
-                      {learner.phoneNumber}
-                    </span>
-                  </div>
-                </TableCell>
-
-                <TableCell>
-                  <Badge
-                    variant={
-                      learner.status === "Active" ? "default" : "secondary"
-                    }
-                    className={
-                      learner.status === "Active"
-                        ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
-                        : learner.status === "Inactive"
-                        ? "bg-gray-100 text-gray-600 border-gray-200"
-                        : "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"
-                        
-                    }
-                  >
-                    <div className="flex items-center gap-1">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          learner.status === "Active"
-                            ? "bg-green-500"
-                            : learner.status === "Inactive"
-                            ? "bg-gray-400"
-                            : "bg-red-500"
-                        }`}
-                      ></div>
-                      {learner.status === "Active"
-                        ? "Hoạt động"
-                        : learner.status === "Inactive"
-                        ? "Ngưng hoạt động"
-                        : "Bị chặn"}
+                  <TableCell className="text-gray-600">
+                    <div className="flex flex-col">
+                      <span className="text-sm">{learner.email}</span>
+                      <span className="text-xs text-gray-500">
+                        {learner.phone || "—"}
+                      </span>
                     </div>
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="relative dropdown-container">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setOpenDropdownId(
-                          openDropdownId === learner.id ? null : learner.id
-                        )
+                  </TableCell>
+
+                  <TableCell>
+                    <Badge
+                      variant={
+                        normalizeStatus(learner.status) === "Active" ? "default" : "secondary"
                       }
-                      className="p-1 h-8 w-8 cursor-pointer"
+                      className={
+                        normalizeStatus(learner.status) === "Active"
+                          ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
+                          : normalizeStatus(learner.status) === "Inactive"
+                          ? "bg-gray-100 text-gray-600 border-gray-200"
+                          : "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"
+                      }
                     >
+                      <div className="flex items-center gap-1">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            normalizeStatus(learner.status) === "Active"
+                              ? "bg-green-500"
+                              : normalizeStatus(learner.status) === "Inactive"
+                              ? "bg-gray-400"
+                              : "bg-red-500"
+                          }`}
+                        ></div>
+                        {normalizeStatus(learner.status) === "Active"
+                          ? "Hoạt động"
+                          : normalizeStatus(learner.status) === "Inactive"
+                          ? "Ngưng hoạt động"
+                          : "Bị chặn"}
+                      </div>
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="relative dropdown-container">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setOpenDropdownId(
+                            openDropdownId === learner.learnerProfileId ? null : learner.learnerProfileId
+                          )
+                        }
+                        className="p-1 h-8 w-8 cursor-pointer"
+                      >
                       <svg
                         width="16"
                         height="16"
@@ -835,7 +442,7 @@ const LearnerManagement = () => {
                       </svg>
                     </Button>
 
-                    {openDropdownId === learner.id && (
+                    {openDropdownId === learner.learnerProfileId && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10 ">
                         <div className="py-1 ">
                           <button
@@ -861,21 +468,25 @@ const LearnerManagement = () => {
                           </button>
                           <button
                             onClick={() => {
+                              const normalizedStatus = normalizeStatus(learner.status);
                               handleBlockUnblock(
                                 learner,
-                                learner.status === "Active" || learner.status === "Inactive" 
+                                  normalizedStatus === "Active" ||
+                                    normalizedStatus === "Inactive"
                                   ? "block"
                                   : "unblock"
                               );
                               setOpenDropdownId(null);
                             }}
                             className={`block cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                              learner.status === "Active" || learner.status === "Inactive" 
+                                normalizeStatus(learner.status) === "Active" ||
+                                normalizeStatus(learner.status) === "Inactive"
                                 ? "text-red-600"
                                 : "text-green-600"
                             }`}
                           >
-                            {learner.status === "Active" || learner.status === "Inactive" ? (
+                              {normalizeStatus(learner.status) === "Active" ||
+                              normalizeStatus(learner.status) === "Inactive" ? (
                               <>
                                 <svg
                                   width="16"
@@ -928,7 +539,8 @@ const LearnerManagement = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -936,18 +548,17 @@ const LearnerManagement = () => {
       {/* Phân trang & Thông tin */}
       <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
         <div>
-          NGƯỜI HỌC HOẠT ĐỘNG:{" "}
-          {filteredLearners.filter((l) => l.status === "Active").length}/
-          {filteredLearners.length}
+          NGƯỜI HỌC HOẠT ĐỘNG: {totalActive}/{totalItems}
         </div>
         <div>
-          Hàng mỗi trang: <span className="font-semibold">10</span> &nbsp; 1-10
-          trên {filteredLearners.length}
+          Hàng mỗi trang:{" "}
+          <span className="font-semibold">{pageSize}</span> &nbsp;
+          {totalItems === 0 ? "0 trên 0" : `${startItem}-${endItem} trên ${totalItems}`}
         </div>
       </div>
 
       {/* Chi tiết người học */}
-      {showDetailsModal && selectedLearner && (
+      {showDetailsModal && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)]  flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] overflow-y-auto w-full mx-4">
             <div className="p-6 border-b">
@@ -957,7 +568,10 @@ const LearnerManagement = () => {
                 </h2>
                 <Button
                   variant="ghost"
-                  onClick={() => setShowDetailsModal(false)}
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    setSelectedLearnerProfileId(null);
+                  }}
                   className="text-gray-500 hover:text-gray-700 cursor-pointer"
                 >
                   <svg
@@ -974,6 +588,17 @@ const LearnerManagement = () => {
               </div>
             </div>
 
+            {learnerDetailQuery.isLoading ? (
+              <div className="p-6 text-center">
+                <div className="text-gray-500">Đang tải...</div>
+              </div>
+            ) : learnerDetailQuery.error || !learnerDetail ? (
+              <div className="p-6 text-center">
+                <div className="text-red-500">
+                  {learnerDetailQuery.error?.message || "Không thể tải thông tin chi tiết"}
+                </div>
+              </div>
+            ) : (
             <div className="p-6 space-y-8">
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -984,61 +609,67 @@ const LearnerManagement = () => {
                   <div className="space-y-3">
                     <div>
                       <span className="font-medium">Mã:</span>{" "}
-                      {selectedLearner.id}
+                        {learnerDetail.learnerProfileId}
                     </div>
                     <div>
                       <span className="font-medium">Họ tên:</span>{" "}
-                      {selectedLearner.fullName}
+                        {learnerDetail.fullName || "—"}
                     </div>
                     <div>
                       <span className="font-medium">Email:</span>{" "}
-                      {selectedLearner.email}
+                        {learnerDetail.email || "—"}
                     </div>
                     <div>
                       <span className="font-medium">Số điện thoại:</span>{" "}
-                      {selectedLearner.phoneNumber}
+                        {learnerDetail.phoneNumber || "—"}
                     </div>
                     <div>
                       <span className="font-medium">Trạng thái:</span>
                       <Badge
                         className={`ml-2 ${
-                          selectedLearner.status === "Active" || selectedLearner.status === "Inactive" || selectedLearner.status === "IsBanned"
+                            learnerDetail.status === "Active"
                             ? "bg-green-600"
-                            : selectedLearner.status === "Inactive"
+                              : learnerDetail.status === "Inactive"
                             ? "bg-gray-400"
                             : "bg-red-500"
                         }`}
                       >
-                        {selectedLearner.status === "Active" || selectedLearner.status === "Inactive" || selectedLearner.status === "IsBanned"
+                          {learnerDetail.status === "Active"
                           ? "Hoạt động"
-                          : selectedLearner.status === "Inactive" || selectedLearner.status === "IsBanned"
+                            : learnerDetail.status === "Inactive"
                           ? "Ngưng hoạt động"
                           : "Bị chặn"}
                       </Badge>
                     </div>
                     <div>
                       <span className="font-medium">Ngày tham gia:</span>{" "}
-                      {selectedLearner.joinedDate}
+                        {formatDisplayDate(learnerDetail.joinDate)}
                     </div>
+                      {learnerDetail.lastActiveAt && (
+                        <div>
+                          <span className="font-medium">Hoạt động lần cuối:</span>{" "}
+                          {formatDisplayDate(learnerDetail.lastActiveAt)}
+                        </div>
+                      )}
                   </div>
                 </div>
                 <div>
                   <div className="space-y-4">
                     {/* Mục tiêu cấp độ */}
                     <div>
-                      <span className="font-medium">Trình độ phát âm:</span>
+                        <span className="font-medium">Trình độ:</span>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-sm px-3 py-1">
-                          {selectedLearner.favouriteLevelGoal}
+                            {learnerDetail.level || "—"}
                         </Badge>
                         <span className="text-xs text-gray-500">
-                          {selectedLearner.favouriteLevelGoal === "Beginner" &&
+                            {levelToGoal(learnerDetail.level) === "Beginner" &&
                             "(Mới bắt đầu)"}
-                          {selectedLearner.favouriteLevelGoal ===
+                            {levelToGoal(learnerDetail.level) ===
                             "Intermediate" && "(Trung bình)"}
-                          {selectedLearner.favouriteLevelGoal === "Advanced" &&
+                            {levelToGoal(learnerDetail.level) === "Advanced" &&
                             "(Nâng cao)"}
-                          {selectedLearner.favouriteLevelGoal === "Expert" &&
+                            {levelToGoal(learnerDetail.level) === "Expert" &&
                             "(Chuyên gia)"}
                         </span>
                       </div>
@@ -1047,26 +678,48 @@ const LearnerManagement = () => {
                       <span className="font-medium">Điểm đánh giá:</span>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-sm px-3 py-1">
-                          {selectedLearner.pronunciationScore}
+                            {learnerDetail.pronunciationScore != null
+                              ? Number((learnerDetail.pronunciationScore / 10).toFixed(1))
+                              : 0}
                         </Badge>
                       </div>
+                    </div>
+                      <div>
+                        <span className="font-medium">Điểm trung bình:</span>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-sm px-3 py-1">
+                            {learnerDetail.avgScore != null
+                              ? Number((learnerDetail.avgScore / 10).toFixed(1))
+                              : 0}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium">Số bài đánh giá:</span>{" "}
+                        {learnerDetail.assessmentCount || 0}
+                      </div>
+                      <div>
+                        <span className="font-medium">Phút học mỗi ngày:</span>{" "}
+                        {learnerDetail.dailyMinutes || 0} phút
                     </div>
                     {/* Trạng thái gói */}
                     <div>
                       <span className="font-medium">Gói học hiện tại:</span>
                       <div className="mt-2">
-                        {selectedLearner.purchasedPackages.filter(
-                          (pkg) => pkg.status === "Active"
+                          {learnerDetail.courses?.filter(
+                            (course) => mapCourseStatus(course.status) === "Active"
                         ).length > 0 ? (
                           <div className="flex flex-wrap gap-2">
-                            {selectedLearner.purchasedPackages
-                              .filter((pkg) => pkg.status === "Active")
-                              .map((pkg, index) => (
+                              {learnerDetail.courses
+                                .filter(
+                                  (course) => mapCourseStatus(course.status) === "Active"
+                                )
+                                .map((course, index) => (
                                 <Badge
                                   key={index}
                                   className="bg-green-100 text-green-800 border-green-300"
                                 >
-                                  ✅ {pkg.name}
+                                    ✅ {course.title}
                                 </Badge>
                               ))}
                           </div>
@@ -1085,23 +738,23 @@ const LearnerManagement = () => {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">
-                    Các gói dịch vụ đã mua
+                      Các khóa học đã đăng ký
                   </h3>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>{selectedLearner.purchasedPackages.length} gói</span>
+                      <span>{learnerDetail.courses?.length || 0} khóa học</span>
                     <span>•</span>
                     <span>
                       {
-                        selectedLearner.purchasedPackages.filter(
-                          (pkg) => pkg.status === "Active"
-                        ).length
+                          learnerDetail.courses?.filter(
+                            (course) => mapCourseStatus(course.status) === "Active"
+                          ).length || 0
                       }{" "}
                       đang học
                     </span>
                   </div>
                 </div>
 
-                {selectedLearner.purchasedPackages.length > 0 ? (
+                  {learnerDetail.courses && learnerDetail.courses.length > 0 ? (
                   <Carousel
                     opts={{
                       align: "start",
@@ -1110,17 +763,34 @@ const LearnerManagement = () => {
                     className="w-full"
                   >
                     <CarouselContent className="-ml-2 md:-ml-4">
-                      {selectedLearner.purchasedPackages.map(
-                        (pkg: Package, index: number) => (
+                        {learnerDetail.courses.map(
+                          (course: Course, index: number) => {
+                            const courseStatus = mapCourseStatus(course.status);
+                            const startDate = course.startTime
+                              ? new Date(course.startTime)
+                              : null;
+                            const endDate = course.endTime
+                              ? new Date(course.endTime)
+                              : null;
+                            const now = new Date();
+                            const remainingDays =
+                              endDate && endDate > now
+                                ? Math.ceil(
+                                    (endDate.getTime() - now.getTime()) /
+                                      (1000 * 60 * 60 * 24)
+                                  )
+                                : 0;
+
+                            return (
                           <CarouselItem
                             key={index}
                             className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
                           >
                             <Card
                               className={`border-2 shadow-lg transition-all duration-300 hover:shadow-xl h-full ${
-                                pkg.status === "Active"
+                                    courseStatus === "Active"
                                   ? "border-green-200 bg-gradient-to-br from-green-50 to-emerald-50"
-                                  : pkg.status === "Completed"
+                                      : courseStatus === "Completed"
                                   ? "border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50"
                                   : "border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50"
                               }`}
@@ -1129,52 +799,52 @@ const LearnerManagement = () => {
                                 <div className="flex items-center justify-between">
                                   <CardTitle
                                     className={`text-lg font-bold ${
-                                      pkg.status === "Active"
+                                          courseStatus === "Active"
                                         ? "text-green-700"
-                                        : pkg.status === "Completed"
+                                            : courseStatus === "Completed"
                                         ? "text-blue-700"
                                         : "text-gray-600"
                                     }`}
                                   >
-                                    {pkg.name}
+                                        {course.title}
                                   </CardTitle>
                                   <div className="flex items-center gap-2">
                                     <div
                                       className={`w-3 h-3 rounded-full ${
-                                        pkg.status === "Active"
+                                            courseStatus === "Active"
                                           ? "bg-green-500 animate-pulse"
-                                          : pkg.status === "Completed"
+                                              : courseStatus === "Completed"
                                           ? "bg-blue-500"
                                           : "bg-gray-400"
                                       }`}
                                     ></div>
                                     <Badge
                                       className={`text-xs font-medium ${
-                                        pkg.status === "Active"
+                                            courseStatus === "Active"
                                           ? "bg-green-100 text-green-700 border-green-300"
-                                          : pkg.status === "Completed"
+                                              : courseStatus === "Completed"
                                           ? "bg-blue-100 text-blue-700 border-blue-300"
                                           : "bg-gray-100 text-gray-600 border-gray-300"
                                       }`}
                                     >
-                                      {pkg.status === "Active"
+                                          {courseStatus === "Active"
                                         ? "Đang học"
-                                        : pkg.status === "Completed"
+                                            : courseStatus === "Completed"
                                         ? "Hoàn thành"
                                         : "Hết hạn"}
                                     </Badge>
                                   </div>
                                 </div>
                                 <CardDescription className="text-sm text-gray-600">
-                                  {pkg.duration} • {pkg.price}
+                                      {course.duration} ngày • {course.price.toLocaleString("vi-VN")} VND
                                 </CardDescription>
                               </CardHeader>
                               <CardContent>
-                                {pkg.status === "Active" ? (
+                                    {courseStatus === "Active" ? (
                                   <div className="space-y-3">
                                     <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-lg text-center">
                                       <div className="text-2xl font-bold">
-                                        25
+                                            {remainingDays}
                                       </div>
                                       <div className="text-sm opacity-90">
                                         ngày còn lại
@@ -1186,22 +856,32 @@ const LearnerManagement = () => {
                                           Tiến độ
                                         </span>
                                         <span className="font-semibold text-green-600">
-                                          83%
+                                              {course.progress}%
                                         </span>
                                       </div>
                                       <div className="w-full bg-gray-200 rounded-full h-2">
                                         <div
                                           className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
-                                          style={{ width: "83%" }}
+                                              style={{ width: `${course.progress}%` }}
                                         ></div>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between text-xs text-gray-500">
-                                      <span>Bắt đầu: 15/01/2024</span>
-                                      <span>Kết thúc: 15/03/2024</span>
+                                          <span>
+                                            Bắt đầu:{" "}
+                                            {startDate
+                                              ? formatDisplayDate(course.startTime)
+                                              : "—"}
+                                          </span>
+                                          <span>
+                                            Kết thúc:{" "}
+                                            {endDate
+                                              ? formatDisplayDate(course.endTime)
+                                              : "—"}
+                                          </span>
                                     </div>
                                   </div>
-                                ) : pkg.status === "Completed" ? (
+                                    ) : courseStatus === "Completed" ? (
                                   <div className="space-y-3">
                                     <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 px-4 rounded-lg text-center">
                                       <div className="text-lg font-bold">
@@ -1212,7 +892,10 @@ const LearnerManagement = () => {
                                       </div>
                                     </div>
                                     <div className="text-center text-sm text-gray-600">
-                                      Gói đã được hoàn thành thành công
+                                          Khóa học đã được hoàn thành thành công
+                                        </div>
+                                        <div className="text-center text-xs text-gray-500">
+                                          Tiến độ: {course.progress}%
                                     </div>
                                   </div>
                                 ) : (
@@ -1226,14 +909,15 @@ const LearnerManagement = () => {
                                       </div>
                                     </div>
                                     <div className="text-center text-sm text-gray-600">
-                                      Gói đã hết hạn, cần gia hạn
+                                          Khóa học đã hết hạn, cần gia hạn
                                     </div>
                                   </div>
                                 )}
                               </CardContent>
                             </Card>
                           </CarouselItem>
-                        )
+                            );
+                          }
                       )}
                     </CarouselContent>
                     <CarouselPrevious className="left-4 bg-white/80 hover:bg-white shadow-lg" />
@@ -1243,15 +927,16 @@ const LearnerManagement = () => {
                   <div className="text-center py-12">
                     <div className="text-gray-400 text-6xl mb-4">📚</div>
                     <div className="text-gray-500 text-lg font-medium">
-                      Chưa mua gói nào
+                        Chưa đăng ký khóa học nào
                     </div>
                     <div className="text-gray-400 text-sm mt-2">
-                      Học viên chưa đăng ký gói học nào
+                        Học viên chưa đăng ký khóa học nào
                     </div>
                   </div>
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
       )}
@@ -1261,32 +946,56 @@ const LearnerManagement = () => {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
             <h3 className="text-lg font-semibold mb-4">
-              Xác nhận {actionType === "block" ? "Block" : "Unblock"} Người dùng
+              Xác nhận {actionType === "block" ? "Chặn" : "Bỏ chặn"} Người dùng
             </h3>
-            <p className="text-gray-600 mb-6">
-              Bạn có chắc chắn muốn {actionType}{" "}
+            <p className="text-gray-600 mb-4">
+              Bạn có chắc chắn muốn {actionType === "block" ? "chặn" : "bỏ chặn"}{" "}
               <strong>{learnerToAction.fullName}</strong> không?
               {actionType === "block"
                 ? " Thao tác này sẽ ngăn họ truy cập vào nền tảng."
                 : " Thao tác này sẽ khôi phục quyền truy cập vào nền tảng của họ."}
             </p>
+            {actionType === "block" && (
+              <div className="mb-4">
+                <Label htmlFor="banReason" className="text-sm font-medium">
+                  Lý do chặn <span className="text-red-500">*</span>
+                </Label>
+                <textarea
+                  id="banReason"
+                  value={banReason}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBanReason(e.target.value)}
+                  placeholder="Nhập lý do chặn người dùng..."
+                  className="mt-2 w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isBanning}
+                />
+              </div>
+            )}
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
-                onClick={() => setShowConfirmDialog(false)}
+                onClick={() => {
+                  setShowConfirmDialog(false);
+                  setBanReason("");
+                }}
                 className="cursor-pointer"
+                disabled={isBanning}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={confirmAction}
+                disabled={isBanning || (actionType === "block" && !banReason.trim())}
                 className={
                   actionType === "block"
-                    ? "bg-red-600 hover:bg-red-700 cursor-pointer"
-                    : "bg-green-600 hover:bg-green-700 cursor-pointer"
+                    ? "bg-red-600 hover:bg-red-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 }
               >
-                {actionType === "block" ? "Block User" : "Unblock User"}
+                {isBanning
+                  ? "Đang xử lý..."
+                  : actionType === "block"
+                  ? "Chặn người dùng"
+                  : "Bỏ chặn người dùng"}
               </Button>
             </div>
           </div>

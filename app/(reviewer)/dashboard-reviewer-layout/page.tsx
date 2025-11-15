@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import StatisticsForMentor from "../statistics-for-mentor/page";
 import Wallet from "../wallet/page";
 import ReviewHistory from "../review-history/page";
-import ReviewLearnerSubmission from "../review-learner-submission/page";
+
 
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
+import ReviewerProfile from "../reviewer-profile/page";
 
 const DashboardReviewerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForMentor");
@@ -35,7 +36,7 @@ const DashboardReviewerLayout = () => {
       path: "/statistics-for-mentor",
     },
     {
-      id: "profileMentor",
+      id: "profileReviewer",
       label: "Profile",
       icon: (
         <svg
@@ -50,7 +51,7 @@ const DashboardReviewerLayout = () => {
           <circle cx="12" cy="7" r="4" />
         </svg>
       ),
-      path: "/mentor-profile",
+      path: "/reviewer-profile",
     },  
     {
       id: "wallet",
@@ -89,19 +90,7 @@ const DashboardReviewerLayout = () => {
         </svg>
       ),
       path: "/review-history",
-    },
-    {
-      id: "reviewLearnerSubmission",
-      label: "Review Learner Submission",
-      icon: (
-        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-          <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-        </svg>
-      ),
-      path: "/review-learner-submission",
-    },
+    }
   ];
 
   return (
@@ -276,13 +265,11 @@ const DashboardReviewerLayout = () => {
               </div>
             )}
 
-            {activeTab === "profileMentor" && (
+            {activeTab === "profileReviewer" && (
               <div className="h-full">
-                {/* <ReviewerProfile /> */}
+                <ReviewerProfile />
               </div>
-            )}
-
-            
+            )}       
 
             {activeTab === "wallet" && (
               <div className="h-full">
@@ -296,11 +283,7 @@ const DashboardReviewerLayout = () => {
               </div>
             )}
 
-            {activeTab === "reviewLearnerSubmission" && (
-              <div className="h-full">
-                <ReviewLearnerSubmission />
-              </div>
-            )}
+           
           </div>
         </div>
       </main>

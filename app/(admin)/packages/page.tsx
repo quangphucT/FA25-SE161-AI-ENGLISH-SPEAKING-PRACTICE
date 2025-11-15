@@ -33,7 +33,9 @@ import { CreateCoinServicePackageRequest } from "@/types/coin_servicePackage";
 const ServicePackageManagement = () => {
   // call hooks
   const {
-    data: servicePackagesData
+    data: servicePackagesData,
+    isLoading,
+    error
   } = useGetServicePackages();
 const {mutateAsync: createServicePackage} = useCreateCoinServicePackage();
 const {mutateAsync: deleteServicePackage} = deleteCoinServicePackageMutation();
@@ -90,7 +92,11 @@ const form = useForm<CreatePackageFormData>({
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Filter packages
-  const filteredPackages = servicePackagesData?.data?.filter((pkg) => {
+  const packages = servicePackagesData?.isSuccess && Array.isArray(servicePackagesData.data)
+    ? servicePackagesData.data
+    : [];
+
+  const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
       pkg.name.toLowerCase().includes(search.toLowerCase()) ||
       pkg.servicePackageId.toLowerCase().includes(search.toLowerCase()) ||
@@ -226,11 +232,32 @@ const form = useForm<CreatePackageFormData>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPackages?.map((pkg, idx) => (
-              <TableRow
-                key={pkg.servicePackageId}
-                className="hover:bg-[#f0f7e6]"
-              >
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8">
+                  <div className="text-gray-500">Đang tải...</div>
+                </TableCell>
+              </TableRow>
+            ) : error || servicePackagesData?.isSuccess === false ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8">
+                  <div className="text-red-500">
+                    {error?.message || servicePackagesData?.message || "Không thể tải dữ liệu"}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredPackages.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8">
+                  <div className="text-gray-500">Không có gói dịch vụ nào</div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredPackages.map((pkg, idx) => (
+                <TableRow
+                  key={pkg.servicePackageId}
+                  className="hover:bg-[#f0f7e6]"
+                >
                 <TableCell className="font-medium text-blue-600">
                   {pkg.servicePackageId}
                 </TableCell>
@@ -337,8 +364,9 @@ const form = useForm<CreatePackageFormData>({
                     )}
                   </div>
                 </TableCell>
-              </TableRow>
-            ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

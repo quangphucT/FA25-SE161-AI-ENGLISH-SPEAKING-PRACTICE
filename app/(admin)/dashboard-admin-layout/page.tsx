@@ -31,8 +31,10 @@ import FeedbacksCommentsManagement from "../feedbacks-comments-management/page";
 import ManagerManagement from "../managers-management/page";
 import WithdrawRequest from "../withdraw-request/page";
 import ReviewMoneyManagement from "../review-money-management/page";
+import PurchasesItemManagement from "../purchases-item-management/page";
 // import SoldPackages from './../soldpackages-management/page';
 // import SoldPackagesManagement from "./../soldpackages-management/page";
+import { handleLogout } from "@/utils/auth";
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -267,6 +269,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
           <li>
             <button
               type="button"
+              onClick={() => setActiveMenu("purchaseItem")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "purchaseItem"
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "purchaseItem"
+                    ? "bg-white/20"
+                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                }`}
+              >
+                <CreditCard size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Quản lí mua gói vật phẩm</span>
+                <span className="text-xs opacity-70">Lịch sử mua vật phẩm</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
               onClick={() => setActiveMenu("feedback")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
                 activeMenu === "feedback"
@@ -322,7 +349,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
       <div className="mt-auto pt-6 border-t border-slate-700 shrink-0">
         <button
           type="button"
-          onClick={() => setActiveMenu("logout")}
+          onClick={handleLogout}
           className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
             activeMenu === "logout"
               ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg"
@@ -383,10 +410,14 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
         title: "Yêu cầu rút tiền",
         subtitle: "Quản lí yêu cầu rút tiền.",
       },
-      reviewMoney: {
-        title: "Quản lí tiền đánh giá",
-        subtitle: "Quản lí tiền đánh giá.",
-      },
+        reviewMoney: {
+          title: "Quản lí tiền đánh giá",
+          subtitle: "Quản lí tiền đánh giá.",
+        },
+        purchaseItem: {
+          title: "Quản lí mua gói vật phẩm",
+          subtitle: "Quản lí mua gói vật phẩm.",
+        },
       //soldpackages: { title: "Gói đã bán", subtitle: "Quản lí gói đã bán và hoạt động." },
     };
     return (
@@ -440,6 +471,8 @@ const DashboardAdmin = () => {
         return <WithdrawRequest />;
       case "reviewMoney":
         return <ReviewMoneyManagement />;
+      case "purchaseItem":
+        return <PurchasesItemManagement />;
       // case "soldpackages":
       //   return <SoldPackagesManagement />;
       default:
