@@ -6,6 +6,7 @@ import { useSubmitTestAssessment } from "@/features/learner/hooks/testAssessment
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 export interface ResultsAfterTest {
   averageScore: number;
   assignedLevel: string;
@@ -18,15 +19,20 @@ const EntranceTest = () => {
   const [uiBlocked, setUiBlocked] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [resultsAfterTest, setResultsAfterTest] = useState<ResultsAfterTest | null>(null);
+  const [resultsAfterTest, setResultsAfterTest] =
+    useState<ResultsAfterTest | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const [loadingToDashboardLearner, setLoadingToDashboardLearner] =
+    useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRecordedRef = useRef<HTMLAudioElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
-  const [pronunciationAccuracy, setPronunciationAccuracy] = useState<string[]>([]);
+  const [pronunciationAccuracy, setPronunciationAccuracy] = useState<string[]>(
+    []
+  );
   const [pronunciationScores, setPronunciationScores] = useState<number[]>([]);
   const [ipaTranscripts, setIpaTranscripts] = useState<string[]>([]);
   const [realIpaTranscripts, setRealIpaTranscripts] = useState<string[]>([]);
@@ -36,7 +42,7 @@ const EntranceTest = () => {
   // Hooks
   const { data: userData } = useGetMeQuery();
   const { mutate: submitTestAssessmentMutation } = useSubmitTestAssessment();
-  
+
   // API config from environment variables
   const apiMainPathSTS = process.env.NEXT_PUBLIC_AI_STS_API_URL;
   const STScoreAPIKey = process.env.NEXT_PUBLIC_AI_STS_API_KEY || "";
@@ -54,14 +60,16 @@ const EntranceTest = () => {
     }> = [];
 
     // Define the order of question types
-    const typeOrder = ['word', 'sentence', 'paragraph'];
+    const typeOrder = ["word", "sentence", "paragraph"];
 
     // Sort sections by type order
-    const sortedSections = [...testAssessmentData.data.sections].sort((a, b) => {
-      const indexA = typeOrder.indexOf(a.type);
-      const indexB = typeOrder.indexOf(b.type);
-      return indexA - indexB;
-    });
+    const sortedSections = [...testAssessmentData.data.sections].sort(
+      (a, b) => {
+        const indexA = typeOrder.indexOf(a.type);
+        const indexB = typeOrder.indexOf(b.type);
+        return indexA - indexB;
+      }
+    );
 
     // Add questions in the sorted order
     sortedSections.forEach((section) => {
@@ -77,6 +85,28 @@ const EntranceTest = () => {
 
     return questions;
   }, [testAssessmentData]);
+
+  // Navigate to dashboard after refreshing token
+  const handleNavigateDashboardLearnerLayout = async () => {
+    setLoadingToDashboardLearner(true);
+    try {
+      const refreshResponse = await fetch("/api/auth/refresh-token", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (refreshResponse.ok) {
+        // Use window.location.href for full page reload with new token
+        window.location.href = "/dashboard-learner-layout";
+      } else {
+        toast.error("Phiên đã hết hạn, vui lòng đăng nhập lại.");
+        router.push("/sign-in");
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+    }
+    setLoadingToDashboardLearner(false);
+  };
 
   // Initialize recorded array when questions are loaded
   useMemo(() => {
@@ -200,14 +230,12 @@ const EntranceTest = () => {
         tests,
       };
 
-      submitTestAssessmentMutation(payload,{
-        onSuccess: (data) => {  
+      submitTestAssessmentMutation(payload, {
+        onSuccess: (data) => {
           toast.success("Đã nộp bài thành công!");
           setResultsAfterTest(data.data);
-        }
+        },
       });
-
-      
 
       // Redirect after 2 seconds
       // setTimeout(() => {
@@ -349,8 +377,8 @@ const EntranceTest = () => {
 
             // Store real IPA transcript
             const newRealIpa = [...realIpaTranscripts];
-            newRealIpa[currentQuestionIndex] = data.real_transcripts_ipa 
-              ? `/ ${data.real_transcripts_ipa} /` 
+            newRealIpa[currentQuestionIndex] = data.real_transcripts_ipa
+              ? `/ ${data.real_transcripts_ipa} /`
               : "";
             setRealIpaTranscripts(newRealIpa);
 
@@ -472,7 +500,9 @@ const EntranceTest = () => {
                 <span className="text-white text-xl font-bold">🎯</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Entrance Test</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Entrance Test
+                </h1>
                 <p className="text-xs text-gray-500">Bài kiểm tra đầu vào</p>
               </div>
             </div>
@@ -480,12 +510,17 @@ const EntranceTest = () => {
               <div className="text-right">
                 <p className="text-xs text-gray-500">Câu hỏi</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {currentQuestionIndex + 1} <span className="text-gray-400">/</span> {totalQuestions}
+                  {currentQuestionIndex + 1}{" "}
+                  <span className="text-gray-400">/</span> {totalQuestions}
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-bold">
-                  {Math.round(((currentQuestionIndex + (done ? 1 : 0)) / totalQuestions) * 100)}%
+                  {Math.round(
+                    ((currentQuestionIndex + (done ? 1 : 0)) / totalQuestions) *
+                      100
+                  )}
+                  %
                 </span>
               </div>
             </div>
@@ -501,7 +536,8 @@ const EntranceTest = () => {
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${
-                  ((currentQuestionIndex + (done ? 1 : 0)) / totalQuestions) * 100
+                  ((currentQuestionIndex + (done ? 1 : 0)) / totalQuestions) *
+                  100
                 }%`,
               }}
             >
@@ -555,10 +591,8 @@ const EntranceTest = () => {
 
           {/* Main content area - 2 column layout */}
           <div className="grid lg:grid-cols-2 gap-8 items-start">
-            
             {/* Left Column - Question & Results */}
             <div className="space-y-6">
-              
               {/* Question instruction with icon */}
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-start gap-3 mb-4">
@@ -617,7 +651,7 @@ const EntranceTest = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* IPA Transcripts */}
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t border-green-200">
                     {/* Your pronunciation */}
@@ -632,7 +666,7 @@ const EntranceTest = () => {
                         </p>
                       </div>
                     )}
-                    
+
                     {/* Real/Expected pronunciation */}
                     {realIpaTranscripts[currentQuestionIndex] && (
                       <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
@@ -684,19 +718,26 @@ const EntranceTest = () => {
             {/* Right Column - Recording Controls */}
             <div className="lg:sticky lg:top-8">
               <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-3xl p-8 border-2 border-gray-200 shadow-xl">
-                
                 {/* Recording status indicator */}
                 <div className="text-center mb-6">
-                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
-                    isRecording 
-                      ? "bg-red-100 text-red-700 animate-pulse" 
-                      : recorded[currentQuestionIndex]
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-200 text-gray-700"
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full ${
-                      isRecording ? "bg-red-500" : recorded[currentQuestionIndex] ? "bg-green-500" : "bg-gray-500"
-                    }`}></div>
+                  <div
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
+                      isRecording
+                        ? "bg-red-100 text-red-700 animate-pulse"
+                        : recorded[currentQuestionIndex]
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isRecording
+                          ? "bg-red-500"
+                          : recorded[currentQuestionIndex]
+                          ? "bg-green-500"
+                          : "bg-gray-500"
+                      }`}
+                    ></div>
                     {isRecording
                       ? "Đang ghi âm..."
                       : recorded[currentQuestionIndex]
@@ -715,11 +756,11 @@ const EntranceTest = () => {
                         <div className="absolute inset-0 rounded-full bg-red-400 animate-pulse opacity-50"></div>
                       </>
                     )}
-                    
+
                     <Button
                       className={`relative rounded-full w-32 h-32 flex items-center cursor-pointer justify-center transition-all duration-300 shadow-2xl ${
                         isRecording
-                          ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 scale-110" 
+                          ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 scale-110"
                           : recorded[currentQuestionIndex]
                           ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                           : "bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
@@ -788,7 +829,6 @@ const EntranceTest = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       ) : (
@@ -808,11 +848,8 @@ const EntranceTest = () => {
               </>
             ) : (
               <>
-              
-        
-
                 <h2 className="text-3xl font-bold mb-3 text-gray-900">
-                   Chúc mừng bạn!
+                  Chúc mừng bạn!
                 </h2>
                 <p className="text-gray-600 mb-8 text-lg">
                   Bạn đã hoàn thành bài kiểm tra đầu vào
@@ -822,13 +859,15 @@ const EntranceTest = () => {
                 {resultsAfterTest && (
                   <div className="bg-gradient-to-br from-blue-10 to-indigo-50 rounded-2xl p-1 mb-8  shadow-sm">
                     <h3 className="text-xl font-semibold text-gray-800 mb-6">
-                       Kết quả của bạn
+                      Kết quả của bạn
                     </h3>
-                    
+
                     {/* Score */}
                     <div className="mb-6">
                       <div className="flex items-center justify-center gap-3 mb-2">
-                        <span className="text-gray-700 font-medium">Điểm trung bình:</span>
+                        <span className="text-gray-700 font-medium">
+                          Điểm trung bình:
+                        </span>
                         <div className="flex items-baseline gap-1">
                           <span className="text-5xl font-bold text-blue-600">
                             {resultsAfterTest.averageScore.toFixed(1)}
@@ -847,7 +886,9 @@ const EntranceTest = () => {
 
                     {/* Level Badge */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Trình độ của bạn:</p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Trình độ của bạn:
+                      </p>
                       <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-full font-bold text-2xl shadow-md">
                         <span>🏆</span>
                         <span>{resultsAfterTest.assignedLevel}</span>
@@ -856,21 +897,20 @@ const EntranceTest = () => {
                   </div>
                 )}
 
-           
-             
-
                 <p className="text-gray-700 mb-8 text-base">
-                  Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng cao kỹ năng của bạn! 💪
+                  Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng cao
+                  kỹ năng của bạn! 💪
                 </p>
 
-                <Button
-                  className="bg-gradient-to-r cursor-pointer from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-10 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg text-[15px]"
-                  onClick={() =>
-                   {router.push('/dashboard-learner-layout')}
-                  }
-                >
-                  Bắt đầu học ngay
-                </Button>
+                {loadingToDashboardLearner ? (
+                  <Loader2 className="mx-auto animate-spin" />
+                ) : (
+                  <Button
+                    className="bg-gradient-to-r cursor-pointer from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-10 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg text-[15px]"
+                    onClick={() => handleNavigateDashboardLearnerLayout()}>
+                    Bắt đầu học ngay
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -885,18 +925,20 @@ const EntranceTest = () => {
               {/* Progress Info */}
               <div className="hidden md:flex items-center gap-3">
                 <div className="flex gap-1">
-                  {Array.from({ length: Math.min(totalQuestions, 10) }).map((_, index) => (
-                    <div
-                      key={index}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index < currentQuestionIndex
-                          ? "bg-green-500"
-                          : index === currentQuestionIndex
-                          ? "bg-blue-500 w-3"
-                          : "bg-gray-300"
-                      }`}
-                    />
-                  ))}
+                  {Array.from({ length: Math.min(totalQuestions, 10) }).map(
+                    (_, index) => (
+                      <div
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index < currentQuestionIndex
+                            ? "bg-green-500"
+                            : index === currentQuestionIndex
+                            ? "bg-blue-500 w-3"
+                            : "bg-gray-300"
+                        }`}
+                      />
+                    )
+                  )}
                 </div>
                 <span className="text-sm text-gray-600 font-medium">
                   {currentQuestionIndex + 1}/{totalQuestions}
@@ -918,15 +960,29 @@ const EntranceTest = () => {
                     {currentQuestionIndex < totalQuestions - 1 ? (
                       <>
                         Tiếp tục
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M5 12h14M12 5l7 7-7 7"/>
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M5 12h14M12 5l7 7-7 7" />
                         </svg>
                       </>
                     ) : (
                       <>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                          <polyline points="22 4 12 14.01 9 11.01"/>
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <polyline points="22 4 12 14.01 9 11.01" />
                         </svg>
                         Hoàn thành bài thi
                       </>
@@ -934,10 +990,17 @@ const EntranceTest = () => {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     Vui lòng ghi âm để tiếp tục
                   </span>
@@ -947,16 +1010,30 @@ const EntranceTest = () => {
               {/* Quick Stats */}
               <div className="hidden md:flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1.5 text-green-600">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="font-semibold">{recorded.filter(r => r).length} hoàn thành</span>
+                  <span className="font-semibold">
+                    {recorded.filter((r) => r).length} hoàn thành
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-gray-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="font-semibold">{totalQuestions - recorded.filter(r => r).length} còn lại</span>
+                  <span className="font-semibold">
+                    {totalQuestions - recorded.filter((r) => r).length} còn lại
+                  </span>
                 </div>
               </div>
             </div>

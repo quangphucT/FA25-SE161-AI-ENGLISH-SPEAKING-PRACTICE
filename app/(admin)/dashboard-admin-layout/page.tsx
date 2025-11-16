@@ -24,15 +24,13 @@ import PageStatistics from "../statistics/page";
 import ReviewerManagement from "../reviewers-management/page";
 import ServicePackageManagement from "../packages/page";
 import LearnerManagement from "../learners-management/page";
-// import SkillManagement from "../skills-management/page";
 import PurchasesManagement from "../purchases-management/page";
 import FeedbacksCommentsManagement from "../feedbacks-comments-management/page";
-// import TopicConversationManagement from "../topic-conversation-management/page";
 import ManagerManagement from "../managers-management/page";
 import WithdrawRequest from "../withdraw-request/page";
 import ReviewMoneyManagement from "../review-money-management/page";
-// import SoldPackages from './../soldpackages-management/page';
-// import SoldPackagesManagement from "./../soldpackages-management/page";
+import AiConversationPackageManagement from "../ai-conversation-package-service/page";
+
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -198,6 +196,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               </div>
             </button>
           </li>
+
+
+          
         </ul>
       </div>
 
@@ -228,6 +229,32 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Gói dịch vụ</span>
                 <span className="text-xs opacity-70">Quản lí gói dịch vụ</span>
+              </div>
+            </button>
+          </li>
+
+           <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("aiConversationPackages")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "aiConversationPackages"
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "aiConversationPackages"
+                    ? "bg-white/20"
+                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                }`}
+              >
+                <CreditCard size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Gói hội thoại AI</span>
+                <span className="text-xs opacity-70">Quản lí gói hội thoại AI.</span>
               </div>
             </button>
           </li>
@@ -440,6 +467,8 @@ const DashboardAdmin = () => {
         return <WithdrawRequest />;
       case "reviewMoney":
         return <ReviewMoneyManagement />;
+      case "aiConversationPackages":
+        return <AiConversationPackageManagement />;
       // case "soldpackages":
       //   return <SoldPackagesManagement />;
       default:

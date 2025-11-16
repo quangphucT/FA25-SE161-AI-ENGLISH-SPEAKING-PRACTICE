@@ -1,372 +1,310 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {  useEnrollFirstCourse, useGetCoursesBasedOnLevelLearner } from "@/features/learner/hooks/coursesBasedOnLevelLearner/coursesBasedOnLevelLearner";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
-import {BookMarked,BookOpen,Coins,PlayCircle,Target,TrendingUp,Lock,ChevronDown,ChevronRight} from "lucide-react";
-import { useState } from "react";
+import {
+  Lock,
+  ArrowRight,
+  BookOpen,
+  Trophy,
+  Target,
+  ChevronRight,
+} from "lucide-react";
+
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { is } from "date-fns/locale";
+import { useLearnerStore } from "@/store/useLearnerStore";
+import { useLearningPathCourseFull } from "@/features/learner/hooks/learningPathCourseFullHooks/learningPathCourseFull";
+import { Progress } from "@/components/ui/progress";
+
 interface LearningPathProps {
   setActiveMenu?: (menu: string) => void;
 }
+
 const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
   const router = useRouter();
+  const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
+  const learnerData = getAllLearnerData();
+
+  const { data: apiResponse, isLoading } = useLearningPathCourseFull(
+    {
+      learningPathCourseId: learnerData?.learningPathCourseId || "",
+      courseId: learnerData?.courseId || "",
+      status: learnerData?.status || "",
+    },
+    Boolean(learnerData)
+  );
+
+  // Ngay khi vào trang lấy thông tin user
   const { data: userData } = useGetMeQuery();
   const userLevel = userData?.learnerProfile?.level || "A1";
-  const { data: coursesBasedOnLevel, isLoading } = useGetCoursesBasedOnLevelLearner(userLevel);
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [expandedChapters, setExpandedChapters] = useState<string[]>([]);
-  const [enrolledCourses, setEnrolledCourses] = useState<string[]>([]); 
-   // hooks enroll
-  const { mutate: enrollFirstCourse } = useEnrollFirstCourse();
-  
-  const toggleChapter = (chapterId: string) => {
-    setExpandedChapters((prev) =>
-      prev.includes(chapterId)
-        ? prev.filter((id) => id !== chapterId)
-        : [...prev, chapterId]
-    );
-  };
 
-  const handleSelectCourse = (courseId: string) => {
-    setSelectedCourse(courseId);
-    setExpandedChapters([]); // Reset expanded chapters when selecting new course
-  };
-
-  const handleEnrollCourseFree = async (courseId: string) => {
-    enrollFirstCourse(courseId);
-    // Sau khi API thành công, add vào enrolled courses và select course
-    setEnrolledCourses((prev) => [...prev, courseId]);
-    handleSelectCourse(courseId);
-  };
-
-  const handleEnrollCourseNotFree = async (courseId: string, price: number) => {
-    // TODO: Gọi API enroll cho khoá học trả phí (đã check coin ở backend)
-    console.log("Enrolling paid course:", courseId, "price:", price);
-    
-    // Sau khi API thành công, add vào enrolled courses và select course
-    setEnrolledCourses((prev) => [...prev, courseId]);
-    handleSelectCourse(courseId);
-  };
-
-  const handleStartExercise = (
-    courseId: string,
-    chapterId: string,
-    exerciseId: string,
-    isFree: boolean
-  ) => {
-    if (!isFree) {
-      // Check if user has access or needs to purchase
-      toast.info("Vui lòng mua khoá học để tiếp tục");
-      return;
+  const handleNavigateToEnrollingCourses = () => {
+    if (setActiveMenu) {
+      setActiveMenu("enrollingCourses");
     }
-
-    // Navigate to exercise page
-    router.push(
-      `/exercise?courseId=${courseId}&chapterId=${chapterId}&exerciseId=${exerciseId}`
-    );
   };
+
+
+
+  const handleExerciseClick = (exerciseId: string) => {
+    // Navigate to exercise
+    router.push(`/exercise?exerciseId=${exerciseId}`);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "in_progress":
+      case "inprogress":
+        return "text-blue-600 bg-blue-50 border-blue-200";
+      case "locked":
+        return "text-gray-400 bg-gray-50 border-gray-200";
+      default:
+        return "text-gray-600 bg-gray-50 border-gray-200";
+    }
+  };
+
+ 
+
+  const getStatusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "Hoàn thành";
+      case "in_progress":
+      case "inprogress":
+        return "Đang học";
+      case "locked":
+        return "Đã khóa";
+      default:
+        return status;
+    }
+  };
+
+  if (!learnerData) {
+    return (
+      <div className="max-w-[1400px] mx-auto p-6">
+        <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-orange-300">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
+              <Lock className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Chưa tham gia khóa học đầu tiên
+              </h3>
+              <p className="text-gray-700 mb-4">
+                Bạn hiện tại chưa enroll khóa đầu tiên của Level {userLevel}.
+                Hãy qua tab menu{" "}
+                <span className="font-bold text-orange-600">Khóa học</span> để
+                tham gia khóa học đầu tiên (miễn phí).
+              </p>
+              <Button
+                onClick={handleNavigateToEnrollingCourses}
+                className="cursor-pointer bg-orange-600 hover:bg-orange-700"
+              >
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Đi đến Khóa học
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-500 font-medium">Đang tải khoá học...</p>
+      <div className="max-w-[1400px] mx-auto p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-gray-200 rounded-lg"></div>
+          <div className="h-48 bg-gray-200 rounded-lg"></div>
+          <div className="h-48 bg-gray-200 rounded-lg"></div>
         </div>
       </div>
     );
   }
 
-  const courses = coursesBasedOnLevel?.data || [];
-  const selectedCourseData = courses.find(c => c.courseId === selectedCourse);
+  const learningPathData = apiResponse?.data;
 
-  return (
-    <div>
-      <div className="mb-6 flex flex-col justify-center items-center ">
-        <h3 className="text-2xl font-bold text-gray-900">
-          Lộ trình luyện Speaking & Pronunciation Level {userLevel}
-        </h3>
-        <p className="text-gray-500 mt-1">
-          {courses.length} khoá học chuyên sâu về phát âm và giao tiếp - Khoá 1
-          miễn phí
-        </p>
-      </div>
-
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-2 gap-6 max-w-[1400px] mx-auto">
-        {/* Left Column - Courses List */}
-        <div className="space-y-3">
-          <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <BookOpen className="w-5 h-3 text-blue-600" />
-            Danh sách khoá học ({courses.length})
-          </h4>
-          
-          {courses.map((course, index) => {
-            const isFirstCourse = index === 0;
-            const isSelected = selectedCourse === course.courseId;
-            const totalExercises =
-              course.chapters?.reduce(
-                (sum, ch) => sum + ch.numberOfExercise,
-                0
-              ) || 0;
-
-            return (
-              <Card
-                key={course.courseId}
-                className={`p-3 cursor-pointer border-2 transition-all duration-300 ${
-                  isSelected
-                    ? 'border-blue-500 bg-blue-50 shadow-lg'
-                    : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
-                }`}
-                onClick={() => enrolledCourses.includes(course.courseId) ? handleSelectCourse(course.courseId) : null}
-              >
-                {/* Course Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      
-                      <h5 className="font-bold text-gray-900 text-base">
-                        {course.title}
-                      </h5>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {course.numberOfChapter} Chương • {totalExercises} Bài tập
-                    </p>
-                  </div>
-
-                  {/* Badge */}
-                  {course.isFree || isFirstCourse ? (
-                    <span className="bg-gradient-to-r from-blue-400 to-blue-500 text-white text-[10px] font-bold px-3 rounded-full shadow-md">
-                      Miễn phí
-                    </span>
-                  ) : (
-                    <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[10px] font-bold px-3  rounded-full flex items-center gap-1 shadow-md">
-                      <Coins className="w-3 h-3" />
-                      {course.price}
-                    </span>
-                  )}
-                </div>
-
-            
-
-                {/* Action Button */}
-                {!enrolledCourses.includes(course.courseId) && (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      isFirstCourse
-                        ? handleEnrollCourseFree(course.courseId)
-                        : handleEnrollCourseNotFree(course.courseId, course.price);
-                    }}
-                    className={`w-[220px] font-bold cursor-pointer rounded-4xl shadow-md text-sm ${
-                      isFirstCourse ? 
-
-                     "bg-blue-50 hover:bg-blue-100 text-black"
-                     : "bg-red-150 hover:bg-blue-100 text-black"  
-                    }`}
-                  >
-                    {isFirstCourse ? (
-                      <>
-                        <BookOpen className="w-4 h-4 mr-2" />
-                        Tham gia
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-4 h-4 mr-2" />
-                        Mở khoá 
-                      </>
-                    )}
-                  </Button>
-                )}
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Right Column - Chapters & Exercises */}
-        <div className="sticky top-6 h-fit">
-          {selectedCourseData ? (
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow-lg">
-                <h4 className="text-xl font-bold mb-1">{selectedCourseData.title}</h4>
-                <p className="text-sm text-blue-100">
-                  {selectedCourseData.numberOfChapter} Chapters • Level {selectedCourseData.level}
-                </p>
-              </div>
-
-              {/* Chapters List */}
-              {selectedCourseData.chapters && selectedCourseData.chapters.length > 0 ? (
-                <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
-                  {selectedCourseData.chapters.map((chapter) => {
-                    const isChapterExpanded = expandedChapters.includes(chapter.chapterId);
-                    
-                    return (
-                      <Card
-                        key={chapter.chapterId}
-                        className="border-2 border-gray-200 hover:border-blue-300 transition-all"
-                      >
-                        <div 
-                          className="p-4 cursor-pointer"
-                          onClick={() => toggleChapter(chapter.chapterId)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h6 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-                                {isChapterExpanded ? (
-                                  <ChevronDown className="w-5 h-5 text-blue-600" />
-                                ) : (
-                                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                                )}
-                                {chapter.title}
-                              </h6>
-                              <p className="text-sm text-gray-600">{chapter.description}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {chapter.numberOfExercise} bài tập
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Exercises List */}
-                          {isChapterExpanded && chapter.exercises && chapter.exercises.length > 0 && (
-                            <div className="mt-3 space-y-2 pl-4 border-l-2 border-blue-200">
-                              {chapter.exercises.map((exercise) => (
-                                <div
-                                  key={exercise.exerciseId}
-                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors"
-                                >
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900 text-sm">
-                                      {exercise.title}
-                                    </p>
-                                    <p className="text-xs text-gray-600">
-                                      {exercise.description}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {exercise.numberOfQuestion} câu hỏi
-                                    </p>
-                                  </div>
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleStartExercise(
-                                        selectedCourseData.courseId,
-                                        chapter.chapterId,
-                                        exercise.exerciseId,
-                                        exercise.isFree ||
-                                          selectedCourseData.isFree ||
-                                          courses.indexOf(selectedCourseData) === 0
-                                      );
-                                    }}
-                                    size="sm"
-                                    className={`ml-3 cursor-pointer ${
-                                      exercise.isFree ||
-                                      selectedCourseData.isFree ||
-                                      courses.indexOf(selectedCourseData) === 0
-                                        ? "bg-green-600 hover:bg-green-700"
-                                        : "bg-gray-400 hover:bg-gray-500"
-                                    }`}
-                                  >
-                                    {exercise.isFree ||
-                                    selectedCourseData.isFree ||
-                                    courses.indexOf(selectedCourseData) === 0 ? (
-                                      <>
-                                        <PlayCircle className="w-4 h-4 mr-1" />
-                                        Bắt đầu
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Lock className="w-4 h-4 mr-1" />
-                                        Khoá
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Empty state for no exercises */}
-                          {isChapterExpanded &&
-                            (!chapter.exercises || chapter.exercises.length === 0) && (
-                              <div className="mt-3 p-4 bg-gray-50 rounded-lg text-center">
-                                <p className="text-sm text-gray-500">Chưa có bài tập</p>
-                              </div>
-                            )}
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              ) : (
-                <Card className="p-8 text-center bg-gray-50">
-                  <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium">Chưa có nội dung</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Khoá học đang được cập nhật
-                  </p>
-                </Card>
-              )}
-            </div>
-          ) : (
-            <Card className="p-12 text-center bg-gradient-to-br from-gray-50 to-blue-50/30">
-              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-10 h-10 text-blue-400" />
-              </div>
-              <h4 className="text-lg font-bold text-gray-900 mb-2">
-                Chọn một khoá học
-              </h4>
-              <p className="text-gray-600">
-                Click vào khoá học bên trái để xem chi tiết
-              </p>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Empty State */}
-      {courses.length === 0 && (
-        <Card className="p-12 text-center bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-[1400px] mx-auto mt-6">
-          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-10 h-10 text-gray-400" />
-          </div>
-          <h4 className="text-xl font-bold text-gray-900 mb-2">
-            Chưa có khoá học
-          </h4>
+  if (!learningPathData) {
+    return (
+      <div className="max-w-[1400px] mx-auto p-6">
+        <Card className="p-6 text-center">
           <p className="text-gray-600">
-            Hiện tại chưa có khoá học nào cho Level {userLevel}
+            Không tìm thấy dữ liệu lộ trình học tập
           </p>
         </Card>
-      )}
+      </div>
+    );
+  }
 
-      {/* Progress Summary */}
-      {courses.length > 0 && (
-        <Card className="mt-8 p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 max-w-[1400px] mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <TrendingUp className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-gray-900 mb-1">
-                  🎯 Lộ trình học Level {userLevel}
-                </h4>
-                <p className="text-gray-600">
-                  Có {courses.length} khoá học - Khoá đầu tiên miễn phí
-                </p>
-              </div>
+  const { course, chapters, progress, status, numberOfChapter } =
+    learningPathData;
+
+  return (
+    <div className="max-w-[1400px] mx-auto p-6 space-y-6">
+      {/* Course Header */}
+      <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen className="w-6 h-6 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">
+                {course.title}
+              </h1>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Số dư của bạn</p>
-              <p className="text-2xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                {userData?.coinBalance} Coin
-              </p>
+            <p className="text-gray-700 mb-4">{course.description}</p>
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-blue-600" />
+                <span className="font-medium">Level: {course.level}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-blue-600" />
+                <span className="font-medium">{numberOfChapter} Chương</span>
+              </div>
+              <div
+                className={`px-3 py-1 rounded-full border ${getStatusColor(
+                  status
+                )}`}
+              >
+                {getStatusText(status)}
+              </div>
             </div>
           </div>
-        </Card>
-      )}
+          <div className="flex items-center gap-3">
+            <Trophy className="w-8 h-8 text-yellow-500" />
+            <div className="text-right">
+              <div className="text-2xl font-bold text-gray-900">
+                {Math.round(progress)}%
+              </div>
+              <div className="text-sm text-gray-600">Tiến độ</div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <Progress value={progress} className="h-3" />
+        </div>
+      </Card>
+
+      {/* Chapters List */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <BookOpen className="w-6 h-6 text-blue-600" />
+          Danh sách chương
+        </h2>
+
+        {chapters && chapters.length > 0 ? (
+          chapters.map((chapter, index) => (
+            <Card
+              key={chapter.learningPathChapterId}
+              className={`p-6 border-2 transition-all hover:shadow-md ${
+                chapter.status.toLowerCase() === "locked"
+                  ? "opacity-60 cursor-not-allowed"
+                  : "cursor-pointer hover:border-blue-300"
+              }`}
+          
+            >
+              <div className="flex items-start gap-4">
+                {/* Chapter Number */}
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg font-bold text-blue-600">
+                    {chapter.orderIndex}
+                  </span>
+                </div>
+
+                <div className="flex-1 space-y-3">
+                  {/* Chapter Header */}
+                  <div className="flex items-center justify-between">
+                    <div className=" rounded-lg bg-white ">
+                      <div className="flex flex-col mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Chương {chapter.orderIndex}
+                        </h3>
+                        <h3 className="text-lg font-semibold text-blue-600">
+                          {chapter.chapterTitle}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {chapter.chapterDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          {Math.round(chapter.progress)}%
+                        </div>
+                        <div className="text-xs text-gray-500">Hoàn thành</div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <Progress value={chapter.progress} className="h-2" />
+
+                  {/* Chapter Info */}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span>{chapter.exercises?.length || 0} Bài tập</span>
+                  </div>
+
+                  {/* Exercises */}
+                  {chapter.exercises && chapter.exercises.length > 0 && (
+                    <div className="mt-4 space-y-2 pl-4 border-l-2 border-gray-200">
+                      {chapter.exercises.map((exercise, exerciseIndex) => (
+                        <div
+                          key={exercise.learningPathExerciseId}
+                          className={`flex items-center justify-between p-3 rounded-lg border ${
+                            exercise.status.toLowerCase() === "locked"
+                              ? "bg-gray-50 border-gray-200 opacity-60"
+                              : "bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                          } transition-all`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (exercise.status.toLowerCase() !== "locked") {
+                              handleExerciseClick(exercise.exerciseId);
+                            }
+                          }}
+                        >
+                          <div className=" rounded-lg p-4 duration-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-500">
+                                Bài tập {exercise.orderIndex}
+                              </span>
+                              {exercise.scoreAchieved > 0 && (
+                                <span className="text-green-600 font-semibold text-sm">
+                                  Điểm: {exercise.scoreAchieved}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="text-md font-semibold text-gray-900 mb-1">
+                              {exercise.exerciseTitle}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {exercise.exerciseDescription}
+                            </p>
+                            <div className="text-xs text-gray-500">
+                              {exercise.numberOfQuestion} câu hỏi
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <Card className="p-6 text-center">
+            <p className="text-gray-600">
+              Chưa có chương nào trong khóa học này
+            </p>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
