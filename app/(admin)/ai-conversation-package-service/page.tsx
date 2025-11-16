@@ -51,13 +51,17 @@ import {
 
 const AiConversationPackageManagement = () => {
   const { mutate: createPackage, isPending: isCreating } = useCreateAIConversationPackages();
-  const { mutate: deletePackage, isPending: isDeleting } = useDeleteAIConversationPackage();
+  const { mutate: deletePackage } = useDeleteAIConversationPackage();
   const { mutate: updatePackage, isPending: isUpdating } = useUpdateAIConversationPackage();
   const { data: packagesData, isPending: isLoading } = getAIConversationPackages();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editingPackage, setEditingPackage] = useState<any>(null);
+  const [editingPackage, setEditingPackage] = useState<{
+    aiConversationChargeId: string;
+    amountCoin: number;
+    allowedMinutes: number;
+  } | null>(null);
   
   // Form state
   const [amountCoin, setAmountCoin] = useState<number>(0);
@@ -96,7 +100,11 @@ const AiConversationPackageManagement = () => {
     });
   };
 
-  const handleEdit = (pkg: any) => {
+  const handleEdit = (pkg: {
+    aiConversationChargeId: string;
+    amountCoin: number;
+    allowedMinutes: number;
+  }) => {
     setEditingPackage(pkg);
     setAmountCoin(pkg.amountCoin);
     setAllowedMinutes(pkg.allowedMinutes);
@@ -305,7 +313,7 @@ const AiConversationPackageManagement = () => {
               <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">Chưa có gói nào</p>
               <p className="text-sm text-gray-500">
-                Nhấn "Tạo gói mới" để thêm gói đầu tiên
+                Nhấn &quot;Tạo gói mới&quot; để thêm gói đầu tiên
               </p>
             </div>
           ) : (

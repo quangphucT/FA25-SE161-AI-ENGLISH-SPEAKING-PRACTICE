@@ -7,14 +7,10 @@ import {
   Wallet,
   BarChart3,
   User,
-  Target,
-  Award,
   ChevronRight,
   PlayCircle,
   BookMarked,
   Coins,
-  CheckCircle2,
-  TrendingUp,
   LogOut,
 } from "lucide-react";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
@@ -26,27 +22,11 @@ import Progress from "../progress/page";
 import { handleLogout } from "@/utils/auth";
 import ConversationWithAI from "../coversation-withAI/page";
 import EnrollingCourse from "../enrolling-courses/page";
-import { useGetLevelAndLearnerCourseIdAfterEnrolling } from "@/features/learner/hooks/enrollingCourseHooks/enrollingCourses";
-import { useEffect } from "react";
+
 
 export default function LearnerDashboard() {
   const [activeMenu, setActiveMenu] = useState("overview");
   const { data: userData } = useGetMeQuery();
-  const userLevel = userData?.learnerProfile?.level || "A1";
-  const { data: levelAndLearnerCourseIdData } = useGetLevelAndLearnerCourseIdAfterEnrolling();
-  
-
-  const currentLevelData = levelAndLearnerCourseIdData?.data?.levels.find(
-    (item) => item.level === userLevel
-  );
-  const learnerCourseId = currentLevelData?.learnerCourseId || null;
-  
-  useEffect(() => {
-    if (learnerCourseId) {
-      localStorage.setItem("learnerCourseId", learnerCourseId);
-    }
-  }, [learnerCourseId]);
-
   const sidebarMenu = [
     { id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
     { id: "learningPath", label: "Lộ trình học", icon: BookOpen, description: "Xem và học theo lộ trình" },
