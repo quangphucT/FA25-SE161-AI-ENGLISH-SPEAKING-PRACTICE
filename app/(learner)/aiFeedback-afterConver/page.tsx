@@ -34,20 +34,6 @@ const Feedback = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleBackClick = () => {
-    // Lấy previous page từ sessionStorage
-    const previousPage = sessionStorage.getItem("previousPage");
-    
-    if (previousPage) {
-      sessionStorage.removeItem("previousPage");
-      router.push(previousPage);
-    } else if (window.history.length > 1) {
-      router.back();
-    } else {
-      // Nếu không có history, về trang conversation
-      router.push("/coversation-withAI");
-    }
-  };
 
   useEffect(() => {
     const loadMessagesAndFetchFeedback = async () => {
@@ -157,7 +143,7 @@ const Feedback = () => {
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                onClick={handleBackClick}
+                onClick={() => router.back()}
                 className="cursor-pointer border-gray-300"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />

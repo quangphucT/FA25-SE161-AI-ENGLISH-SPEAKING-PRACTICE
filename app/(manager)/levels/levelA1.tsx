@@ -73,6 +73,7 @@ import { useUpdateMedia } from "@/features/manager/hook/mediaQuestionHooks/useUp
 interface Course {
   courseId: string;
   title: string;
+  description?: string;
   type: string;
   numberOfChapter: number;
   orderIndex: number;
@@ -246,6 +247,7 @@ const LevelA1 = ({ level }: LevelProps) => {
   // Course Schema and Form
   const courseSchema = z.object({
     title: z.string().min(1, "Title is required"),
+    description: z.string().min(1, "Description is required"),
     level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"], "Level is required"),
     numberOfChapter: z.coerce.number().int().min(0, "Must be >= 0"),
     price: z.coerce.number().min(0, "Price must be >= 0"),
@@ -261,6 +263,7 @@ const LevelA1 = ({ level }: LevelProps) => {
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
       title: "",
+      description: "",
       level: "A1",
       numberOfChapter: 0,
       price: 0,
@@ -377,6 +380,7 @@ const LevelA1 = ({ level }: LevelProps) => {
     setEditingCourse(null);
     courseFormMethods.reset({
       title: "",
+      description: "",
       level: "A1",
       numberOfChapter: 0,
       price: 0,
@@ -391,6 +395,7 @@ const LevelA1 = ({ level }: LevelProps) => {
     setEditingCourse(course);
     courseFormMethods.reset({
       title: course.title,
+      description: course.description || "",
       level: course.level as "A1" | "A2" | "B1" | "B2" | "C1" | "C2",
       numberOfChapter: course.numberOfChapter,
       price: course.price,
@@ -860,6 +865,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                   <TableRow className="bg-slate-50">
                     <TableHead className="w-24 font-semibold">ID</TableHead>
                     <TableHead className="font-semibold">Title</TableHead>
+                    <TableHead className="font-semibold">Description</TableHead>
                     <TableHead className="text-center font-semibold w-32">Chapters</TableHead>
                     <TableHead className="text-center font-semibold w-24">Order</TableHead>
                     <TableHead className="text-center font-semibold w-28">Price</TableHead>
@@ -880,6 +886,11 @@ const LevelA1 = ({ level }: LevelProps) => {
                       <TableCell>
                         <div className="font-semibold text-slate-900">
                           {course.title}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-slate-600 text-sm max-w-xs truncate" title={course.description || ''}>
+                          {course.description || '-'}
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
@@ -909,7 +920,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                       </TableCell>
                       <TableCell className="text-center">
                         <span className="text-slate-600 font-medium">
-                          {course.duration || 0}h
+                          {course.duration || 0} Ngày
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
@@ -986,6 +997,23 @@ const LevelA1 = ({ level }: LevelProps) => {
                     <FormControl>
                       <Input
                         placeholder="e.g., Basic Speaking Practice"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name="description"
+                control={courseFormMethods.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Learn basic English speaking skills"
                         {...field}
                       />
                     </FormControl>

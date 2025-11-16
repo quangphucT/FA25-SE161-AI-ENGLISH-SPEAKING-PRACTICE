@@ -7,6 +7,7 @@ import CurriculumManagementPage from "../curriculum-management/page";
 import QuestionForAssessmentPage from "../question-for-assessment/page";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import LevelA1 from "../levels/levelA1";
+import AiConversationPackageManagement from "../../(admin)/ai-conversation-package-service/page";
 const DashboardManagerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForManagers");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -87,6 +88,26 @@ const DashboardManagerLayout = () => {
       ),
       path: "/question-for-assessment",
     },
+
+    // {
+    //   id: "aiConversationPackageService",
+    //   label: "AI Conversation Packages",
+    //   icon: (
+    //     <svg
+    //       width="20"
+    //       height="20"
+    //       fill="none"
+    //       stroke="currentColor"
+    //       strokeWidth="2"
+    //       viewBox="0 0 24 24"
+    //     >
+    //       <circle cx="12" cy="12" r="10" />
+    //       <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+    //       <line x1="12" y1="17" x2="12.01" y2="17" />
+    //     </svg>
+    //   ),
+    //   path: "/ai-conversation-package-service",
+    // },
 
     {
       id: "levels",
@@ -397,6 +418,12 @@ const DashboardManagerLayout = () => {
                 <QuestionForAssessmentPage />
               </div>
             )}
+
+             {/* {activeTab === "aiConversationPackageService" && (
+              <div className="h-full">
+                <AiConversationPackageManagement />
+              </div>
+            )} */}
 
             {/* Level Pages */}
             {activeTab === "level-a1" && <LevelA1 level="A1" />}

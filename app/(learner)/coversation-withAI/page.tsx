@@ -42,7 +42,6 @@ const ConversationWithAI = () => {
   const { mutate: chartCoinForConversationMutation } = useChartCoinForConversation();
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const COIN_PER_MINUTE = 5;
-
   const durationOptions = [
     {value: "1", label: "1 phút", coins: 5 },
     { value: "5", label: "5 phút", coins: 25 },
@@ -64,25 +63,18 @@ const ConversationWithAI = () => {
           userName
         )}`
       );
-
       const contentType = response.headers.get("content-type") || "";
       const bodyText = await response.text();
-
       if (!response.ok) {
-        console.error("Error response:", bodyText);
         throw new Error(`Failed to get token: ${response.status} ${bodyText}`);
       }
-
       if (!contentType.includes("application/json")) {
-        console.error("Unexpected response:", bodyText);
         throw new Error("Failed to get token: unexpected response format");
       }
-
       const data = JSON.parse(bodyText);
       setToken(data.token);
       setServerUrl(data.url);
     } catch (error) {
-      console.error(error);
       toast.error("Không thể kết nối. Vui lòng thử lại!");
       setShowLiveKit(false);
     }
@@ -109,16 +101,11 @@ const ConversationWithAI = () => {
   // Timer countdown effect
   useEffect(() => {
     if (showLiveKit && token && duration) {
-      // Initialize time remaining in seconds
       const totalSeconds = parseInt(duration) * 60;
       setTimeRemaining(totalSeconds);
-
-      // Clear any existing interval
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
       }
-
-      // Start countdown timer
       timerIntervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
           const newTime = prev - 1;
@@ -169,21 +156,22 @@ const ConversationWithAI = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+
+  
   const handleStart = () => {
     if (!name.trim()) {
       toast.error("Vui lòng nhập tên của bạn");
       return;
     }
-
     if (!duration) {
       toast.error("Vui lòng chọn thời gian muốn trò chuyện");
       return;
     }
-
     if (!hasEnoughCoins) {
       toast.error("Số dư không đủ! Vui lòng nạp thêm coin");
       return;
     }
+
     chartCoinForConversationMutation(
       { payCoin: requiredCoins },
       {
@@ -200,6 +188,7 @@ const ConversationWithAI = () => {
     <div className=" bg-gray-50 flex items-center justify-center p-6">
       {/* LiveKit Modal - Enhanced Design */}
       {showLiveKit && (
+
         <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-gradient-to-br from-white via-blue-50/30 to-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-white/50 animate-in slide-in-from-bottom-4 duration-500">
             {/* Header with Gradient & Decorative Elements */}
@@ -271,18 +260,21 @@ const ConversationWithAI = () => {
             <div className="p-8 overflow-y-auto flex-1 bg-gradient-to-b from-transparent via-blue-50/20 to-transparent">
               {token ? (
                 <div className="h-full">
+
+                     {/* LiveKit Room có nhiệm vụ là kết nối vào 1 cái room trên livekit server để stream audio/video và dữ liệu thời gian thực */}
                   <LiveKitRoom
                     serverUrl={
                       serverUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || ""
                     }
                     token={token}
                     connect={true}
-                    video={true}
+                    video={ false}
                     audio={true}
                     onDisconnected={handleDisconnect}
                   >
-                    <RoomAudioRenderer />
-                    <EnhancedVoiceAssistant />
+                    <RoomAudioRenderer />  {/* Xử lý phát âm thanh từ phòng LiveKit */}
+                    
+                    <EnhancedVoiceAssistant /> {/* Hiển thị nội dung cuộc trò chuyện với AI */}
                   </LiveKitRoom>
                 </div>
               ) : (
@@ -342,7 +334,9 @@ const ConversationWithAI = () => {
             )}
           </div>
         </div>
+
       )}
+
 
       <Card className="w-full max-w-5xl shadow-xl border border-gray-200 bg-white">
         {/* Header */}
@@ -541,6 +535,9 @@ const ConversationWithAI = () => {
           </div>
         </div>
       </Card>
+
+
+
     </div>
   );
 };

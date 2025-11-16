@@ -104,7 +104,7 @@ const Overview = ({ setActiveMenu }: OverviewProps) => {
         <Card 
           onClick={() => {
             if (setActiveMenu) {
-              setActiveMenu("courses");
+              setActiveMenu("enrollingCourses");
             } else {
               router.push("/dashboard-learner-layout");
             }
