@@ -1,5 +1,4 @@
 
-import { BuyCoinRequest, PayOSCheckoutResponse } from "@/types/coin_servicePackage";
 import { AssessmentResponse } from "@/types/testAssessment/testAssessment";
 import fetchWithAuth from "@/utils/fetchWithAuth";
 import { SubmitTestAssessmentRequest, SubmitTestAssessmentResponse } from "../../hooks/testAssessmentHooks/useSubmitTestAssessment";

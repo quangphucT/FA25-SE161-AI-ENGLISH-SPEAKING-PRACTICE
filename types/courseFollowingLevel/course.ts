@@ -30,6 +30,7 @@ export interface Chapter {
 export interface Course {
   courseId: string;
   title: string;
+  description?: string;
   type: string;
   numberOfChapter: number;
   orderIndex: number;
@@ -47,6 +48,7 @@ export interface CreateCourseResponse {
 }
 export interface CreateCourseRequest {
   title: string;
+  description: string;
   numberOfChapter: number;
   orderIndex: number;
   level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";

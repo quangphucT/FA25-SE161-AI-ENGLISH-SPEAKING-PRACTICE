@@ -1,45 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const parts = request.nextUrl.pathname.split("/").filter(Boolean);
-  const courseId = parts[parts.length - 1];
+  const learningPathCourseId = parts[parts.length - 1];
   const accessToken = request.cookies.get("accessToken")?.value;
   
-  if (!courseId || courseId === "[id]") {
+  if (!learningPathCourseId || learningPathCourseId === "[id]") {
     return NextResponse.json(
-      { message: "courseId is required" },
+      { message: "LearningPathCourseId is required" },
       { status: 400 }
     );
   }
 
   try {
     const body = await request.json();
-    const { title, numberOfChapter, description, orderIndex, level, price, duration, status } = body;
+    const { learnerCourseId } = body;
 
-    if (!title) {
+    if (!learnerCourseId) {
       return NextResponse.json(
-        { message: "title is required" },
+        { message: "learnerCourseId is required" },
         { status: 400 }
       );
     }
 
     const backendResponse = await fetch(
-      `${process.env.BE_API_URL}/ManagerCourse/courses/${courseId}`,
+      `${process.env.BE_API_URL}/LearningPathChapter/by-course/${learningPathCourseId}`,
       {
-        method: "PUT",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          title,
-          numberOfChapter: numberOfChapter || 0,
-          orderIndex: orderIndex || 0,
-          level: level || 0,
-          price: price || 0,
-          duration: duration || 0,
-          description: description || "",
-          status: status || "Inactive",
+          learnerCourseId,
         }),
       }
     );
@@ -53,12 +46,13 @@ export async function PUT(request: NextRequest) {
   } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json(
-        { message: error.message || "Update course failed" },
+        { message: error.message || "Create learning path chapter failed" },
         { status: 500 }
       );
     }
+
     return NextResponse.json(
-      { message: "Update course failed" },
+      { message: "Create learning path chapter failed" },
       { status: 500 }
     );
   }

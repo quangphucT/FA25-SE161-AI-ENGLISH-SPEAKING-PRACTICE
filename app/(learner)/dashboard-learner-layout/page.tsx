@@ -7,14 +7,10 @@ import {
   Wallet,
   BarChart3,
   User,
-  Target,
-  Award,
   ChevronRight,
   PlayCircle,
   BookMarked,
   Coins,
-  CheckCircle2,
-  TrendingUp,
   LogOut,
 } from "lucide-react";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
@@ -25,15 +21,16 @@ import LearningPath from "../learningPath/page";
 import Progress from "../progress/page";
 import { handleLogout } from "@/utils/auth";
 import ConversationWithAI from "../coversation-withAI/page";
+import EnrollingCourse from "../enrolling-courses/page";
+
 
 export default function LearnerDashboard() {
   const [activeMenu, setActiveMenu] = useState("overview");
-  const { data: userData } = useGetMeQuery()
-
-
+  const { data: userData } = useGetMeQuery();
   const sidebarMenu = [
     { id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
-    { id: "courses", label: "Lộ trình học", icon: BookOpen, description: "Khám phá các khoá học" },
+    { id: "learningPath", label: "Lộ trình học", icon: BookOpen, description: "Xem và học theo lộ trình" },
+    { id: "enrollingCourses", label: "Khoá học", icon: BookMarked, description: "Tham gia các khoá học" },
     { id: "wallet", label: "Ví Coin", icon: Wallet, description: "Quản lý và nạp Coin" },
     { id: "conversationWithAI", label: "Trò chuyện với AI", icon: PlayCircle, description: "Giao tiếp và luyện tập" },
     { id: "progress", label: "Tiến độ", icon: BarChart3, description: "Theo dõi học tập" },
@@ -159,8 +156,12 @@ export default function LearnerDashboard() {
           )}
 
           {/* COURSES PAGE */}
-          {activeMenu === "courses" && (
+          {activeMenu === "learningPath" && (
            <LearningPath setActiveMenu={setActiveMenu} />
+          )}
+          {/* ENROLLING COURSES PAGE */}
+          {activeMenu === "enrollingCourses" && (
+           <EnrollingCourse setActiveMenu={setActiveMenu} />
           )}
 
           {/* WALLET PAGE */}

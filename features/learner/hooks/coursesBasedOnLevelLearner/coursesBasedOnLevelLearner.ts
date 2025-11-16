@@ -1,11 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   enrollingFirstCourseService,
   getCoursesBasedOnLevelLearnerService,
 } from "../../services/coursesBasedOnLevelLearner/courseBasedOnLevelLearnerService";
 import { toast } from "sonner";
 import { useLearnerStore } from "@/store/useLearnerStore";
-import { set } from "date-fns";
+
 
 export interface GetCourseBasedOnLevelLearner {
   isSucess: boolean;
@@ -19,7 +19,8 @@ export interface CourseItem {
   title: string;
   numberOfChapter: number;
   orderIndex: number;
-  level: string;
+  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+  description: string;
   price: number;
   duration: number;
   status: string;
@@ -62,19 +63,35 @@ export const useGetCoursesBasedOnLevelLearner = (level: string) => {
 };
 
 export interface EnrollFirstCourseResponse {
-  isSuccess: boolean;
+  isSucess: boolean;
+  data: {
+    level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"; 
+    learningPathCourseId: string;
+    courseId: string;
+    status: "InProgress" | "Completed" ; 
+  };
+  businessCode: "INSERT_SUCESSFULLY" | string;
   message: string;
-  businessCode: string;
-  learnerCourseId: string;
 }
 
 export const useEnrollFirstCourse = () => {
-  const { setLearnerCourseId } = useLearnerStore();
+  const queryClient = useQueryClient();
+  const setAllLearnerData = useLearnerStore((state) => state.setAllLearnerData);
+  
   return useMutation<EnrollFirstCourseResponse, Error, string>({
     mutationFn: (courseId) => enrollingFirstCourseService(courseId),
     onSuccess: (data) => {
-      toast.success(data.message || "Tham gia khóa học thành công");
-      setLearnerCourseId(data.learnerCourseId);
+      
+      
+      setAllLearnerData({
+        learnerCourseId: data.data.learningPathCourseId,
+        courseId: data.data.courseId,
+        learningPathCourseId: data.data.learningPathCourseId,
+        status: data.data.status,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["levelsAndlearnerCourseIds"] });
+      queryClient.invalidateQueries({ queryKey: ["trackingCoursesEnrolled"] });
     },
     onError: (error) => {
       toast.error(error.message || "Tham gia khóa học thất bại");
