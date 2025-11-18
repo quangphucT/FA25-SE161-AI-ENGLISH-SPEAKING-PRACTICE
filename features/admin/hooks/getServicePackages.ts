@@ -3,9 +3,14 @@ import { GetServicePackagesResponse } from "@/types/servicePackage/servicePackag
 import {  useQuery } from "@tanstack/react-query";
 import { getServicePackages } from "../services/getServicePackages";
 
-export const useGetServicePackages = () => {
+export const useGetServicePackages = (
+  pageNumber: string = "1",
+  pageSize: string = "10",
+  search: string = "",
+  filter: string = ""
+) => {
   return useQuery<GetServicePackagesResponse, Error>({
-    queryKey: ["getCoinServicePackages"],
-    queryFn: () => getServicePackages(),
+    queryKey: ["getServicePackages", pageNumber, pageSize, search, filter],
+    queryFn: () => getServicePackages(pageNumber, pageSize, search, filter),
   });
 };

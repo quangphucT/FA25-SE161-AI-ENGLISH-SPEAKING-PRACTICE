@@ -1,13 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 import StatisticsForMentor from "../statistics-for-mentor/page";
 import Wallet from "../wallet/page";
 import ReviewHistory from "../review-history/page";
-import ReviewLearnerSubmission from "../review-learner-submission/page";
+
 
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
+import ReviewerProfile from "../reviewer-profile/page";
+import { handleLogout } from "@/utils/auth";
 
 const DashboardReviewerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForMentor");
@@ -35,7 +37,7 @@ const DashboardReviewerLayout = () => {
       path: "/statistics-for-mentor",
     },
     {
-      id: "profileMentor",
+      id: "profileReviewer",
       label: "Profile",
       icon: (
         <svg
@@ -50,7 +52,7 @@ const DashboardReviewerLayout = () => {
           <circle cx="12" cy="7" r="4" />
         </svg>
       ),
-      path: "/mentor-profile",
+      path: "/reviewer-profile",
     },  
     {
       id: "wallet",
@@ -89,19 +91,7 @@ const DashboardReviewerLayout = () => {
         </svg>
       ),
       path: "/review-history",
-    },
-    {
-      id: "reviewLearnerSubmission",
-      label: "Review Learner Submission",
-      icon: (
-        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-          <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-          <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-        </svg>
-      ),
-      path: "/review-learner-submission",
-    },
+    }
   ];
 
   return (
@@ -110,7 +100,7 @@ const DashboardReviewerLayout = () => {
       <aside
         className={`${
           sidebarOpen ? "w-72" : "w-20"
-        } bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transition-all duration-300 flex flex-col shadow-2xl`}
+        } fixed left-0 top-0 h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transition-all duration-300 flex flex-col shadow-2xl z-50`}
       >
         {/* Header */}
         <div className="p-6 border-b border-slate-700/50">
@@ -206,14 +196,25 @@ const DashboardReviewerLayout = () => {
             }`}
           >
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white font-medium text-sm">SM</span>
+              <span className="text-white font-medium text-sm">
+                {meData?.fullName
+                  ? meData.fullName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)
+                  : "U"}
+              </span>
             </div>
             {sidebarOpen && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  Sarah Miller
+                  {meData?.fullName || "User"}
                 </p>
-                <p className="text-xs text-slate-400 truncate">Senior Mentor</p>
+                <p className="text-xs text-slate-400 truncate">
+                  {meData?.role === "REVIEWER" ? "Reviewer" : meData?.role || "User"}
+                </p>
               </div>
             )}
             {sidebarOpen && (
@@ -221,6 +222,7 @@ const DashboardReviewerLayout = () => {
                 variant="ghost"
                 size="sm"
                 className="text-slate-400 hover:text-white hover:bg-slate-700/50 p-1"
+                onClick={() => handleLogout()}
               >
                 <svg
                   width="16"
@@ -241,7 +243,9 @@ const DashboardReviewerLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen">
+      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
+        sidebarOpen ? "ml-72" : "ml-20"
+      }`}>
         {/* Modern Header */}
         <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40">
           <div className="px-6 py-4">
@@ -276,13 +280,11 @@ const DashboardReviewerLayout = () => {
               </div>
             )}
 
-            {activeTab === "profileMentor" && (
+            {activeTab === "profileReviewer" && (
               <div className="h-full">
-                {/* <ReviewerProfile /> */}
+                <ReviewerProfile />
               </div>
-            )}
-
-            
+            )}       
 
             {activeTab === "wallet" && (
               <div className="h-full">
@@ -296,11 +298,7 @@ const DashboardReviewerLayout = () => {
               </div>
             )}
 
-            {activeTab === "reviewLearnerSubmission" && (
-              <div className="h-full">
-                <ReviewLearnerSubmission />
-              </div>
-            )}
+           
           </div>
         </div>
       </main>

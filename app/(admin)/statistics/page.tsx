@@ -26,6 +26,12 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import {
+  useAdminPackages,
+  useAdminRegisteredReviewer,
+  useAdminRevenue,
+  useAdminSummary,
+} from "@/features/admin/hooks/useAdminSummary";
 
 ChartJS.register(
   CategoryScale,
@@ -63,19 +69,37 @@ const PageStatistics = () => {
     (_, idx) => currentYear - idx
   );
 
-  // Dữ liệu mẫu cho biểu đồ cột theo từng năm
-  const packageData: { [key: number]: number[] } = {
-    2025: [20, 40, 35, 50, 64, 30, 45, 60, 55, 122, 42, 38],
-    2024: [15, 35, 30, 45, 58, 25, 40, 55, 50, 43, 37, 33],
-    2023: [18, 38, 32, 47, 61, 28, 42, 58, 52, 45, 39, 35],
-  };
+  const { data: adminSummary } = useAdminSummary();
+  const { data: adminPackages } = useAdminPackages(selectedYear.toString());
+  const { data: adminRevenue } = useAdminRevenue(selectedYear.toString());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const { data: adminRegisteredReviewer } = useAdminRegisteredReviewer(
+    currentPage,
+    pageSize
+  );
 
-  // Dữ liệu doanh thu theo tháng (đơn vị: K)
-  const revenueData: { [key: number]: number[] } = {
-    2025: [104, 82, 120, 36, 62, 22, 19, 24, 21, 17, 15, 23],
-    2024: [12, 7, 10, 14, 24, 20, 17, 22, 19, 15, 13, 21],
-    2023: [15, 9, 13, 17, 28, 24, 21, 26, 23, 19, 17, 25],
-  };
+  console.log(adminRegisteredReviewer);
+
+  // Dữ liệu từ API cho biểu đồ cột theo từng năm
+  const packageData =
+    adminPackages?.data?.reduce((acc, item) => {
+      if (!acc[selectedYear]) {
+        acc[selectedYear] = new Array(12).fill(0);
+      }
+      acc[selectedYear][item.month - 1] = item.count;
+      return acc;
+    }, {} as { [key: number]: number[] }) || {};
+
+  // Dữ liệu doanh thu từ API theo tháng (đơn vị: K)
+  const revenueData =
+    adminRevenue?.data?.reduce((acc, item) => {
+      if (!acc[selectedYear]) {
+        acc[selectedYear] = new Array(12).fill(0);
+      }
+      acc[selectedYear][item.month - 1] = Math.round(item.revenue / 1000); // Convert to K
+      return acc;
+    }, {} as { [key: number]: number[] }) || {};
 
   // Tính toán động trục Y dựa trên dữ liệu của năm đang chọn
   const currentPackages = packageData[selectedYear] || new Array(12).fill(0);
@@ -87,45 +111,7 @@ const PageStatistics = () => {
   const packagesStep = Math.max(1, Math.ceil(packagesYMax / 5));
   const revenueStep = Math.max(1, Math.ceil(revenueYMax / 5));
 
-  // Reviewers awaiting participation approval
-  const [reviewerApplicants, setReviewerApplicants] = useState<
-    ReviewerApplicant[]
-  >([
-    {
-      id: "MN-1001",
-      fullName: "Nguyễn Văn A",
-      email: "nguyenvana@example.com",
-      phone: "0901234567",
-      level: "C1",
-      experienceYears: 5,
-      status: "Chờ duyệt",
-      joinedDate: "2025-09-15",
-      certificates: [
-        {
-          id: "cert-ielts-trainer",
-          name: "IELTS Trainer Certification",
-          imageUrl:
-            "https://sununi.edu.vn/wp-content/uploads/2023/05/Ha-Phuong-723x1024.png",
-        },
-        {
-          id: "cert-tesol",
-          name: "TESOL Advanced",
-          imageUrl:
-            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&auto=format&fit=crop&q=60",
-        },
-      ],
-    },
-    {
-      id: "MN-1002",
-      fullName: "Trần Thị B",
-      email: "tranthib@example.com",
-      phone: "0912345678",
-      level: "C2",
-      experienceYears: 8,
-      status: "Chờ duyệt",
-      joinedDate: "2025-09-18",
-    },
-  ]);
+  // Reviewers awaiting participation approval - now using API data
 
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedReviewer, setSelectedReviewer] =
@@ -137,16 +123,14 @@ const PageStatistics = () => {
   };
 
   const approveReviewer = (id: string) => {
-    setReviewerApplicants((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: "Đã duyệt" } : m))
-    );
+    // TODO: Implement API call to approve reviewer
+    console.log("Approving reviewer:", id);
     setShowDetailsModal(false);
   };
 
   const rejectReviewer = (id: string) => {
-    setReviewerApplicants((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: "Không duyệt" } : m))
-    );
+    // TODO: Implement API call to reject reviewer
+    console.log("Rejecting reviewer:", id);
     setShowDetailsModal(false);
   };
 
@@ -177,7 +161,7 @@ const PageStatistics = () => {
   const stats = [
     {
       label: "Tổng người học",
-      value: "489",
+      value: adminSummary?.data?.totalLearners?.toString() || "0",
       icon: <FaUser />,
       color: "bg-violet-100",
       iconBg: "bg-violet-500",
@@ -186,7 +170,7 @@ const PageStatistics = () => {
     },
     {
       label: "Tổng số người đang theo học",
-      value: "293",
+      value: adminSummary?.data?.totalActiveLearners?.toString() || "0",
       icon: <FaBox />,
       color: "bg-yellow-100",
       iconBg: "bg-yellow-500",
@@ -195,7 +179,7 @@ const PageStatistics = () => {
     },
     {
       label: "Tổng gói dịch vụ",
-      value: "10",
+      value: adminSummary?.data?.totalServicePackages?.toString() || "0",
       icon: <FaChartLine />,
       color: "bg-green-100",
       iconBg: "bg-green-500",
@@ -204,7 +188,9 @@ const PageStatistics = () => {
     },
     {
       label: "Tổng doanh thu",
-      value: "1,000,000 VND",
+      value: adminSummary?.data?.totalRevenue
+        ? `${adminSummary.data.totalRevenue.toLocaleString()} VND`
+        : "0 VND",
       icon: <FaClock />,
       color: "bg-red-100",
       iconBg: "bg-red-500",
@@ -487,46 +473,110 @@ const PageStatistics = () => {
             Danh sách Reviewer đăng ký tham gia
           </h2>
         </div>
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="overflow-x-auto rounded-xl border shadow">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#f7f9fa]">
-                <TableHead>Mã</TableHead>
-                <TableHead>Họ tên</TableHead>
-                <TableHead>SĐT</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Trình độ</TableHead>
-                <TableHead>Kinh nghiệm</TableHead>
-                <TableHead>Ngày đăng ký</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-center">Hành động</TableHead>
+                <TableHead className="text-gray-700 font-semibold">
+                  Thông tin
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold">
+                  Họ tên
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold">
+                  Liên hệ
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold">
+                  Trình độ
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold">
+                  Kinh nghiệm
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold">
+                  Trạng thái
+                </TableHead>
+                <TableHead className="text-center text-gray-700 font-semibold">
+                  Hành động
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {reviewerApplicants.map((m) => (
-                <TableRow key={m.id} className="hover:bg-[#f0f7e6]">
-                  <TableCell className="font-medium text-blue-600">
-                    {m.id}
+              {adminRegisteredReviewer?.data?.items?.map((m) => (
+                <TableRow
+                  key={m.reviewerProfileId}
+                  className="hover:bg-[#f0f7e6]"
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+                          {m.fullName.charAt(0).toUpperCase()}
+                        </div>
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
+                            m.status === "Approved"
+                              ? "bg-green-500"
+                              : m.status === "Rejected"
+                              ? "bg-red-500"
+                              : "bg-yellow-500"
+                          }`}
+                        ></div>
+                      </div>
+                      <div>
+                        <div className="text-blue-600 font-semibold text-sm">
+                          {m.reviewerProfileId}
+                        </div>
+                      </div>
+                    </div>
                   </TableCell>
-                  <TableCell className="font-medium">{m.fullName}</TableCell>
-                  <TableCell className="text-gray-600">{m.email}</TableCell>
-                  <TableCell className="text-gray-600">{m.phone}</TableCell>
-                  <TableCell>{m.level}</TableCell>
-                  <TableCell>{m.experienceYears} năm</TableCell>
-                  <TableCell>{m.joinedDate}</TableCell>
+
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-gray-900">
+                        {m.fullName}
+                      </span>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="text-gray-600">
+                    <div className="flex flex-col">
+                      <span className="text-sm">{m.email}</span>
+                      <span className="text-xs text-gray-500">{m.phone}</span>
+                    </div>
+                  </TableCell>
+
+                  <TableCell>{m.experience || "Chưa có"}</TableCell>
+                  <TableCell>{m.experience || "0"} năm</TableCell>
+
                   <TableCell>
                     <Badge
                       className={
-                        m.status === "Đã duyệt"
-                          ? "bg-green-100 text-green-800 border-green-200"
-                          : m.status === "Không duyệt"
-                          ? "bg-red-100 text-red-800 border-red-200"
+                        m.status === "Approved"
+                          ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
+                          : m.status === "Rejected"
+                          ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"
                           : "bg-yellow-100 text-yellow-800 border-yellow-200"
                       }
                     >
-                      {m.status}
+                      <div className="flex items-center gap-1">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            m.status === "Approved"
+                              ? "bg-green-500"
+                              : m.status === "Rejected"
+                              ? "bg-red-500"
+                              : "bg-yellow-500"
+                          }`}
+                        ></div>
+                        {m.status === "Approved"
+                          ? "Đã duyệt"
+                          : m.status === "Rejected"
+                          ? "Không duyệt"
+                          : "Chờ duyệt"}
+                      </div>
                     </Badge>
                   </TableCell>
+
                   <TableCell className="text-center">
                     <div className="relative dropdown-container">
                       <Button
@@ -534,10 +584,12 @@ const PageStatistics = () => {
                         size="sm"
                         onClick={() =>
                           setOpenDropdownId(
-                            openDropdownId === m.id ? null : m.id
+                            openDropdownId === m.reviewerProfileId
+                              ? null
+                              : m.reviewerProfileId
                           )
                         }
-                        className="p-1 h-8 w-8 cursor-pointer"
+                        className="p-1 h-8 w-8 cursor-pointer relative z-10"
                       >
                         <svg
                           width="16"
@@ -552,15 +604,34 @@ const PageStatistics = () => {
                           <circle cx="5" cy="12" r="1" />
                         </svg>
                       </Button>
-                      {openDropdownId === m.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
+                      {openDropdownId === m.reviewerProfileId && (
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border z-50 transform -translate-x-4">
                           <div className="py-1">
                             <button
                               onClick={() => {
-                                openReviewerDetails(m);
+                                openReviewerDetails({
+                                  id: m.reviewerProfileId,
+                                  fullName: m.fullName,
+                                  email: m.email,
+                                  phone: m.phone,
+                                  level: m.experience,
+                                  experienceYears: 0,
+                                  status: m.status as
+                                    | "Chờ duyệt"
+                                    | "Đã duyệt"
+                                    | "Không duyệt",
+                                  joinedDate: new Date()
+                                    .toISOString()
+                                    .split("T")[0],
+                                  certificates: m.certificates?.map((cert) => ({
+                                    id: cert.certificateId,
+                                    name: cert.name,
+                                    imageUrl: cert.url,
+                                  })),
+                                });
                                 setOpenDropdownId(null);
                               }}
-                              className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                               <svg
                                 width="16"
@@ -585,6 +656,87 @@ const PageStatistics = () => {
               ))}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between mt-4 px-4 py-3 bg-gray-50 border-t">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-700">Hiển thị:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1); // Reset to first page when changing page size
+                }}
+                className="border rounded px-2 py-1 text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-700">mục mỗi trang</span>
+            </div>
+            <div className="text-sm text-gray-600">
+              Trang {currentPage} - Hiển thị{" "}
+              {adminRegisteredReviewer?.data?.items?.length || 0} kết quả
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1"
+            >
+              Trước
+            </Button>
+
+            <div className="flex items-center gap-1">
+              {/* Show page numbers */}
+              {Array.from(
+                {
+                  length: Math.min(
+                    5,
+                    Math.ceil(
+                      (adminRegisteredReviewer?.data?.items?.length || 0) /
+                        pageSize
+                    )
+                  ),
+                },
+                (_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              disabled={
+                !adminRegisteredReviewer?.data?.items?.length ||
+                adminRegisteredReviewer.data.items.length < pageSize
+              }
+              className="px-3 py-1"
+            >
+              Sau
+            </Button>
+          </div>
         </div>
       </div>
 

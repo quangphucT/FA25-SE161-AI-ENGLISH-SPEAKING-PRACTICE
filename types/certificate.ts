@@ -4,7 +4,7 @@ export type UploadCertificateRequest = FormData;
 
 
 export interface UploadCertificateResponse {
-   isSucess: boolean;
+  isSucess: boolean;
   data: {
     certificateId: string;
     name: string;

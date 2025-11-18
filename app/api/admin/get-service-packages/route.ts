@@ -4,18 +4,35 @@ export async function GET(request: NextRequest) {
 
 
   const accessToken = request.cookies.get("accessToken")?.value;
+  const { searchParams } = new URL(request.url);
+  const pageNumber = searchParams.get("pageNumber");
+  const pageSize = searchParams.get("pageSize");
+  const search = searchParams.get("search");
+  const filter = searchParams.get("filter");
   try {
-
-    const backendResponse = await fetch(
+    const backendUrl = new URL(
       `${process.env.BE_API_URL}/AdminServicePackage`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
     );
+    if (pageNumber) {
+      backendUrl.searchParams.set("pageNumber", pageNumber);
+    }
+    if (pageSize) {
+      backendUrl.searchParams.set("pageSize", pageSize);
+    }
+    if (search) {
+      backendUrl.searchParams.set("search", search);
+    }
+    if (filter) {
+      backendUrl.searchParams.set("filter", filter);
+    }
+    const backendResponse = await fetch(backendUrl.toString(), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
 
     const data = await backendResponse.json();
     if (!backendResponse.ok) {
