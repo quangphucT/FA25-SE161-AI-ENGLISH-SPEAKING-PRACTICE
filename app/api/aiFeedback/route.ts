@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     let data;
     try {
       data = JSON.parse(responseText);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_parseError) {
       throw new Error("Invalid JSON response from AI service");
     }

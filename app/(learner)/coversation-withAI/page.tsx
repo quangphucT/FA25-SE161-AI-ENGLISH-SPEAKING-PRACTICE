@@ -84,6 +84,7 @@ const ConversationWithAI = () => {
       const data = JSON.parse(bodyText);
       setToken(data.token);
       setServerUrl(data.url);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
       toast.error("Không thể kết nối. Vui lòng thử lại!");
       setShowLiveKit(false);

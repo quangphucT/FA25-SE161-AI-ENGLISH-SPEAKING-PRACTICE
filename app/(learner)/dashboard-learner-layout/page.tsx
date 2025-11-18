@@ -16,7 +16,7 @@ import {
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import Overview from "../overview/page";
 import WalletCoinPurchase from "../Wallet_coinPurchase/page";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import LearningPath from "../learningPath/page";
 import { handleLogout } from "@/utils/auth";
@@ -24,8 +24,7 @@ import ConversationWithAI from "../coversation-withAI/page";
 import EnrollingCourse from "../enrolling-courses/page";
 import SendingAudioToReviewer from "../sendingAudioToReviewer/page";
 
-
-export default function LearnerDashboard() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const menuParam = searchParams?.get("menu");
   const [activeMenu, setActiveMenu] = useState(menuParam || "overview");
@@ -211,5 +210,13 @@ export default function LearnerDashboard() {
 
     
     </div>
+  );
+}
+
+export default function LearnerDashboard() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }

@@ -37,6 +37,7 @@ const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
     Boolean(learnerData)
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { mutate: startExercise, isPending: _isStarting } = useStartExercise();
   const [loadingExerciseId, setLoadingExerciseId] = useState<string | null>(null);
 

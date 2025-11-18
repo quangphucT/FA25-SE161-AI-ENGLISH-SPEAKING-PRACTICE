@@ -113,6 +113,7 @@ const form = useForm<CreatePackageFormData>({
     setShowUpdateModal(true);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAction = (pkg: ServicePackage, _action: "delete") => {
     setPackageToAction(pkg);
     setShowConfirmDialog(true);
@@ -134,6 +135,7 @@ const form = useForm<CreatePackageFormData>({
       });
       setShowUpdateModal(false);
       setPackageToUpdate(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_err) {
       // errors are handled in hook via toast
     }
