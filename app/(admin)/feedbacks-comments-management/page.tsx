@@ -290,6 +290,7 @@ const FeedbacksCommentsManagement = () => {
     setShowDetailsModal(true);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAction = (feedback: Feedback, _action: "reject") => {
     setSelectedFeedback(feedback);
     setShowActionModal(true);
