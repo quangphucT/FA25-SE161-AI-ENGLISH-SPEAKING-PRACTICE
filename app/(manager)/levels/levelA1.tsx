@@ -49,7 +49,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import {Plus,Pencil,Trash2,BookOpen,Layers,ChevronRight,FolderOpen,FileText,HelpCircle,FileImage,ArrowLeft} from "lucide-react";
+import {Plus,Pencil,Trash2,BookOpen,Layers,FolderOpen,FileText,HelpCircle,FileImage,ArrowLeft} from "lucide-react";
 import { useCreateCourse } from "@/features/manager/hook/coursesHooks/useCreateCourse";
 import { useUpdateCourse } from "@/features/manager/hook/coursesHooks/useUpdateCourse";
 import { useDeleteCourse } from "@/features/manager/hook/coursesHooks/useDeleteCourse";
@@ -2323,7 +2323,7 @@ const LevelA1 = ({ level }: LevelProps) => {
                                         .sort(
                                           (a, b) => a.orderIndex - b.orderIndex
                                         )
-                                        .map((exercise, idx) => (
+                                        .map((exercise) => (
                                           <React.Fragment
                                             key={exercise.exerciseId}
                                           >

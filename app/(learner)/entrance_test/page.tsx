@@ -102,8 +102,9 @@ const EntranceTest = () => {
         toast.error("Phiên đã hết hạn, vui lòng đăng nhập lại.");
         router.push("/sign-in");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+      console.error("Error navigating to dashboard:", _error);
     }
     setLoadingToDashboardLearner(false);
   };
@@ -211,7 +212,7 @@ const EntranceTest = () => {
       const tests = Array.from(sectionMap.entries()).map(
         ([type, questions]) => ({
           type,
-          assessmentDetails: questions.map((q, idx) => {
+          assessmentDetails: questions.map((q) => {
             const questionIndex = allQuestions.findIndex(
               (aq) => aq.id === q.id
             );
@@ -893,11 +894,7 @@ const EntranceTest = () => {
                         <span>🏆</span>
                         <span>{resultsAfterTest.assignedLevel}</span>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-gray-700 mb-8 text-base">
+                      <p className="text-gray-700 mb-8 text-base">
                   Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng cao
                   kỹ năng của bạn! 💪
                 </p>
@@ -911,6 +908,11 @@ const EntranceTest = () => {
                     Bắt đầu học ngay
                   </Button>
                 )}
+                    </div>
+                  </div>
+                )}
+
+                
               </>
             )}
           </div>

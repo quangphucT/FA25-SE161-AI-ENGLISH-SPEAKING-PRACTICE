@@ -7,7 +7,7 @@ import CurriculumManagementPage from "../curriculum-management/page";
 import QuestionForAssessmentPage from "../question-for-assessment/page";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import LevelA1 from "../levels/levelA1";
-import AiConversationPackageManagement from "../../(admin)/ai-conversation-package-service/page";
+
 const DashboardManagerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForManagers");
   const [sidebarOpen, setSidebarOpen] = useState(true);

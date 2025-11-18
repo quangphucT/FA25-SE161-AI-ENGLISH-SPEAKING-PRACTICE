@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useBuyingCoinServicePackages } from "@/features/learner/hooks/servicePackages/useBuyingServicePackageMutation";
 import { useGetCoinServicePackage } from "@/hooks/coin-hooks/useGetCoinServicePackage";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
-import { ChevronRight, Coins, Loader2, Wallet } from "lucide-react";
+import { Coins, Loader2, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";

@@ -9,7 +9,7 @@ export interface ChartCoinForConversationResponse {
     message: string;
 }
 export interface ChartCoinForConversationPayload {
-    payCoin: number;
+    aiConversationChargeId: string;
 }
 export const useChartCoinForConversation = () => {
   return useMutation<ChartCoinForConversationResponse, Error, ChartCoinForConversationPayload>({
