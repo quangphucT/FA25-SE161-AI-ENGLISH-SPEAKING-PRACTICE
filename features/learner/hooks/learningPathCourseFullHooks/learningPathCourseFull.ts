@@ -1,5 +1,25 @@
 import { useQuery } from "@tanstack/react-query"
 import { learningPathCourseFullService } from "../../services/learningPathCourseFullService/learningPathCourseService";
+interface QuestionMedia {
+  questionMediaId: string;
+  accent: string;
+  audioUrl: string | null;
+  videoUrl: string | null;
+  imageUrl: string | null;
+  source: string | null;
+}
+interface Question {
+  learningPathQuestionId: string;
+  questionId: string;
+  status: string;
+  score: number;
+  numberOfRetake: number;
+  text: string;
+  type: string;
+  orderIndex: number;
+  media: QuestionMedia[];
+}
+
 interface Exercise {
   learningPathExerciseId: string;
   exerciseId: string;
@@ -10,7 +30,9 @@ interface Exercise {
   progress: number;
   scoreAchieved: number;
   numberOfQuestion: number;
+  questions: Question[];   
 }
+
 
 interface Chapter {
   learningPathChapterId: string;

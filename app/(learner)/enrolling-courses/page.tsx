@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -7,7 +8,6 @@ import {
 } from "@/features/learner/hooks/coursesBasedOnLevelLearner/coursesBasedOnLevelLearner";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { BookOpen, Coins, TrendingUp, ArrowRight } from "lucide-react";
-import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useGetLevelAndLearnerCourseIdAfterEnrolling } from "@/features/learner/hooks/enrollingCourseHooks/enrollingCourses";
 import { useLearnerStore } from "@/store/useLearnerStore";

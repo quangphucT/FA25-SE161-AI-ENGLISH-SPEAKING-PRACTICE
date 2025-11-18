@@ -83,7 +83,6 @@ const form = useForm<CreatePackageFormData>({
     status: "Active",
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
-  const [actionType, setActionType] = useState<"delete">("delete");
   const [packageToAction, setPackageToAction] = useState<ServicePackage | null>(
     null
   );
@@ -114,9 +113,8 @@ const form = useForm<CreatePackageFormData>({
     setShowUpdateModal(true);
   };
 
-  const handleAction = (pkg: ServicePackage, action: "delete") => {
+  const handleAction = (pkg: ServicePackage, _action: "delete") => {
     setPackageToAction(pkg);
-    setActionType(action);
     setShowConfirmDialog(true);
   };
 
@@ -136,7 +134,7 @@ const form = useForm<CreatePackageFormData>({
       });
       setShowUpdateModal(false);
       setPackageToUpdate(null);
-    } catch (err) {
+    } catch (_err) {
       // errors are handled in hook via toast
     }
   };
@@ -226,7 +224,7 @@ const form = useForm<CreatePackageFormData>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPackages?.map((pkg, idx) => (
+            {filteredPackages?.map((pkg) => (
               <TableRow
                 key={pkg.servicePackageId}
                 className="hover:bg-[#f0f7e6]"

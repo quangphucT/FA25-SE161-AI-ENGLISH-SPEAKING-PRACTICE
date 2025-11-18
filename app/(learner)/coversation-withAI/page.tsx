@@ -29,10 +29,19 @@ import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
 import EnhancedVoiceAssistant from "@/components/ai-conversation/EnhancedVoiceAssistant";
 import { useChartCoinForConversation } from "@/features/learner/hooks/chartCoinForConversation/useChartCoinForConversation";
+import { useGetAIPackages } from "@/features/learner/hooks/ai-packagesHooks/aiPackages";
+
+interface AIPackage {
+  allowedMinutes: number;
+  amountCoin: number;
+  aiConversationChargeId: string;
+}
 
 const ConversationWithAI = () => {
   const router = useRouter();
   const { data: userData, refetch: refetchUserData } = useGetMeQuery();
+  const {data: aiPackagesData} = useGetAIPackages();
+  
   const [name, setName] = useState("");
   const [duration, setDuration] = useState<string>("");
   const [showLiveKit, setShowLiveKit] = useState(false);
@@ -41,15 +50,16 @@ const ConversationWithAI = () => {
   const [timeRemaining, setTimeRemaining] = useState<number>(0); // in seconds
   const { mutate: chartCoinForConversationMutation } = useChartCoinForConversation();
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const COIN_PER_MINUTE = 5;
-  const durationOptions = [
-    {value: "1", label: "1 phút", coins: 5 },
-    { value: "5", label: "5 phút", coins: 25 },
-    { value: "10", label: "10 phút", coins: 50 },
-    { value: "15", label: "15 phút", coins: 75 },
-    { value: "20", label: "20 phút", coins: 100 },
-    { value: "30", label: "30 phút", coins: 150 },
-  ];
+
+  // Use API data for duration options - data is directly in aiPackagesData, not aiPackagesData.data
+  const durationOptions = Array.isArray(aiPackagesData) 
+    ? aiPackagesData.map((pkg: AIPackage) => ({
+        value: pkg.allowedMinutes.toString(),
+        label: `${pkg.allowedMinutes} phút`,
+        coins: pkg.amountCoin,
+        id: pkg.aiConversationChargeId
+      }))
+    : [];
 
   const selectedOption = durationOptions.find((opt) => opt.value === duration);
   const requiredCoins = selectedOption?.coins || 0;
@@ -74,7 +84,7 @@ const ConversationWithAI = () => {
       const data = JSON.parse(bodyText);
       setToken(data.token);
       setServerUrl(data.url);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Không thể kết nối. Vui lòng thử lại!");
       setShowLiveKit(false);
     }
@@ -172,8 +182,13 @@ const ConversationWithAI = () => {
       return;
     }
 
+    if (!selectedOption?.id) {
+      toast.error("Không tìm thấy gói đã chọn");
+      return;
+    }
+
     chartCoinForConversationMutation(
-      { payCoin: requiredCoins },
+      { aiConversationChargeId: selectedOption.id },
       {
         onSuccess: () => {
           toast.success("Bắt đầu trò chuyện với AI!");
@@ -392,16 +407,23 @@ const ConversationWithAI = () => {
                       <SelectValue placeholder="Chọn thời gian..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {durationOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex cursor-pointer items-center justify-between w-full gap-8">
-                            <span className="font-medium">{option.label}</span>
-                            <span className="text-orange-600 font-bold text-sm">
-                              {option.coins} coin
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
+                      {durationOptions.length > 0 ? (
+                        durationOptions.map((option) => (
+                          <SelectItem key={option.id} value={option.value}>
+                            <div className="flex cursor-pointer items-center justify-between w-full gap-8">
+                              <span className="font-medium">{option.label}</span>
+                              <span className="text-orange-600 font-bold text-sm">
+                                {option.coins} coin
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                          <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                          Đang tải gói...
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -460,7 +482,7 @@ const ConversationWithAI = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tỷ lệ:</span>
                       <span className="font-medium text-gray-700">
-                        {COIN_PER_MINUTE} coin/phút
+                        {selectedOption ? (selectedOption.coins / parseInt(selectedOption.value)).toFixed(1) : 0} coin/phút
                       </span>
                     </div>
                     <div className="border-t border-gray-200 my-1.5"></div>
