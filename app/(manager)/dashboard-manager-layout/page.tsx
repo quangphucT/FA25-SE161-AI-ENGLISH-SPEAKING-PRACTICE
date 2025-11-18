@@ -1,13 +1,13 @@
 "use client";
-import { use, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FaBook } from "react-icons/fa";
 import AssesmentManagement from "../assesment-management/page";
 import StatisticsForManagers from "../statistics-for-managers/page";
 import CurriculumManagementPage from "../curriculum-management/page";
 import QuestionForAssessmentPage from "../question-for-assessment/page";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import LevelA1 from "../levels/levelA1";
+
 const DashboardManagerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForManagers");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -89,6 +89,26 @@ const DashboardManagerLayout = () => {
       path: "/question-for-assessment",
     },
 
+    // {
+    //   id: "aiConversationPackageService",
+    //   label: "AI Conversation Packages",
+    //   icon: (
+    //     <svg
+    //       width="20"
+    //       height="20"
+    //       fill="none"
+    //       stroke="currentColor"
+    //       strokeWidth="2"
+    //       viewBox="0 0 24 24"
+    //     >
+    //       <circle cx="12" cy="12" r="10" />
+    //       <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+    //       <line x1="12" y1="17" x2="12.01" y2="17" />
+    //     </svg>
+    //   ),
+    //   path: "/ai-conversation-package-service",
+    // },
+
     {
       id: "levels",
       label: "Levels",
@@ -148,14 +168,14 @@ const DashboardManagerLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Dark Gradient Sidebar */}
+      {/* White Sidebar */}
       <aside
         className={`${
           sidebarOpen ? "w-72" : "w-20"
-        } bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transition-all duration-300 flex flex-col shadow-2xl`}
+        } bg-white text-gray-800 transition-all duration-300 flex flex-col shadow-lg border-r border-gray-200`}
       >
         {/* Header */}
-        <div className="p-6 border-b border-slate-700/50">
+        <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center space-x-3">
@@ -170,8 +190,8 @@ const DashboardManagerLayout = () => {
                   </svg>
                 </div>
                 <div>
-                  <h1 className="font-bold text-lg text-white">Manager Hub</h1>
-                  <p className="text-xs text-slate-400">{getMe?.email}</p>
+                  <h1 className="font-bold text-lg text-gray-800">Manager Hub</h1>
+                  <p className="text-xs text-gray-500">{getMe?.email}</p>
                 </div>
               </div>
             )}
@@ -179,7 +199,7 @@ const DashboardManagerLayout = () => {
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-slate-300 hover:text-white hover:bg-slate-700/50 p-2"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2"
             >
               <svg
                 width="18"
@@ -203,7 +223,7 @@ const DashboardManagerLayout = () => {
             {/* Main Section */}
             <div>
               {sidebarOpen && (
-                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-3">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">
                   Main Menu
                 </h3>
               )}
@@ -225,8 +245,8 @@ const DashboardManagerLayout = () => {
                         activeTab === item.id
                           ? "bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30"
                           : openSubmenu === item.id
-                          ? "bg-slate-700/70 text-white"
-                          : "text-slate-300 hover:text-white hover:bg-slate-700/60"
+                          ? "bg-gray-100 text-gray-900"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                       } ${
                         sidebarOpen
                           ? "px-4 py-3.5 space-x-3"
@@ -238,7 +258,7 @@ const DashboardManagerLayout = () => {
                         className={`${
                           activeTab === item.id
                             ? "text-white"
-                            : "text-slate-400 group-hover:text-white"
+                            : "text-gray-500 group-hover:text-gray-700"
                         } transition-colors duration-300`}
                       >
                         {item.icon}
@@ -277,20 +297,20 @@ const DashboardManagerLayout = () => {
                               key={child.id}
                               onClick={() => {
                                 setActiveTab(child.id);
-                                setOpenSubmenu(null);
+                                // Keep submenu open when clicking child items
                               }}
                               style={{ animationDelay: `${idx * 50}ms` }}
                               className={`w-full cursor-pointer text-left text-sm rounded-lg px-4 py-2.5 transition-all duration-200 flex items-center space-x-3 group ${
                                 activeTab === child.id
-                                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
-                                  : "text-slate-400 hover:text-white hover:bg-slate-700/60 hover:pl-5"
+                                  ? "bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30"
+                                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:pl-5"
                               }`}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
                                   activeTab === child.id
                                     ? "bg-white"
-                                    : "bg-slate-500 group-hover:bg-blue-400"
+                                    : "bg-gray-400 group-hover:bg-blue-400"
                                 }`}
                               />
                               <span>{child.label}</span>
@@ -306,7 +326,7 @@ const DashboardManagerLayout = () => {
         </nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-slate-700/50">
+        <div className="p-4 border-t border-gray-200">
           <div
             className={`flex items-center ${
               sidebarOpen ? "space-x-3" : "justify-center"
@@ -317,17 +337,17 @@ const DashboardManagerLayout = () => {
             </div>
             {sidebarOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
+                <p className="text-sm font-medium text-gray-800 truncate">
                   {getMe?.fullName}
                 </p>
-                <p className="text-xs text-slate-400 truncate">{getMe?.role}</p>
+                <p className="text-xs text-gray-500 truncate">{getMe?.role}</p>
               </div>
             )}
             {sidebarOpen && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-slate-400 hover:text-white hover:bg-slate-700/50 p-1"
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1"
               >
                 <svg
                   width="16"
@@ -350,24 +370,23 @@ const DashboardManagerLayout = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-h-screen">
         {/* Modern Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                       {navigationItems.find((item) => item.id === activeTab)
                         ?.label || "Dashboard"}
                     </h1>
-                    <div className="h-6 w-px bg-gradient-to-b from-slate-200 to-transparent"></div>
-                    <span className="text-sm text-slate-500 font-medium">
-                      Reviewer Hub
+                    <div className="h-6 w-px bg-gradient-to-b from-gray-200 to-transparent"></div>
+                    <span className="text-sm text-gray-500 font-medium">
+                      Manager Hub
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500 mt-1">
-                    Welcome back, Sarah! Here&apos;s what&apos;s happening
-                    today.
+                  <p className="text-sm text-gray-500 mt-1">
+                    Welcome back! Here&apos;s what&apos;s happening today.
                   </p>
                 </div>
               </div>
@@ -376,7 +395,7 @@ const DashboardManagerLayout = () => {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 bg-gradient-to-br from-slate-50 to-white">
+        <div className="flex-1 bg-white">
           <div className="p-6 h-full">
             {activeTab === "statisticsForManagers" && (
               <div className="h-full">
@@ -400,139 +419,20 @@ const DashboardManagerLayout = () => {
               </div>
             )}
 
+             {/* {activeTab === "aiConversationPackageService" && (
+              <div className="h-full">
+                <AiConversationPackageManagement />
+              </div>
+            )} */}
+
             {/* Level Pages */}
-            {activeTab === "level-a1" && <LevelA1 />}
-
-            {activeTab === "level-a2" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">A2</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        A2 - Elementary Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Elementary level for basic communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for A2 level will be displayed here. This level
-                      focuses on building basic communication skills.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-b1" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">B1</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        B1 - Intermediate Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Intermediate level for confident communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for B1 level will be displayed here. This level
-                      helps learners become more confident in everyday
-                      situations.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-b2" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">B2</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        B2 - Upper Intermediate Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Upper intermediate for advanced communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for B2 level will be displayed here. This level
-                      prepares learners for professional and academic contexts.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-c1" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">C1</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        C1 - Advanced Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Advanced level for fluent communication
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for C1 level will be displayed here. This level
-                      focuses on achieving fluency and natural expression.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "level-c2" && (
-              <div className="h-full">
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-2xl">C2</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800">
-                        C2 - Mastery Level
-                      </h2>
-                      <p className="text-slate-600">
-                        Mastery level for native-like proficiency
-                      </p>
-                    </div>
-                  </div>
-                  <div className="prose max-w-none">
-                    <p className="text-slate-700">
-                      Content for C2 level will be displayed here. This level
-                      represents near-native proficiency and mastery.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {activeTab === "level-a1" && <LevelA1 level="A1" />}
+            {activeTab === "level-a2" && <LevelA1 level="A2"/>}
+            {activeTab === "level-b1" && <LevelA1 level="B1" />}
+            {activeTab === "level-b2" && <LevelA1 level="B2"/>}
+            {activeTab === "level-c1" && <LevelA1 level="C1"/>}
+            {activeTab === "level-c2" && <LevelA1 level="C2" />}
+            
           </div>
         </div>
       </main>

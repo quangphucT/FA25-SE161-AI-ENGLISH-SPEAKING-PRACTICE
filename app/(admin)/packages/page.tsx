@@ -86,7 +86,6 @@ const ServicePackageManagement = () => {
     status: "Active",
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
-  const [actionType, setActionType] = useState<"delete">("delete");
   const [packageToAction, setPackageToAction] = useState<ServicePackage | null>(
     null
   );
@@ -111,9 +110,9 @@ const ServicePackageManagement = () => {
     setShowUpdateModal(true);
   };
 
-  const handleAction = (pkg: ServicePackage, action: "delete") => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleAction = (pkg: ServicePackage, _action: "delete") => {
     setPackageToAction(pkg);
-    setActionType(action);
     setShowConfirmDialog(true);
   };
 
@@ -133,7 +132,8 @@ const ServicePackageManagement = () => {
       });
       setShowUpdateModal(false);
       setPackageToUpdate(null);
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       // errors are handled in hook via toast
     }
   };

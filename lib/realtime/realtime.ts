@@ -90,10 +90,14 @@ export type ReviewCompletedHandler = (review: ReviewCompleted) => void;
   }
 
   // Helper to check if error indicates server is unavailable
-  private isConnectionRefusedError(error: any): boolean {
+  private isConnectionRefusedError(error: unknown): boolean {
     if (!error) return false;
     
-    const errorMessage = error.message || error.toString() || '';
+    // Type guard to safely access error properties
+    const errorMessage = 
+      (error instanceof Error ? error.message : '') ||
+      (typeof error === 'string' ? error : '') ||
+      String(error);
     const errorString = errorMessage.toLowerCase();
     
     // Check for various connection refused indicators
@@ -288,7 +292,7 @@ export type ReviewCompletedHandler = (review: ReviewCompleted) => void;
       this.isServerUnavailable = false;
 
       // Rejoin the Reviewers group after reconnection
-      this.joinReviewerGroup().catch((err: any) =>
+      this.joinReviewerGroup().catch((err: unknown) =>
         console.warn('⚠️ [SIGNALR] Failed to rejoin Reviewers group after reconnect:', err)
       );
 

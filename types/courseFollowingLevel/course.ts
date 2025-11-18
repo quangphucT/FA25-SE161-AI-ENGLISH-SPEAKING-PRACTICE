@@ -30,16 +30,16 @@ export interface Chapter {
 export interface Course {
   courseId: string;
   title: string;
+  description?: string;
   type: string;
   numberOfChapter: number;
   orderIndex: number;
   level: string;
   price: number;
-  isFree: boolean;
+  status: "Active" | "Inactive";
+  duration: number;
   chapters: Chapter[];
 }
-
-// ✅ Response khi tạo 1 khóa học
 export interface CreateCourseResponse {
   isSucess: boolean;
   data: Course;
@@ -48,15 +48,13 @@ export interface CreateCourseResponse {
 }
 export interface CreateCourseRequest {
   title: string;
-  type: string;
+  description: string;
   numberOfChapter: number;
   orderIndex: number;
-  level: number | string;
-  chapters: Array<{
-    title: string;
-    description?: string;
-    numberOfExercise?: number;
-  }>;
+  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+   price: number;
+  duration: number;
+  status: "Active" | "Inactive";
 }
 
 // ✅ Response khi lấy danh sách khóa học

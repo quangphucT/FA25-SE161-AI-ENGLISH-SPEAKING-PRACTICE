@@ -50,7 +50,6 @@ const ScheduleMentor = () => {
   const [showAddSlotModal, setShowAddSlotModal] = useState(false);
   const [showEntryTestModal, setShowEntryTestModal] = useState(false);
   const [selectedStudentTest, setSelectedStudentTest] = useState<StudentTestData | null>(null);
-  const [selectedDay, setSelectedDay] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -359,7 +358,6 @@ const ScheduleMentor = () => {
         isBooked: false
       };
       setScheduleData([...scheduleData, newSlot]);
-      setSelectedDay("");
       setSelectedDate("");
       setStartTime("");
       setEndTime("");
@@ -650,7 +648,6 @@ const ScheduleMentor = () => {
                   variant="outline"
                   onClick={() => {
                     setShowAddSlotModal(false);
-                    setSelectedDay("");
                     setSelectedDate("");
                     setStartTime("");
                     setEndTime("");

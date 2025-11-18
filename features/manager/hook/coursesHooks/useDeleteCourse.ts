@@ -9,7 +9,7 @@ export const useDeleteCourse = () => {
     mutationFn: (id) => deleteCourseService(id),
     onSuccess: (data) => {
       toast.success(data.message || "Xóa khóa học thành công");
-      queryClient.invalidateQueries({ queryKey: ["getCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["getCoursesOfLevel"] });
     },
     onError: (error) => {
       toast.error(error.message || "Xóa khóa học thất bại");
