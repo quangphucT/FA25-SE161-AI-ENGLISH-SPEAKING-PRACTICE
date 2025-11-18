@@ -723,7 +723,7 @@ const LearnerManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLearners.map((learner, idx) => (
+            {filteredLearners.map((learner) => (
               <TableRow
                 key={learner.id}
                 className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"

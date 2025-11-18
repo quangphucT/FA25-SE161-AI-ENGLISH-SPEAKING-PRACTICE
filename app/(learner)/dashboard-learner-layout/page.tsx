@@ -187,7 +187,7 @@ export default function LearnerDashboard() {
 
           {/* PROGRESS PAGE */}
           {activeMenu === "learnerSendingAudioToReviewer" && (
-            <SendingAudioToReviewer setActiveMenu={setActiveMenu} />
+            <SendingAudioToReviewer />
           )}
 
           {/* PROFILE PAGE */}

@@ -31,10 +31,16 @@ import EnhancedVoiceAssistant from "@/components/ai-conversation/EnhancedVoiceAs
 import { useChartCoinForConversation } from "@/features/learner/hooks/chartCoinForConversation/useChartCoinForConversation";
 import { useGetAIPackages } from "@/features/learner/hooks/ai-packagesHooks/aiPackages";
 
+interface AIPackage {
+  allowedMinutes: number;
+  amountCoin: number;
+  aiConversationChargeId: string;
+}
+
 const ConversationWithAI = () => {
   const router = useRouter();
   const { data: userData, refetch: refetchUserData } = useGetMeQuery();
-  const {data: aiPackagesData, isLoading: isLoadingPackages} = useGetAIPackages();
+  const {data: aiPackagesData} = useGetAIPackages();
   
   const [name, setName] = useState("");
   const [duration, setDuration] = useState<string>("");
@@ -47,7 +53,7 @@ const ConversationWithAI = () => {
 
   // Use API data for duration options - data is directly in aiPackagesData, not aiPackagesData.data
   const durationOptions = Array.isArray(aiPackagesData) 
-    ? aiPackagesData.map((pkg: any) => ({
+    ? aiPackagesData.map((pkg: AIPackage) => ({
         value: pkg.allowedMinutes.toString(),
         label: `${pkg.allowedMinutes} phút`,
         coins: pkg.amountCoin,
@@ -55,7 +61,7 @@ const ConversationWithAI = () => {
       }))
     : [];
 
-  const selectedOption = durationOptions.find((opt: any) => opt.value === duration);
+  const selectedOption = durationOptions.find((opt) => opt.value === duration);
   const requiredCoins = selectedOption?.coins || 0;
   const userCoins = userData?.coinBalance || 0;
   const hasEnoughCoins = userCoins >= requiredCoins;
@@ -78,7 +84,7 @@ const ConversationWithAI = () => {
       const data = JSON.parse(bodyText);
       setToken(data.token);
       setServerUrl(data.url);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Không thể kết nối. Vui lòng thử lại!");
       setShowLiveKit(false);
     }
@@ -402,7 +408,7 @@ const ConversationWithAI = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {durationOptions.length > 0 ? (
-                        durationOptions.map((option: any) => (
+                        durationOptions.map((option) => (
                           <SelectItem key={option.id} value={option.value}>
                             <div className="flex cursor-pointer items-center justify-between w-full gap-8">
                               <span className="font-medium">{option.label}</span>

@@ -102,8 +102,9 @@ const EntranceTest = () => {
         toast.error("Phiên đã hết hạn, vui lòng đăng nhập lại.");
         router.push("/sign-in");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+      console.error("Error navigating to dashboard:", _error);
     }
     setLoadingToDashboardLearner(false);
   };
@@ -211,7 +212,7 @@ const EntranceTest = () => {
       const tests = Array.from(sectionMap.entries()).map(
         ([type, questions]) => ({
           type,
-          assessmentDetails: questions.map((q, idx) => {
+          assessmentDetails: questions.map((q) => {
             const questionIndex = allQuestions.findIndex(
               (aq) => aq.id === q.id
             );

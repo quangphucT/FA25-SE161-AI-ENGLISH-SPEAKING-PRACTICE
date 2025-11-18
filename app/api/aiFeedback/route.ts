@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     let data;
     try {
       data = JSON.parse(responseText);
-    } catch (parseError) {
+    } catch (_parseError) {
       throw new Error("Invalid JSON response from AI service");
     }
     return NextResponse.json(data);

@@ -246,7 +246,7 @@ const ManagerManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredManagers.map((Manager, idx) => (
+            {filteredManagers.map((Manager) => (
               <TableRow key={Manager.id} className="hover:bg-[#f0f7e6]">
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">

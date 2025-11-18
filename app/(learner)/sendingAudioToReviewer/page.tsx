@@ -1,8 +1,5 @@
 
-interface SendingAudioToReviewerProps {
-  setActiveMenu?: (menu: string) => void;
-}
-const SendingAudioToReviewer = ({ setActiveMenu }: SendingAudioToReviewerProps) => {
+const SendingAudioToReviewer = () => {
   return (
     <div>
       abc

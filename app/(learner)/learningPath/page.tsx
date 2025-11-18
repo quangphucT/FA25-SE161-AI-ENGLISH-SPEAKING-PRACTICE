@@ -37,7 +37,7 @@ const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
     Boolean(learnerData)
   );
 
-  const { mutate: startExercise, isPending: isStarting } = useStartExercise();
+  const { mutate: startExercise, isPending: _isStarting } = useStartExercise();
   const [loadingExerciseId, setLoadingExerciseId] = useState<string | null>(null);
 
   // Ngay khi vào trang lấy thông tin user
@@ -226,7 +226,7 @@ const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
         </h2>
 
         {chapters && chapters.length > 0 ? (
-          chapters.map((chapter, index) => (
+          chapters.map((chapter) => (
             <Card
               key={chapter.learningPathChapterId}
               className={`p-6 border-2 transition-all hover:shadow-md ${
@@ -282,7 +282,7 @@ const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
                   {/* Exercises */}
                   {chapter.exercises && chapter.exercises.length > 0 && (
                     <div className="mt-4 space-y-2 pl-4 border-l-2 border-gray-200">
-                      {chapter.exercises.map((exercise, exerciseIndex) => (
+                      {chapter.exercises.map((exercise) => (
                         <div
                           key={exercise.learningPathExerciseId}
                           className={`flex items-center justify-between p-3 rounded-lg border ${

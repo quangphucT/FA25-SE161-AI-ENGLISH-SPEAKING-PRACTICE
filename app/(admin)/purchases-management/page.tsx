@@ -664,7 +664,7 @@ const PurchasesManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPurchases.map((purchase, idx) => (
+              {filteredPurchases.map((purchase) => (
                 <TableRow key={purchase.purchaseId}>
                   
                   <TableCell>

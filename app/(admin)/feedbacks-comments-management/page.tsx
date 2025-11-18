@@ -290,7 +290,7 @@ const FeedbacksCommentsManagement = () => {
     setShowDetailsModal(true);
   };
 
-  const handleAction = (feedback: Feedback, action: "reject") => {
+  const handleAction = (feedback: Feedback, _action: "reject") => {
     setSelectedFeedback(feedback);
     setShowActionModal(true);
   };
@@ -415,7 +415,7 @@ const FeedbacksCommentsManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredFeedbacks.map((feedback, idx) => (
+              {filteredFeedbacks.map((feedback) => (
                 <TableRow key={feedback.feedbackId}>
                   
                   <TableCell>
