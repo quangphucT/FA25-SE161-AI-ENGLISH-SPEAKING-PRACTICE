@@ -16,24 +16,34 @@ import {
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import Overview from "../overview/page";
 import WalletCoinPurchase from "../Wallet_coinPurchase/page";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import LearningPath from "../learningPath/page";
-import Progress from "../progress/page";
 import { handleLogout } from "@/utils/auth";
 import ConversationWithAI from "../coversation-withAI/page";
 import EnrollingCourse from "../enrolling-courses/page";
+import SendingAudioToReviewer from "../sendingAudioToReviewer/page";
 
 
 export default function LearnerDashboard() {
-  const [activeMenu, setActiveMenu] = useState("overview");
+  const searchParams = useSearchParams();
+  const menuParam = searchParams?.get("menu");
+  const [activeMenu, setActiveMenu] = useState(menuParam || "overview");
   const { data: userData } = useGetMeQuery();
+  
+  // Update active menu when URL param changes
+  useEffect(() => {
+    if (menuParam) {
+      setActiveMenu(menuParam);
+    }
+  }, [menuParam]);
   const sidebarMenu = [
     { id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
     { id: "learningPath", label: "Lộ trình học", icon: BookOpen, description: "Xem và học theo lộ trình" },
     { id: "enrollingCourses", label: "Khoá học", icon: BookMarked, description: "Tham gia các khoá học" },
     { id: "wallet", label: "Ví Coin", icon: Wallet, description: "Quản lý và nạp Coin" },
     { id: "conversationWithAI", label: "Trò chuyện với AI", icon: PlayCircle, description: "Giao tiếp và luyện tập" },
-    { id: "progress", label: "Tiến độ", icon: BarChart3, description: "Theo dõi học tập" },
+    { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
   ];
 
@@ -176,8 +186,8 @@ export default function LearnerDashboard() {
           )}
 
           {/* PROGRESS PAGE */}
-          {activeMenu === "progress" && (
-            <Progress setActiveMenu={setActiveMenu} />
+          {activeMenu === "learnerSendingAudioToReviewer" && (
+            <SendingAudioToReviewer setActiveMenu={setActiveMenu} />
           )}
 
           {/* PROFILE PAGE */}

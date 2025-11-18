@@ -893,11 +893,7 @@ const EntranceTest = () => {
                         <span>🏆</span>
                         <span>{resultsAfterTest.assignedLevel}</span>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-gray-700 mb-8 text-base">
+                      <p className="text-gray-700 mb-8 text-base">
                   Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng cao
                   kỹ năng của bạn! 💪
                 </p>
@@ -911,6 +907,11 @@ const EntranceTest = () => {
                     Bắt đầu học ngay
                   </Button>
                 )}
+                    </div>
+                  </div>
+                )}
+
+                
               </>
             )}
           </div>
