@@ -31,46 +31,47 @@ import { useUpdateCoinServicePackage } from "@/features/admin/hooks/updateCoinSe
 import { CreateCoinServicePackageRequest } from "@/types/coin_servicePackage";
 
 const ServicePackageManagement = () => {
+  const [search, setSearch] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  
   // call hooks
   const {
     data: servicePackagesData,
     isLoading,
     error
-  } = useGetServicePackages();
-const {mutateAsync: createServicePackage} = useCreateCoinServicePackage();
-const {mutateAsync: deleteServicePackage} = deleteCoinServicePackageMutation();
-const {mutateAsync: updateServicePackage} = useUpdateCoinServicePackage();
-const createPackageSchema = z.object({
-  name: z.string().min(1, "Vui lòng nhập tên gói"),
-  description: z.string().min(1, "Vui lòng nhập mô tả"),
-  price: z.number().min(1, "Giá phải lớn hơn 0"),
-  numberOfCoin: z.number().min(1, "Phải có ít nhất 1 xu"),
-  bonusPercent: z.number().min(0).max(100, "Bonus trong khoảng 0 - 100"),
-  status: z.enum(["Active", "Inactive"]),
-});
+  } = useGetServicePackages("1", "100", search, statusFilter === "All" ? "" : statusFilter);
+  
+  const {mutateAsync: createServicePackage} = useCreateCoinServicePackage();
+  const {mutateAsync: deleteServicePackage} = deleteCoinServicePackageMutation();
+  const {mutateAsync: updateServicePackage} = useUpdateCoinServicePackage();
+  
+  const createPackageSchema = z.object({
+    name: z.string().min(1, "Vui lòng nhập tên gói"),
+    description: z.string().min(1, "Vui lòng nhập mô tả"),
+    price: z.number().min(1, "Giá phải lớn hơn 0"),
+    numberOfCoin: z.number().min(1, "Phải có ít nhất 1 xu"),
+    bonusPercent: z.number().min(0).max(100, "Bonus trong khoảng 0 - 100"),
+    status: z.enum(["Active", "Inactive"]),
+  });
 
-type CreatePackageFormData = z.infer<typeof createPackageSchema>;
+  type CreatePackageFormData = z.infer<typeof createPackageSchema>;
 
-const form = useForm<CreatePackageFormData>({
-  resolver: zodResolver(createPackageSchema),
-  defaultValues: {
-    name: "",
-    description: "",
-    price: 0,
-    numberOfCoin: 0,
-    bonusPercent: 0,
-    status: "Active",
-  },
-});
-
+  const form = useForm<CreatePackageFormData>({
+    resolver: zodResolver(createPackageSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      price: 0,
+      numberOfCoin: 0,
+      bonusPercent: 0,
+      status: "Active",
+    },
+  });
 
   const onSubmit = (values: z.infer<typeof createPackageSchema>) => {
     createServicePackage(values);
     setShowCreateModal(false);
   };
-
-  const [search, setSearch] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
   const [packageToUpdate, setPackageToUpdate] = useState<ServicePackage | null>(
@@ -91,20 +92,10 @@ const form = useForm<CreatePackageFormData>({
   );
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
-  // Filter packages
-  const packages = servicePackagesData?.isSuccess && Array.isArray(servicePackagesData.data)
-    ? servicePackagesData.data
+  // Get packages from API (already filtered by API)
+  const packages = servicePackagesData?.isSucess && servicePackagesData.data?.items
+    ? servicePackagesData.data.items
     : [];
-
-  const filteredPackages = packages.filter((pkg) => {
-    const matchesSearch =
-      pkg.name.toLowerCase().includes(search.toLowerCase()) ||
-      pkg.servicePackageId.toLowerCase().includes(search.toLowerCase()) ||
-      pkg.description.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || pkg.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
 
   const handleUpdate = (pkg: ServicePackage) => {
     setPackageToUpdate(pkg);
@@ -165,21 +156,9 @@ const form = useForm<CreatePackageFormData>({
   }, []);
 
   return (
-    <div className="p-6">
+    <div className="p-6"> 
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </Button>
+        <div className="flex items-center gap-4"> 
           <Input
             placeholder="Tìm kiếm gói dịch vụ..."
             value={search}
@@ -238,7 +217,7 @@ const form = useForm<CreatePackageFormData>({
                   <div className="text-gray-500">Đang tải...</div>
                 </TableCell>
               </TableRow>
-            ) : error || servicePackagesData?.isSuccess === false ? (
+            ) : error || servicePackagesData?.isSucess === false ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <div className="text-red-500">
@@ -246,14 +225,14 @@ const form = useForm<CreatePackageFormData>({
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredPackages.length === 0 ? (
+            ) : packages.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <div className="text-gray-500">Không có gói dịch vụ nào</div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPackages.map((pkg, idx) => (
+              packages.map((pkg, idx) => (
                 <TableRow
                   key={pkg.servicePackageId}
                   className="hover:bg-[#f0f7e6]"

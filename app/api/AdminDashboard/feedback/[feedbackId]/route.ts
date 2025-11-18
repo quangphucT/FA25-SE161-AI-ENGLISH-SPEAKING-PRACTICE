@@ -10,7 +10,7 @@ export async function GET(
   try {
     // Build URL with path parameter and query parameters
     const backendUrl = new URL(
-      `${process.env.BE_API_URL}/AdminFeedback/${feedbackId}/detail`
+      `${process.env.BE_API_URL}/AdminFeedback/${feedbackId}`
     );
 
     const backendResponse = await fetch(backendUrl.toString(), {

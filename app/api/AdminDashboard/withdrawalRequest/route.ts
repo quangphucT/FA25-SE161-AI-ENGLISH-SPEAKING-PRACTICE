@@ -1,29 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-
-
   const accessToken = request.cookies.get("accessToken")?.value;
   const { searchParams } = new URL(request.url);
   const pageNumber = searchParams.get("pageNumber");
   const pageSize = searchParams.get("pageSize");
-  const search = searchParams.get("search");
-  const filter = searchParams.get("filter");
   try {
+    // Build URL with query parameters
     const backendUrl = new URL(
-      `${process.env.BE_API_URL}/AdminServicePackage`,
+      `${process.env.BE_API_URL}/AdminWithdrawal/pending`
     );
     if (pageNumber) {
       backendUrl.searchParams.set("pageNumber", pageNumber);
     }
     if (pageSize) {
       backendUrl.searchParams.set("pageSize", pageSize);
-    }
-    if (search) {
-      backendUrl.searchParams.set("search", search);
-    }
-    if (filter) {
-      backendUrl.searchParams.set("filter", filter);
     }
     const backendResponse = await fetch(backendUrl.toString(), {
       method: "GET",
@@ -35,6 +26,7 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await backendResponse.json();
+
     if (!backendResponse.ok) {
       return NextResponse.json(data, { status: backendResponse.status });
     }
@@ -43,12 +35,12 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json(
-        { message: error.message || "Create question test failed" },
+        { message: error.message || "Failed to fetch manager" },
         { status: 500 }
       );
     }
     return NextResponse.json(
-      { message: "Create question test failed" },
+      { message: "Failed to fetch manager" },
       { status: 500 }
     );
   }

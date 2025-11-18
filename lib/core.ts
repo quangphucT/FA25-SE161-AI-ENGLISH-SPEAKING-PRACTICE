@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { deleteCookie } from 'cookies-next';
-import { useAuthStore } from '@/lib/store/authStore';
+import { useUserStore } from '@/store/useStore';
 
 // API error response data structure
 export interface ApiErrorData {
@@ -250,7 +250,7 @@ const apiService = new ApiService(process.env.NEXT_PUBLIC_API_URL_BACKEND || '',
     deleteCookie('auth-token', { path: '/' });
 
     // Clear auth store
-    useAuthStore.getState().logout();
+    useUserStore.getState().logout();
 
     // Dispatch logout event for other components to listen to
     window.dispatchEvent(new Event('logout'));

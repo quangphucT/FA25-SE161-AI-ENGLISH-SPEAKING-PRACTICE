@@ -1,24 +1,49 @@
-import { GetQuestionTestResponse } from "@/types/questionTest";
 import { GetServicePackagesResponse } from "@/types/servicePackage/servicePackage";
 import fetchWithAuth from "@/utils/fetchWithAuth";
 
 export const getServicePackages =
-  async (): Promise<GetServicePackagesResponse> => {
+  async (pageNumber: string, pageSize: string, search: string, filter: string): Promise<GetServicePackagesResponse> => {
     try {
-      const response = await fetchWithAuth(`/api/admin/get-service-packages`, {
-        method: "GET",
-        credentials: "include",
-      });
+      // Build query string
+      const params = new URLSearchParams();
+      if (pageNumber && pageNumber.trim()) {
+        params.set("pageNumber", pageNumber);
+      }
+      if (pageSize && pageSize.trim()) {
+        params.set("pageSize", pageSize);
+      }
+      if (search && search.trim()) {
+        params.set("search", search);
+      }
+      if (filter && filter.trim()) {
+        params.set("filter", filter);
+      }
+      
+      const queryString = params.toString();
+      const url = `/api/admin/get-service-packages${queryString ? `?${queryString}` : ""}`;
+      
+      const response = await fetchWithAuth(url);
 
       const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Create question test failed");
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch service packages");
+      }
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message =
-        error?.response?.data?.message ||
-        error.message ||
-        "Create question test failed";
+        (error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "data" in error.response &&
+        error.response.data &&
+        typeof error.response.data === "object" &&
+        "message" in error.response.data
+          ? (error.response.data as { message: string }).message
+          : null) ||
+        (error instanceof Error ? error.message : null) ||
+        "Failed to fetch service packages";
       throw new Error(message);
     }
   };

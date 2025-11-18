@@ -17,7 +17,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  useAdminFeedback,
+  useAdminFeedbackDetail,
+  useAdminFeedbackReject,
+} from "@/features/admin/hooks/useAdminFeedback";
+import {
+  Feedback as ApiFeedback,
+  AdminFeedbackResponse,
+} from "@/features/admin/services/adminFeedbackService";
 
 // Type definitions
 interface User {
@@ -41,233 +52,151 @@ interface Feedback {
   rating: number; // 1-5 stars
   content: string;
   createdAt: string;
-  status: "approved" | "rejected";
+  status: "Active" | "Rejected" | "Pending";
   type: "feedback" | "comment";
 }
 
-const sampleFeedbacks: Feedback[] = [
-  {
-    feedbackId: "FB001",
+// Map API status to UI status format
+const mapApiStatusToUI = (apiStatus: string): "Active" | "Rejected" | "Pending" => {
+  const normalized = apiStatus.trim();
+  // API already returns "Active", "Rejected", "Pending" in some cases
+  if (normalized === "Active") return "Active";
+  if (normalized === "Rejected") return "Rejected";
+  if (normalized === "Pending") return "Pending";
+  // Fallback for old format
+  const lower = normalized.toLowerCase();
+  if (lower === "approved" || lower === "active") return "Active";
+  if (lower === "rejected") return "Rejected";
+  return "Pending";
+};
+
+// Map API feedback to UI feedback structure
+const mapApiFeedbackToUI = (apiFeedback: ApiFeedback): Feedback => {
+  // Determine target type based on reviewId presence
+  // If reviewId exists, it's a mentor feedback, otherwise it's a package feedback
+  const targetType: "mentor" | "package" = apiFeedback.reviewId ? "mentor" : "package";
+  
+  return {
+    feedbackId: apiFeedback.feedbackId,
     reviewer: {
-      id: "L001",
-      fullName: "Nguyễn Văn An",
-      email: "an@gmail.com",
-      userType: "learner",
+      id: apiFeedback.feedbackId, // Using feedbackId as id since we don't have user id
+      fullName: apiFeedback.senderName,
+      email: apiFeedback.senderEmail,
+      userType: "learner", // Assuming all feedbacks are from learners
     },
     target: {
-      type: "mentor",
-      id: "M001",
-      name: "Ms. Sarah Johnson",
+      type: targetType,
+      id: apiFeedback.reviewId || apiFeedback.feedbackId,
+      name: apiFeedback.reviewerName || "N/A",
     },
-    rating: 5,
-    content:
-      "Cô Sarah dạy rất tốt, phát âm chuẩn và nhiệt tình hướng dẫn. Tôi đã cải thiện được rất nhiều sau 1 tháng học.",
-    createdAt: "2025-09-20T10:30:00Z",
-    status: "approved",
-    type: "feedback",
-  },
-  {
-    feedbackId: "FB002",
-    reviewer: {
-      id: "L002",
-      fullName: "Trần Thị Bình",
-      email: "binh@email.com",
-      userType: "learner",
-    },
-    target: {
-      type: "mentor",
-      id: "M002",
-      name: "Mr. David Wilson",
-    },
-    rating: 2,
-    content:
-      "Mentor này không professional lắm, hay cancel class và attitude không tốt. Tôi không recommend.",
-    createdAt: "2025-09-19T14:20:00Z",
-    status: "rejected",
-    type: "feedback",
-  },
-  {
-    feedbackId: "FB003",
-    reviewer: {
-      id: "L003",
-      fullName: "Lê Minh Hoàng",
-      email: "hoang@yahoo.com",
-      userType: "learner",
-    },
-    target: {
-      type: "package",
-      id: "PKG001",
-      name: "Basic English Conversation",
-    },
-    rating: 4,
-    content:
-      "Package khá ổn, content phong phú. Chỉ có điều giá hơi cao so với thị trường.",
-    createdAt: "2025-09-18T09:15:00Z",
-    status: "approved",
-    type: "feedback",
-  },
-  {
-    feedbackId: "FB004",
-    reviewer: {
-      id: "L004",
-      fullName: "Phạm Thu Dung",
-      email: "dung@hotmail.com",
-      userType: "learner",
-    },
-    target: {
-      type: "mentor",
-      id: "M003",
-      name: "Ms. Emily Chen",
-    },
-    rating: 1,
-    content:
-      "This mentor is completely unprofessional and rude. Waste of money and time!",
-    createdAt: "2025-09-17T20:45:00Z",
-    status: "rejected",
-    type: "feedback",
-  },
-  {
-    feedbackId: "FB005",
-    reviewer: {
-      id: "L006",
-      fullName: "Nguyễn Thị Lan",
-      email: "lan@outlook.com",
-      userType: "learner",
-    },
-    target: {
-      type: "package",
-      id: "PKG003",
-      name: "IELTS Preparation Package",
-    },
-    rating: 5,
-    content:
-      "Excellent course! Very comprehensive materials and the practice tests are exactly like the real IELTS exam. Highly recommended!",
-    createdAt: "2025-09-16T11:30:00Z",
-    status: "approved",
-    type: "comment",
-  },
-  {
-    feedbackId: "FB006",
-    reviewer: {
-      id: "L007",
-      fullName: "Vũ Minh Khôi",
-      email: "khoi@yahoo.com",
-      userType: "learner",
-    },
-    target: {
-      type: "mentor",
-      id: "M001",
-      name: "Ms. Sarah Johnson",
-    },
-    rating: 3,
-    content:
-      "Okay mentor but sometimes hard to understand her accent. Teaching method is good though.",
-    createdAt: "2025-09-15T16:20:00Z",
-    status: "approved",
-    type: "comment",
-  },
-  {
-    feedbackId: "FB007",
-    reviewer: {
-      id: "L008",
-      fullName: "Đặng Thị Hạnh",
-      email: "hanh@gmail.com",
-      userType: "learner",
-    },
-    target: {
-      type: "package",
-      id: "PKG002",
-      name: "Business English Premium",
-    },
-    rating: 4,
-    content:
-      "Great package for business professionals. The role-play sessions are very practical and useful for real-world scenarios.",
-    createdAt: "2025-09-14T13:45:00Z",
-    status: "approved",
-    type: "feedback",
-  },
-  {
-    feedbackId: "FB008",
-    reviewer: {
-      id: "L009",
-      fullName: "Trần Văn Tùng",
-      email: "tung@hotmail.com",
-      userType: "learner",
-    },
-    target: {
-      type: "mentor",
-      id: "M005",
-      name: "Ms. Lisa Wang",
-    },
-    rating: 5,
-    content:
-      "Amazing mentor! Very patient and always explains things clearly. My speaking confidence has improved dramatically.",
-    createdAt: "2025-09-13T10:15:00Z",
-    status: "approved",
-    type: "feedback",
-  },
-  {
-    feedbackId: "FB009",
-    reviewer: {
-      id: "L010",
-      fullName: "Lê Thị Mai",
-      email: "mai@gmail.com",
-      userType: "learner",
-    },
-    target: {
-      type: "package",
-      id: "PKG004",
-      name: "Advanced Speaking Package",
-    },
-    rating: 4,
-    content:
-      "The speaking exercises are very challenging and helpful. Good value for money but could use more interactive elements.",
-    createdAt: "2025-09-12T14:30:00Z",
-    status: "approved",
-    type: "feedback",
-  },
-  {
-    feedbackId: "FB010",
-    reviewer: {
-      id: "L011",
-      fullName: "Nguyễn Quang Minh",
-      email: "minh@yahoo.com",
-      userType: "learner",
-    },
-    target: {
-      type: "mentor",
-      id: "M006",
-      name: "Mr. James Smith",
-    },
-    rating: 2,
-    content:
-      "Mentor often comes late to sessions and doesn't prepare well. Not satisfied with the service quality.",
-    createdAt: "2025-09-11T09:45:00Z",
-    status: "rejected",
-    type: "comment",
-  },
-];
+    rating: apiFeedback.rating,
+    content: apiFeedback.content,
+    createdAt: apiFeedback.createdAt,
+    status: mapApiStatusToUI(apiFeedback.status),
+    type: apiFeedback.type as "feedback" | "comment",
+  };
+};
 
 const FeedbacksCommentsManagement = () => {
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
+  const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(
     null
   );
   const [showActionModal, setShowActionModal] = useState<boolean>(false);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const queryClient = useQueryClient();
 
-  // Filter feedbacks
-  const filteredFeedbacks = sampleFeedbacks.filter((feedback) => {
-    const matchesSearch = feedback.content
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "All" || feedback.status === statusFilter;
+  // Convert status filter for API (UI format -> API format)
+  const apiStatus = useMemo(() => {
+    if (statusFilter === "All") return "";
+    // Map UI status to API status format
+    if (statusFilter === "Active") return "approved";
+    if (statusFilter === "Rejected") return "rejected";
+    if (statusFilter === "Pending") return "pending";
+    return statusFilter; // Fallback to original value
+  }, [statusFilter]);
 
-    return matchesSearch && matchesStatus;
-  });
+  // Fetch feedbacks from API
+  const feedbacksQuery = useAdminFeedback(
+    pageNumber,
+    pageSize,
+    apiStatus,
+    search
+  );
+  const { data, isLoading, error } = feedbacksQuery;
+  const feedbacksResponse = data as AdminFeedbackResponse | undefined;
+
+  // Fetch feedback detail when selected
+  const feedbackDetailQuery = useAdminFeedbackDetail(selectedFeedbackId || "");
+  const feedbackDetail = feedbackDetailQuery.data?.data;
+
+  // Reject mutation
+  const rejectMutation = useAdminFeedbackReject();
+
+  // Map API feedbacks to UI structure
+  const apiFeedbacks = useMemo<ApiFeedback[]>(() => {
+    if (!feedbacksResponse?.isSucess) return [];
+    return feedbacksResponse.data?.items ?? [];
+  }, [feedbacksResponse]);
+
+  const mappedFeedbacks = useMemo<Feedback[]>(() => {
+    return apiFeedbacks.map(mapApiFeedbackToUI);
+  }, [apiFeedbacks]);
+
+  const totalItems = feedbacksResponse?.isSucess
+    ? feedbacksResponse.data?.totalItems ?? 0
+    : 0;
+
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+  // Calculate statistics
+  const totalApproved = useMemo(() => {
+    return mappedFeedbacks.filter((f) => f.status === "Active").length;
+  }, [mappedFeedbacks]);
+
+  const totalRejected = useMemo(() => {
+    return mappedFeedbacks.filter((f) => f.status === "Rejected").length;
+  }, [mappedFeedbacks]);
+
+  const averageRating = useMemo(() => {
+    if (mappedFeedbacks.length === 0) return 0;
+    const sum = mappedFeedbacks.reduce((acc, f) => acc + f.rating, 0);
+    return sum / mappedFeedbacks.length;
+  }, [mappedFeedbacks]);
+
+  // Get selected feedback for display
+  const selectedFeedback = useMemo<Feedback | null>(() => {
+    if (!selectedFeedbackId) return null;
+    const found = mappedFeedbacks.find((f) => f.feedbackId === selectedFeedbackId);
+    if (found) return found;
+    // If not found in current page, use detail data
+    if (feedbackDetail) {
+      return {
+        feedbackId: feedbackDetail.feedbackId,
+        reviewer: {
+          id: feedbackDetail.feedbackId,
+          fullName: feedbackDetail.senderName || "",
+          email: "",
+          userType: "learner",
+        },
+        target: {
+          type: feedbackDetail.reviewId ? "mentor" : "package",
+          id: feedbackDetail.reviewId || feedbackDetail.feedbackId,
+          name: "",
+        },
+        rating: feedbackDetail.rating,
+        content: feedbackDetail.content,
+        createdAt: feedbackDetail.createdAt,
+        status: mapApiStatusToUI(feedbackDetail.status),
+        type: feedbackDetail.type as "feedback" | "comment",
+      };
+    }
+    return null;
+  }, [selectedFeedbackId, mappedFeedbacks, feedbackDetail]);
 
   // const handleSelectRow = (idx: number) => {
   //   setSelectedRows(
@@ -286,13 +215,34 @@ const FeedbacksCommentsManagement = () => {
   // };
 
   const handleViewDetails = (feedback: Feedback) => {
-    setSelectedFeedback(feedback);
+    setSelectedFeedbackId(feedback.feedbackId);
     setShowDetailsModal(true);
   };
 
   const handleAction = (feedback: Feedback, action: "reject") => {
-    setSelectedFeedback(feedback);
+    setSelectedFeedbackId(feedback.feedbackId);
     setShowActionModal(true);
+  };
+
+  const handleReject = () => {
+    if (!selectedFeedbackId) return;
+    
+    rejectMutation.mutate(selectedFeedbackId, {
+      onSuccess: () => {
+        toast.success("Từ chối phản hồi thành công");
+        queryClient.invalidateQueries({ queryKey: ["adminFeedback"] });
+        setShowActionModal(false);
+        setSelectedFeedbackId(null);
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || "Có lỗi xảy ra khi từ chối phản hồi");
+      },
+    });
+  };
+
+  const handleSearchInput = (value: string) => {
+    setSearch(value);
+    setPageNumber(1);
   };
 
   const renderStars = (rating: number) => {
@@ -339,17 +289,21 @@ const FeedbacksCommentsManagement = () => {
           <Input
             placeholder="Tìm theo nội dung..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
             className="w-[300px]"
           />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPageNumber(1);
+            }}
             className="px-3 py-2 border rounded-md cursor-pointer"
           >
             <option value="All">Tất cả trạng thái</option>
-            <option value="approved">Đã duyệt</option>
-            <option value="rejected">Bị từ chối</option>
+            <option value="Active">Đã duyệt</option>
+            <option value="Rejected">Bị từ chối</option>
+            <option value="Pending">Đang chờ</option>
           </select>
         </div>
       </div>
@@ -358,33 +312,26 @@ const FeedbacksCommentsManagement = () => {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{sampleFeedbacks.length}</div>
+            <div className="text-2xl font-bold">{totalItems}</div>
             <p className="text-xs text-muted-foreground">Tổng số phản hồi</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">
-              {sampleFeedbacks.filter((f) => f.status === "approved").length}
-            </div>
+            <div className="text-2xl font-bold">{totalApproved}</div>
             <p className="text-xs text-muted-foreground">Đã duyệt</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">
-              {sampleFeedbacks.filter((f) => f.status === "rejected").length}
-            </div>
+            <div className="text-2xl font-bold">{totalRejected}</div>
             <p className="text-xs text-muted-foreground">Bị từ chối</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">
-              {(
-                sampleFeedbacks.reduce((sum, f) => sum + f.rating, 0) /
-                sampleFeedbacks.length
-              ).toFixed(1)}
+              {averageRating.toFixed(1)}
             </div>
             <p className="text-xs text-muted-foreground">Điểm trung bình</p>
           </CardContent>
@@ -396,26 +343,38 @@ const FeedbacksCommentsManagement = () => {
         <CardHeader>
           <CardTitle>Quản lí phản hồi & bình luận</CardTitle>
           <CardDescription>
-            Hiển thị {filteredFeedbacks.length} trên {sampleFeedbacks.length}{" "}
-            phản hồi và bình luận
+            {isLoading
+              ? "Đang tải..."
+              : `Hiển thị ${mappedFeedbacks.length} trên ${totalItems} phản hồi và bình luận`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                
-                <TableHead>ID</TableHead>
-                <TableHead>Người đánh giá</TableHead>
-                <TableHead>Mục tiêu</TableHead>
-                <TableHead>Điểm</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredFeedbacks.map((feedback, idx) => (
+          {isLoading ? (
+            <div className="text-center py-8">Đang tải dữ liệu...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">
+              Có lỗi xảy ra khi tải dữ liệu
+            </div>
+          ) : mappedFeedbacks.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              Không có phản hồi nào
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Người đánh giá</TableHead>
+                    <TableHead>Mục tiêu</TableHead>
+                    <TableHead>Điểm</TableHead>
+                    <TableHead>Ngày tạo</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead>Hành động</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mappedFeedbacks.map((feedback, idx) => (
                 <TableRow key={feedback.feedbackId}>
                   
                   <TableCell>
@@ -465,22 +424,22 @@ const FeedbacksCommentsManagement = () => {
                   <TableCell>
                     <Badge
                       variant={
-                        feedback.status === "approved"
+                        feedback.status === "Active"
                           ? "default"
-                          : feedback.status === "rejected"
+                          : feedback.status === "Rejected"
                           ? "destructive"
-                          : feedback.status === "pending"
+                          : feedback.status === "Pending"
                           ? "secondary"
-                          : feedback.status === "hidden"
-                          ? "outline"
-                          : "destructive"
+                          : "outline"
                       }
                       className="text-xs"
                     >
-                      {feedback.status === "approved"
+                      {feedback.status === "Active"
                         ? "đã duyệt"
-                        : feedback.status === "rejected"
+                        : feedback.status === "Rejected"
                         ? "bị từ chối"
+                        : feedback.status === "Pending"
+                        ? "đang chờ"
                         : feedback.status}
                     </Badge>
                   </TableCell>
@@ -560,10 +519,41 @@ const FeedbacksCommentsManagement = () => {
                       )}
                     </div>
                   </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-gray-500">
+                    Trang {pageNumber} / {totalPages} ({totalItems} kết quả)
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
+                      disabled={pageNumber === 1 || isLoading}
+                    >
+                      Trước
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setPageNumber((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={pageNumber === totalPages || isLoading}
+                    >
+                      Sau
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -611,25 +601,19 @@ const FeedbacksCommentsManagement = () => {
                 <button
                   onClick={() => {
                     setShowActionModal(false);
-                    setSelectedFeedback(null);
+                    setSelectedFeedbackId(null);
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-auto hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  disabled={rejectMutation.isPending}
                 >
                   Hủy
                 </button>
                 <button
-                  onClick={() => {
-                    // Handle reject logic here
-                    console.log(
-                      "Rejecting feedback:",
-                      selectedFeedback.feedbackId
-                    );
-                    setShowActionModal(false);
-                    setSelectedFeedback(null);
-                  }}
-                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-auto hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300"
+                  onClick={handleReject}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-auto hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:opacity-50"
+                  disabled={rejectMutation.isPending}
                 >
-                  Từ chối
+                  {rejectMutation.isPending ? "Đang xử lý..." : "Từ chối"}
                 </button>
               </div>
             </div>
@@ -648,7 +632,7 @@ const FeedbacksCommentsManagement = () => {
               <button
                 onClick={() => {
                   setShowDetailsModal(false);
-                  setSelectedFeedback(null);
+                  setSelectedFeedbackId(null);
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -736,14 +720,18 @@ const FeedbacksCommentsManagement = () => {
                   <div className="p-2 bg-gray-50 rounded-md">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        selectedFeedback.status === "approved"
+                        selectedFeedback.status === "Active"
                           ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+                          : selectedFeedback.status === "Rejected"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {selectedFeedback.status === "approved"
+                      {selectedFeedback.status === "Active"
                         ? "Đã duyệt"
-                        : "Bị từ chối"}
+                        : selectedFeedback.status === "Rejected"
+                        ? "Bị từ chối"
+                        : "Đang chờ"}
                     </span>
                   </div>
                 </div>
@@ -778,7 +766,7 @@ const FeedbacksCommentsManagement = () => {
               <button
                 onClick={() => {
                   setShowDetailsModal(false);
-                  setSelectedFeedback(null);
+                  setSelectedFeedbackId(null);
                 }}
                 className="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
               >

@@ -1,6 +1,12 @@
 export interface GetServicePackagesResponse {
-    isSuccess: boolean;
-    data: ServicePackage[];
+    isSucess: boolean;
+    data: {
+        pageNumber: number;
+        pageSize: number;
+        totalItems: number;
+        items: ServicePackage[];
+    };
+    businessCode: string;
     message: string;
 }
 export interface ServicePackage {

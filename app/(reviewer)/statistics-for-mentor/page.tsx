@@ -1,8 +1,6 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,8 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useSelectedReviewsStore } from "@/store/selectedReviewsStore";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useReviewReviewPending, useReviewReviewSubmit } from "@/features/reviewer/hooks/useReviewReview";
+import { useGetMeQuery } from "@/hooks/useGetMeQuery";
+import { signalRService } from "@/lib/realtime/realtime";
+import { ReviewCompleted } from "@/lib/realtime/realtime";
+import { useRealtime } from "@/providers/RealtimeProvider";
 
 const StatisticsForMentor = () => {
   const [showAllFeedback, setShowAllFeedback] = useState(false);
@@ -77,31 +79,38 @@ const StatisticsForMentor = () => {
     },
   ];
 
-  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
-  const [reviewedAnswers, setReviewedAnswers] = useState<number[]>([]);
-  const [isReviewing, setIsReviewing] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
+  const [reviewedAnswers, setReviewedAnswers] = useState<string[]>([]);
+  // Track numberOfReview updates from SignalR events
+  const [numberOfReviewUpdates, setNumberOfReviewUpdates] = useState<Record<string, number>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<typeof pendingReviews[0] | null>(null);
+  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; duration?: string } | null>(null);
   const [comment, setComment] = useState("");
   const [score, setScore] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { setSelectedReviews } = useSelectedReviewsStore();
+  
+  // Fetch pending reviews
+  const { data: pendingReviewsData, isLoading, error } = useReviewReviewPending(1, 100);
+  
+  // Get user info for reviewerProfileId
+  const { data: userData } = useGetMeQuery();
+  
+  // Submit review mutation
+  const submitReviewMutation = useReviewReviewSubmit();
 
-  const handleSelectAnswer = (id: number) => {
-    setSelectedAnswers((prev) =>
-      prev.includes(id)
-        ? prev.filter((answerId) => answerId !== id)
-        : [...prev, id]
-    );
-  };
+  // Get SignalR connection state from RealtimeProvider
+  const { isConnected } = useRealtime();
 
-  const handleOpenReviewModal = (reviewId: number) => {
-    const review = pendingReviews.find((r) => r.id === reviewId);
+  const handleOpenReviewModal = (reviewId: string) => {
+    const review = pendingReviews?.find((r) => r.id === reviewId);
     if (review) {
-      setSelectedReview(review);
+      setSelectedReview({
+        id: review.id,
+        question: review.question,
+        audioUrl: review.audioUrl,
+        submittedAt: review.submittedAt,
+        duration: review.duration,
+      });
       setIsModalOpen(true);
       setComment("");
       setScore("");
@@ -121,154 +130,105 @@ const StatisticsForMentor = () => {
     }
   };
 
-  const handleSaveAndFinish = () => {
+  const handleSaveAndFinish = async () => {
     if (!selectedReview) return;
-    // TODO: Integrate API submit here
-    // console.log({ id: selectedReview.id, comment, score });
-    handleCloseModal();
-  };
-
-  const pendingReviews = useMemo(
-    () => [
-      {
-        id: 1,
-        question: "Describe your favorite hobby and explain why you enjoy it.",
-
-        audioUrl: "https://example.com/audio1.mp3",
-        duration: "2:30",
-
-        submittedAt: "15/01/2024",
-        status: "Pending",
-      },
-      {
-        id: 2,
-        question:
-          "What are the advantages and disadvantages of living in a big city?",
-
-        audioUrl: "https://example.com/audio2.mp3",
-        duration: "3:15",
-
-        submittedAt: "14/01/2024",
-        status: "Pending",
-      },
-      {
-        id: 3,
-        question: "Explain the process of photosynthesis in plants.",
-
-        audioUrl: "https://example.com/audio3.mp3",
-        duration: "4:20",
-
-        submittedAt: "13/01/2024",
-        status: "Pending",
-      },
-      {
-        id: 4,
-        question:
-          "What is your opinion about social media's impact on society?",
-
-        audioUrl: "https://example.com/audio4.mp3",
-        duration: "2:45",
-
-        submittedAt: "12/01/2024",
-        status: "Pending",
-      },
-      {
-        id: 5,
-        question: "Describe a memorable trip you have taken.",
-
-        audioUrl: "https://example.com/audio5.mp3",
-        duration: "3:00",
-
-        submittedAt: "11/01/2024",
-        status: "Pending",
-      },
-    ],
-    []
-  );
-
-  const handleSelectAll = () => {
-    if (selectedAnswers.length === availableReviews.length) {
-      setSelectedAnswers([]);
-    } else {
-      setSelectedAnswers(availableReviews.map((review) => review.id));
+    
+    // Validate inputs
+    if (!comment.trim()) {
+      // You can add toast notification here if needed
+      return;
     }
-  };
-
-  const handleReviewSelected = async () => {
-    if (selectedAnswers.length === 0) return;
-
-    setIsReviewing(true);
-
-    // Simulate WebSocket call to review answers
+    
+    const scoreValue = parseFloat(score);
+    if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 10) {
+      // You can add toast notification here if needed
+      return;
+    }
+    
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Add to reviewed answers (they will disappear from the list)
-      setReviewedAnswers((prev) => [...prev, ...selectedAnswers]);
-
-      // Clear selected answers
-      setSelectedAnswers([]);
-
-      // Show notification
-      setNotificationMessage(
-        `Đã review thành công ${selectedAnswers.length} câu trả lời!`
-      );
-      setShowNotification(true);
-
-      // Hide notification after 3 seconds
-      setTimeout(() => {
-        setShowNotification(false);
-      }, 3000);
-
-      // Simulate WebSocket notification
-      console.log(`Reviewed ${selectedAnswers.length} answers via WebSocket`);
+      await submitReviewMutation.mutateAsync({
+        learnerAnswerId: selectedReview.id,
+        recordId: null, // Can be null as per requirement
+        reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
+        score: scoreValue,
+        comment: comment.trim(),
+      });
+      
+      // Remove review from current reviewer's list immediately
+      // SignalR event will handle updates for other reviewers
+      setReviewedAnswers((prev) => [...prev, selectedReview.id]);
+      
+      // Close modal
+      handleCloseModal();
     } catch (error) {
-      console.error("Error reviewing answers:", error);
-    } finally {
-      setIsReviewing(false);
+      // Error is already handled by the mutation's onError callback
+      console.error("Error submitting review:", error);
     }
   };
+
+  // Transform API data to component format
+  // Merge with numberOfReview updates from SignalR events
+  const pendingReviews = useMemo(() => {
+    if (!pendingReviewsData?.data?.items) return [];
+    return pendingReviewsData.data.items.map((item) => ({
+      id: item.id,
+      question: item.questionText,
+      audioUrl: item.audioUrl,
+      duration: undefined, // Duration not available in API
+      submittedAt: new Date(item.submittedAt).toLocaleDateString('vi-VN'),
+      status: "Pending",
+      learnerFullName: item.learnerFullName,
+      type: item.type,
+      // Use updated numberOfReview from SignalR if available, otherwise use from API
+      numberOfReview: numberOfReviewUpdates[item.id] !== undefined 
+        ? numberOfReviewUpdates[item.id] 
+        : item.numberOfReview,
+    }));
+  }, [pendingReviewsData, numberOfReviewUpdates]);
 
   // Filter out reviewed answers
   const availableReviews = pendingReviews.filter(
     (review) => !reviewedAnswers.includes(review.id)
   );
 
-  // Sync selected answers to global store for cross-page usage
+  // Setup SignalR listener for reviewCompleted events
   useEffect(() => {
-    const selected = pendingReviews
-      .filter((r) => selectedAnswers.includes(r.id))
-      .map((r) => ({ id: r.id, question: r.question, audioUrl: r.audioUrl }));
-    setSelectedReviews(selected);
-  }, [selectedAnswers, pendingReviews, setSelectedReviews]);
+    // Only setup handler when connection is established
+    if (!isConnected) {
+      return;
+    }
 
-  // Simulate WebSocket connection
-  useEffect(() => {
-    // Simulate WebSocket connection
-    const ws = new WebSocket("ws://localhost:8080/reviews");
+    const handleReviewCompleted = (review: ReviewCompleted) => {
+      console.log('SignalR: Review completed', review);
+      
+      if (!review.learnerAnswerId) return;
 
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "review_completed") {
-        // Remove completed reviews from the list
-        setReviewedAnswers((prev) => [...prev, data.reviewId]);
-        console.log(`Review ${data.reviewId} completed via WebSocket`);
+      // Case 1: If remaining = 0, remove from all reviewers' lists
+      if (review.remaining === 0) {
+        setReviewedAnswers((prev) => {
+          if (prev.includes(review.learnerAnswerId)) {
+            return prev;
+          }
+          return [...prev, review.learnerAnswerId];
+        });
+      } 
+      // Case 2: If remaining > 0, only update numberOfReview for other reviewers
+      else {
+        setNumberOfReviewUpdates((prev) => ({
+          ...prev,
+          [review.learnerAnswerId]: review.remaining,
+        }));
       }
     };
 
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
-    };
+    // Register handler
+    signalRService.setReviewCompletedHandler(handleReviewCompleted);
 
+    // Cleanup when component unmounts or connection changes
     return () => {
-      ws.close();
+      signalRService.setReviewCompletedHandler(null);
     };
-  }, []);
+  }, [isConnected]);
 
   // Full feedback data cho modal
   const allFeedbackData = [
@@ -456,7 +416,19 @@ const StatisticsForMentor = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {availableReviews.length === 0 ? (
+              {isLoading ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg font-medium">
+                    Đang tải...
+                  </div>
+                </div>
+              ) : error ? (
+                <div className="text-center py-12">
+                  <div className="text-red-400 text-lg font-medium">
+                    Lỗi khi tải dữ liệu: {error.message}
+                  </div>
+                </div>
+              ) : availableReviews.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-gray-400 text-6xl mb-4">✅</div>
                   <div className="text-gray-500 text-lg font-medium">
@@ -470,22 +442,10 @@ const StatisticsForMentor = () => {
                 availableReviews.map((review) => (
                   <div
                     key={review.id}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                      selectedAnswers.includes(review.id)
-                        ? "border-blue-500 bg-blue-50 shadow-md"
-                        : "border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300"
-                    }`}
+                    className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 cursor-pointer"
                     onClick={() => handleOpenReviewModal(review.id)}
                   >
                     <div className="flex items-start gap-4">
-                      {/* Checkbox */}
-                      <div 
-                        className="flex items-center pt-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        
-                      </div>
-
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         {/* Question */}
@@ -494,11 +454,6 @@ const StatisticsForMentor = () => {
                             <h4 className="font-semibold text-gray-900">
                               Câu hỏi:
                             </h4>
-                            {selectedAnswers.includes(review.id) && (
-                              <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
-                                Đã chọn
-                              </Badge>
-                            )}
                           </div>
                           <p className="text-sm text-gray-700 leading-relaxed">
                             {review.question}
@@ -523,9 +478,11 @@ const StatisticsForMentor = () => {
                                 <span className="text-sm font-medium text-gray-900">
                                   Audio Response
                                 </span>
-                                <span className="text-xs text-gray-500">
-                                  ({review.duration})
-                                </span>
+                                {review.duration && (
+                                  <span className="text-xs text-gray-500">
+                                    ({review.duration})
+                                  </span>
+                                )}
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div
@@ -541,6 +498,9 @@ const StatisticsForMentor = () => {
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-gray-500">
                             {review.submittedAt}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {review.numberOfReview}
                           </div>
                         </div>
                       </div>
@@ -806,9 +766,10 @@ const StatisticsForMentor = () => {
                   </Button>
                   <Button
                     onClick={handleSaveAndFinish}
-                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    disabled={submitReviewMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50"
                   >
-                    Hoàn thành (Finish)
+                    {submitReviewMutation.isPending ? "Đang xử lý..." : "Hoàn thành (Finish)"}
                   </Button>
                 </div>
               </div>
@@ -827,31 +788,6 @@ const StatisticsForMentor = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Notification */}
-      {showNotification && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-in slide-in-from-right">
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-            </svg>
-            <span className="font-medium">{notificationMessage}</span>
-            <button
-              onClick={() => setShowNotification(false)}
-              className="ml-2 text-white hover:text-gray-200"
-            >
-              <svg
-                width="16"
-                height="16"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

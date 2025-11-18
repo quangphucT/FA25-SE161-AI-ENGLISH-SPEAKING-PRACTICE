@@ -9,7 +9,6 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const fromDate = searchParams.get("fromDate");
   const toDate = searchParams.get("toDate");
-
   try {
     // Build URL with path parameter and query parameters
     const backendUrl = new URL(

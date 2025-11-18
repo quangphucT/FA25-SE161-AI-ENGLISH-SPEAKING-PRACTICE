@@ -4,6 +4,7 @@ import "./globals.css";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import TokenRefresher from "@/providers/TokenRefresher";
+import RealtimeProvider from "@/providers/RealtimeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +32,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReactQueryProvider>
-          <TokenRefresher/>
-          {children}
+          <RealtimeProvider>
+            <TokenRefresher/>
+            {children}
+          </RealtimeProvider>
         </ReactQueryProvider>
         <Toaster position="top-right" richColors />
       </body>

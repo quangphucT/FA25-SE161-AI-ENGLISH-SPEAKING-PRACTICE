@@ -470,7 +470,7 @@ const ReviewerProfile = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-gray-900 text-lg">
+                          <h4 className="font-semibold text-gray-900 text-lg truncate max-w-[200px]">
                             {cert.name}
                           </h4>
                           <div className="flex items-center gap-2">
