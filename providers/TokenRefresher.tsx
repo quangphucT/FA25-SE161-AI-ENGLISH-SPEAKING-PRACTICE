@@ -4,8 +4,8 @@ import { handleLogout } from "@/utils/auth";
 import { usePathname } from "next/navigation";
 export default function TokenRefresher() {
 	const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-	const startedRef = useRef(false);
     const pathname = usePathname(); // lấy pathname chính xác ngay khi render
+	
 	useEffect(() => {
 		const AUTH_PUBLIC_PATHS = [
 			"/sign-in",
@@ -19,13 +19,13 @@ export default function TokenRefresher() {
 
 		const isAuthPublic = AUTH_PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 		if (isAuthPublic) {
-			return; // Bỏ qua ở các trang public/auth
+			// Clear interval if exists when on auth pages
+			if (intervalRef.current) {
+				clearInterval(intervalRef.current);
+				intervalRef.current = null;
+			}
+			return;
 		}
-
-		if (startedRef.current) {
-			return; // Tránh khởi động nhiều lần trong Strict Mode dev
-		}
-		startedRef.current = true;
 
 		let stopped = false;
 
@@ -56,6 +56,12 @@ export default function TokenRefresher() {
 			 // ✅ expose global để trang khác gọi ngay lập tức
     (window as any).forceRefreshToken = runOnce;
 		};
+
+		// Clear any existing interval before starting new one
+		if (intervalRef.current) {
+			clearInterval(intervalRef.current);
+			intervalRef.current = null;
+		}
 
 		// Chạy ngay khi mount
 		void runOnce();

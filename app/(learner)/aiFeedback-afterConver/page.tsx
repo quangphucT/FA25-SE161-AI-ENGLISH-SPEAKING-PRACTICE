@@ -61,7 +61,7 @@ const Feedback = () => {
                 .join("\n");
 
               // Call the API
-              const response = await fetch("/api/aiFeedback", {
+              const response = await fetchWithAuth("/api/aiFeedback", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
