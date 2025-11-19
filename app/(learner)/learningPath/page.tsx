@@ -38,7 +38,7 @@ const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { mutate: startExercise, isPending: _isStarting } = useStartExercise();
+  const { mutate: startExercise, isPending: isStarting } = useStartExercise();
   const [loadingExerciseId, setLoadingExerciseId] = useState<string | null>(null);
 
   // Ngay khi vào trang lấy thông tin user
