@@ -111,7 +111,7 @@ const ServicePackageManagement = () => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleAction = (pkg: ServicePackage, _action: "delete") => {
+  const handleAction = (pkg: ServicePackage, action: "delete") => {
     setPackageToAction(pkg);
     setShowConfirmDialog(true);
   };
@@ -133,7 +133,7 @@ const ServicePackageManagement = () => {
       setShowUpdateModal(false);
       setPackageToUpdate(null);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_err) {
+    } catch (err) {
       // errors are handled in hook via toast
     }
   };
