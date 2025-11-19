@@ -491,13 +491,13 @@ const EntranceTest = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50">
       {/* Enhanced Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white text-xl font-bold">🎯</span>
               </div>
               <div>
@@ -595,7 +595,7 @@ const EntranceTest = () => {
             {/* Left Column - Question & Results */}
             <div className="space-y-6">
               {/* Question instruction with icon */}
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-sm">
+              <div className="bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xl">💬</span>
@@ -636,7 +636,7 @@ const EntranceTest = () => {
 
               {/* Accuracy Result - Enhanced */}
               {pronunciationAccuracy[currentQuestionIndex] && (
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-200 shadow-md">
+                <div className="bg-linear-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-200 shadow-md">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
@@ -718,7 +718,7 @@ const EntranceTest = () => {
 
             {/* Right Column - Recording Controls */}
             <div className="lg:sticky lg:top-8">
-              <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-3xl p-8 border-2 border-gray-200 shadow-xl">
+              <div className="bg-linear-to-br from-slate-50 to-gray-100 rounded-3xl p-8 border-2 border-gray-200 shadow-xl">
                 {/* Recording status indicator */}
                 <div className="text-center mb-6">
                   <div
@@ -761,10 +761,10 @@ const EntranceTest = () => {
                     <Button
                       className={`relative rounded-full w-32 h-32 flex items-center cursor-pointer justify-center transition-all duration-300 shadow-2xl ${
                         isRecording
-                          ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 scale-110"
+                          ? "bg-linear-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 scale-110"
                           : recorded[currentQuestionIndex]
-                          ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                          : "bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
+                          ? "bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                          : "bg-linear-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
                       }`}
                       onClick={handleRecord}
                       disabled={uiBlocked && !isRecording}
@@ -858,7 +858,7 @@ const EntranceTest = () => {
 
                 {/* Results Card */}
                 {resultsAfterTest && (
-                  <div className="bg-gradient-to-br from-blue-10 to-indigo-50 rounded-2xl p-1 mb-8  shadow-sm">
+                  <div className="bg-linear-to-br from-blue-10 to-indigo-50 rounded-2xl p-1 mb-8  shadow-sm">
                     <h3 className="text-xl font-semibold text-gray-800 mb-6">
                       Kết quả của bạn
                     </h3>

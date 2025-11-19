@@ -179,7 +179,7 @@ const DashboardManagerLayout = () => {
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                   <svg
                     width="20"
                     height="20"
@@ -332,7 +332,7 @@ const DashboardManagerLayout = () => {
               sidebarOpen ? "space-x-3" : "justify-center"
             }`}
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-linear-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-white font-medium text-sm">SM</span>
             </div>
             {sidebarOpen && (

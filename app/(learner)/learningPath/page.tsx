@@ -77,7 +77,7 @@ const LearningPath = () => {
   if (!learnerData) {
     return (
       <div className="max-w-[1400px] mx-auto p-6">
-        <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-orange-300">
+        <Card className="p-6 bg-linear-to-br from-yellow-50 to-orange-50 border-2 border-orange-300">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
               <Lock className="w-6 h-6 text-orange-600" />
@@ -170,7 +170,7 @@ const LearningPath = () => {
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-6">
       {/* Course Header */}
-      <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+      <Card className="p-6 bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">

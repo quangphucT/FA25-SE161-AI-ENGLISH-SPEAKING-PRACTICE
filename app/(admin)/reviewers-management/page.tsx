@@ -294,7 +294,7 @@ const ReviewerManagement = () => {
                               alt={reviewer.fullName}
                               className="object-cover"
                             />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
+                            <AvatarFallback className="bg-linear-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
                               {getInitials(reviewer.fullName)}
                             </AvatarFallback>
                           </Avatar>
@@ -530,7 +530,7 @@ const ReviewerManagement = () => {
             <div className="p-8">
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                <div className="bg-linear-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                       <svg
@@ -557,7 +557,7 @@ const ReviewerManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200">
+                <div className="bg-linear-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
                       <svg
@@ -582,7 +582,7 @@ const ReviewerManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+                <div className="bg-linear-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
                       <svg
@@ -607,7 +607,7 @@ const ReviewerManagement = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                <div className="bg-linear-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
                       <svg
@@ -809,7 +809,7 @@ const ReviewerManagement = () => {
                           >
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                   {feedback.fullName
                                     .split(" ")
                                     .map((n) => n[0])

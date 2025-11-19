@@ -387,7 +387,7 @@ const ReviewMoneyManagement = () => {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="size-8">
-                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs">
+                              <AvatarFallback className="bg-linear-to-br from-blue-500 to-blue-600 text-white text-xs">
                                 {getInitials(reviewer.fullName)}
                               </AvatarFallback>
                             </Avatar>
@@ -667,7 +667,7 @@ const ReviewMoneyManagement = () => {
                                 src={record.learnerAvatar}
                                 alt={record.learnerName}
                               />
-                              <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-600 text-white text-xs">
+                              <AvatarFallback className="bg-linear-to-br from-green-500 to-green-600 text-white text-xs">
                                 {getInitials(record.learnerName)}
                               </AvatarFallback>
                             </Avatar>

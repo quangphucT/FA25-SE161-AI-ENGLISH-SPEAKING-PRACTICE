@@ -341,7 +341,7 @@ const LearnerManagement = () => {
                             alt={learner.fullName}
                             className="object-cover"
                           />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
+                          <AvatarFallback className="bg-linear-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
                             {getInitials(learner.fullName || "")}
                           </AvatarFallback>
                         </Avatar>
@@ -771,10 +771,10 @@ const LearnerManagement = () => {
                             <Card
                               className={`border-2 shadow-lg transition-all duration-300 hover:shadow-xl h-full ${
                                     courseStatus === "Active"
-                                  ? "border-green-200 bg-gradient-to-br from-green-50 to-emerald-50"
+                                  ? "border-green-200 bg-linear-to-br from-green-50 to-emerald-50"
                                       : courseStatus === "Completed"
-                                  ? "border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50"
-                                  : "border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50"
+                                  ? "border-blue-200 bg-linear-to-br from-blue-50 to-indigo-50"
+                                  : "border-gray-200 bg-linear-to-br from-gray-50 to-slate-50"
                               }`}
                             >
                               <CardHeader className="pb-3">

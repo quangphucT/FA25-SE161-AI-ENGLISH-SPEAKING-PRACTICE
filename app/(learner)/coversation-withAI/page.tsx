@@ -125,7 +125,7 @@ const ConversationWithAI = () => {
       
       // Navigate to feedback page
       router.push("/aiFeedback-afterConver");
-    }, 1000); // Increased to 1 second for proper cleanup
+    }, 500); 
   }, [router, isDisconnecting]);
 
   // Timer countdown effect
@@ -227,8 +227,8 @@ const ConversationWithAI = () => {
       {/* LiveKit Modal - Enhanced Design */}
       {showLiveKit && (
 
-        <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-gradient-to-br from-white via-blue-50/30 to-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-white/50 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="fixed inset-0 bg-linear-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-linear-to-br from-white via-blue-50/30 to-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-white/50 animate-in slide-in-from-bottom-4 duration-500">
             {/* Header with Gradient & Decorative Elements */}
             <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-8 py-6 flex items-center justify-between flex-shrink-0 overflow-hidden">
               {/* Decorative Background Pattern */}
@@ -240,7 +240,7 @@ const ConversationWithAI = () => {
               <div className="flex items-center gap-4 relative z-10">
                 {/* Animated Icon */}
                 <div className="relative">
-                  <div className="w-14 h-14 bg-gradient-to-br from-white to-blue-100 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-300">
+                  <div className="w-14 h-14 bg-linear-to-br from-white to-blue-100 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-300">
                     <MessageCircle className="w-7 h-7 text-blue-600" />
                   </div>
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
@@ -300,7 +300,7 @@ const ConversationWithAI = () => {
                     
                     // Navigate to feedback page
                     router.push("/aiFeedback-afterConver");
-                  }, 1000);
+                  }, 500);
                 }}
                 disabled={isDisconnecting}
                 className={`relative z-10 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90 group ${
@@ -499,7 +499,7 @@ const ConversationWithAI = () => {
               {/* Coin Balance */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-linear-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
                     <Coins className="w-5 h-5 text-white" />
                   </div>
                   <div>

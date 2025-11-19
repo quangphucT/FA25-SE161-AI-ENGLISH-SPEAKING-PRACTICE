@@ -546,7 +546,7 @@ const DashboardAdmin = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div className="bg-linear-to-br from-gray-50 to-gray-100 min-h-screen">
       <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
       <div className="md:ml-72">
         <Header activeMenu={activeMenu} />
