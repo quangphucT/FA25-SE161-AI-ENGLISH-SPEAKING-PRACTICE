@@ -1,8 +1,11 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* Temporarily disabled problematic import to avoid Turbopack/PostCSS crash on Vercel */
+/* @import "tw-animate-css"; */
 
-@custom-variant dark (&:is(.dark *));
+/* Experimental directives disabled to avoid PostCSS/Turbopack parsing issues on Vercel */
+/* @custom-variant dark (&:is(.dark *)); */
 
+/*
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -42,6 +45,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
+*/
 
 :root {
   --radius: 0.625rem;
