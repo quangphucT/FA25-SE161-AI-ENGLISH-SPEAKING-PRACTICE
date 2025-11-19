@@ -23,6 +23,7 @@ import { handleLogout } from "@/utils/auth";
 import ConversationWithAI from "../coversation-withAI/page";
 import EnrollingCourse from "../enrolling-courses/page";
 import SendingAudioToReviewer from "../sendingAudioToReviewer/page";
+import EnrollingCourses from "../enrolling-courses/page";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -166,11 +167,11 @@ function DashboardContent() {
 
           {/* COURSES PAGE */}
           {activeMenu === "learningPath" && (
-           <LearningPath />
+           <LearningPath  />
           )}
           {/* ENROLLING COURSES PAGE */}
           {activeMenu === "enrollingCourses" && (
-           <EnrollingCourse />
+           <EnrollingCourses  />
           )}
 
           {/* WALLET PAGE */}
