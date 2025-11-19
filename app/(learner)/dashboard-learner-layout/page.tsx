@@ -175,7 +175,7 @@ function DashboardContent() {
 
           {/* WALLET PAGE */}
           {activeMenu === "conversationWithAI" && (
-           <ConversationWithAI  />
+           <ConversationWithAI   />
           )}
 
 

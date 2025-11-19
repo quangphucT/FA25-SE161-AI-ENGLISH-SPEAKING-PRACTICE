@@ -7,9 +7,9 @@ export async function POST() {
     const cookieStore = await cookies();
 
     const refreshToken = cookieStore.get("refreshToken")?.value;
-    const decodedToken = refreshToken
-      ? decodeURIComponent(refreshToken)
-      : undefined;
+    // const decodedToken = refreshToken
+    //   ? decodeURIComponent(refreshToken)
+    //   : undefined;
 
     // Server-side fetch sẽ KHÔNG tự đính kèm cookie của client.
     // Cần forward thủ công cookie refreshToken sang BE qua header Cookie.
@@ -20,7 +20,7 @@ export async function POST() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ refreshToken: decodedToken }),
+        body: JSON.stringify({ refreshToken }),
       }
     );
 
