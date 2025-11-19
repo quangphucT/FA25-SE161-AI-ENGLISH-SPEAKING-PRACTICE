@@ -23,6 +23,7 @@ import { handleLogout } from "@/utils/auth";
 import ConversationWithAI from "../coversation-withAI/page";
 import EnrollingCourse from "../enrolling-courses/page";
 import SendingAudioToReviewer from "../sendingAudioToReviewer/page";
+import EnrollingCourses from "../enrolling-courses/page";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -161,16 +162,16 @@ function DashboardContent() {
         <div className="p-8">
           {/* OVERVIEW PAGE */}
           {activeMenu === "overview" && (
-              <Overview />
+              <Overview setActiveMenu={setActiveMenu} />
           )}
 
           {/* COURSES PAGE */}
           {activeMenu === "learningPath" && (
-           <LearningPath />
+           <LearningPath setActiveMenu={setActiveMenu} />
           )}
           {/* ENROLLING COURSES PAGE */}
           {activeMenu === "enrollingCourses" && (
-           <EnrollingCourse />
+           <EnrollingCourses setActiveMenu={setActiveMenu} />
           )}
 
           {/* WALLET PAGE */}

@@ -11,8 +11,14 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { set } from "zod";
 
-const Overview = () => {
+
+interface ActiveMenuProps {
+  setActiveMenu: (menu: string) => void;
+}
+
+const Overview = ({ setActiveMenu }: ActiveMenuProps) => {
   const { data: userData } = useGetMeQuery();
   const router = useRouter();
   const stats = [
@@ -99,7 +105,9 @@ const Overview = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card 
           onClick={() => {
-            router.push("/dashboard-learner-layout?menu=enrollingCourses");
+            if(setActiveMenu){
+              setActiveMenu("enrollingCourses");
+            }
           }} 
           className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 cursor-pointer hover:shadow-lg transition-all"
         >

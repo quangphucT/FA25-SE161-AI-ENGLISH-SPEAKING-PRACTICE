@@ -19,7 +19,10 @@ import { useStartExercise } from "@/features/learner/hooks/startExerciseHooks/st
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-const LearningPath = () => {
+interface ActiveMenuProps {
+  setActiveMenu: (menu: string) => void;
+}
+const LearningPath = ({ setActiveMenu }: ActiveMenuProps) => {
   const router = useRouter();
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
   const learnerData = getAllLearnerData();
