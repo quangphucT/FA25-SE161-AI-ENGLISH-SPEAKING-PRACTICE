@@ -162,16 +162,16 @@ function DashboardContent() {
         <div className="p-8">
           {/* OVERVIEW PAGE */}
           {activeMenu === "overview" && (
-              <Overview setActiveMenu={setActiveMenu} />
+              <Overview />
           )}
 
           {/* COURSES PAGE */}
           {activeMenu === "learningPath" && (
-           <LearningPath setActiveMenu={setActiveMenu} />
+           <LearningPath  />
           )}
           {/* ENROLLING COURSES PAGE */}
           {activeMenu === "enrollingCourses" && (
-           <EnrollingCourses setActiveMenu={setActiveMenu} />
+           <EnrollingCourses  />
           )}
 
           {/* WALLET PAGE */}
