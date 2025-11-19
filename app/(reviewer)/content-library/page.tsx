@@ -243,7 +243,7 @@ const ContentLibrary = () => {
       <div className="flex justify-between items-center p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-100">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+            <div className="p-3 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl">
               <Upload className="w-7 h-7 text-white" />
             </div>
             Thư viện tài liệu
@@ -280,7 +280,7 @@ const ContentLibrary = () => {
                     <TableRow key={content.id} className="hover:bg-gray-50 transition-colors">
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br from-blue-400 to-purple-500">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-linear-to-br from-blue-400 to-purple-500">
                             <TypeIcon className="w-5 h-5 text-white" />
                           </div>
                           <span className="font-semibold text-gray-900 text-base">{content.title}</span>
@@ -367,7 +367,7 @@ const ContentLibrary = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                <div className="p-2 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg">
                   <Plus className="w-5 h-5 text-white" />
                 </div>
                 {editingContent ? 'Chỉnh sửa tài liệu' : 'Thêm tài liệu mới'}
@@ -467,7 +467,7 @@ const ContentLibrary = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg">
+                <div className="p-2 bg-linear-to-br from-green-500 to-teal-600 rounded-lg">
                   <Share2 className="w-5 h-5 text-white" />
                 </div>
                 Chia sẻ tài liệu
