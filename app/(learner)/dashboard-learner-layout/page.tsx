@@ -50,13 +50,13 @@ function DashboardContent() {
 
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="min-h-screen flex bg-linear-to-br from-gray-50 to-blue-50/30">
       {/* SIDEBAR - Professional White Design */}
       <aside className="w-77 bg-white shadow-xl flex flex-col border-r border-gray-300">
         {/* Logo Section */}
         <div className="p-8 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-linear-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
               </svg>
@@ -144,7 +144,7 @@ function DashboardContent() {
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity"></div>
               <div className="relative flex items-center gap-4 bg-gradient-to-r from-yellow-50 to-amber-50 pl-5 pr-6 py-1 rounded-2xl border-1 border-yellow-200 shadow-lg hover:shadow-xl transition-all cursor-pointer">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+                <div className="w-12 h-12 bg-linear-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
                   <Coins className="w-7 h-7 text-white" />
                 </div>
                 <div>
