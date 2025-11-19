@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+
 const Overview = () => {
   const { data: userData } = useGetMeQuery();
   const router = useRouter();
@@ -99,7 +100,7 @@ const Overview = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card 
           onClick={() => {
-            router.push("/dashboard-learner-layout?menu=enrollingCourses");
+            router.push(`/dashboard-learner-layout?menu=enrollingCourses`);
           }} 
           className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 cursor-pointer hover:shadow-lg transition-all"
         >

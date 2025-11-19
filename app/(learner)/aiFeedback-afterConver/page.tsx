@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   MessageSquare,
   Calendar,
-  CheckCircle2,
   AlertCircle,
   ArrowLeft,
   RefreshCw,
