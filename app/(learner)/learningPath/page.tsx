@@ -19,11 +19,7 @@ import { useStartExercise } from "@/features/learner/hooks/startExerciseHooks/st
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-interface LearningPathProps {
-  setActiveMenu?: (menu: string) => void;
-}
-
-const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
+const LearningPath = () => {
   const router = useRouter();
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
   const learnerData = getAllLearnerData();
@@ -38,7 +34,7 @@ const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { mutate: startExercise, isPending: _isStarting } = useStartExercise();
+  const { mutate: startExercise, isPending: isStarting } = useStartExercise();
   const [loadingExerciseId, setLoadingExerciseId] = useState<string | null>(null);
 
   // Ngay khi vào trang lấy thông tin user
@@ -46,9 +42,7 @@ const LearningPath = ({ setActiveMenu }: LearningPathProps) => {
   const userLevel = userData?.learnerProfile?.level || "A1";
 
   const handleNavigateToEnrollingCourses = () => {
-    if (setActiveMenu) {
-      setActiveMenu("enrollingCourses");
-    }
+    router.push("/enrolling-courses");
   };
 
 

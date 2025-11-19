@@ -48,6 +48,7 @@ const ConversationWithAI = () => {
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(0); // in seconds
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const { mutate: chartCoinForConversationMutation } = useChartCoinForConversation();
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -75,6 +76,9 @@ const ConversationWithAI = () => {
       );
       const contentType = response.headers.get("content-type") || "";
       const bodyText = await response.text();
+      
+     
+
       if (!response.ok) {
         throw new Error(`Failed to get token: ${response.status} ${bodyText}`);
       }
@@ -82,10 +86,13 @@ const ConversationWithAI = () => {
         throw new Error("Failed to get token: unexpected response format");
       }
       const data = JSON.parse(bodyText);
+      
+     
+      
       setToken(data.token);
       setServerUrl(data.url);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
+    } catch (error) {
+     
       toast.error("Không thể kết nối. Vui lòng thử lại!");
       setShowLiveKit(false);
     }
@@ -99,15 +106,27 @@ const ConversationWithAI = () => {
 
   // Handle disconnect
   const handleDisconnect = useCallback(() => {
+    if (isDisconnecting) return; // Prevent multiple calls
+    
+    setIsDisconnecting(true);
+    
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
-    setShowLiveKit(false);
-    setToken(null);
-    setServerUrl(null);
-    setTimeRemaining(0);
-    router.push("/aiFeedback-afterConver");
-  }, [router]);
+    
+    // Give time for localStorage to save and LiveKit to disconnect properly
+    setTimeout(() => {
+      setShowLiveKit(false);
+      setToken(null);
+      setServerUrl(null);
+      setTimeRemaining(0);
+      setIsDisconnecting(false);
+      
+      // Navigate to feedback page
+      router.push("/aiFeedback-afterConver");
+    }, 1000); // Increased to 1 second for proper cleanup
+  }, [router, isDisconnecting]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -192,6 +211,9 @@ const ConversationWithAI = () => {
       { aiConversationChargeId: selectedOption.id },
       {
         onSuccess: () => {
+          // Clear old messages from previous conversation
+          localStorage.removeItem("messages");
+          
           toast.success("Bắt đầu trò chuyện với AI!");
           setShowLiveKit(true);
           refetchUserData();
@@ -256,16 +278,34 @@ const ConversationWithAI = () => {
 
               <button
                 onClick={() => {
-                  // Clear timer and close without redirecting
+                  if (isDisconnecting) return; // Prevent multiple clicks
+                  
+                  setIsDisconnecting(true);
+                  
+                  // Clear timer
                   if (timerIntervalRef.current) {
                     clearInterval(timerIntervalRef.current);
+                    timerIntervalRef.current = null;
                   }
-                  setShowLiveKit(false);
-                  setToken(null);
-                  setServerUrl(null);
-                  setTimeRemaining(0);
+                  
+                  toast.info("Đang kết thúc trò chuyện...");
+                  
+                  // Give time for cleanup
+                  setTimeout(() => {
+                    setShowLiveKit(false);
+                    setToken(null);
+                    setServerUrl(null);
+                    setTimeRemaining(0);
+                    setIsDisconnecting(false);
+                    
+                    // Navigate to feedback page
+                    router.push("/aiFeedback-afterConver");
+                  }, 1000);
                 }}
-                className="relative z-10 w-10 h-10 cursor-pointer rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90 group"
+                disabled={isDisconnecting}
+                className={`relative z-10 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90 group ${
+                  isDisconnecting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                }`}
                 title="Đóng"
               >
                 <X className="w-6 h-6 text-white group-hover:text-red-200 transition-colors" />
@@ -283,10 +323,17 @@ const ConversationWithAI = () => {
                       serverUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || ""
                     }
                     token={token}
-                    connect={true}
-                    video={ false}
+                    connect={!isDisconnecting}
+                    video={false}
                     audio={true}
                     onDisconnected={handleDisconnect}
+                    onError={(error) => {
+                      console.error("LiveKit Room Error:", error);
+                      // Don't show error toast if we're intentionally disconnecting
+                      if (!isDisconnecting && !error.message?.includes("Client initiated disconnect")) {
+                        toast.error(`Lỗi kết nối: ${error.message}`);
+                      }
+                    }}
                   >
                     <RoomAudioRenderer />  {/* Xử lý phát âm thanh từ phòng LiveKit */}
                     

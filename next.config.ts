@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Disable Turbopack for production builds on Vercel
+  experimental: {
+    turbo: undefined,
+  },
   images: {
     remotePatterns: [
       {
@@ -21,6 +25,9 @@ const nextConfig: NextConfig = {
     unoptimized: true, 
     dangerouslyAllowSVG: true,
   },
+  // Optimize for Vercel deployment
+  output: 'standalone',
+  poweredByHeader: false,
 };
 
 export default nextConfig;

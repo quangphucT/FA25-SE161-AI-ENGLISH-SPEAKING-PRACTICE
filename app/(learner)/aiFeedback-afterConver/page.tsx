@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import {
   MessageSquare,
   Calendar,
-  CheckCircle2,
   AlertCircle,
   ArrowLeft,
   RefreshCw,
 } from "lucide-react";
+import fetchWithAuth from "@/utils/fetchWithAuth";
 
 interface Message {
   type: "agent" | "user";
@@ -60,7 +60,7 @@ const Feedback = () => {
                 .join("\n");
 
               // Call the API
-              const response = await fetch("/api/aiFeedback", {
+              const response = await fetchWithAuth("/api/aiFeedback", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -110,7 +110,7 @@ const Feedback = () => {
         .join("\n");
 
       // Call the API
-      const response = await fetch("/api/aiFeedback/", {
+      const response = await fetchWithAuth("/api/aiFeedback/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -137,14 +137,16 @@ const Feedback = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-5">
+      <div className=" sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                onClick={() => router.back()}
-                className="cursor-pointer border-gray-300"
+                 onClick={() =>
+                  router.push("/dashboard-learner-layout?menu=conversationWithAI")
+                }
+                className="cursor-pointer rounded-4xl border-gray-300"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Quay lại
@@ -158,12 +160,12 @@ const Feedback = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-2">
         {/* Title Section */}
-        <div className="text-center mb-3">
+        <div className="text-center mb-2">
           <div className="flex items-center justify-center gap-1 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-              <MessageSquare className="w-6 h-6 text-white" />
+            <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+              <MessageSquare className="w-4 h-4 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
@@ -232,108 +234,75 @@ const Feedback = () => {
           </div>
         )}
 
-        {/* Feedback Content */}
-        {!loading && !error && feedbackSections.length > 0 && (
-          <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-xl p-8">
-            <div className="grid grid-cols-2 gap-8">
-              {/* Left Column */}
-              <div className="space-y-6">
-                {feedbackSections.slice(0, Math.ceil(feedbackSections.length / 2)).map((section, idx) => (
-                  <div key={idx}>
-                    {section.title && (
-                      <div className="flex items-start gap-3 mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1 shadow-md">
-                          <CheckCircle2 className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                            {section.title}
-                          </h2>
-                          {section.description && (
-                            <p className="text-gray-700 leading-relaxed text-base">
-                              {section.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+  {/* Feedback Content */}
+{!loading && !error && feedbackSections.length > 0 && (() => {
+  // Flatten items into individual sections for display
+  const displaySections: FeedbackSection[] = [];
+  
+  feedbackSections.forEach((section) => {
+    if (section.items.length > 0) {
+      // Each item becomes its own section
+      section.items.forEach((item, idx) => {
+        displaySections.push({
+          title: `${idx + 1}`,
+          description: item,
+          items: []
+        });
+      });
+    } else {
+      // Keep sections without items as-is
+      displaySections.push(section);
+    }
+  });
 
-                    {section.items.length > 0 && (
-                      <div className="ml-11 space-y-3">
-                        {section.items.map((item, itemIdx) => (
-                          <div
-                            key={itemIdx}
-                            className="flex items-start gap-3 p-4 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200 hover:shadow-md transition-shadow"
-                          >
-                            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                              <span className="text-xs font-bold text-white">
-                                {itemIdx + 1}
-                              </span>
-                            </div>
-                            <p className="text-gray-800 flex-1 leading-relaxed">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Divider */}
-                    {idx < Math.ceil(feedbackSections.length / 2) - 1 && (
-                      <div className="border-b-2 border-gray-200 my-6"></div>
-                    )}
-                  </div>
-                ))}
+  const leftSections = displaySections.slice(0, 4);
+  const rightSections = displaySections.slice(4);
+
+  return (
+  <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-xl p-8">
+    <div className="grid grid-cols-2 gap-8">
+
+      {/* LEFT COLUMN (items 1-4) */}
+      <div className="space-y-6">
+        {leftSections.map((section, idx) => (
+          <div key={idx}>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-[100%] flex items-center justify-center flex-shrink-0 shadow-md">
+                <span className="text-xl font-bold  text-white">{section.title}</span>
               </div>
-
-              {/* Right Column */}
-              <div className="space-y-6">
-                {feedbackSections.slice(Math.ceil(feedbackSections.length / 2)).map((section, idx) => (
-                  <div key={idx}>
-                    {section.title && (
-                      <div className="flex items-start gap-3 mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1 shadow-md">
-                          <CheckCircle2 className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                            {section.title}
-                          </h2>
-                          {section.description && (
-                            <p className="text-gray-700 leading-relaxed text-base">
-                              {section.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {section.items.length > 0 && (
-                      <div className="ml-11 space-y-3">
-                        {section.items.map((item, itemIdx) => (
-                          <div
-                            key={itemIdx}
-                            className="flex items-start gap-3 p-4 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200 hover:shadow-md transition-shadow"
-                          >
-                            <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                              <span className="text-xs font-bold text-white">
-                                {itemIdx + 1}
-                              </span>
-                            </div>
-                            <p className="text-gray-800 flex-1 leading-relaxed">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Divider */}
-                    {idx < feedbackSections.slice(Math.ceil(feedbackSections.length / 2)).length - 1 && (
-                      <div className="border-b-2 border-gray-200 my-6"></div>
-                    )}
-                  </div>
-                ))}
+              <div className="flex-1">
+                <p className="text-gray-800 leading-relaxed text-base">
+                  {section.description}
+                </p>
               </div>
             </div>
+            {idx < leftSections.length - 1 && <div className="border-b-2 border-gray-200 my-6"></div>}
           </div>
-        )}
+        ))}
+      </div>
+
+      {/* RIGHT COLUMN (items 5+) */}
+      <div className="space-y-6">
+        {rightSections.map((section, idx) => (
+          <div key={idx}>
+            <div className="flex items-start gap-3 mb-4">
+            
+              <div className="flex-1">
+                <p className="text-gray-800 leading-relaxed text-base">
+                  {section.description}
+                </p>
+              </div>
+            </div>
+            {idx < rightSections.length - 1 && <div className="border-b-2 border-gray-200 my-6"></div>}
+          </div>
+        ))}
+      </div>
+
+    </div>
+  </div>
+  );
+})()}
+
       </div>
     </div>
   );

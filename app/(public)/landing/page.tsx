@@ -2,8 +2,6 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import logoWeb from "../../../public/icons/logoWeb.svg"
-import imageLandingPage from "../../../public/images/imageLanding.avif"    
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 const features = [
@@ -31,7 +29,7 @@ const Page = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-[300px] py-6">
         <div onClick={() => router.push("/")} className="flex items-center gap-2 cursor-pointer">
-          <Image src={logoWeb} alt="Logo" width={40} height={40} />
+          <Image src="/icons/logoWeb.svg" alt="Logo" width={40} height={40} />
           <span className="text-4xl font-bold text-[#58cc02]">SpeakAI</span>
         </div>
       
@@ -56,7 +54,7 @@ const Page = () => {
           </div>
         </div>
         <div className="flex-1 flex justify-center">
-          <Image src={imageLandingPage} alt="Duolingo AI" width={400} height={400} />
+          <Image src="/images/imageLanding.avif" alt="Duolingo AI" width={400} height={400} />
         </div>
       </section>
 

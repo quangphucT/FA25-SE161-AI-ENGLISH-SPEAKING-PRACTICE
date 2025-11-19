@@ -102,9 +102,9 @@ const EntranceTest = () => {
         toast.error("Phiên đã hết hạn, vui lòng đăng nhập lại.");
         router.push("/sign-in");
       }
-    } catch (_error) {
+    } catch (err) {
       toast.error("Có lỗi xảy ra, vui lòng thử lại.");
-      console.error("Error navigating to dashboard:", _error);
+      console.error("Error navigating to dashboard:", err);
     }
     setLoadingToDashboardLearner(false);
   };

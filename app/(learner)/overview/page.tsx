@@ -12,11 +12,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface OverviewProps {
-  setActiveMenu?: (menu: string) => void;
-}
 
-const Overview = ({ setActiveMenu }: OverviewProps) => {
+const Overview = () => {
   const { data: userData } = useGetMeQuery();
   const router = useRouter();
   const stats = [
@@ -103,11 +100,7 @@ const Overview = ({ setActiveMenu }: OverviewProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card 
           onClick={() => {
-            if (setActiveMenu) {
-              setActiveMenu("enrollingCourses");
-            } else {
-              router.push("/dashboard-learner-layout");
-            }
+            router.push(`/dashboard-learner-layout?menu=enrollingCourses`);
           }} 
           className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 cursor-pointer hover:shadow-lg transition-all"
         >
@@ -128,11 +121,7 @@ const Overview = ({ setActiveMenu }: OverviewProps) => {
         </Card>
 
         <Card onClick={() => {
-            if(setActiveMenu){
-                setActiveMenu("progress")
-            }else{
-                router.push("/dashboard-learner-layout/progress")
-            }
+            router.push("/dashboard-learner-layout?menu=progress");
         }} className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 cursor-pointer hover:shadow-lg transition-all">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center">
