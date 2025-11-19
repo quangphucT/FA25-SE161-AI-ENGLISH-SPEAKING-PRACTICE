@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import imageProfile from "../../../public/images/imageLanding.avif";
 import {
   Star,
   Award,
@@ -266,7 +265,7 @@ const ReviewerProfile = () => {
                 <div className="relative group">
                   <div className="absolute -inset-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full opacity-20 group-hover:opacity-30 transition-opacity blur"></div>
                   <Image
-                    src={imageProfile}
+                    src="/images/imageLanding.avif"
                     alt={mentorData.name}
                     className="relative w-40 h-40 rounded-full object-cover border-4 border-white shadow-2xl"
                     width={160}
