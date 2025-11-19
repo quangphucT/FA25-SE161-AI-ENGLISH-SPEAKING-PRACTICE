@@ -14,6 +14,8 @@ export function middleware(request: NextRequest) {
   if (!accessToken && (pathName.startsWith("/dashboard") || pathName.startsWith("/entrance"))) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
+
+  
   if (accessToken) {
     try {
       const base64 = accessToken.split(".")[1];
@@ -22,6 +24,28 @@ export function middleware(request: NextRequest) {
       const role = decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
       const isPlacementTestDone = decodedPayload["IsPlacementTestDone"];
       const isReviewerActive = decodedPayload["IsReviewerActive"];
+
+      // Nếu vào root "/" và đã có token → redirect về dashboard theo role
+      if (pathName === "/") {
+        if (role === "LEARNER") {
+          if (!isPlacementTestDone) {
+            return NextResponse.redirect(new URL("/entrance_test", request.url));
+          }
+          return NextResponse.redirect(new URL("/dashboard-learner-layout", request.url));
+        }
+        if (role === "REVIEWER") {
+          if (!isReviewerActive) {
+            return NextResponse.redirect(new URL("/entrance_information", request.url));
+          }
+          return NextResponse.redirect(new URL("/dashboard-reviewer-layout", request.url));
+        }
+        if (role === "ADMIN") {
+          return NextResponse.redirect(new URL("/dashboard-admin-layout", request.url));
+        }
+        if (role === "MANAGER") {
+          return NextResponse.redirect(new URL("/dashboard-manager-layout", request.url));
+        }
+      }
 
       // Nếu LEARNER chưa làm placement test → chuyển hướng tới trang test
       if (
