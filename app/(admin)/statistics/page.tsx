@@ -13,7 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Bar, Line } from "react-chartjs-2";
 import Image from "next/image";
 import { FaBox, FaChartLine, FaClock, FaUser } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -134,17 +140,6 @@ const PageStatistics = () => {
     setShowDetailsModal(false);
   };
 
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".dropdown-container")) {
-      setOpenDropdownId(null);
-    }
-  };
-  useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
 
   // Image preview state for certificates
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -578,79 +573,69 @@ const PageStatistics = () => {
                   </TableCell>
 
                   <TableCell className="text-center">
-                    <div className="relative dropdown-container">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setOpenDropdownId(
-                            openDropdownId === m.reviewerProfileId
-                              ? null
-                              : m.reviewerProfileId
-                          )
-                        }
-                        className="p-1 h-8 w-8 cursor-pointer relative z-10"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 h-8 w-8 cursor-pointer"
                         >
-                          <circle cx="12" cy="12" r="1" />
-                          <circle cx="19" cy="12" r="1" />
-                          <circle cx="5" cy="12" r="1" />
-                        </svg>
-                      </Button>
-                      {openDropdownId === m.reviewerProfileId && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border z-50 transform -translate-x-4">
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                openReviewerDetails({
-                                  id: m.reviewerProfileId,
-                                  fullName: m.fullName,
-                                  email: m.email,
-                                  phone: m.phone,
-                                  level: m.experience,
-                                  experienceYears: 0,
-                                  status: m.status as
-                                    | "Chờ duyệt"
-                                    | "Đã duyệt"
-                                    | "Không duyệt",
-                                  joinedDate: new Date()
-                                    .toISOString()
-                                    .split("T")[0],
-                                  certificates: m.certificates?.map((cert) => ({
-                                    id: cert.certificateId,
-                                    name: cert.name,
-                                    imageUrl: cert.url,
-                                  })),
-                                });
-                                setOpenDropdownId(null);
-                              }}
-                              className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                className="inline mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
-                              Xem chi tiết
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="19" cy="12" r="1" />
+                            <circle cx="5" cy="12" r="1" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            openReviewerDetails({
+                              id: m.reviewerProfileId,
+                              fullName: m.fullName,
+                              email: m.email,
+                              phone: m.phone,
+                              level: m.experience,
+                              experienceYears: 0,
+                              status: m.status as
+                                | "Chờ duyệt"
+                                | "Đã duyệt"
+                                | "Không duyệt",
+                              joinedDate: new Date()
+                                .toISOString()
+                                .split("T")[0],
+                              certificates: m.certificates?.map((cert) => ({
+                                id: cert.certificateId,
+                                name: cert.name,
+                                imageUrl: cert.url,
+                              })),
+                            });
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            className="inline mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

@@ -5,16 +5,24 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const pageNumber = searchParams.get("pageNumber");
   const pageSize = searchParams.get("pageSize");
+  const status = searchParams.get("status");
+  const keyword = searchParams.get("keyword");
   try {
     // Build URL with query parameters
     const backendUrl = new URL(
-      `${process.env.BE_API_URL}/AdminWithdrawal/pending`
+      `${process.env.BE_API_URL}/AdminWithdrawal/all`
     );
     if (pageNumber) {
       backendUrl.searchParams.set("pageNumber", pageNumber);
     }
     if (pageSize) {
       backendUrl.searchParams.set("pageSize", pageSize);
+    }
+    if (status) {
+      backendUrl.searchParams.set("status", status);
+    }
+    if (keyword) {
+      backendUrl.searchParams.set("keyword", keyword);
     }
     const backendResponse = await fetch(backendUrl.toString(), {
       method: "GET",

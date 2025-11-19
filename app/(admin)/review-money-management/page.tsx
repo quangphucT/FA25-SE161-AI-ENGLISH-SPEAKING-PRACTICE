@@ -12,6 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAdminReviewerIncome, useAdminReviewerIncomeDetail, useAdminReviewerIncomeList } from "@/features/admin/hooks/useAdminReviewerIncome";
 
 // Type definitions
@@ -408,19 +414,53 @@ const ReviewMoneyManagement = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              handleViewReviewerDetails(
-                                reviewer.email,
-                                reviewer.fullName
-                              )
-                            }
-                            className="text-xs"
-                          >
-                            Xem chi tiết
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 h-8 w-8 cursor-pointer"
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle cx="12" cy="12" r="1" />
+                                  <circle cx="19" cy="12" r="1" />
+                                  <circle cx="5" cy="12" r="1" />
+                                </svg>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleViewReviewerDetails(
+                                    reviewer.email,
+                                    reviewer.fullName
+                                  )
+                                }
+                                className="cursor-pointer"
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  className="inline mr-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                Xem chi tiết
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))

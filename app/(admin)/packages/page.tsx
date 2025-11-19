@@ -29,6 +29,7 @@ import { useCreateCoinServicePackage } from "@/features/admin/hooks/createNewCoi
 import { deleteCoinServicePackageMutation } from "@/features/admin/hooks/deleteCoinServicePackageMutation";
 import { useUpdateCoinServicePackage } from "@/features/admin/hooks/updateCoinServicePackage";
 import { CreateCoinServicePackageRequest } from "@/types/coin_servicePackage";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ServicePackageManagement = () => {
   const [search, setSearch] = useState<string>("");
@@ -38,7 +39,8 @@ const ServicePackageManagement = () => {
   const {
     data: servicePackagesData,
     isLoading,
-    error
+    error,
+    refetch
   } = useGetServicePackages("1", "100", search, statusFilter === "All" ? "" : statusFilter);
   
   const {mutateAsync: createServicePackage} = useCreateCoinServicePackage();
@@ -68,9 +70,16 @@ const ServicePackageManagement = () => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof createPackageSchema>) => {
-    createServicePackage(values);
-    setShowCreateModal(false);
+  const onSubmit = async (values: z.infer<typeof createPackageSchema>) => {
+    try {
+      await createServicePackage(values);
+      setShowCreateModal(false);
+      form.reset();
+      // Refetch data after successful creation
+      await refetch();
+    } catch (error) {
+      // Error is handled in hook via toast
+    }
   };
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
@@ -116,10 +125,16 @@ const ServicePackageManagement = () => {
     setShowConfirmDialog(true);
   };
 
-  const confirmAction = () => {
-    deleteServicePackage(packageToAction!.servicePackageId);
-    setShowConfirmDialog(false);
-    setPackageToAction(null);
+  const confirmAction = async () => {
+    try {
+      await deleteServicePackage(packageToAction!.servicePackageId);
+      setShowConfirmDialog(false);
+      setPackageToAction(null);
+      // Refetch data after successful deletion
+      await refetch();
+    } catch (error) {
+      // Error is handled in hook via toast
+    }
   };
 
   const handleUpdateSubmit = async (e?: React.FormEvent) => {
@@ -132,6 +147,8 @@ const ServicePackageManagement = () => {
       });
       setShowUpdateModal(false);
       setPackageToUpdate(null);
+      // Refetch data after successful update
+      await refetch();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_err) {
       // errors are handled in hook via toast
@@ -165,15 +182,12 @@ const ServicePackageManagement = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="w-[300px]"
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border rounded-md cursor-pointer"
-          >
-            <option value="All">Tất cả trạng thái</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+            <TabsList className="grid grid-cols-2 w-[300px]">
+              <TabsTrigger value="Actived">Hoạt động</TabsTrigger>
+              <TabsTrigger value="InActived">Ngưng hoạt động</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
         <Button
           onClick={() => setShowCreateModal(true)}

@@ -10,7 +10,7 @@ import {
   adminRegisteredReviewerService,
 } from "../services/adminSummaryService";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
-import { adminManagerCreateService, AdminManagerResponse, adminManagerService } from "../services/adminManagerService";
+import { adminManagerCreateService, AdminManagerDetailResponse, adminManagerDetailService, AdminManagerResponse, adminManagerService } from "../services/adminManagerService";
 import { AdminReviewersResponse, adminReviewersService } from "../services/adminReviewerService";
 export const useAdminSummary = () => {
   return useQuery<AdminSummaryResponse, Error>({
@@ -55,5 +55,12 @@ export const useAdminReviewerList = (pageNumber: number, pageSize: number, filte
     queryKey: ["adminReviewerList", pageNumber, pageSize, filterStatus, search],
     queryFn: () => adminReviewersService(pageNumber, pageSize, filterStatus, search),
     placeholderData: keepPreviousData,
+  });
+}
+export const useAdminManagerDetail = (userId: string) => {
+  return useQuery<AdminManagerDetailResponse, Error>({
+    queryKey: ["adminManagerDetail", userId],
+    queryFn: () => adminManagerDetailService(userId),
+    enabled: !!userId && userId !== "", // Only fetch when userId is provided
   });
 }

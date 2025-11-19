@@ -246,7 +246,7 @@ const ReviewerProfile = () => {
     rating: profileData?.rating || 0,
     totalReviews: 0, // TODO: Get from API if available
     totalFeedbacks: 0, // TODO: Get from API if available
-    yearsExperience: profileData?.yearsExperience || 0,
+    yearsExperience: meData?.reviewerProfile?.experience || 0,
     level: meData?.reviewerProfile?.levels || "___", // TODO: Get from API if available
     certifications: profileData?.certificates || [],
   };
@@ -561,14 +561,13 @@ const ReviewerProfile = () => {
                     >
                       Kinh nghiệm
                     </Label>
-                    <textarea
+                    <Input
                       id="experience"
                       value={formData.experience}
                       onChange={(e) =>
                         handleInputChange("experience", e.target.value)
                       }
-                      className="mt-1 w-full min-h-[100px] p-2 border rounded-md"
-                      placeholder="Mô tả kinh nghiệm của bạn..."
+                      placeholder="Nhập số năm kinh nghiệm của bạn..."
                     />
                   </div>
 

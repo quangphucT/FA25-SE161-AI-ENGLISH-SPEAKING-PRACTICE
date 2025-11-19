@@ -31,6 +31,7 @@ import WithdrawRequest from "../withdraw-request/page";
 import ReviewMoneyManagement from "../review-money-management/page";
 import PurchasesItemManagement from "../purchases-item-management/page";
 import AiConversationPackageManagement from "../ai-conversation-package-service/page";
+import ReviewFeeManagement from "../reviewfee-management/page"; 
 import { handleLogout } from "@/utils/auth";
 
 Chart.register(
@@ -321,6 +322,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
           <li>
             <button
               type="button"
+                onClick={() => setActiveMenu("reviewfee")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "reviewfee"
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "reviewfee"
+                    ? "bg-white/20"
+                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                }`}
+              >
+                <CreditCard size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Quản lí gói phí đánh giá</span>
+                <span className="text-xs opacity-70">Quản lí gói phí đánh giá.</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
               onClick={() => setActiveMenu("feedback")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
                 activeMenu === "feedback"
@@ -445,6 +471,14 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
           title: "Quản lí mua gói vật phẩm",
           subtitle: "Quản lí mua gói vật phẩm.",
         },
+        aiConversationPackages: {
+          title: "Quản lí gói hội thoại AI",
+          subtitle: "Quản lí gói hội thoại AI.",
+        },
+        reviewfee:{
+          title: "Quản lí gói phí đánh giá",
+          subtitle: "Quản lí gói phí đánh giá.",
+        }
       //soldpackages: { title: "Gói đã bán", subtitle: "Quản lí gói đã bán và hoạt động." },
     };
     return (
@@ -500,6 +534,12 @@ const DashboardAdmin = () => {
         return <ReviewMoneyManagement />;
       // case "soldpackages":
       //   return <SoldPackagesManagement />;
+      case "purchaseItem":
+        return <PurchasesItemManagement />;
+      case "aiConversationPackages":
+        return <AiConversationPackageManagement />;
+      case "reviewfee":
+        return <ReviewFeeManagement />;
       default:
         return null;
     }

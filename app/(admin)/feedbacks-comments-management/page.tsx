@@ -29,6 +29,12 @@ import {
   Feedback as ApiFeedback,
   AdminFeedbackResponse,
 } from "@/features/admin/services/adminFeedbackService";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Type definitions
 interface User {
@@ -105,7 +111,6 @@ const FeedbacksCommentsManagement = () => {
     null
   );
   const [showActionModal, setShowActionModal] = useState<boolean>(false);
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const queryClient = useQueryClient();
@@ -267,19 +272,6 @@ const FeedbacksCommentsManagement = () => {
       new Date(dateString).toLocaleTimeString("vi-VN")
     );
   };
-
-  // Close dropdown when clicking outside
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".dropdown-container")) {
-      setOpenDropdownId(null);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
 
   return (
     <div className="p-6">
@@ -444,80 +436,64 @@ const FeedbacksCommentsManagement = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="dropdown-container relative">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenDropdownId(
-                            openDropdownId === feedback.feedbackId
-                              ? null
-                              : feedback.feedbackId
-                          );
-                        }}
-                        className="h-8 w-8 p-0 cursor-pointer"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 cursor-pointer"
                         >
-                          <circle cx="12" cy="12" r="1" />
-                          <circle cx="19" cy="12" r="1" />
-                          <circle cx="5" cy="12" r="1" />
-                        </svg>
-                      </Button>
-                      {openDropdownId === feedback.feedbackId && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                          <div className="py-1">
-                            <button
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                              onClick={() => {
-                                handleViewDetails(feedback);
-                                setOpenDropdownId(null);
-                              }}
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                className="inline mr-2"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
-                              Xem chi tiết
-                            </button>
-                            <button
-                              className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-                              onClick={() => {
-                                handleAction(feedback, "reject");
-                                setOpenDropdownId(null);
-                              }}
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                className="inline mr-2"
-                              >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                              </svg>
-                              Từ chối
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                          <svg
+                            width="14"
+                            height="14"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="19" cy="12" r="1" />
+                            <circle cx="5" cy="12" r="1" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => handleViewDetails(feedback)}
+                          className="cursor-pointer text-gray-700 focus:text-gray-900"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            className="inline mr-2"
+                          >
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAction(feedback, "reject")}
+                          className="cursor-pointer text-red-600 focus:text-red-700"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            className="inline mr-2"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                          Từ chối
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                   </TableRow>
                   ))}
