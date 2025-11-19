@@ -1,6 +1,10 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useReviewReviewHistory } from "@/features/reviewer/hooks/useReviewReview";
+import { useState } from "react";
+import { ReviewerReviewHistory } from "@/features/reviewer/services/reviewerReviewService";
 
 type ReviewedAnswer = {
   id: string;
@@ -15,43 +19,88 @@ type ReviewedAnswer = {
   questionType: "Word" | "Phrase" | "Sentence" | "Conversation";
 };
 
-const sampleReviewedAnswers: ReviewedAnswer[] = [
-  {
-    id: "A001",
-    question: "the favorite fruit of me is apple",
-    audioUrl: "/sample-audios/answer-1.mp3",
-    comment:
-      "Good fluency and coherent structure. Work on pronunciation of long vowels.",
-    score: 8.5,
-    status: "Approved",
-    reviewedAt: "05/10/2025",
-    questionType: "Word",
-  },
-  {
-    id: "A002",
-    question: "apple",
-    audioUrl: "/sample-audios/answer-2.mp3",
-    comment:
-      "Ideas are solid but there are frequent pauses. Try to reduce filler words.",
-    score: 7.0,
-    status: "Pending",
-    reviewedAt: "04/10/2025",
-    questionType: "Phrase",
-  },
-  {
-    id: "A003",
-    question:
-      "sing a song",
-    comment:
-      "Response lacks detail and examples. Consider expanding your answers.",
-    score: 5.5,
-    status: "Rejected",
-    reviewedAt: "03/10/2025",
-    questionType: "Sentence",
-  },
-];
+const formatDate = (date: Date | string): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const mapReviewToReviewedAnswer = (review: ReviewerReviewHistory): ReviewedAnswer => {
+  return {
+    id: review.reviewId,
+    question: review.questionContent,
+    audioUrl: "", // ReviewerReviewHistory doesn't have audioUrl field
+    comment: review.comment,
+    score: review.score,
+    status: (review.status as "Approved" | "Rejected" | "Pending") || "Pending",
+    reviewedAt: formatDate(review.createdAt),
+    questionType: (review.reviewType as "Word" | "Phrase" | "Sentence" | "Conversation") || "Word",
+  };
+};
 
 const ReviewHistory = () => {
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize] = useState(20);
+  const { data, isLoading, error } = useReviewReviewHistory(pageNumber, pageSize);
+
+  // Calculate pagination info
+  const totalItems = data?.data?.totalItems || 0;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const startItem = totalItems > 0 ? (pageNumber - 1) * pageSize + 1 : 0;
+  const endItem = Math.min(pageNumber * pageSize, totalItems);
+
+  // Handle pagination
+  const handlePreviousPage = () => {
+    if (pageNumber > 1) {
+      setPageNumber(pageNumber - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pageNumber < totalPages) {
+      setPageNumber(pageNumber + 1);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPageNumber(newPage);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Reviewed Answers</h1>
+          <p className="text-sm text-slate-500">
+            Learner submissions you&apos;ve reviewed
+          </p>
+        </div>
+        <div className="text-center py-8 text-slate-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Reviewed Answers</h1>
+          <p className="text-sm text-slate-500">
+            Learner submissions you&apos;ve reviewed
+          </p>
+        </div>
+        <div className="text-center py-8 text-red-500">
+          Error: {error.message}
+        </div>
+      </div>
+    );
+  }
+
+  // Type assertion: API returns ReviewerReviewHistory[] but type says ReviewerReview[]
+  const reviewedAnswers: ReviewedAnswer[] = (data?.data?.items as unknown as ReviewerReviewHistory[])?.map(mapReviewToReviewedAnswer) || [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -61,8 +110,13 @@ const ReviewHistory = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {sampleReviewedAnswers.map((item) => (
+      {reviewedAnswers.length === 0 ? (
+        <div className="text-center py-8 text-slate-500">
+          No reviewed answers found.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {reviewedAnswers.map((item) => (
           <Card
             key={item.id}
             className="overflow-hidden border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow"
@@ -132,7 +186,60 @@ const ReviewHistory = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {reviewedAnswers.length > 0 && (
+        <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-200">
+          <div className="text-sm text-slate-500">
+            Showing {startItem}-{endItem} of {totalItems} reviewed answers
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={pageNumber === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (pageNumber <= 3) {
+                  pageNum = i + 1;
+                } else if (pageNumber >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = pageNumber - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pageNumber === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange(pageNum)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={pageNumber >= totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
