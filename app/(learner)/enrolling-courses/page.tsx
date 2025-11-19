@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -13,11 +14,8 @@ import { useGetLevelAndLearnerCourseIdAfterEnrolling } from "@/features/learner/
 import { useLearnerStore } from "@/store/useLearnerStore";
 import { useEnrollCourseNotFree } from "@/features/learner/hooks/enrollingCourseNotFreeHooks/enrollCourseNotFree";
 
-interface LearningPathProps {
-  setActiveMenu?: (menu: string) => void;
-}
-
-const EnrollingCourses = ({ setActiveMenu }: LearningPathProps) => {
+const EnrollingCourses = () => {
+  const router = useRouter();
   const learnerCourseIdOnZustand = useLearnerStore(
     (state) => state.getAllLearnerData().learnerCourseId
   );
@@ -48,18 +46,14 @@ const EnrollingCourses = ({ setActiveMenu }: LearningPathProps) => {
       status: status as "InProgress" | "Completed",
     };
     useLearnerStore.getState().setAllLearnerData(courseData);
-    if (setActiveMenu) {
-      setActiveMenu("learningPath");
-    }
+    router.push("/learningPath");
   };
 
   const handleEnrollCourseFree = async (courseId: string) => {
     enrollFirstCourse(courseId, {
       onSuccess: (data) => {
         toast.success(data.message || "Đã tham gia khóa học thành công!");
-        if (setActiveMenu) {
-          setActiveMenu("learningPath");
-        }
+        router.push("/learningPath");
       },
     });
   };
@@ -81,9 +75,7 @@ const EnrollingCourses = ({ setActiveMenu }: LearningPathProps) => {
             learningPathCourseId: data.data.learningPathCourseId,
             status: data.data.status,
           });
-          if (setActiveMenu) {
-            setActiveMenu("learningPath");
-          }
+          router.push("/learningPath");
         },
         onError: (error) => {
           toast.error(error.message || "Tham gia khóa học thất bại");
