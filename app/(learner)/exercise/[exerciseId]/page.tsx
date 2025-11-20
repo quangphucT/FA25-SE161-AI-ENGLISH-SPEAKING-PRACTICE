@@ -2,7 +2,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Mic, Volume2, ArrowLeft, ArrowRight } from "lucide-react";
 import { useLearnerStore } from "@/store/useLearnerStore";
@@ -12,10 +12,12 @@ import { useSubmitAnswerQuestion } from "@/features/learner/hooks/submitAnswerQu
 const ExercisePage = () => {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const exerciseId = params?.exerciseId as string;
+  const chapterId = searchParams.get('chapterId');
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
   const learnerData = getAllLearnerData();
-
+  
   // Get full learning path data
   const { data: apiResponse, isLoading } = useLearningPathCourseFull(
     {
@@ -25,7 +27,6 @@ const ExercisePage = () => {
     },
     Boolean(learnerData)
   );
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recorded, setRecorded] = useState<boolean[]>([]);
@@ -276,6 +277,25 @@ const ExercisePage = () => {
             setRecorded(newRecorded);
 
             setIsProcessingAudio(false);
+
+            // Submit answer immediately after processing
+            submitAnswerQuestion(
+              {
+                learningPathQuestionId: currentQuestion?.learningPathQuestionId || "",
+                audioRecordingUrl: "abc",
+                transcribedText: newIpa[currentQuestionIndex] || "",
+                scoreForVoice: acc || 0,
+                explainTheWrongForVoiceAI: "abc",
+              },
+              {
+                onSuccess: () => {
+                  console.log("Answer submitted successfully");
+                },
+                onError: (error) => {
+                  console.error("Submit error:", error);
+                },
+              }
+            );
           } catch (error) {
             console.error("Error processing audio:", error);
             setIsProcessingAudio(false);
@@ -316,40 +336,8 @@ const ExercisePage = () => {
     AILanguage,
   ]);
 
-  const handleNextQuestion = async () => {
-    // Submit kết quả câu hiện tại trước khi chuyển sang câu tiếp theo
-    if (recorded[currentQuestionIndex]) {
-      setIsSubmitting(true);
-      try {
-        await new Promise<void>((resolve, reject) => {
-          submitAnswerQuestion(
-            {
-              learningPathQuestionId: currentQuestion?.learningPathQuestionId || "",
-              audioRecordingUrl: "abc",
-              transcribedText: ipaTranscripts[currentQuestionIndex] || "",
-              scoreForVoice: pronunciationScores[currentQuestionIndex] || 0,
-              explainTheWrongForVoiceAI: "abc",
-            },
-            {
-              onSuccess: () => {
-                resolve();
-              },
-              onError: (error) => {
-                console.error("Submit error:", error);
-                reject(error);
-              },
-            }
-          );
-        });
-      } catch (error) {
-        console.error("Failed to submit answer:", error);
-        // Tiếp tục chuyển câu dù có lỗi
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-
-    // Chuyển sang câu tiếp theo
+  const handleNextQuestion = () => {
+    // Chuyển sang câu tiếp theo (answer đã được submit khi dừng ghi âm)
     if (currentQuestionIndex < totalQuestions - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
@@ -361,40 +349,14 @@ const ExercisePage = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    // Submit kết quả câu cuối cùng
-    if (recorded[currentQuestionIndex]) {
-      setIsSubmitting(true);
-      try {
-        await new Promise<void>((resolve, reject) => {
-          submitAnswerQuestion(
-            {
-              learningPathQuestionId: currentQuestion?.learningPathQuestionId || "",
-              audioRecordingUrl: "",
-              transcribedText: ipaTranscripts[currentQuestionIndex] || "",
-              scoreForVoice: pronunciationScores[currentQuestionIndex] || 0,
-              explainTheWrongForVoiceAI: "",
-            },
-            {
-              onSuccess: () => {
-                toast.success("Đã nộp bài thành công!");
-                resolve();
-              },
-              onError: (error) => {
-                toast.error("Nộp bài thất bại");
-                console.error("Submit error:", error);
-                reject(error);
-              },
-            }
-          );
-        });
-        // Vẫn nằm ở câu cuối sau khi submit
-      } catch (error) {
-        console.error("Failed to submit final answer:", error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
+  const handleSubmit = () => {
+    // Tất cả câu trả lời đã được submit khi dừng ghi âm
+    toast.success("Đã hoàn thành bài tập!");
+    // Navigate về learning path với chapterId
+    const url = chapterId 
+      ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
+      : "/dashboard-learner-layout?menu=learningPath";
+    router.push(url);
   };
 
   if (isLoading || !isMounted) {
@@ -437,9 +399,12 @@ const ExercisePage = () => {
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
-                onClick={() =>
-                  router.push("/dashboard-learner-layout?menu=learningPath")
-                }
+                onClick={() => {
+                  const url = chapterId 
+                    ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
+                    : "/dashboard-learner-layout?menu=learningPath";
+                  router.push(url);
+                }}
                 className="text-gray-600 cursor-pointer hover:bg-gray-100"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -526,6 +491,12 @@ const ExercisePage = () => {
             </div>
           </div>
         )}
+
+      
+
+
+
+
         <div className="flex items-center justify-center space-x-4 mb-8">
           <div className="text-4xl font-bold text-gray-900 leading-relaxed">
             {currentQuestion.text}
@@ -542,6 +513,38 @@ const ExercisePage = () => {
               Nghe phát âm
             </Button>
           </div>
+
+            {/* Question stats - Previous result and retake count */}
+        {(currentQuestion.score > 0 || currentQuestion.numberOfRetake > 0) && (
+          <div className="flex justify-center gap-4 mb-6">
+            {currentQuestion.score >= 0 && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-4 py-2 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-blue-700 font-medium">Điểm gần nhất</p>
+                    <p className="text-lg font-bold text-blue-900">{currentQuestion.score}/100</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {currentQuestion.numberOfRetake > 0 && (
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg px-4 py-2 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-orange-700 font-medium">Số lần làm lại</p>
+                    <p className="text-lg font-bold text-orange-900">{currentQuestion.numberOfRetake}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         </div>
         {/* Main content area - 2 column layout */}
         <div className="grid lg:grid-cols-2 gap-8 items-start">
@@ -811,62 +814,41 @@ const ExercisePage = () => {
               </span>
             </div>
 
-            {/* Next/Submit Button */}
+            {/* Next Button */}
             {currentQuestionIndex === totalQuestions - 1 ? (
               <Button
                 onClick={handleSubmit}
-                disabled={!recorded.every((r) => r) || isSubmitting}
-                className={`font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg ${
-                  recorded.every((r) => r)
-                    ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer transform hover:scale-105"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
+                className="font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer transform hover:scale-105"
               >
                 <span className="flex items-center gap-2">
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Đang nộp bài...
-                    </>
-                  ) : recorded.every((r) => r) ? (
-                    <>
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      Nộp bài
-                    </>
-                  ) : (
-                    "Hoàn thành tất cả câu hỏi"
-                  )}
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Hoàn thành
                 </span>
               </Button>
             ) : (
               <Button
                 onClick={handleNextQuestion}
-                disabled={!recorded[currentQuestionIndex] || isSubmitting}
+                disabled={!recorded[currentQuestionIndex] && currentQuestion.status !== "Completed"}
                 className={`font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg ${
-                  recorded[currentQuestionIndex]
+                  recorded[currentQuestionIndex] || currentQuestion.status === "Completed"
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer transform hover:scale-105"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Đang lưu kết quả...
-                    </>
-                  ) : recorded[currentQuestionIndex] ? (
+                  {recorded[currentQuestionIndex] || currentQuestion.status === "Completed" ? (
                     <>
                       Câu tiếp theo
                       <ArrowRight className="w-4 h-4" />

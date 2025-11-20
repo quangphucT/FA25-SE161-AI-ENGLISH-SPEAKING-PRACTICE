@@ -17,15 +17,15 @@ import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import Overview from "../overview/page";
 import WalletCoinPurchase from "../Wallet_coinPurchase/page";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import LearningPath from "../learningPath/page";
 import { handleLogout } from "@/utils/auth";
 import ConversationWithAI from "../coversation-withAI/page";
-import EnrollingCourse from "../enrolling-courses/page";
 import SendingAudioToReviewer from "../sendingAudioToReviewer/page";
 import EnrollingCourses from "../enrolling-courses/page";
 
 function DashboardContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const menuParam = searchParams?.get("menu");
   const [activeMenu, setActiveMenu] = useState(menuParam || "overview");
@@ -80,7 +80,10 @@ function DashboardContent() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveMenu(item.id)}
+                onClick={() => {
+                  setActiveMenu(item.id);
+                  router.push(`/dashboard-learner-layout?menu=${item.id}`);
+                }}
                 className={`w-full rounded-xl flex items-center gap-3 px-4 py-3.5 transition-all duration-200 group cursor-pointer ${
                   isActive
                     ? "bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/30"
