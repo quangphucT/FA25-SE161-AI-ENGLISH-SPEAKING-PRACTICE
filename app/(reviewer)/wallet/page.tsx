@@ -253,7 +253,7 @@ const Wallet = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                <div className="p-2 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg">
                   <Plus className="w-5 h-5 text-white" />
                 </div>
                 {editingTransaction

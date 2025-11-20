@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
@@ -17,10 +17,11 @@ import { useLearningPathCourseFull } from "@/features/learner/hooks/learningPath
 import { Progress } from "@/components/ui/progress";
 import { useStartExercise } from "@/features/learner/hooks/startExerciseHooks/startExercise";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-const LearningPath = () => {
+function LearningPathContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
   const learnerData = getAllLearnerData();
 
@@ -36,6 +37,30 @@ const LearningPath = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { mutate: startExercise, isPending: isStarting } = useStartExercise();
   const [loadingExerciseId, setLoadingExerciseId] = useState<string | null>(null);
+  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set mounted state
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Tự động mở chapter từ URL params - only on client
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const chapterId = searchParams.get('chapterId');
+    if (chapterId) {
+      setExpandedChapterId(chapterId);
+      // Scroll to chapter after a short delay to ensure rendering
+      setTimeout(() => {
+        const element = document.getElementById(`chapter-${chapterId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  }, [searchParams, isMounted]);
 
   // Ngay khi vào trang lấy thông tin user
   const { data: userData } = useGetMeQuery();
@@ -77,7 +102,7 @@ const LearningPath = () => {
   if (!learnerData) {
     return (
       <div className="max-w-[1400px] mx-auto p-6">
-        <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-orange-300">
+        <Card className="p-6 bg-linear-to-br from-yellow-50 to-orange-50 border-2 border-orange-300">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
               <Lock className="w-6 h-6 text-orange-600" />
@@ -138,7 +163,8 @@ const LearningPath = () => {
   const handleButtonClick = (
     exerciseStatus: string, 
     learningPathExerciseId: string,
-    exerciseId: string
+    exerciseId: string,
+    chapterId: string
   ) => {
     if (exerciseStatus === "NotStarted") {
       // Set loading state cho exercise này
@@ -152,8 +178,8 @@ const LearningPath = () => {
             toast.success("Đã bắt đầu bài tập!");
             setLoadingExerciseId(null);
             refetch();
-            // Navigate đến trang exercise
-            router.push(`/exercise/${exerciseId}`);
+            // Navigate đến trang exercise với chapterId
+            router.push(`/exercise/${exerciseId}?chapterId=${chapterId}`);
           },
           onError: (data) => {
             toast.error(data?.message || "Có lỗi xảy ra khi bắt đầu bài tập.");
@@ -163,14 +189,14 @@ const LearningPath = () => {
         }
       );
     } else {
-      // Nếu status khác NotStarted, navigate trực tiếp đến trang exercise
-      router.push(`/exercise/${exerciseId}`);
+      // Nếu status khác NotStarted, navigate trực tiếp đến trang exercise với chapterId
+      router.push(`/exercise/${exerciseId}?chapterId=${chapterId}`);
     }
   };
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-6">
       {/* Course Header */}
-      <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+      <Card className="p-6 bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
@@ -224,10 +250,11 @@ const LearningPath = () => {
           chapters.map((chapter) => (
             <Card
               key={chapter.learningPathChapterId}
+              id={`chapter-${chapter.learningPathChapterId}`}
               className={`p-6 border-2 transition-all hover:shadow-md ${
                 chapter.status.toLowerCase() === "locked"
                   ? "opacity-60 cursor-not-allowed"
-                  : "cursor-pointer hover:border-blue-300"
+                  : "hover:border-blue-300"
               }`}
             >
               <div className="flex items-start gap-4">
@@ -240,7 +267,19 @@ const LearningPath = () => {
 
                 <div className="flex-1 space-y-3">
                   {/* Chapter Header */}
-                  <div className="flex items-center justify-between">
+                  <div 
+                    className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (chapter.status.toLowerCase() !== "locked") {
+                        setExpandedChapterId(
+                          expandedChapterId === chapter.learningPathChapterId 
+                            ? null 
+                            : chapter.learningPathChapterId
+                        );
+                      }
+                    }}
+                  >
                     <div className=" rounded-lg bg-white ">
                       <div className="flex flex-col mb-2">
                         <h3 className="text-lg font-semibold text-gray-900">
@@ -262,7 +301,13 @@ const LearningPath = () => {
                         </div>
                         <div className="text-xs text-gray-500">Hoàn thành</div>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <ChevronRight 
+                        className={`w-5 h-5 text-gray-400 transition-transform ${
+                          expandedChapterId === chapter.learningPathChapterId 
+                            ? "rotate-90" 
+                            : ""
+                        }`} 
+                      />
                     </div>
                   </div>
 
@@ -275,7 +320,9 @@ const LearningPath = () => {
                   </div>
 
                   {/* Exercises */}
-                  {chapter.exercises && chapter.exercises.length > 0 && (
+                  {expandedChapterId === chapter.learningPathChapterId && 
+                    chapter.exercises && 
+                    chapter.exercises.length > 0 && (
                     <div className="mt-4 space-y-2 pl-4 border-l-2 border-gray-200">
                       {chapter.exercises.map((exercise) => (
                         <div
@@ -322,7 +369,8 @@ const LearningPath = () => {
                                   handleButtonClick(
                                     exercise.status, 
                                     exercise.learningPathExerciseId,
-                                    exercise.exerciseId
+                                    exercise.exerciseId,
+                                    chapter.learningPathChapterId
                           
                                   );
                                 }}
@@ -364,6 +412,20 @@ const LearningPath = () => {
       </div>
     </div>
   );
-};
+}
 
-export default LearningPath;
+export default function LearningPath() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-[1400px] mx-auto p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-gray-200 rounded-lg"></div>
+          <div className="h-48 bg-gray-200 rounded-lg"></div>
+          <div className="h-48 bg-gray-200 rounded-lg"></div>
+        </div>
+      </div>
+    }>
+      <LearningPathContent />
+    </Suspense>
+  );
+}

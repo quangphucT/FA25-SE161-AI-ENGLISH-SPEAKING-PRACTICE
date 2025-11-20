@@ -126,7 +126,7 @@ const WalletCoinPurchase = () => {
       <Card className="mb-6 p-5 bg-white border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-14 h-14 bg-linear-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
               <Coins className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -203,7 +203,7 @@ const WalletCoinPurchase = () => {
                   </div>
 
                   {/* Coin Display - Compact */}
-                  <div className="mb-4 text-center py-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                  <div className="mb-4 text-center py-4 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Coins className="w-6 h-6 text-yellow-500" />
                       <span className="text-3xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
@@ -329,7 +329,7 @@ const WalletCoinPurchase = () => {
                       </div>
 
                       {/* Coin Display */}
-                      <div className="mb-4 text-center py-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                      <div className="mb-4 text-center py-4 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                         <div className="flex items-center justify-center gap-2 mb-1">
                           <Coins className="w-6 h-6 text-yellow-500" />
                           <span className="text-3xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
@@ -490,7 +490,7 @@ const WalletCoinPurchase = () => {
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-linear-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
                       <Wallet className="w-6 h-6 text-white" />
                     </div>
                     <div>

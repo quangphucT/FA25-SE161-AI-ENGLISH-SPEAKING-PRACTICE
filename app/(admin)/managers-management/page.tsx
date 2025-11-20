@@ -238,7 +238,7 @@ const ManagerManagement = () => {
                               alt={Manager.fullName}
                               className="object-cover"
                             />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
+                            <AvatarFallback className="bg-linear-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
                               {getInitials(Manager.fullName)}
                             </AvatarFallback>
                           </Avatar>

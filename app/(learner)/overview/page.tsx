@@ -102,7 +102,7 @@ const Overview = () => {
           onClick={() => {
             router.push(`/dashboard-learner-layout?menu=enrollingCourses`);
           }} 
-          className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 cursor-pointer hover:shadow-lg transition-all"
+          className="p-6 bg-linear-to-br from-blue-50 to-indigo-50 border-blue-200 cursor-pointer hover:shadow-lg transition-all"
         >
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center">
@@ -122,7 +122,7 @@ const Overview = () => {
 
         <Card onClick={() => {
             router.push("/dashboard-learner-layout?menu=progress");
-        }} className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 cursor-pointer hover:shadow-lg transition-all">
+        }} className="p-6 bg-linear-to-br from-green-50 to-emerald-50 border-green-200 cursor-pointer hover:shadow-lg transition-all">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center">
               <TrendingUp className="w-7 h-7 text-white" />

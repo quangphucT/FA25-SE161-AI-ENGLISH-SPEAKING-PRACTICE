@@ -527,7 +527,7 @@ const StatisticsForMentor = () => {
                   key={feedback.id}
                   className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-xs">
                       {feedback.avatar}
                     </span>
@@ -619,7 +619,7 @@ const StatisticsForMentor = () => {
                     className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-medium text-sm">
                           {feedback.avatar}
                         </span>

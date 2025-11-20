@@ -120,7 +120,7 @@ export default function EnrollingCourses() {
   return (
     <div>
       {/* Level Mind Map */}
-      <Card className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 max-w-[1400px] mx-auto">
+      <Card className="mb-6 p-6 bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 max-w-[1400px] mx-auto">
         <div className="flex flex-col items-center">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -143,9 +143,9 @@ export default function EnrollingCourses() {
                       onClick={() => isClickable && handleLevelClick(level)}
                       className={`relative w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
                         isCurrentLevel
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg scale-110 ring-4 ring-blue-200"
+                          ? "bg-linear-to-br from-blue-500 to-indigo-600 text-white shadow-lg scale-110 ring-4 ring-blue-200"
                           : hasCoursesInLevel
-                          ? "bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-md hover:scale-105"
+                          ? "bg-linear-to-br from-blue-400 to-indigo-500 text-white shadow-md hover:scale-105"
                           : "bg-white text-gray-400 border-2 border-gray-300"
                       } ${
                         isClickable

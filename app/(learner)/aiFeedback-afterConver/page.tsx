@@ -135,7 +135,7 @@ const Feedback = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50">
       {/* Header */}
       <div className=" sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-2">
@@ -164,7 +164,7 @@ const Feedback = () => {
         {/* Title Section */}
         <div className="text-center mb-2">
           <div className="flex items-center justify-center gap-1 mb-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="w-7 h-7 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
               <MessageSquare className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -193,7 +193,7 @@ const Feedback = () => {
 
         {/* Error State */}
         {error && !loading && (
-          <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl border-2 border-red-200 shadow-lg p-8">
+          <div className="bg-linear-to-br from-red-50 to-pink-50 rounded-2xl border-2 border-red-200 shadow-lg p-8">
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle className="w-8 h-8 text-red-600" />
@@ -215,7 +215,7 @@ const Feedback = () => {
 
         {/* No Messages State */}
         {!loading && !error && messages.length === 0 && (
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 shadow-lg p-12 text-center">
+          <div className="bg-linear-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 shadow-lg p-12 text-center">
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="w-8 h-8 text-amber-600" />
             </div>
@@ -226,7 +226,7 @@ const Feedback = () => {
               Vui lòng bắt đầu một cuộc trò chuyện trước khi xem phản hồi
             </p>
             <Button
-              onClick={() => router.push("/coversation-withAI")}
+              onClick={() => router.push(`/dashboard-learner-layout?menu=conversationWithAI`)}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer shadow-lg"
             >
               Bắt đầu trò chuyện
@@ -267,7 +267,7 @@ const Feedback = () => {
         {leftSections.map((section, idx) => (
           <div key={idx}>
             <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-[100%] flex items-center justify-center flex-shrink-0 shadow-md">
+              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-500 rounded-[100%] flex items-center justify-center flex-shrink-0 shadow-md">
                 <span className="text-xl font-bold  text-white">{section.title}</span>
               </div>
               <div className="flex-1">

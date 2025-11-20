@@ -41,8 +41,8 @@ const Message = ({ type, text, timestamp }: MessageProps) => {
       <div
         className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
           type === "agent"
-            ? "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg"
-            : "bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg"
+            ? "bg-linear-to-br from-blue-500 to-indigo-600 shadow-lg"
+            : "bg-linear-to-br from-green-500 to-emerald-600 shadow-lg"
         }`}
       >
         {type === "agent" ? (
@@ -58,7 +58,7 @@ const Message = ({ type, text, timestamp }: MessageProps) => {
           className={`inline-block max-w-[85%] ${
             type === "agent"
               ? "bg-white border border-blue-100 rounded-2xl rounded-tl-sm"
-              : "bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl rounded-tr-sm"
+              : "bg-linear-to-br from-blue-600 to-blue-700 rounded-2xl rounded-tr-sm"
           } px-4 py-3 shadow-sm`}
         >
           <p
@@ -120,7 +120,7 @@ const EnhancedVoiceAssistant = () => {
       {/* Left Column - User Camera & AI Visualizer */}
       <div className="flex flex-col gap-6">
         {/* User Camera Card */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-lg relative">
+        <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-lg relative">
           <div className="absolute top-4 left-4 z-10 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg">
             <h3 className="text-xs font-semibold text-white flex items-center gap-2">
               <Camera className="w-3.5 h-3.5 text-green-400" />
@@ -154,7 +154,7 @@ const EnhancedVoiceAssistant = () => {
         </div>
 
         {/* AI Voice Visualizer Card */}
-        <div className="bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-2xl p-6 border border-blue-400 shadow-lg">
+        <div className="bg-linear-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-2xl p-6 border border-blue-400 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
               <Waves className="w-4 h-4 text-blue-200" />
