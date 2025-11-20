@@ -1,10 +1,11 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useReviewerCoinHistoryWithdraw, useReviewerCoinWithdraw } from "@/features/reviewer/hooks/useReviewerCoin";
 
 import { Plus, Save, X } from "lucide-react";
 
@@ -41,41 +42,37 @@ const Wallet = () => {
     transactionEnum: "Pending",
   });
 
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: "TX001",
-      amount: "1,200,000",
-      createdTransaction: "2024-01-22",
-      fk: "RV001",
-      wallet_id: "WAL001",
-      bankName: "Vietcombank",
-      accountNumber: "1234567890",
-      reasonWithdrawReject: "",
-      transactionEnum: "Pending",
-    },
-    {
-      id: "TX002",
-      amount: "850,000",
-      createdTransaction: "2024-01-20",
-      fk: "RV002",
-      wallet_id: "WAL001",
-      bankName: "Techcombank",
-      accountNumber: "0987654321",
-      reasonWithdrawReject: "",
-      transactionEnum: "Withdraw",
-    },
-    {
-      id: "TX003",
-      amount: "1,500,000",
-      createdTransaction: "2024-01-18",
-      fk: "RV003",
-      wallet_id: "WAL001",
-      bankName: "BIDV",
-      accountNumber: "1122334455",
-      reasonWithdrawReject: "Hồ sơ thiếu thông tin",
-      transactionEnum: "Reject",
-    },
-  ]);
+  const { data: historyData, isLoading, error } = useReviewerCoinHistoryWithdraw();
+  const withdrawMutation = useReviewerCoinWithdraw();
+
+  // Map API data to Transaction format
+  const transactions = useMemo(() => {
+    if (!historyData?.data) return [];
+    
+    return historyData.data.map((item) => {
+      // Map status: "Pending" -> "Pending", "Approved" -> "Withdraw", "Rejected" -> "Reject"
+      let transactionEnum: "Withdraw" | "Reject" | "Pending" = "Pending";
+      if (item.status === "Approved" || item.status === "Success") {
+        transactionEnum = "Withdraw";
+      } else if (item.status === "Rejected" || item.status === "Reject") {
+        transactionEnum = "Reject";
+      } else {
+        transactionEnum = "Pending";
+      }
+
+      return {
+        id: item.orderCode,
+        amount: item.amountMoney.toLocaleString("vi-VN"),
+        createdTransaction: new Date(item.createdAt).toLocaleDateString("vi-VN"),
+        fk: item.orderCode,
+        wallet_id: item.orderCode,
+        bankName: item.bankName,
+        accountNumber: item.accountNumber,
+        reasonWithdrawReject: transactionEnum === "Reject" ? item.description : undefined,
+        transactionEnum,
+      } as Transaction;
+    });
+  }, [historyData]);
 
   const openCreateModal = () => {
     setEditingTransaction(null);
@@ -108,16 +105,48 @@ const Wallet = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (editingTransaction) {
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === editingTransaction.id ? formData : t))
-      );
-    } else {
-      setTransactions((prev) => [formData, ...prev]);
+      // Edit is not supported via API, only create new withdrawal
+      setIsAddingTransaction(false);
+      setEditingTransaction(null);
+      return;
     }
-    setIsAddingTransaction(false);
-    setEditingTransaction(null);
+
+    // Parse coin amount from input (user enters coin, not money)
+    const coinAmount = parseInt(formData.amount);
+    if (isNaN(coinAmount) || coinAmount <= 0) {
+      return;
+    }
+
+    if (!formData.bankName || !formData.accountNumber) {
+      return;
+    }
+
+    try {
+      await withdrawMutation.mutateAsync({
+        coin: coinAmount,
+        bankName: formData.bankName,
+        accountNumber: formData.accountNumber,
+      });
+      // History will be automatically refetched by the hook's onSuccess
+      setIsAddingTransaction(false);
+      setEditingTransaction(null);
+      // Reset form
+      setFormData({
+        id: "",
+        amount: "",
+        createdTransaction: "",
+        fk: "",
+        wallet_id: "",
+        bankName: "",
+        accountNumber: "",
+        reasonWithdrawReject: "",
+        transactionEnum: "Withdraw",
+      });
+    } catch (error) {
+      // Error is handled by mutation hook via toast
+    }
   };
 
   return (
@@ -199,8 +228,24 @@ const Wallet = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {transactions.map((tx) => (
+          {isLoading && (
+            <div className="text-center py-8 text-gray-500">
+              Đang tải dữ liệu...
+            </div>
+          )}
+          {error && (
+            <div className="text-center py-8 text-red-500">
+              Lỗi khi tải dữ liệu: {error.message}
+            </div>
+          )}
+          {!isLoading && !error && transactions.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Chưa có giao dịch nào
+            </div>
+          )}
+          {!isLoading && !error && (
+            <div className="space-y-4">
+              {transactions.map((tx) => (
               <div
                 key={tx.id}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -233,19 +278,11 @@ const Wallet = () => {
                   >
                     {tx.transactionEnum}
                   </Badge>
-                  {tx.transactionEnum === "Pending" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditModal(tx)}
-                    >
-                      Sửa
-                    </Button>
-                  )}
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
       {isAddingTransaction && (
@@ -277,17 +314,21 @@ const Wallet = () => {
                     htmlFor="amount"
                     className="text-sm font-semibold text-gray-700"
                   >
-                    Amount of money you want to withdraw *
+                    Số coin muốn rút *
                   </Label>
                   <Input
                     id="amount"
+                    type="number"
                     value={formData.amount}
                     onChange={(e) =>
                       handleInputChange("amount", e.target.value)
                     }
-                    placeholder="VD: 1,000,000"
+                    placeholder="VD: 100"
                     className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl"
                   />
+                  <p className="text-xs text-gray-500">
+                    Nhập số coin bạn muốn rút (1 coin = 1000 VND)
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -353,10 +394,15 @@ const Wallet = () => {
               </Button>
               <Button
                 onClick={handleSubmit}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl font-semibold flex items-center gap-2"
+                disabled={withdrawMutation.isPending}
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl font-semibold flex items-center gap-2 disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                {editingTransaction ? "Cập nhật" : "Thêm giao dịch"}
+                {withdrawMutation.isPending
+                  ? "Đang xử lý..."
+                  : editingTransaction
+                  ? "Cập nhật"
+                  : "Thêm giao dịch"}
               </Button>
             </div>
           </div>

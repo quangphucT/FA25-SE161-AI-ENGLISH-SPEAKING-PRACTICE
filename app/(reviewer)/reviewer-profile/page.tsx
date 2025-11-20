@@ -85,7 +85,7 @@ const ReviewerProfile = () => {
   
   const [formData, setFormData] = useState({
     fullname: meData?.fullName || "",
-    experience: profileData?.experience || "",
+    experience: meData?.reviewerProfile?.experience || "",
     phoneNumber: meData?.phoneNumber || "",
   });
 
@@ -238,6 +238,12 @@ const ReviewerProfile = () => {
   };
 
   // Use real data from API
+  const derivedLevel =
+    (profileData as { level?: string } | undefined)?.level ??
+    (meData?.reviewerProfile as { level?: string } | undefined)?.level ??
+    meData?.reviewerProfile?.levels ??
+    "___";
+
   const mentorData = {
     id: profileData?.reviewerProfileId || "",
     name: meData?.fullName || "Chưa có tên",
@@ -245,8 +251,12 @@ const ReviewerProfile = () => {
     rating: profileData?.rating || 0,
     totalReviews: 0, // TODO: Get from API if available
     totalFeedbacks: 0, // TODO: Get from API if available
-    yearsExperience: meData?.reviewerProfile?.experience || 0,
-    level: meData?.reviewerProfile?.levels || "___", // TODO: Get from API if available
+    yearsExperience:
+      profileData?.experience ??
+      profileData?.yearsExperience ??
+      meData?.reviewerProfile?.experience ??
+      0,
+    level: derivedLevel, // TODO: Get from API if available
     certifications: profileData?.certificates || [],
   };
 

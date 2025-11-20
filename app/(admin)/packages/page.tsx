@@ -219,6 +219,7 @@ const ServicePackageManagement = () => {
               <TableHead>Giá</TableHead>
               <TableHead>Số lượng xu</TableHead>
               <TableHead>Phần trăm bonus</TableHead>
+              <TableHead>Số xu đươc nhận</TableHead>
               <TableHead>Trạng thái</TableHead>
 
               <TableHead className="text-center">Hành động</TableHead>
@@ -251,7 +252,7 @@ const ServicePackageManagement = () => {
                   key={pkg.servicePackageId}
                   className="hover:bg-[#f0f7e6]"
                 >
-                <TableCell className="font-medium text-blue-600">
+                <TableCell className="font-medium text-blue-600 truncate max-w-[100px]">
                   {pkg.servicePackageId}
                 </TableCell>
                 <TableCell className="font-medium">{pkg.name}</TableCell>
@@ -266,6 +267,7 @@ const ServicePackageManagement = () => {
                 </TableCell>
                 <TableCell>{pkg.numberOfCoin}</TableCell>
                 <TableCell>{pkg.bonusPercent}</TableCell>
+                <TableCell>{pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100)}</TableCell>
                 <TableCell>
                   <Badge
                     variant={pkg.status === "Active" ? "default" : "secondary"}

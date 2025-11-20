@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ transactionId: string }> }
+  { params }: { params: Promise<{ certificateId: string }> }
 ) {
   const accessToken = request.cookies.get("accessToken")?.value;
-  const { transactionId } = await params;
-  const body = await request.json();
+  const { certificateId } = await params;
+
   try {
-    
+    const body = await request.json();
     const backendResponse = await fetch(
-      `${process.env.BE_API_URL}/AdminWithdrawal/reject/${transactionId}`,
+      `${process.env.BE_API_URL}/AdminReviewer/reject/${certificateId}`,
       {
         method: "PUT",
         headers: {
@@ -31,7 +31,7 @@ export async function PUT(
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Từ chối yêu cầu rút tiền thất bại" },
+      { message: error instanceof Error ? error.message : "Reject reviewer failed" },
       { status: 500 }
     );
   }

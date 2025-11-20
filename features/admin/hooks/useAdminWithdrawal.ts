@@ -1,5 +1,8 @@
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+"use client";
+
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdminWithdrawalPutResponse, AdminWithdrawalResponse, AdminWithdrawalSummaryResponse, adminWithdrawalApproveService, adminWithdrawalRejectService, adminWithdrawalService, adminWithdrawalSummaryService } from "../services/adminWithdrawalService";
+import { toast } from "sonner";
 
 export const useAdminWithdrawal = (pageNumber: number, pageSize: number, status: string, keyword: string) => {
     return useQuery<AdminWithdrawalResponse, Error>({
@@ -9,13 +12,33 @@ export const useAdminWithdrawal = (pageNumber: number, pageSize: number, status:
     });
 };
 export const useAdminWithdrawalApprove = () => {
+    const queryClient = useQueryClient();
     return useMutation<AdminWithdrawalPutResponse, Error, string>({
         mutationFn: (transactionId: string) => adminWithdrawalApproveService(transactionId),
+        onSuccess: (data) => {
+            toast.success(data.message || "Duyệt yêu cầu rút tiền thành công");
+            // Invalidate queries để refetch data
+            queryClient.invalidateQueries({ queryKey: ["adminWithdrawal"] });
+            queryClient.invalidateQueries({ queryKey: ["adminWithdrawalSummary"] });
+        },
+        onError: (error) => {
+            toast.error(error.message || "Duyệt yêu cầu rút tiền thất bại");
+        },
     });
 };
 export const useAdminWithdrawalReject = () => {
-    return useMutation<AdminWithdrawalPutResponse, Error, string>({
-        mutationFn: (transactionId: string) => adminWithdrawalRejectService(transactionId),
+    const queryClient = useQueryClient();
+    return useMutation<AdminWithdrawalPutResponse, Error, { transactionId: string; reason: string }>({
+        mutationFn: ({ transactionId, reason }) => adminWithdrawalRejectService(transactionId, reason),
+        onSuccess: (data) => {
+            toast.success(data.message || "Từ chối yêu cầu rút tiền thành công");
+            // Invalidate queries để refetch data
+            queryClient.invalidateQueries({ queryKey: ["adminWithdrawal"] });
+            queryClient.invalidateQueries({ queryKey: ["adminWithdrawalSummary"] });
+        },
+        onError: (error) => {
+            toast.error(error.message || "Từ chối yêu cầu rút tiền thất bại");
+        },
     }); 
 };
 export const useAdminWithdrawalSummary = () => {

@@ -72,8 +72,16 @@ export const adminWithdrawalService = async (pageNumber: number, pageSize: numbe
 };
 export const adminWithdrawalApproveService = async (transactionId: string): Promise<AdminWithdrawalPutResponse> => {
   try {
-    const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/approve/${transactionId}`);
+    const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/approve/${transactionId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Approve withdrawal failed");
+    }
     return data;
   } catch (error: unknown) {
     const message =
@@ -93,10 +101,21 @@ export const adminWithdrawalApproveService = async (transactionId: string): Prom
     throw new Error(message);
   }
 };
-export const adminWithdrawalRejectService = async (transactionId: string): Promise<AdminWithdrawalPutResponse> => {
+export const adminWithdrawalRejectService = async (transactionId: string, reason: string): Promise<AdminWithdrawalPutResponse> => {
     try {
-        const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/reject/${transactionId}`);
+        const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/reject/${transactionId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                reason: reason,
+            }),
+        });
         const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Reject withdrawal failed");
+        }
         return data;
     } catch (error: unknown) {
         const message =

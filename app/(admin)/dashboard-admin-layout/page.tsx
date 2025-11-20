@@ -19,6 +19,8 @@ import {
   GraduationCap,
   CreditCard,
   Star,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import ReviewerManagement from "../reviewers-management/page";
@@ -49,9 +51,15 @@ type SidebarProps = {
   setActiveMenu: (menu: string) => void;
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
-  <aside className="hidden md:flex flex-col w-72 h-screen bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl fixed left-0 top-0 z-10 overflow-y-auto">
-    <div className="flex items-center gap-3 font-bold text-xl mb-12 px-6 pt-8">
+const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
+  const [isMainMenuCollapsed, setIsMainMenuCollapsed] = useState(false);
+  const [isServiceCollapsed, setIsServiceCollapsed] = useState(false);
+  const [isBusinessCollapsed, setIsBusinessCollapsed] = useState(false);
+
+  return (
+  <aside className="hidden md:flex flex-col w-72 h-screen bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl fixed left-0 top-0 z-10 no-scrollbar">
+    {/* Header Logo - Fixed at top */}
+    <div className="sticky top-0 z-20 bg-gradient-to-b from-slate-900 to-slate-800 flex items-center gap-3 font-bold text-xl px-6 pt-8 pb-4 border-b border-slate-700/50">
       <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
         <span className="text-white text-lg font-extrabold">S</span>
       </div>
@@ -62,12 +70,25 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
         </span>
       </div>
     </div>
-    <nav className="flex-1 px-6 pb-6 flex flex-col">
-      <div className="mb-6">
-        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          Menu chính
-        </p>
-        <ul className="space-y-2">
+    {/* Navigation - Scrollable */}
+    <nav className="flex-1 px-6 py-4 flex flex-col overflow-y-auto no-scrollbar">
+      <div className="mb-1">
+        <button
+          type="button"
+          onClick={() => setIsMainMenuCollapsed(!isMainMenuCollapsed)}
+          className="flex items-center justify-between w-full mb-4 group hover:bg-slate-700/30 rounded-lg px-2 py-2 transition-colors"
+        >
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            Menu chính
+          </p>
+          {isMainMenuCollapsed ? (
+            <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          ) : (
+            <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          )}
+        </button>
+        {!isMainMenuCollapsed && (
+          <ul className="space-y-2">
           <li>
             <button
               type="button"
@@ -199,17 +220,27 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
               </div>
             </button>
           </li>
-
-
-          
         </ul>
+        )}
       </div>
 
-      <div className="mb-6">
-        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          Dịch vụ
-        </p>
-        <ul className="space-y-2">
+      <div className="mb-1">
+        <button
+          type="button"
+          onClick={() => setIsServiceCollapsed(!isServiceCollapsed)}
+          className="flex items-center justify-between w-full mb-4 group hover:bg-slate-700/30 rounded-lg px-2 py-2 transition-colors"
+        >
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            Dịch vụ
+          </p>
+          {isServiceCollapsed ? (
+            <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          ) : (
+            <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          )}
+        </button>
+        {!isServiceCollapsed && (
+          <ul className="space-y-2">
           <li>
             <button
               type="button"
@@ -262,13 +293,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
             </button>
           </li>
         </ul>
+        )}
       </div>
 
-      <div className="mb-6">
-        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          Kinh doanh
-        </p>
-        <ul className="space-y-2">
+      <div className="mb-1">
+        <button
+          type="button"
+          onClick={() => setIsBusinessCollapsed(!isBusinessCollapsed)}
+          className="flex items-center justify-between w-full mb-4 group hover:bg-slate-700/30 rounded-lg px-2 py-2 transition-colors"
+        >
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            Kinh doanh
+          </p>
+          {isBusinessCollapsed ? (
+            <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          ) : (
+            <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          )}
+        </button>
+        {!isBusinessCollapsed && (
+          <ul className="space-y-2">
           <li>
             <button
               type="button"
@@ -397,36 +441,38 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => (
             </button>
           </li>
         </ul>
-      </div>
-
-      <div className="mt-auto pt-6 border-t border-slate-700 shrink-0">
-        <button
-          type="button"
-          onClick={handleLogout}
-          className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-            activeMenu === "logout"
-              ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg"
-              : "text-slate-400 hover:bg-slate-700/50 hover:text-red-400"
-          }`}
-        >
-          <span
-            className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-              activeMenu === "logout"
-                ? "bg-white/20"
-                : "bg-red-500/20 group-hover:bg-red-500/30"
-            }`}
-          >
-            <LogOutIcon size={20} />
-          </span>
-          <div className="flex flex-col items-start justify-center">
-            <span className="font-semibold text-sm">Đăng xuất</span>
-            <span className="text-xs opacity-70">Thoát</span>
-          </div>
-        </button>
+        )}
       </div>
     </nav>
+    {/* Logout Button - Fixed at bottom */}
+    <div className="sticky bottom-0 z-20 bg-gradient-to-b from-slate-800 to-slate-900 pt-4 pb-6 px-6 border-t border-slate-700/50 shrink-0">
+      <button
+        type="button"
+        onClick={handleLogout}
+        className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+          activeMenu === "logout"
+            ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg"
+            : "text-slate-400 hover:bg-slate-700/50 hover:text-red-400"
+        }`}
+      >
+        <span
+          className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+            activeMenu === "logout"
+              ? "bg-white/20"
+              : "bg-red-500/20 group-hover:bg-red-500/30"
+          }`}
+        >
+          <LogOutIcon size={20} />
+        </span>
+        <div className="flex flex-col items-start justify-center">
+          <span className="font-semibold text-sm">Đăng xuất</span>
+          <span className="text-xs opacity-70">Thoát</span>
+        </div>
+      </button>
+    </div>
   </aside>
-);
+  );
+};
 
 const Header = ({ activeMenu }: { activeMenu: string }) => {
   const getMenuTitle = (menu: string) => {

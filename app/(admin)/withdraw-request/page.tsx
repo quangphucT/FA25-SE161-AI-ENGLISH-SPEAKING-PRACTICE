@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,6 +38,7 @@ const WithdrawRequest = () => {
   const [actionType, setActionType] = useState<"approve" | "reject">("approve");
   const [requestToAction, setRequestToAction] =
     useState<Withdrawal | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>("");
   const {
     data: withdrawalData,
     isLoading,
@@ -72,21 +75,33 @@ const WithdrawRequest = () => {
   ) => {
     setRequestToAction(request);
     setActionType(action);
+    setRejectReason(""); // Reset reason when opening dialog
     setShowConfirmDialog(true);
   };
 
   const confirmAction = async () => {
     if (!requestToAction) return;
+    
+    // Validate reason when rejecting
+    if (actionType === "reject" && !rejectReason.trim()) {
+      toast.error("Vui lòng nhập lý do từ chối");
+      return;
+    }
+
     try {
       if (actionType === "approve") {
         await approveWithdrawal(requestToAction.transactionId);
         toast.success("Duyệt yêu cầu thành công");
       } else {
-        await rejectWithdrawal(requestToAction.transactionId);
+        await rejectWithdrawal({
+          transactionId: requestToAction.transactionId,
+          reason: rejectReason.trim(),
+        });
         toast.success("Từ chối yêu cầu thành công");
       }
       setShowConfirmDialog(false);
       setRequestToAction(null);
+      setRejectReason("");
       await refetch();
     } catch (err) {
       toast.error(
@@ -573,16 +588,34 @@ const WithdrawRequest = () => {
             <h3 className="text-lg font-semibold mb-4">
               Xác nhận {actionType === "approve" ? "Duyệt" : "Từ chối"} Yêu cầu
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-4">
               Bạn có chắc chắn muốn{" "}
               {actionType === "approve" ? "duyệt" : "từ chối"} yêu cầu rút tiền
               của <strong>{requestToAction.reviewerName}</strong> với số tiền{" "}
               <strong>{formatCurrency(requestToAction.amountMoney)}</strong> không?
             </p>
+            {actionType === "reject" && (
+              <div className="mb-6">
+                <Label htmlFor="rejectReason" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Lý do từ chối *
+                </Label>
+                <Textarea
+                  id="rejectReason"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Nhập lý do từ chối yêu cầu rút tiền..."
+                  className="min-h-[100px] resize-none"
+                  required
+                />
+              </div>
+            )}
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
-                onClick={() => setShowConfirmDialog(false)}
+                onClick={() => {
+                  setShowConfirmDialog(false);
+                  setRejectReason("");
+                }}
                 className="cursor-pointer"
               >
                 Hủy

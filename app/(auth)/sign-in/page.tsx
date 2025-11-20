@@ -335,7 +335,7 @@ export default function LoginForm() {
                   <div className="flex justify-center mt-4">
                     <Loader2 className="inline-block animate-spin text-white" />
                   </div>
-                ) : (
+                ) : ( 
                   <GoogleLoginButton onClick={handleLoginWithGoogle} />
                 )}
                 <div className="mt-6 text-center text-gray-400 text-sm">

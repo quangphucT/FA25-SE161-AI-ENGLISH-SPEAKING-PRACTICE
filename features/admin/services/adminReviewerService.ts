@@ -142,3 +142,65 @@ export const adminReviewerBanService = async (
       throw new Error(message);
     }
   };
+  export const adminReviewerApproveService = async (
+    certificateId: string,
+  ): Promise<any> => {
+    try {
+      const response = await fetchWithAuth(`/api/AdminDashboard/reviewer/approve/${certificateId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Approve reviewer failed");
+      return data;
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || "Approve reviewer failed";
+      throw new Error(message);
+    }
+    }
+  
+  export const adminReviewerRejectService = async (
+    certificateId: string,
+  ): Promise<any> => {
+    try {
+      const response = await fetchWithAuth(`/api/AdminDashboard/reviewer/reject/${certificateId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Reject reviewer failed");
+      return data;
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || "Reject reviewer failed";
+      throw new Error(message);
+    }
+  };
+export const adminReviewerLevelService = async (
+  reviewerProfileId: string,
+  body: {
+    level: string;
+  }
+): Promise<any> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/reviewer/level/${reviewerProfileId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Update reviewer level failed");
+    return data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || error.message || "Update reviewer level failed";
+    throw new Error(message);
+  }
+};
