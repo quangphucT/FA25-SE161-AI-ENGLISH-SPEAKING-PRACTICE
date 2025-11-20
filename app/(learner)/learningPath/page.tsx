@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
@@ -19,7 +19,7 @@ import { useStartExercise } from "@/features/learner/hooks/startExerciseHooks/st
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const LearningPath = () => {
+function LearningPathContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
@@ -412,6 +412,20 @@ const LearningPath = () => {
       </div>
     </div>
   );
-};
+}
 
-export default LearningPath;
+export default function LearningPath() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-[1400px] mx-auto p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-gray-200 rounded-lg"></div>
+          <div className="h-48 bg-gray-200 rounded-lg"></div>
+          <div className="h-48 bg-gray-200 rounded-lg"></div>
+        </div>
+      </div>
+    }>
+      <LearningPathContent />
+    </Suspense>
+  );
+}
