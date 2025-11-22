@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const learningPathCourseId = searchParams.get('learningPathCourseId');
   const courseId = searchParams.get('courseId');
-  const status = searchParams.get('status');
+
 
   try {
     // Build query string
@@ -19,9 +19,7 @@ export async function GET(request: NextRequest) {
     if (courseId) {
       queryParams.append('courseId', courseId);
     }
-    if (status) {
-      queryParams.append('status', status);
-    }
+   
 
     const url = `${process.env.BE_API_URL}/LearningPathCourse/full?${queryParams.toString()}`;
 

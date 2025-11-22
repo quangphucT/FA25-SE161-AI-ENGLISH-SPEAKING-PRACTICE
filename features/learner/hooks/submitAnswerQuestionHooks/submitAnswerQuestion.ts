@@ -21,8 +21,11 @@ export const useSubmitAnswerQuestion = () => {
   return useMutation<SubmitAnswerQuestionResponse, Error, SubmitAnswerQuestionRequest>({
     mutationFn: submitAnswerQuestionService,
     onSuccess: (data) => {
-      toast.success(data.message || "Nộp bài thành công");
-        queryClient.invalidateQueries({ queryKey: ["learningPathCourseFull"] });
+        // Invalidate và refetch ngay lập tức
+        queryClient.invalidateQueries({ 
+          queryKey: ["learningPathCourseFull"],
+          refetchType: 'active' // Force refetch cho query đang active
+        });
     },
     onError: (error) => {
       toast.error(error.message || "Nộp bài thất bại");
