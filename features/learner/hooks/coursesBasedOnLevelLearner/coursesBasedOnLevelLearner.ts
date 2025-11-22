@@ -67,6 +67,7 @@ export interface EnrollFirstCourseResponse {
   data: {
     level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"; 
     learningPathCourseId: string;
+    learnerCourseId: string;
     courseId: string;
     status: "InProgress" | "Completed" ; 
   };
@@ -84,7 +85,7 @@ export const useEnrollFirstCourse = () => {
       
       
       setAllLearnerData({
-        learnerCourseId: data.data.learningPathCourseId,
+        learnerCourseId: data.data.learnerCourseId,
         courseId: data.data.courseId,
         learningPathCourseId: data.data.learningPathCourseId,
         status: data.data.status,

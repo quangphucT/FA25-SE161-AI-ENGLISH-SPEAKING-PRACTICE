@@ -76,12 +76,11 @@ interface ApiResponse {
 export interface LearningPathCourseParams {
   learningPathCourseId?: string;
   courseId?: string;
-  status?: string;
 }
 
 export const useLearningPathCourseFull = (params: LearningPathCourseParams, enabled: boolean = true) => {
      const isParamsValid = Boolean(
-    params.learningPathCourseId && params.courseId && params.status
+    params.learningPathCourseId && params.courseId
   );
     return useQuery<ApiResponse, Error>({
         queryKey: ["learningPathCourseFull", params],

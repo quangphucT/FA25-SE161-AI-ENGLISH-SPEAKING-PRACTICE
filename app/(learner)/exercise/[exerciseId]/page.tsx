@@ -3,7 +3,6 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import { Loader2, Mic, Volume2, ArrowLeft, ArrowRight } from "lucide-react";
 import { useLearnerStore } from "@/store/useLearnerStore";
 import { useLearningPathCourseFull } from "@/features/learner/hooks/learningPathCourseFullHooks/learningPathCourseFull";
@@ -15,7 +14,9 @@ const ExercisePage = () => {
   const searchParams = useSearchParams();
   const exerciseId = params?.exerciseId as string;
   const chapterId = searchParams.get('chapterId');
+
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
+  const setAllLearnerData = useLearnerStore((state) => state.setAllLearnerData);
   const learnerData = getAllLearnerData();
   
   // Get full learning path data
@@ -23,7 +24,6 @@ const ExercisePage = () => {
     {
       learningPathCourseId: learnerData?.learningPathCourseId || "",
       courseId: learnerData?.courseId || "",
-      status: learnerData?.status || "",
     },
     Boolean(learnerData)
   );
@@ -34,7 +34,7 @@ const ExercisePage = () => {
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const { mutate: submitAnswerQuestion } = useSubmitAnswerQuestion();
 
@@ -82,6 +82,23 @@ const ExercisePage = () => {
   const totalQuestions = questions.length;
   const progressPercentage =
     ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
+  // Update store when apiResponse changes
+  useEffect(() => {
+    if (apiResponse?.data?.status && learnerData?.learnerCourseId && learnerData?.courseId && learnerData?.learningPathCourseId) {
+      const newStatus = apiResponse.data.status as "InProgress" | "Completed";
+     
+      // Chỉ update nếu status thực sự thay đổi
+      if (newStatus !== learnerData.status) {
+        setAllLearnerData({
+          learnerCourseId: learnerData.learnerCourseId,
+          courseId: learnerData.courseId,
+          learningPathCourseId: learnerData.learningPathCourseId,
+          status: newStatus,
+        });
+      } 
+    } 
+  }, [apiResponse?.data?.status, apiResponse]);
 
   // Initialize recorded state
   useEffect(() => {
@@ -287,14 +304,8 @@ const ExercisePage = () => {
                 scoreForVoice: acc || 0,
                 explainTheWrongForVoiceAI: "abc",
               },
-              {
-                onSuccess: () => {
-                  console.log("Answer submitted successfully");
-                },
-                onError: (error) => {
-                  console.error("Submit error:", error);
-                },
-              }
+              
+
             );
           } catch (error) {
             console.error("Error processing audio:", error);
@@ -349,15 +360,13 @@ const ExercisePage = () => {
     }
   };
 
-  const handleSubmit = () => {
-    // Tất cả câu trả lời đã được submit khi dừng ghi âm
-    toast.success("Đã hoàn thành bài tập!");
-    // Navigate về learning path với chapterId
-    const url = chapterId 
-      ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
-      : "/dashboard-learner-layout?menu=learningPath";
-    router.push(url);
-  };
+  // const handleSubmit = () => {
+  //   // Navigate về learning path với chapterId
+  //   const url = chapterId 
+  //     ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
+  //     : "/dashboard-learner-layout?menu=learningPath";
+  //   router.push(url);
+  // };
 
   if (isLoading || !isMounted) {
     return (
@@ -816,46 +825,17 @@ const ExercisePage = () => {
 
             {/* Next Button */}
             {currentQuestionIndex === totalQuestions - 1 ? (
-              <Button
-                onClick={handleSubmit}
-                className="font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer transform hover:scale-105"
-              >
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  Hoàn thành
-                </span>
-              </Button>
+              // Câu hỏi cuối cùng - không hiển thị button
+              <div className="w-[200px]"></div>
             ) : (
+              // Các câu hỏi thường - hiển thị button Tiếp tục
               <Button
                 onClick={handleNextQuestion}
-                disabled={!recorded[currentQuestionIndex] && currentQuestion.status !== "Completed"}
-                className={`font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg ${
-                  recorded[currentQuestionIndex] || currentQuestion.status === "Completed"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer transform hover:scale-105"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
+                className="font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer transform hover:scale-105"
               >
                 <span className="flex items-center gap-2">
-                  {recorded[currentQuestionIndex] || currentQuestion.status === "Completed" ? (
-                    <>
-                      Câu tiếp theo
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  ) : (
-                    "Vui lòng ghi âm để tiếp tục"
-                  )}
+                  Tiếp tục
+                  <ArrowRight className="w-4 h-4" />
                 </span>
               </Button>
             )}
