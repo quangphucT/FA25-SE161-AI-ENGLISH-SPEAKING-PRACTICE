@@ -28,8 +28,7 @@ function LearningPathContent() {
   const { data: apiResponse, isLoading, refetch } = useLearningPathCourseFull(
     {
       learningPathCourseId: learnerData?.learningPathCourseId || "",
-      courseId: learnerData?.courseId || "",
-      status: learnerData?.status || "",
+      courseId: learnerData?.courseId || ""
     },
     Boolean(learnerData)
   );
