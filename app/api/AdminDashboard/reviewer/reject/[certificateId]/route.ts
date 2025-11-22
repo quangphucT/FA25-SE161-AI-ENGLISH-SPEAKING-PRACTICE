@@ -8,7 +8,6 @@ export async function PUT(
   const { certificateId } = await params;
 
   try {
-    const body = await request.json();
     const backendResponse = await fetch(
       `${process.env.BE_API_URL}/AdminReviewer/reject/${certificateId}`,
       {
@@ -17,21 +16,39 @@ export async function PUT(
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(body),
         credentials: "include",
       }
     );
 
-    const data = await backendResponse.json();
+    // Check if response has content before parsing JSON
+    const contentType = backendResponse.headers.get("content-type");
+    let data;
+    
+    if (contentType && contentType.includes("application/json")) {
+      const text = await backendResponse.text();
+      data = text ? JSON.parse(text) : {};
+    } else {
+      const text = await backendResponse.text();
+      data = { message: text || "Reject reviewer failed" };
+    }
 
     if (!backendResponse.ok) {
-      return NextResponse.json(data, { status: backendResponse.status });
+      return NextResponse.json(
+        { message: data.message || "Reject reviewer failed", ...data },
+        { status: backendResponse.status }
+      );
     }
 
     return NextResponse.json(data, { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { message: error.message || "Reject reviewer failed" },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Reject reviewer failed" },
+      { message: "Reject reviewer failed" },
       { status: 500 }
     );
   }

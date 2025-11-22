@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminTransactions } from "@/features/admin/hooks/useAdminTransactions";
-import { Transaction as ApiTransaction } from "@/features/admin/services/adminTransactionsService";
+import { TransactionAdmin } from "@/features/admin/services/adminTransactionsService";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -52,11 +52,12 @@ interface ServicePackage {
 
 interface Transaction {
   TRANSACTIONS_id: string;
+  UserName: string;
   CreatedTransaction: string;
   Bankname: string;
   AccountNumber: string;
   Description: string;
-  Status: "Success" | "Pending" | "Failed" | "Refunded";
+  Status: "Completed" | "Pending" | "Failed" | "Refunded";
   amount_coin: number;
   type: string;
   OrderCode: string;
@@ -74,18 +75,61 @@ const PurchasesManagement = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(
     null
   );
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
-  const { data: transactionsData, isLoading, error } = useAdminTransactions();
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset to page 1 when search or status filter changes
+  useEffect(() => {
+    setPageNumber(1);
+  }, [debouncedSearch, statusFilter]);
+
+  const { data: transactionsData, isLoading, error } = useAdminTransactions(
+    pageNumber,
+    pageSize,
+    debouncedSearch,
+    statusFilter === "All" ? "" : statusFilter
+  );
 
   // Map API data to Transaction format
   const transactions = useMemo(() => {
-    if (!transactionsData?.data) return [];
+    if (!transactionsData) return [];
     
-    return transactionsData.data.map((item: ApiTransaction) => {
+    // Handle the actual response structure: { data: { items: [...], pageNumber, pageSize, totalItems, totalPages } }
+    let dataArray: TransactionAdmin[] = [];
+    
+    // Check if data.items exists (paginated response structure)
+    if (transactionsData.data && typeof transactionsData.data === 'object' && 'items' in transactionsData.data) {
+      const paginatedData = transactionsData.data as { items?: TransactionAdmin[] };
+      if (Array.isArray(paginatedData.items)) {
+        dataArray = paginatedData.items;
+      }
+    } else if (transactionsData.data && Array.isArray(transactionsData.data)) {
+      // Fallback: if data is directly an array
+      dataArray = transactionsData.data;
+    } else if (Array.isArray(transactionsData)) {
+      // Fallback: if the response is directly an array
+      dataArray = transactionsData as unknown as TransactionAdmin[];
+    } else {
+      // If data exists but is not in expected format, return empty
+      console.warn("Unexpected data structure:", transactionsData);
+      return [];
+    }
+    
+    return dataArray.map((item: TransactionAdmin) => {
       // Map status: "Pending" -> "Pending", "Success" -> "Success", "Cancelled" -> "Failed", etc.
-      let mappedStatus: "Success" | "Pending" | "Failed" | "Refunded" = "Pending";
+      let mappedStatus: "Completed" | "Pending" | "Failed" | "Refunded" = "Pending";
       if (item.status === "Success" || item.status === "Completed") {
-        mappedStatus = "Success";
+        mappedStatus = "Completed";
       } else if (item.status === "Failed" || item.status === "Cancelled") {
         mappedStatus = "Failed";
       } else if (item.status === "Refunded") {
@@ -95,35 +139,34 @@ const PurchasesManagement = () => {
       }
 
       return {
-        TRANSACTIONS_id: item.orderCode,
-        CreatedTransaction: item.createdAt,
-       
+        TRANSACTIONS_id: item.transactionId,
+        UserName: item.userName || "N/A",
+        CreatedTransaction: item.createdTransaction,
+        Bankname: item.bankName || "N/A",
+        AccountNumber: item.accountNumber || "N/A",
         Description: item.description,
         Status: mappedStatus,
         amount_coin: item.amountCoin,
-      
+        type: item.type,
         OrderCode: item.orderCode,
-        servicePackage_id: "", // API doesn't provide this
-        user_id: "", // API doesn't provide this
-        servicePackage: undefined,
+        servicePackage_id: item.servicePackageId || "",
+        user_id: item.userId,
+        servicePackage: item.servicePackageName && item.servicePackageId ? {
+          servicePackage_id: item.servicePackageId,
+          Name: item.servicePackageName,
+          Description: item.description,
+          Price: item.amountMoney,
+          status: "Active",
+          NumberOfCoin: item.amountCoin,
+          bonus_percent: 0,
+          created_at: item.createdTransaction,
+        } : undefined,
       } as Transaction;
     });
   }, [transactionsData]);
 
-  // Filter transactions
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((transaction) => {
-      const matchesSearch =
-        transaction.TRANSACTIONS_id.toLowerCase().includes(search.toLowerCase()) ||
-        transaction.OrderCode.toLowerCase().includes(search.toLowerCase()) ||
-        transaction.user_id.toLowerCase().includes(search.toLowerCase()) ||
-        transaction.servicePackage?.Name.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus =
-        statusFilter === "All" || transaction.Status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [transactions, search, statusFilter]);
+  // Transactions are already filtered by the API, so we just use them directly
+  const filteredTransactions = transactions;
 
   // const handleSelectRow = (idx: number) => {
   //   setSelectedRows(
@@ -267,7 +310,7 @@ const PurchasesManagement = () => {
           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
             <TabsList className="grid grid-cols-5 w-[500px]">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
-              <TabsTrigger value="Success">Thành công</TabsTrigger>
+              <TabsTrigger value="Completed">Thành công</TabsTrigger>
               <TabsTrigger value="Failed">Thất bại</TabsTrigger>
               <TabsTrigger value="Pending">Đang xử lý</TabsTrigger>
               <TabsTrigger value="Refunded">Hoàn tiền</TabsTrigger>
@@ -304,7 +347,7 @@ const PurchasesManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {transactions.filter((t) => t.Status === "Success").length}
+              {transactions.filter((t) => t.Status === "Completed").length}
             </div>
           </CardContent>
         </Card>
@@ -344,7 +387,7 @@ const PurchasesManagement = () => {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
               {transactions
-                .filter((t) => t.Status === "Success")
+                .filter((t) => t.Status === "Completed")
                 .reduce((sum, t) => sum + t.amount_coin, 0)
                 .toLocaleString("vi-VN")}{" "}
               <span className="text-sm font-normal">coin</span>
@@ -365,7 +408,7 @@ const PurchasesManagement = () => {
                 ) : error ? (
                   `Lỗi: ${error.message}`
                 ) : (
-                  `Hiển thị ${filteredTransactions.length} trên ${transactions.length} giao dịch`
+                  `Hiển thị ${filteredTransactions.length} giao dịch`
                 )}
               </CardDescription>
             </div>
@@ -392,11 +435,11 @@ const PurchasesManagement = () => {
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="font-semibold text-gray-700">Mã giao dịch</TableHead>
-                <TableHead className="font-semibold text-gray-700">User ID</TableHead>
+                <TableHead className="font-semibold text-gray-700">Tên người dùng</TableHead>
                 <TableHead className="font-semibold text-gray-700">Gói dịch vụ</TableHead>
                 <TableHead className="font-semibold text-gray-700">Số coin</TableHead>
                 <TableHead className="font-semibold text-gray-700">Ngân hàng</TableHead>
-                <TableHead className="font-semibold text-gray-700">Order Code</TableHead>
+                <TableHead className="font-semibold text-gray-700">Loại giao dịch</TableHead>
                 <TableHead className="font-semibold text-gray-700">Ngày tạo</TableHead>
                 <TableHead className="font-semibold text-gray-700">Trạng thái</TableHead>
                 <TableHead className="font-semibold text-gray-700 text-center">Hành động</TableHead>
@@ -406,19 +449,19 @@ const PurchasesManagement = () => {
               {filteredTransactions.map((transaction) => (
                 <TableRow key={transaction.TRANSACTIONS_id} className="hover:bg-gray-50/50">
                   <TableCell>
-                    <span className="font-mono text-sm">
+                    <span className="font-mono text-sm truncate max-w-[150px] block">
                       {transaction.TRANSACTIONS_id}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-sm text-gray-500">
-                      {transaction.user_id || "N/A"}
+                    <span className="font-mono text-sm text-gray-500 truncate max-w-[150px] block">
+                      {transaction.UserName || "N/A"}
                     </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium">
-                        {transaction.servicePackage?.Name || transaction.type || "N/A"}
+                        {transaction.servicePackage?.Name}
                       </span>
                       {transaction.servicePackage && (
                         <span className="text-xs text-gray-500">
@@ -444,7 +487,7 @@ const PurchasesManagement = () => {
                   </TableCell>
                   <TableCell>
                     <span className="font-mono text-sm">
-                      {transaction.OrderCode}
+                      {transaction.type}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -455,7 +498,7 @@ const PurchasesManagement = () => {
                   <TableCell>
                     <Badge
                       variant={
-                        transaction.Status === "Success"
+                        transaction.Status === "Completed"
                           ? "default"
                           : transaction.Status === "Failed"
                           ? "destructive"
@@ -565,7 +608,7 @@ const PurchasesManagement = () => {
                       <span className="text-sm text-gray-600">Trạng thái:</span>
                       <Badge
                         variant={
-                          selectedTransaction.Status === "Success"
+                          selectedTransaction.Status === "Completed"
                             ? "default"
                             : selectedTransaction.Status === "Failed"
                             ? "destructive"

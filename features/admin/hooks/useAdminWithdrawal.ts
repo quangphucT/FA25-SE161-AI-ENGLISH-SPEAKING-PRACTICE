@@ -20,6 +20,8 @@ export const useAdminWithdrawalApprove = () => {
             // Invalidate queries để refetch data
             queryClient.invalidateQueries({ queryKey: ["adminWithdrawal"] });
             queryClient.invalidateQueries({ queryKey: ["adminWithdrawalSummary"] });
+            // Invalidate adminTransactions để refetch purchases-management page
+            queryClient.invalidateQueries({ queryKey: ["adminTransactions"] });
         },
         onError: (error) => {
             toast.error(error.message || "Duyệt yêu cầu rút tiền thất bại");
@@ -35,6 +37,8 @@ export const useAdminWithdrawalReject = () => {
             // Invalidate queries để refetch data
             queryClient.invalidateQueries({ queryKey: ["adminWithdrawal"] });
             queryClient.invalidateQueries({ queryKey: ["adminWithdrawalSummary"] });
+            // Invalidate adminTransactions để refetch purchases-management page
+            queryClient.invalidateQueries({ queryKey: ["adminTransactions"] });
         },
         onError: (error) => {
             toast.error(error.message || "Từ chối yêu cầu rút tiền thất bại");

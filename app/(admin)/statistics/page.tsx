@@ -1,6 +1,15 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Table,
   TableHeader,
@@ -13,7 +22,9 @@ import { Badge } from "@/components/ui/badge";
 import { Bar, Line } from "react-chartjs-2";
 import Image from "next/image";
 import { FaBox, FaChartLine, FaClock, FaUser } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +49,12 @@ import {
   useAdminRevenue,
   useAdminSummary,
 } from "@/features/admin/hooks/useAdminSummary";
+import { useAdminReviewerLevel } from "@/features/admin/hooks/useAdminReviewer";
+import { adminReviewerApproveService, adminReviewerRejectService } from "@/features/admin/services/adminReviewerService";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
 
 ChartJS.register(
   CategoryScale,
@@ -62,7 +79,7 @@ interface ReviewerApplicant {
   phone: string;
   level: string;
   experienceYears: number;
-  status: "Chờ duyệt" | "Đã duyệt" | "Không duyệt";
+  status: string;
   joinedDate: string;
   certificates?: Certificate[];
 }
@@ -75,12 +92,13 @@ const PageStatistics = () => {
     (_, idx) => currentYear - idx
   );
 
+  const queryClient = useQueryClient();
   const { data: adminSummary } = useAdminSummary();
   const { data: adminPackages } = useAdminPackages(selectedYear.toString());
   const { data: adminRevenue } = useAdminRevenue(selectedYear.toString());
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const { data: adminRegisteredReviewer } = useAdminRegisteredReviewer(
+  const { data: adminRegisteredReviewer, refetch: refetchReviewers } = useAdminRegisteredReviewer(
     currentPage,
     pageSize
   );
@@ -120,29 +138,130 @@ const PageStatistics = () => {
   // Reviewers awaiting participation approval - now using API data
 
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
+  const [showUpdateLevelModal, setShowUpdateLevelModal] = useState<boolean>(false);
   const [selectedReviewer, setSelectedReviewer] =
     useState<ReviewerApplicant | null>(null);
+
+  // Form schema for updating reviewer level
+  const updateLevelSchema = z.object({
+    level: z.string().min(1, "Vui lòng nhập level"),
+  });
+
+  const updateLevelForm = useForm<z.infer<typeof updateLevelSchema>>({
+    resolver: zodResolver(updateLevelSchema),
+    defaultValues: {
+      level: "",
+    },
+  });
+
+  const { mutate: updateLevel, isPending: isUpdatingLevel } = useAdminReviewerLevel();
+
+  // Helper function to map status to Vietnamese
+  const getStatusText = (status: string): "Chờ duyệt" | "Đã duyệt" | "Không duyệt" => {
+    const statusMap: Record<string, "Chờ duyệt" | "Đã duyệt" | "Không duyệt"> = {
+      "Approved": "Đã duyệt",
+      "Rejected": "Không duyệt",
+      "Pending": "Chờ duyệt",
+      "Chờ duyệt": "Chờ duyệt",
+      "Đã duyệt": "Đã duyệt",
+      "Không duyệt": "Không duyệt",
+    };
+    return statusMap[status] || "Chờ duyệt";
+  };
 
   const openReviewerDetails = (reviewer: ReviewerApplicant) => {
     setSelectedReviewer(reviewer);
     setShowDetailsModal(true);
   };
 
-  const approveReviewer = (id: string) => {
-    // TODO: Implement API call to approve reviewer
-    console.log("Approving reviewer:", id);
-    setShowDetailsModal(false);
+  const approveReviewer = async(id: string) => {
+    try {
+      const response = await adminReviewerApproveService(id);
+      if (response.isSuccess || response.success) {
+        toast.success(response.message || "Reviewer approved successfully");
+        // Update selectedReviewer to remove the approved certificate
+        if (selectedReviewer) {
+          setSelectedReviewer({
+            ...selectedReviewer,
+            certificates: selectedReviewer.certificates?.filter(
+              (cert) => cert.id !== id
+            ),
+          });
+        }
+        setPreviewImageUrl(null);
+        setSelectedCertificateId(null);
+        // Refetch data to update the list
+        await refetchReviewers();
+        queryClient.invalidateQueries({ queryKey: ["adminRegisteredReviewer"] });
+      } else {
+        toast.error(response.message || "Failed to approve reviewer");
+      }
+    } catch (error) {
+      console.error("Error approving reviewer:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to approve reviewer");
+    }
   };
 
-  const rejectReviewer = (id: string) => {
-    // TODO: Implement API call to reject reviewer
-    console.log("Rejecting reviewer:", id);
-    setShowDetailsModal(false);
+  const rejectReviewer = async(id: string) => {
+    try {
+      const response = await adminReviewerRejectService(id);
+      if (response.isSuccess || response.success) {
+        toast.success(response.message || "Reviewer rejected successfully");
+        // Update selectedReviewer to remove the rejected certificate
+        if (selectedReviewer) {
+          setSelectedReviewer({
+            ...selectedReviewer,
+            certificates: selectedReviewer.certificates?.filter(
+              (cert) => cert.id !== id
+            ),
+          });
+        }
+        setPreviewImageUrl(null);
+        setSelectedCertificateId(null);
+        // Refetch data to update the list
+        await refetchReviewers();
+        queryClient.invalidateQueries({ queryKey: ["adminRegisteredReviewer"] });
+      } else {
+        toast.error(response.message || "Failed to reject reviewer");
+      }
+    } catch (error) {
+      console.error("Error rejecting reviewer:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to reject reviewer");
+    }
+  };
+
+  const handleUpdateLevel = (values: z.infer<typeof updateLevelSchema>) => {
+    if (!selectedReviewer) return;
+    
+    updateLevel(
+      {
+        reviewerProfileId: selectedReviewer.id,
+        level: values.level,
+      },
+      {
+        onSuccess: () => {
+          setShowUpdateLevelModal(false);
+          updateLevelForm.reset();
+          setShowDetailsModal(false);
+          // Refetch data to update the list
+          refetchReviewers();
+          queryClient.invalidateQueries({ queryKey: ["adminRegisteredReviewer"] });
+        },
+      }
+    );
+  };
+
+  const openUpdateLevelModal = () => {
+    if (selectedReviewer) {
+      updateLevelForm.setValue("level", selectedReviewer.level || "");
+      setShowUpdateLevelModal(true);
+    }
   };
 
 
   // Image preview state for certificates
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>(null);
   const [previewZoom, setPreviewZoom] = useState<number>(1);
   const [previewOffset, setPreviewOffset] = useState<{ x: number; y: number }>({
     x: 0,
@@ -951,17 +1070,40 @@ const PageStatistics = () => {
                       <span className="font-medium text-gray-700">
                         Trạng thái tài khoản
                       </span>
-                      <Badge
-                        className={
-                          selectedReviewer.status === "Đã duyệt"
-                            ? "bg-green-100 text-green-800 border-green-200"
-                            : selectedReviewer.status === "Không duyệt"
-                            ? "bg-red-100 text-red-800 border-red-200"
-                            : "bg-yellow-100 text-yellow-800 border-yellow-200"
-                        }
-                      >
-                        {selectedReviewer.status}
-                      </Badge>
+                      {(() => {
+                        const statusText = getStatusText(selectedReviewer.status);
+                        const statusConfig = {
+                          "Đã duyệt": {
+                            bg: "bg-green-100",
+                            text: "text-green-800",
+                            border: "border-green-200",
+                            dot: "bg-green-500",
+                          },
+                          "Không duyệt": {
+                            bg: "bg-red-100",
+                            text: "text-red-800",
+                            border: "border-red-200",
+                            dot: "bg-red-500",
+                          },
+                          "Chờ duyệt": {
+                            bg: "bg-yellow-100",
+                            text: "text-yellow-800",
+                            border: "border-yellow-200",
+                            dot: "bg-yellow-500",
+                          },
+                        };
+                        const config = statusConfig[statusText] || statusConfig["Chờ duyệt"];
+                        return (
+                          <Badge
+                            className={`${config.bg} ${config.text} ${config.border} hover:opacity-80 transition-opacity`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <div className={`w-2 h-2 rounded-full ${config.dot}`}></div>
+                              <span className="font-medium">{statusText}</span>
+                            </div>
+                          </Badge>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -1012,6 +1154,7 @@ const PageStatistics = () => {
                             setPreviewZoom(1);
                             setPreviewOffset({ x: 0, y: 0 });
                             setPreviewImageUrl(cert.imageUrl);
+                            setSelectedCertificateId(cert.id);
                           }}
                           role="button"
                           aria-label={`Xem lớn ${cert.name}`}
@@ -1040,7 +1183,10 @@ const PageStatistics = () => {
               {previewImageUrl && (
                 <div
                   className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-0 select-none"
-                  onClick={() => setPreviewImageUrl(null)}
+                  onClick={() => {
+                    setPreviewImageUrl(null);
+                    setSelectedCertificateId(null);
+                  }}
                   onContextMenu={(e) => e.preventDefault()}
                 >
                   <div
@@ -1049,7 +1195,10 @@ const PageStatistics = () => {
                   >
                     <button
                       className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
-                      onClick={() => setPreviewImageUrl(null)}
+                      onClick={() => {
+                        setPreviewImageUrl(null);
+                        setSelectedCertificateId(null);
+                      }}
                       aria-label="Đóng xem ảnh"
                     >
                       <svg
@@ -1063,6 +1212,28 @@ const PageStatistics = () => {
                         <path d="M18 6L6 18M6 6l12 12" />
                       </svg>
                     </button>
+                    <Button
+                  onClick={() => {
+                    if (selectedCertificateId) {
+                      approveReviewer(selectedCertificateId);
+                    }
+                  }}
+                  className="absolute top-15 right-3 z-10 bg-green-600 hover:bg-green-700 cursor-pointer"
+                  disabled={!selectedCertificateId}
+                >
+                  Duyệt
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedCertificateId) {
+                      rejectReviewer(selectedCertificateId);
+                    }
+                  }}
+                  className="absolute top-25 right-3 z-10 bg-red-600 hover:bg-red-700 cursor-pointer"
+                  disabled={!selectedCertificateId}
+                >
+                  Không duyệt
+                </Button>
                     <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
                       <button
                         className="h-10 px-3 rounded-lg bg-white/15 hover:bg-white/25 text-white"
@@ -1172,18 +1343,127 @@ const PageStatistics = () => {
                   Đóng
                 </Button>
                 <Button
-                  onClick={() => approveReviewer(selectedReviewer.id)}
+                  onClick={openUpdateLevelModal}
                   className="bg-green-600 hover:bg-green-700 cursor-pointer"
                 >
-                  Duyệt
+                  Cập nhật Level của reviewer
                 </Button>
+               
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Level Modal */}
+      {showUpdateLevelModal && selectedReviewer && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <svg
+                      width="24"
+                      height="24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      Cập nhật Level Reviewer
+                    </h2>
+                    <p className="text-sm text-green-100 mt-0.5">
+                      {selectedReviewer.fullName}
+                    </p>
+                  </div>
+                </div>
                 <Button
-                  onClick={() => rejectReviewer(selectedReviewer.id)}
-                  className="bg-red-600 hover:bg-red-700 cursor-pointer"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowUpdateLevelModal(false);
+                    updateLevelForm.reset();
+                  }}
+                  className="text-white hover:bg-white/20 h-10 w-10 p-0 rounded-full transition-colors"
                 >
-                  Không duyệt
+                  <svg
+                    width="24"
+                    height="24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
                 </Button>
               </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <Form {...updateLevelForm}>
+                <form
+                  onSubmit={updateLevelForm.handleSubmit(handleUpdateLevel)}
+                  className="space-y-6"
+                >
+                  <FormField
+                    control={updateLevelForm.control}
+                    name="level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          Level *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="VD: Beginner, Intermediate, Advanced"
+                            {...field}
+                            className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Level hiện tại: <span className="font-medium text-gray-700">{selectedReviewer.level || "Chưa có"}</span>
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowUpdateLevelModal(false);
+                        updateLevelForm.reset();
+                      }}
+                      className="cursor-pointer border-gray-300 hover:bg-gray-50 px-6"
+                      disabled={isUpdatingLevel}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isUpdatingLevel}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer px-6 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdatingLevel ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Đang cập nhật...
+                        </>
+                      ) : (
+                        "Cập nhật Level"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </div>
           </div>
         </div>

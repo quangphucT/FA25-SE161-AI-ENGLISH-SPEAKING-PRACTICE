@@ -54,6 +54,32 @@ export default function LoginForm() {
       password: "",
     },
   });
+  const extractReviewerStatus = (data: unknown): string | undefined => {
+    const typed =
+      (data as { reviewerStatus?: string; reviewStatus?: string }) || {};
+    return typed.reviewerStatus ?? typed.reviewStatus;
+  };
+
+  const handleReviewerNavigation = (
+    isReviewerActive?: boolean,
+    rawStatus?: string
+  ) => {
+    const reviewerStatus = rawStatus || "Pending";
+    if (reviewerStatus === "Active" && isReviewerActive) {
+      router.push("/dashboard-reviewer-layout");
+      return;
+    }
+    if (reviewerStatus === "Pending" && isReviewerActive === false) {
+      router.push("/entrance_information");
+      return;
+    }
+    if (reviewerStatus === "Pending" && isReviewerActive) {
+      router.push("/reviewer-waiting");
+      return;
+    }
+    router.push("/dashboard-reviewer-layout");
+  };
+
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     const payload = {
@@ -71,11 +97,10 @@ export default function LoginForm() {
             router.push("/dashboard-learner-layout");
           }
         } else if (data.role === "REVIEWER") {
-          if (!data.isReviewerActive) {
-            router.push("/entrance_information");
-          } else {
-            router.push("/dashboard-reviewer-layout");
-          }
+          handleReviewerNavigation(
+            data.isReviewerActive,
+            extractReviewerStatus(data)
+          );
         } else {
           router.push("/sign-in");
         }
@@ -114,11 +139,10 @@ export default function LoginForm() {
         {
           onSuccess: (data) => {
             toast.success("Đăng nhập với Google thành công!");
-            if (data.isReviewerActive === false) {
-              router.push("/entrance_information");
-            } else if (data.isReviewerActive === true) {
-              router.push("/dashboard-reviewer-layout");
-            }
+            handleReviewerNavigation(
+              data.isReviewerActive,
+              extractReviewerStatus(data)
+            );
           },
           onError: (error) => {
             toast.error(error.message);

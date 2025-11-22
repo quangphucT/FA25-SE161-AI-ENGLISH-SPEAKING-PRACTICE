@@ -1,27 +1,63 @@
+import { Transaction } from "@/features/learner/services/learnerTransactionService";
 import fetchWithAuth from "@/utils/fetchWithAuth";
 
-export interface Transaction {
-  orderCode: string;
+export interface TransactionAdmin {
+  transactionId: string;
+  userId: string;
+  userName?: string; // Optional - not present in Withdrawal transactions
+  servicePackageId?: string; // Optional - not present in Withdrawal transactions
+  servicePackageName?: string; // Optional - not present in Withdrawal transactions
   amountMoney: number;
   amountCoin: number;
-  status: string;
+  orderCode: string;
+  bankName?: string; // Optional - might not be present in all transactions
+  accountNumber?: string; // Optional - might not be present in all transactions
   description: string;
-  createdAt: string;
+  type: string;
+  status: string;
+  createdTransaction: string;
+}
+
+export interface PaginatedTransactionsData {
+  items: TransactionAdmin[];
+  pageNumber: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 export interface AdminTransactionsResponse {
-  data: Transaction[];
+  isSucess: boolean;
+  data: PaginatedTransactionsData;
+  businessCode: string;
+  message: string;
 }
 
-export const adminTransactionsService = async (): Promise<AdminTransactionsResponse> => {
+export const adminTransactionsService = async (pageNumber: number, pageSize: number, search: string, status: string): Promise<AdminTransactionsResponse> => {
   try {
-    const response = await fetchWithAuth(`/api/AdminDashboard/transaction`);
+    const queryParams = new URLSearchParams({
+      pageNumber: pageNumber.toString(),
+      pageSize: pageSize.toString(),
+    });
+    if (search) {
+      queryParams.set("search", search.toString());
+    }
+    if (status) {
+      queryParams.set("status", status.toString());
+    } 
+    const response = await fetchWithAuth(`/api/coin/transactions?${queryParams.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || "Failed to fetch transactions");
+      throw new Error(data.message || data.error || "Failed to fetch transactions");
     }
-    // API trả về array trực tiếp, cần wrap vào object có property data
-    return Array.isArray(data) ? { data } : data;
+    return data;
   } catch (error: unknown) {
     const message =
       (error &&

@@ -31,14 +31,15 @@ const ReviewerWaitingPage = () => {
 
   const statusRaw = meData?.reviewerProfile?.status || "";
   const normalizedStatus = statusRaw.trim().toLowerCase();
+
   const statusInfo =
     statusDescriptions[normalizedStatus as keyof typeof statusDescriptions] ||
     statusDescriptions.default;
-//  useEffect(() => {
-  //   if (isApproved) {
-  //     router.replace("/dashboard-reviewer-layout");
-  //   }
-  // }, [isApproved, router]);
+ useEffect(() => {
+    if (normalizedStatus === "actived") {
+      router.replace("/dashboard-reviewer-layout");
+    }
+  }, [normalizedStatus, router]);
 
   if (isLoading && !meData) {
     return (
@@ -69,12 +70,7 @@ const ReviewerWaitingPage = () => {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3">
-          <Button
-            onClick={() => router.push("/entrance_information")}
-            className="bg-[#2ed7ff] text-[#18232a] font-semibold"
-          >
-            Cập nhật hồ sơ
-          </Button>
+         
           <Button
             variant="outline"
             onClick={() => refetch()}

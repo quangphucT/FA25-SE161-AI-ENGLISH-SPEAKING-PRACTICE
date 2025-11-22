@@ -152,15 +152,35 @@ export const adminReviewerBanService = async (
           "Content-Type": "application/json",
         },
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Approve reviewer failed");
+      
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      // Try to parse as JSON first
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { message: "Approve reviewer failed" };
+        }
+      } else {
+        // If not JSON, get text
+        const text = await response.text();
+        data = { message: text || "Approve reviewer failed" };
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Approve reviewer failed");
+      }
       return data;
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || error.message || "Approve reviewer failed";
-      throw new Error(message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Approve reviewer failed");
+      }
+      throw new Error("Approve reviewer failed");
     }
-    }
+  }
   
   export const adminReviewerRejectService = async (
     certificateId: string,
@@ -172,13 +192,33 @@ export const adminReviewerBanService = async (
           "Content-Type": "application/json",
         },
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Reject reviewer failed");
+      
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      // Try to parse as JSON first
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { message: "Reject reviewer failed" };
+        }
+      } else {
+        // If not JSON, get text
+        const text = await response.text();
+        data = { message: text || "Reject reviewer failed" };
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Reject reviewer failed");
+      }
       return data;
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || error.message || "Reject reviewer failed";
-      throw new Error(message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Reject reviewer failed");
+      }
+      throw new Error("Reject reviewer failed");
     }
   };
 export const adminReviewerLevelService = async (

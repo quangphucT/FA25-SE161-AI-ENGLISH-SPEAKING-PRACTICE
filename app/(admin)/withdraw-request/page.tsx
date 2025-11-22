@@ -91,22 +91,21 @@ const WithdrawRequest = () => {
     try {
       if (actionType === "approve") {
         await approveWithdrawal(requestToAction.transactionId);
-        toast.success("Duyệt yêu cầu thành công");
+        // Toast đã được xử lý trong hook
       } else {
         await rejectWithdrawal({
           transactionId: requestToAction.transactionId,
           reason: rejectReason.trim(),
         });
-        toast.success("Từ chối yêu cầu thành công");
+        // Toast đã được xử lý trong hook
       }
       setShowConfirmDialog(false);
       setRequestToAction(null);
       setRejectReason("");
       await refetch();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Thao tác không thành công"
-      );
+      // Error toast đã được xử lý trong hook, chỉ log nếu cần
+      console.error("Error in confirmAction:", err);
     }
   };
 

@@ -333,8 +333,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                 <CreditCard size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Quản lí mua gói </span>
-                <span className="text-xs opacity-70">Lịch sử mua gói</span>
+                <span className="font-semibold text-sm">Quản lí giao dịch</span>
+                <span className="text-xs opacity-70">Lịch sử giao dịch</span>
               </div>
             </button>
           </li>
