@@ -21,6 +21,7 @@ export const useSubmitAnswerQuestion = () => {
   return useMutation<SubmitAnswerQuestionResponse, Error, SubmitAnswerQuestionRequest>({
     mutationFn: submitAnswerQuestionService,
     onSuccess: (data) => {
+      console.log("Data:", data)
         // Invalidate và refetch ngay lập tức
         queryClient.invalidateQueries({ 
           queryKey: ["learningPathCourseFull"],

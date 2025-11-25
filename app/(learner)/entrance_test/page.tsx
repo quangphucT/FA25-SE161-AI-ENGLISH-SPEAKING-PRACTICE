@@ -134,27 +134,8 @@ const EntranceTest = () => {
     });
   }, []);
 
-  // Play audio with speech synthesis
-  // const playWithSpeechSynthesis = useCallback((text: string) => {
-  //   if (!synthRef.current) return;
-  //   setUiBlocked(true);
-  //   const utter = new SpeechSynthesisUtterance(text);
-  //   if (voiceRef.current) utter.voice = voiceRef.current;
-  //   utter.rate = 0.7;
-  //   utter.onend = () => setUiBlocked(false);
-  //   synthRef.current.speak(utter);
-  // }, []);
 
-  // Play current question audio
-  // const playAudio = useCallback(() => {
-  //   if (currentQuestion?.content) {
-  //     setMainTitle("Playing audio...");
-  //     playWithSpeechSynthesis(currentQuestion.content);
-  //     setTimeout(() => setMainTitle("AI Pronunciation Test"), 1000);
-  //   }
-  // }, [currentQuestion, playWithSpeechSynthesis]);
 
-  // Play recorded audio
   const playRecording = useCallback(() => {
     const audio = audioRecordedRef.current;
     if (!audio) return;
