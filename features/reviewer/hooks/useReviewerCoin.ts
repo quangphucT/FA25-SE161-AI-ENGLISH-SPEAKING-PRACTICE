@@ -10,8 +10,8 @@ export const useReviewerCoinWithdraw = () => {
         mutationFn: reviewerCoinWithdrawService,
         onSuccess: () => {
             toast.success("Rút coin thành công");
-            // Invalidate và refetch lịch sử giao dịch
-            queryClient.invalidateQueries({ queryKey: ["reviewerCoinHistoryWithdraw"] });
+            // Invalidate và refetch wallet data
+            queryClient.invalidateQueries({ queryKey: ["reviewReviewWallet"] });
         },
         onError: (error) => {
             toast.error(error.message || "Rút coin thất bại");

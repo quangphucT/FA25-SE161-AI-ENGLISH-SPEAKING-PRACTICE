@@ -1,0 +1,265 @@
+import fetchWithAuth from "@/utils/fetchWithAuth";
+
+// Interfaces
+export interface RecordCategory {
+  learnerRecordId: string;
+  name: string;
+  status?: string;
+  createdAt?: Date;
+}
+
+export interface RecordCategoryResponse {
+  data: RecordCategory[];
+  message?: string;
+  isSucess: boolean; // Note: API returns "isSucess" with one 'c'
+  businessCode?: string;
+}
+
+export interface Record {
+    recordId: string;
+    learnerRecordId: string;
+    content: string;
+    audioRecordingURL: string;
+    score: number;
+    aiFeedback: string;
+    status: string;
+    createdAt: Date;
+}
+
+export interface RecordResponse {
+  data?: Record[] | Record; // Support both array and single object
+  message?: string;
+  isSucess?: boolean;
+  businessCode?: string;
+}
+
+export interface CreateRecordCategoryResponse {
+  message?: string;
+  data?: RecordCategory;
+  isSuccess?: boolean;
+}
+
+export interface CreateRecordResponse {
+  message?: string;
+  data?: Record;
+  isSuccess?: boolean;
+}
+
+export interface DeleteResponse {
+  message?: string;
+  isSuccess?: boolean;
+}
+
+export interface ReviewRecordRequest {
+  score?: number;
+  aiFeedback?: string;
+  audioRecordingURL?: string;
+}
+
+export interface ReviewRecordResponse {
+  message?: string;
+  isSuccess?: boolean;  
+}
+
+// Folder/Category Services
+export const LearnerRecordFolderService = async (): Promise<RecordCategoryResponse> => {
+    try {
+        const response = await fetchWithAuth(`/api/learner/recordCategory`);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Lấy danh sách thư mục thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Lấy danh sách thư mục thất bại");
+        }
+        throw new Error("Lấy danh sách thư mục thất bại");
+    }
+}
+export const LearnerRecordFolderCreateService = async (name: string): Promise<CreateRecordCategoryResponse> => {
+    try {
+        const response = await fetchWithAuth(`/api/learner/recordCategory`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name }),
+            credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Tạo thư mục thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Tạo thư mục thất bại");
+        }
+        throw new Error("Tạo thư mục thất bại");
+    }
+}
+
+export const LearnerRecordFolderDeleteService = async (categoryId: string): Promise<DeleteResponse> => {
+    try {
+        const response = await fetchWithAuth(`/api/learner/recordCategory/${categoryId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ categoryId }),
+            credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Xóa thư mục thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Xóa thư mục thất bại");
+        }
+        throw new Error("Xóa thư mục thất bại");
+    }
+}
+
+export const LearnerRecordFolderRenameService = async (categoryId: string, newName: string): Promise<CreateRecordCategoryResponse> => {
+    try {
+        const response = await fetchWithAuth(`/api/learner/recordCategory/${categoryId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({  newName }),
+            credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Đổi tên thư mục thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Đổi tên thư mục thất bại");
+        }
+        throw new Error("Đổi tên thư mục thất bại");
+    }
+}
+
+// Record Services
+export const LearnerRecordService = async (folderId: string): Promise<RecordResponse> => {
+    try {
+        const response = await fetchWithAuth(`/api/learner/record/folder/${folderId}`);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Lấy danh sách record thất bại");
+        } 
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Lấy danh sách record thất bại");
+        }
+        throw new Error("Lấy danh sách record thất bại");
+    }
+}
+
+export const LearnerRecordCreateService = async (folderId: string, content: string): Promise<CreateRecordResponse> => {
+    try {
+        const response = await fetchWithAuth(`/api/learner/record/folder/${folderId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ content }),
+            credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Tạo record thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Tạo record thất bại");
+        }
+        throw new Error("Tạo record thất bại");
+    }
+}
+
+export const LearnerRecordDeleteService = async (recordId: string): Promise<DeleteResponse> => {
+    try {
+        if (!recordId) {
+            throw new Error("Record ID is required");
+        }
+        const response = await fetchWithAuth(`/api/learner/record/${recordId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ recordId }),
+            credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Xóa record thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Xóa record thất bại");
+        }
+        throw new Error("Xóa record thất bại");
+    }
+}
+
+export const LearnerRecordUpdateService = async (recordId: string, reviewData: ReviewRecordRequest): Promise<ReviewRecordResponse> => {
+    try {
+        if (!recordId) {
+            throw new Error("Record ID is required");
+        }
+        const response = await fetchWithAuth(`/api/learner/record/${recordId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ recordId, ...reviewData }),
+            credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Đánh giá record thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Đánh giá record thất bại");
+        }
+        throw new Error("Đánh giá record thất bại");
+    }
+}
+
+export const LearnerRecordUpdateContentService = async (recordId: string, content: string): Promise<ReviewRecordResponse> => {
+    try {
+        if (!recordId) {
+            throw new Error("Record ID is required");
+        }
+        const response = await fetchWithAuth(`/api/learner/record/${recordId}/update-content`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ content }),
+            credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Cập nhật nội dung record thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Cập nhật nội dung record thất bại");
+        }
+        throw new Error("Cập nhật nội dung record thất bại");
+    }
+}

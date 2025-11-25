@@ -77,7 +77,22 @@ const EntranceInformation = () => {
       toast.error("Không tìm thấy thông tin người dùng!");
       return;
     }
-
+    if (!experienceYears.trim()) {
+      toast.error("Số năm kinh nghiệm không được để trống!");
+      return;
+    }
+    if (Number(experienceYears.trim()) < 0) {
+      toast.error("Số năm kinh nghiệm không được nhỏ hơn 0!");
+      return;
+    }
+    if (Number(experienceYears.trim()) > 100) {
+      toast.error("Số năm kinh nghiệm không được lớn hơn 100!");
+      return;
+    }
+    if(!Number.isInteger(Number(experienceYears.trim()))) {
+      toast.error("Số năm kinh nghiệm phải là số nguyên!");
+      return;
+    }
     try {
       // Upload certificates first
       for (const certificate of certificates) {

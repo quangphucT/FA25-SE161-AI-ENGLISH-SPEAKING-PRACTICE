@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminPurchase, useAdminPurchaseDetails } from "@/features/admin/hooks/useAdminPurchase";
+import { useDownloadPurchaseExcel } from "@/features/admin/hooks/useAdminPurchaseExcel";
 import { Loader2, Search, Download, Eye, CheckCircle2, XCircle, Clock, DollarSign } from "lucide-react";
 import type { AIConversationPurchaseDetail, Purchase } from "@/features/admin/services/adminPurchaseService";
 
@@ -69,6 +70,9 @@ const PurchasesItemManagement = () => {
   const { data: purchaseDetailsData, isLoading: isLoadingDetails, isError: isErrorDetails } = useAdminPurchaseDetails(
     selectedPurchaseId
   );
+
+  // Excel download hook
+  const { mutate: downloadExcel, isPending: isDownloadingExcel } = useDownloadPurchaseExcel();
 
   const handleViewDetails = (purchase: Purchase) => {
     setSelectedPurchaseId(purchase.purchaseId);
@@ -222,23 +226,18 @@ const PurchasesItemManagement = () => {
                 </TabsList>
               </Tabs>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 cursor-pointer transition-all hover:shadow-lg flex items-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Xuất báo cáo
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={exportToPDF}
-                  className="cursor-pointer flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Xuất PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              onClick={() => downloadExcel()} 
+              disabled={isDownloadingExcel}
+              className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 cursor-pointer transition-all hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDownloadingExcel ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              Xuất báo cáo
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -395,7 +394,13 @@ const PurchasesItemManagement = () => {
                               ? "secondary"
                               : "outline"
                           }
-                          className="text-xs font-medium"
+                          className={`text-xs font-medium ${
+                            purchase.itemType === "Course" || purchase.itemType === "Course"
+                              ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                              : purchase.itemType === "ReviewFee" || purchase.itemType === "Review Fee"
+                              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300"
+                              : "outline"
+                          }`}
                         >
                           {getItemType(purchase)}
                         </Badge>
@@ -419,7 +424,15 @@ const PurchasesItemManagement = () => {
                               ? "secondary"
                               : "outline"
                           }
-                          className="text-xs font-medium"
+                          className={`text-xs font-medium ${
+                            purchase.status === "Success" || purchase.status === "Completed"
+                              ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                              : purchase.status === "Failed"
+                              ? "bg-red-100 text-red-800 hover:bg-red-200 border-red-300"
+                              : purchase.status === "Pending"
+                              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300"
+                              : "outline"
+                          }`}
                         >
                           {purchase.status}
                         </Badge>

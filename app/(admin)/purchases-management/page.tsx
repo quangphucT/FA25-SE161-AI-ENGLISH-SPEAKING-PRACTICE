@@ -57,7 +57,7 @@ interface Transaction {
   Bankname: string;
   AccountNumber: string;
   Description: string;
-  Status: "Completed" | "Pending" | "Failed" | "Refunded";
+  Status: "Approved" | "Pending" | "Failed" ;
   amount_coin: number;
   type: string;
   OrderCode: string;
@@ -127,9 +127,9 @@ const PurchasesManagement = () => {
     
     return dataArray.map((item: TransactionAdmin) => {
       // Map status: "Pending" -> "Pending", "Success" -> "Success", "Cancelled" -> "Failed", etc.
-      let mappedStatus: "Completed" | "Pending" | "Failed" | "Refunded" = "Pending";
-      if (item.status === "Success" || item.status === "Completed") {
-        mappedStatus = "Completed";
+      let mappedStatus: "Approved" | "Pending" | "Failed" | "Refunded" = "Pending";
+      if (item.status === "Success" || item.status === "Approved") {
+        mappedStatus = "Approved";
       } else if (item.status === "Failed" || item.status === "Cancelled") {
         mappedStatus = "Failed";
       } else if (item.status === "Refunded") {
@@ -138,6 +138,14 @@ const PurchasesManagement = () => {
         mappedStatus = "Pending";
       }
 
+      let mappedType: string = "Không xác định";
+      if (item.type === "Deposit") {
+        mappedType = "Nạp tiền";
+      } else if (item.type === "Withdrawal") {
+        mappedType = "Rút tiền";
+      } else {
+        mappedType = "Không xác định";
+      }
       return {
         TRANSACTIONS_id: item.transactionId,
         UserName: item.userName || "N/A",
@@ -147,7 +155,7 @@ const PurchasesManagement = () => {
         Description: item.description,
         Status: mappedStatus,
         amount_coin: item.amountCoin,
-        type: item.type,
+        type: mappedType,
         OrderCode: item.orderCode,
         servicePackage_id: item.servicePackageId || "",
         user_id: item.userId,
@@ -308,12 +316,12 @@ const PurchasesManagement = () => {
             />
           </div>
           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
-            <TabsList className="grid grid-cols-5 w-[500px]">
+            <TabsList className="grid grid-cols-4 w-[500px]">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
-              <TabsTrigger value="Completed">Thành công</TabsTrigger>
+              <TabsTrigger value="Approved">Thành công</TabsTrigger>
               <TabsTrigger value="Failed">Thất bại</TabsTrigger>
               <TabsTrigger value="Pending">Đang xử lý</TabsTrigger>
-              <TabsTrigger value="Refunded">Hoàn tiền</TabsTrigger>
+              
             </TabsList>
           </Tabs>
         </div>
@@ -337,7 +345,7 @@ const PurchasesManagement = () => {
       </div>
 
       {/* Thống kê */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -347,7 +355,7 @@ const PurchasesManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {transactions.filter((t) => t.Status === "Completed").length}
+              {transactions.filter((t) => t.Status === "Approved").length}
             </div>
           </CardContent>
         </Card>
@@ -377,23 +385,7 @@ const PurchasesManagement = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Coins className="h-4 w-4 text-blue-500" />
-              Tổng coin thành công
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {transactions
-                .filter((t) => t.Status === "Completed")
-                .reduce((sum, t) => sum + t.amount_coin, 0)
-                .toLocaleString("vi-VN")}{" "}
-              <span className="text-sm font-normal">coin</span>
-            </div>
-          </CardContent>
-        </Card>
+       
       </div>
 
       {/* Bảng giao dịch */}
@@ -436,9 +428,9 @@ const PurchasesManagement = () => {
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="font-semibold text-gray-700">Mã giao dịch</TableHead>
                 <TableHead className="font-semibold text-gray-700">Tên người dùng</TableHead>
-                <TableHead className="font-semibold text-gray-700">Gói dịch vụ</TableHead>
+              
                 <TableHead className="font-semibold text-gray-700">Số coin</TableHead>
-                <TableHead className="font-semibold text-gray-700">Ngân hàng</TableHead>
+               
                 <TableHead className="font-semibold text-gray-700">Loại giao dịch</TableHead>
                 <TableHead className="font-semibold text-gray-700">Ngày tạo</TableHead>
                 <TableHead className="font-semibold text-gray-700">Trạng thái</TableHead>
@@ -458,37 +450,26 @@ const PurchasesManagement = () => {
                       {transaction.UserName || "N/A"}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {transaction.servicePackage?.Name}
-                      </span>
-                      {transaction.servicePackage && (
-                        <span className="text-xs text-gray-500">
-                          {formatPrice(transaction.servicePackage.Price)}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
+                  
                   <TableCell>
                     <span className="font-semibold">
                       {transaction.amount_coin.toLocaleString("vi-VN")} coin
                     </span>
                   </TableCell>
+                 
                   <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm">{transaction.Bankname || "N/A"}</span>
-                      {transaction.AccountNumber !== "N/A" && (
-                        <span className="text-xs text-gray-500">
-                          {transaction.AccountNumber}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-sm">
+                    <Badge
+                      variant={
+                        transaction.type === "Nạp tiền"
+                          ? "default"
+                          : transaction.type === "Rút tiền"
+                          ? "secondary"
+                          : "outline"
+                      }
+                      className="text-xs font-medium"
+                    >
                       {transaction.type}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-gray-600">
@@ -498,7 +479,7 @@ const PurchasesManagement = () => {
                   <TableCell>
                     <Badge
                       variant={
-                        transaction.Status === "Completed"
+                        transaction.Status === "Approved"
                           ? "default"
                           : transaction.Status === "Failed"
                           ? "destructive"
@@ -506,41 +487,49 @@ const PurchasesManagement = () => {
                           ? "secondary"
                           : "outline"
                       }
-                      className="text-xs"
+                      className={`text-xs font-medium ${
+                        transaction.Status === "Approved"
+                          ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                          : transaction.Status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300"
+                          : ""
+                      }`}
                     >
                       {transaction.Status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 cursor-pointer"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 cursor-pointer hover:bg-gray-100"
                           >
-                            <circle cx="12" cy="12" r="1" />
-                            <circle cx="19" cy="12" r="1" />
-                            <circle cx="5" cy="12" r="1" />
-                          </svg>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleViewDetails(transaction)}
-                          className="cursor-pointer"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Xem chi tiết
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                            <svg
+                              width="14"
+                              height="14"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle cx="12" cy="12" r="1" />
+                              <circle cx="19" cy="12" r="1" />
+                              <circle cx="5" cy="12" r="1" />
+                            </svg>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleViewDetails(transaction)}
+                            className="cursor-pointer"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Xem chi tiết
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -608,7 +597,7 @@ const PurchasesManagement = () => {
                       <span className="text-sm text-gray-600">Trạng thái:</span>
                       <Badge
                         variant={
-                          selectedTransaction.Status === "Completed"
+                          selectedTransaction.Status === "Approved"
                             ? "default"
                             : selectedTransaction.Status === "Failed"
                             ? "destructive"

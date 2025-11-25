@@ -29,6 +29,7 @@ export interface Reviewer {
 export interface ReviewerDetail {
     reviewerProfileId: string;
     fullName: string;
+    level: string;
     email: string;
     phone: string;
     experience: string;

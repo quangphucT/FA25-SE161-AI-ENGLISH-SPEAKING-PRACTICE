@@ -34,9 +34,12 @@ export const useAdminRegisteredReviewer = (
   pageNumber: number,
   pageSize: number
 ) => {
+  
   return useQuery<AdminRegisteredReviewerResponse, Error>({
+    
     queryKey: ["adminRegisteredReviewer", pageNumber, pageSize],
     queryFn: () => adminRegisteredReviewerService(pageNumber, pageSize),
+    
   });
 };
 export const useAdminManagerCreateMutation = () => {

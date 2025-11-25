@@ -138,8 +138,7 @@ const WithdrawRequest = () => {
         return "Đã duyệt";
       case "Rejected":
         return "Từ chối";
-      case "Processing":
-        return "Đang xử lý";
+     
       default:
         return status;
     }
@@ -148,7 +147,7 @@ const WithdrawRequest = () => {
   const pendingCount = requests.filter((r) => r.status === "Pending").length;
   const approvedCount = requests.filter((r) => r.status === "Approved").length;
   const rejectedCount = requests.filter((r) => r.status === "Rejected").length;
-  const processingCount = requests.filter((r) => r.status === "Processing").length;
+
 
   return (
     <div className="p-6">
@@ -205,19 +204,7 @@ const WithdrawRequest = () => {
               {rejectedCount}
             </div>
           </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Đang xử lý
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {processingCount}
-            </div>
-          </CardContent>
-        </Card>
+        </Card> 
       </div>
 
       {/* Filters */}

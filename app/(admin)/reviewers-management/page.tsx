@@ -625,7 +625,7 @@ const ReviewerManagement = () => {
                         Levels
                       </p>
                       <p className="text-2xl font-bold text-green-900">
-                        —
+                        {reviewerDetail.level}
                         <span className="text-sm font-normal"></span>
                       </p>
                     </div>

@@ -141,3 +141,100 @@ export const reviewerReviewSubmitService = async (
       throw new Error(message);
     }
   };
+  export interface ReviewerReviewStatisticsResponse {
+    isSucess: boolean;
+    data: {
+      totalFeedback: number;
+      totalReviews: number;
+      averageRating: number;
+      coinBalance: number;
+    };
+    businessCode: string;
+    message: string;
+  }
+  export const reviewerReviewStatisticsService = async (): Promise<ReviewerReviewStatisticsResponse> => {
+    try {
+      const response = await fetchWithAuth(`/api/reviewer/statistics`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Reviewer review statistics failed");
+      return data;
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || "Reviewer review statistics failed";
+      throw new Error(message);
+    }
+  }
+  export interface ReviewerReviewWalletResponse {
+    isSucess: boolean;
+    data: {
+      totalEarnedCoin: number;
+      totalEarnedMoney: number;
+      currentBalanceCoin: number;
+      currentBalanceMoney: number;
+      transactions: Transaction;
+    };
+    businessCode: string;
+    message: string;
+  }
+  export interface Transaction {
+    pageNumber: number;
+    pageSize: number;
+    totalItems: number;
+    items: TransactionItem[];
+  }
+  export interface TransactionItem {
+    transactionId: string;
+      coin: number;
+    money: number;
+    bankName: string;
+    accountNumber: string;
+    status: "Withdraw" | "Reject" | "Pending";
+    orderCode: string;
+    createdAt: string;
+    description: string;
+  }
+  export const reviewerReviewWalletService = async (pageNumber: number, pageSize: number): Promise<ReviewerReviewWalletResponse> => {
+    try {
+      const params = new URLSearchParams({
+        pageNumber: pageNumber.toString(),
+        pageSize: pageSize.toString(),
+      });
+      const response = await fetchWithAuth(`/api/reviewer/wallet?${params.toString()}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Reviewer review wallet failed");
+      return data;
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || "Reviewer review wallet failed";
+      throw new Error(message);
+    }
+  }
+  export const reviewerTipAfterReviewService = async (reviewerId: string, amountCoin: number, message: string): Promise<any> => {
+    try {
+      const response = await fetchWithAuth(`/api/reviewer/tipafterreview`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          
+        },
+        body: JSON.stringify({ reviewerId, amountCoin, message }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to tip after review");
+      return data;
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || "Review answer pending failed";
+      throw new Error(message);
+    }
+  }

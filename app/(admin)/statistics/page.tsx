@@ -49,9 +49,11 @@ import {
   useAdminRevenue,
   useAdminSummary,
 } from "@/features/admin/hooks/useAdminSummary";
-import { useAdminReviewerLevel } from "@/features/admin/hooks/useAdminReviewer";
-import { adminReviewerApproveService, adminReviewerRejectService } from "@/features/admin/services/adminReviewerService";
-import { toast } from "sonner";
+import {
+  useAdminReviewerApprove,
+  useAdminReviewerLevel,
+  useAdminReviewerReject,
+} from "@/features/admin/hooks/useAdminReviewer";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
@@ -153,8 +155,10 @@ const PageStatistics = () => {
       level: "",
     },
   });
-
+  
   const { mutate: updateLevel, isPending: isUpdatingLevel } = useAdminReviewerLevel();
+  const { mutateAsync: approveReviewerMutation } = useAdminReviewerApprove();
+  const { mutateAsync: rejectReviewerMutation } = useAdminReviewerReject();
 
   // Helper function to map status to Vietnamese
   const getStatusText = (status: string): "Chờ duyệt" | "Đã duyệt" | "Không duyệt" => {
@@ -174,12 +178,13 @@ const PageStatistics = () => {
     setShowDetailsModal(true);
   };
 
-  const approveReviewer = async(id: string) => {
+  const approveReviewer = async (id: string) => {
     try {
-      const response = await adminReviewerApproveService(id);
-      if (response.isSuccess || response.success) {
-        toast.success(response.message || "Reviewer approved successfully");
-        // Update selectedReviewer to remove the approved certificate
+      const response = await approveReviewerMutation(id);
+      const isSuccess =
+        response?.isSucess ?? response?.isSuccess ?? response?.success ?? true;
+
+      if (isSuccess) {
         if (selectedReviewer) {
           setSelectedReviewer({
             ...selectedReviewer,
@@ -190,24 +195,20 @@ const PageStatistics = () => {
         }
         setPreviewImageUrl(null);
         setSelectedCertificateId(null);
-        // Refetch data to update the list
         await refetchReviewers();
-        queryClient.invalidateQueries({ queryKey: ["adminRegisteredReviewer"] });
-      } else {
-        toast.error(response.message || "Failed to approve reviewer");
       }
     } catch (error) {
       console.error("Error approving reviewer:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to approve reviewer");
     }
   };
 
-  const rejectReviewer = async(id: string) => {
+  const rejectReviewer = async (id: string) => {
     try {
-      const response = await adminReviewerRejectService(id);
-      if (response.isSuccess || response.success) {
-        toast.success(response.message || "Reviewer rejected successfully");
-        // Update selectedReviewer to remove the rejected certificate
+      const response = await rejectReviewerMutation(id);
+      const isSuccess =
+        response?.isSucess ?? response?.isSuccess ?? response?.success ?? true;
+
+      if (isSuccess) {
         if (selectedReviewer) {
           setSelectedReviewer({
             ...selectedReviewer,
@@ -218,15 +219,10 @@ const PageStatistics = () => {
         }
         setPreviewImageUrl(null);
         setSelectedCertificateId(null);
-        // Refetch data to update the list
         await refetchReviewers();
-        queryClient.invalidateQueries({ queryKey: ["adminRegisteredReviewer"] });
-      } else {
-        toast.error(response.message || "Failed to reject reviewer");
       }
     } catch (error) {
       console.error("Error rejecting reviewer:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to reject reviewer");
     }
   };
 
@@ -1216,6 +1212,7 @@ const PageStatistics = () => {
                   onClick={() => {
                     if (selectedCertificateId) {
                       approveReviewer(selectedCertificateId);
+                     
                     }
                   }}
                   className="absolute top-15 right-3 z-10 bg-green-600 hover:bg-green-700 cursor-pointer"
@@ -1227,6 +1224,7 @@ const PageStatistics = () => {
                   onClick={() => {
                     if (selectedCertificateId) {
                       rejectReviewer(selectedCertificateId);
+                     
                     }
                   }}
                   className="absolute top-25 right-3 z-10 bg-red-600 hover:bg-red-700 cursor-pointer"
