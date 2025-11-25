@@ -417,13 +417,16 @@ const ExercisePage = () => {
     }
   };
 
-  // const handleSubmit = () => {
-  //   // Navigate về learning path với chapterId
-  //   const url = chapterId 
-  //     ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
-  //     : "/dashboard-learner-layout?menu=learningPath";
-  //   router.push(url);
-  // };
+  const handleSubmit = () => {
+    // Tất cả câu trả lời đã được submit khi dừng ghi âm
+    toast.success("Đã hoàn thành bài tập!");
+    // Navigate về learning path với chapterId
+    const url = chapterId 
+      ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
+      : "/dashboard-learner-layout?menu=learningPath";
+    router.push(url);
+  };
+
 
   if (isLoading || !isMounted) {
     return (
