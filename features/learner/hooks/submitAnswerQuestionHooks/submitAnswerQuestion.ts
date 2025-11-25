@@ -41,18 +41,13 @@ export const useSubmitAnswerQuestion = () => {
   return useMutation<SubmitAnswerQuestionResponse, Error, SubmitAnswerQuestionRequest>({
     mutationFn: submitAnswerQuestionService,
     onSuccess: (data) => {
-<<<<<<< HEAD
       console.log("Data:", data)
-        // Invalidate và refetch ngay lập tức
-        queryClient.invalidateQueries({ 
-          queryKey: ["learningPathCourseFull"],
-          refetchType: 'active' // Force refetch cho query đang active
-        });
-=======
       toast.success(data.message || "Nộp bài thành công");
-        queryClient.invalidateQueries({ queryKey: ["learningPathCourseFull"] ,refetchType: 'active' });
-        
->>>>>>> a1ca835f2c1e25334bcef87d7ea2ad8c0412d2e9
+      // Invalidate và refetch ngay lập tức
+      queryClient.invalidateQueries({ 
+        queryKey: ["learningPathCourseFull"],
+        refetchType: 'active' // Force refetch cho query đang active
+      });
     },
     onError: (error) => {
       toast.error(error.message || "Nộp bài thất bại");
