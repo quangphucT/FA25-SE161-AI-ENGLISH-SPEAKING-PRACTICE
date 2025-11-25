@@ -3,10 +3,13 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Mic, Volume2, ArrowLeft, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
+import { Loader2, Mic, Volume2, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import { useLearnerStore } from "@/store/useLearnerStore";
 import { useLearningPathCourseFull } from "@/features/learner/hooks/learningPathCourseFullHooks/learningPathCourseFull";
 import { useSubmitAnswerQuestion } from "@/features/learner/hooks/submitAnswerQuestionHooks/submitAnswerQuestion";
+import BuyReviewModal from "@/components/BuyReviewModal";
+import { uploadAudioToCloudinary } from "@/utils/upload";
 
 const ExercisePage = () => {
   const params = useParams();
@@ -27,6 +30,7 @@ const ExercisePage = () => {
     },
     Boolean(learnerData)
   );
+  //console.log(apiResponse);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recorded, setRecorded] = useState<boolean[]>([]);
@@ -34,10 +38,14 @@ const ExercisePage = () => {
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-
-
+  const [openBuyReviewModal, setOpenBuyReviewModal] = useState(false);
+  const [learnerAnswerIds, setLearnerAnswerIds] = useState<string[]>([]); // Lưu learnerAnswerId theo từng câu hỏi
+  
   const { mutate: submitAnswerQuestion } = useSubmitAnswerQuestion();
-
+  
+  // Log khi mutation được gọi
+  // console.log("submitAnswerQuestion function:", submitAnswerQuestion);
+  const recordedAudioBlobMp3Ref = useRef<Blob | null>(null); // Store recorded audio blob
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -52,7 +60,7 @@ const ExercisePage = () => {
   const [ipaTranscripts, setIpaTranscripts] = useState<string[]>([]);
   const [realIpaTranscripts, setRealIpaTranscripts] = useState<string[]>([]);
   const [coloredContents, setColoredContents] = useState<string[]>([]);
-
+  const [AIExplainTheWrongForVoiceAI, setAIExplainTheWrongForVoiceAI] = useState<string[]>([]);
   // API config
   const apiMainPathSTS = process.env.NEXT_PUBLIC_AI_STS_API_URL;
   const STScoreAPIKey = process.env.NEXT_PUBLIC_AI_STS_API_KEY || "";
@@ -110,6 +118,8 @@ const ExercisePage = () => {
       setIpaTranscripts(new Array(questions.length).fill(""));
       setRealIpaTranscripts(new Array(questions.length).fill(""));
       setColoredContents(new Array(questions.length).fill(""));
+      setLearnerAnswerIds(new Array(questions.length).fill("")); // Initialize learnerAnswerIds array
+      setAIExplainTheWrongForVoiceAI(new Array(questions.length).fill("")); // Initialize AIExplainTheWrongForVoiceAI array
     }
   }, [questions, recorded.length]);
 
@@ -201,6 +211,9 @@ const ExercisePage = () => {
         mr.onstop = async () => {
           setUiBlocked(true);
           const blob = new Blob(audioChunksRef.current, { type: "audio/ogg;" });
+          // Store the blob in the ref for later upload
+          const blobMp3 = new Blob(audioChunksRef.current, { type: "audio/mp3;" });
+          recordedAudioBlobMp3Ref.current = blobMp3; 
           const audioUrl = URL.createObjectURL(blob);
           audioRecordedRef.current = new Audio(audioUrl);
 
@@ -263,6 +276,11 @@ const ExercisePage = () => {
               ? `/ ${data.real_transcripts_ipa} /`
               : "";
             setRealIpaTranscripts(newRealIpa);
+            
+            // Store AI explain the wrong for voice AI
+            const newAIExplainTheWrongForVoiceAI = [...AIExplainTheWrongForVoiceAI];
+            newAIExplainTheWrongForVoiceAI[currentQuestionIndex] = data.AIFeedback;
+            setAIExplainTheWrongForVoiceAI(newAIExplainTheWrongForVoiceAI);
 
             // Color code the words: 1 = green, 0 = red
             const isLetterCorrectAll: string[] = String(
@@ -294,18 +312,55 @@ const ExercisePage = () => {
             setRecorded(newRecorded);
 
             setIsProcessingAudio(false);
+            
+            const recordedMp3Blob = recordedAudioBlobMp3Ref.current;
+            if (!recordedMp3Blob) {
+            
+              setUiBlocked(false);
+              return;
+            }
 
+            // Convert blob to File
+            const audioFile = new File(
+              [recordedMp3Blob],
+              `record-${Date.now()}.mp3`,
+              { type: "audio/mp3" }
+            );
+            console.log("audioFile", audioFile);
+            // Upload to Cloudinary
+            const audioUrl = await uploadAudioToCloudinary(audioFile);
+        
+            // Only submit if audio upload was successful
+            if (!audioUrl) {
+              console.error("Audio upload failed, cannot submit answer");
+              setUiBlocked(false);
+              return;
+            }
+            console.log("About to submit answer");
             // Submit answer immediately after processing
             submitAnswerQuestion(
               {
                 learningPathQuestionId: currentQuestion?.learningPathQuestionId || "",
-                audioRecordingUrl: "abc",
+                audioRecordingUrl: audioUrl,
                 transcribedText: newIpa[currentQuestionIndex] || "",
                 scoreForVoice: acc || 0,
-                explainTheWrongForVoiceAI: "abc",
+                explainTheWrongForVoiceAI: AIExplainTheWrongForVoiceAI[currentQuestionIndex] || "",
               },
-              
-
+              {
+                onSuccess: (data) => {
+                  console.log("Answer submitted successfully");
+                  console.log("Response:", data);
+                  // Lưu learnerAnswerId từ response vào array theo index của câu hỏi
+                  if (data.data?.learnerAnswerId) {
+                    const newLearnerAnswerIds = [...learnerAnswerIds];
+                    newLearnerAnswerIds[currentQuestionIndex] = data.data.learnerAnswerId;
+                    setLearnerAnswerIds(newLearnerAnswerIds);
+                  }
+                },
+                onError: (error) => {
+                  console.error("Submit error:", error);
+                },
+              }
             );
           } catch (error) {
             console.error("Error processing audio:", error);
@@ -345,6 +400,8 @@ const ExercisePage = () => {
     apiMainPathSTS,
     STScoreAPIKey,
     AILanguage,
+    AIExplainTheWrongForVoiceAI,
+    submitAnswerQuestion,
   ]);
 
   const handleNextQuestion = () => {
@@ -360,13 +417,16 @@ const ExercisePage = () => {
     }
   };
 
-  // const handleSubmit = () => {
-  //   // Navigate về learning path với chapterId
-  //   const url = chapterId 
-  //     ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
-  //     : "/dashboard-learner-layout?menu=learningPath";
-  //   router.push(url);
-  // };
+  const handleSubmit = () => {
+    // Tất cả câu trả lời đã được submit khi dừng ghi âm
+    toast.success("Đã hoàn thành bài tập!");
+    // Navigate về learning path với chapterId
+    const url = chapterId 
+      ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
+      : "/dashboard-learner-layout?menu=learningPath";
+    router.push(url);
+  };
+
 
   if (isLoading || !isMounted) {
     return (
@@ -524,36 +584,51 @@ const ExercisePage = () => {
           </div>
 
             {/* Question stats - Previous result and retake count */}
-        {(currentQuestion.score > 0 || currentQuestion.numberOfRetake > 0) && (
-          <div className="flex justify-center gap-4 mb-6">
-            {currentQuestion.score >= 0 && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-4 py-2 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <div>
-                    <p className="text-xs text-blue-700 font-medium">Điểm gần nhất</p>
-                    <p className="text-lg font-bold text-blue-900">{currentQuestion.score}/100</p>
+        <div className="flex justify-center gap-4 mb-6">
+          {(currentQuestion.score > 0 || currentQuestion.numberOfRetake > 0) && (
+            <>
+              {currentQuestion.score >= 0 && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-4 py-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium">Điểm gần nhất</p>
+                      <p className="text-lg font-bold text-blue-900">{currentQuestion.score}/100</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            {currentQuestion.numberOfRetake > 0 && (
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg px-4 py-2 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <div>
-                    <p className="text-xs text-orange-700 font-medium">Số lần làm lại</p>
-                    <p className="text-lg font-bold text-orange-900">{currentQuestion.numberOfRetake}</p>
+              )}
+              {currentQuestion.numberOfRetake > 0 && (
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg px-4 py-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-orange-700 font-medium">Số lần làm lại</p>
+                      <p className="text-lg font-bold text-orange-900">{currentQuestion.numberOfRetake}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </>
+          )}
+          {/* Nút Đánh giá phát âm - hiển thị khi đã có learnerAnswerId (đã submit) */}
+          {learnerAnswerIds[currentQuestionIndex] && (
+            <Button 
+              variant="outline" 
+              className="px-6 py-3 rounded-xl font-semibold cursor-pointer" 
+              onClick={() => {
+                setOpenBuyReviewModal(true);
+              }}
+            >
+              <BookOpen className="w-4 h-4 mr-2" />
+              Đánh giá phát âm
+            </Button>
+          )}
+        </div>
         </div>
         {/* Main content area - 2 column layout */}
         <div className="grid lg:grid-cols-2 gap-8 items-start">
@@ -781,6 +856,41 @@ const ExercisePage = () => {
                 </div>
               </div>
             </div>
+            {/* Accuracy Result - Enhanced */}
+            {recorded[currentQuestionIndex] && AIExplainTheWrongForVoiceAI[currentQuestionIndex] && (
+              <div className="mt-9 p-5 ml-2 bg-white rounded-lg border border-green-200 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                  Phân tích chi tiết:
+                </h3>
+                <div className="space-y-4">
+                  {parseFeedbackText(AIExplainTheWrongForVoiceAI[currentQuestionIndex]).map((section, idx) => (
+                    <div key={idx} className="space-y-2">
+                      {section.title && (
+                        <h4 className="text-sm font-semibold text-gray-900 flex items-start">
+                          <span className="text-green-600 mr-2">•</span>
+                          {section.title}
+                        </h4>
+                      )}
+                      {section.description && (
+                        <p className="text-sm text-gray-700 ml-5 leading-relaxed">
+                          {section.description}
+                        </p>
+                      )}
+                      {section.items && section.items.length > 0 && (
+                        <ul className="ml-5 space-y-1.5">
+                          {section.items.map((item, itemIdx) => (
+                            <li key={itemIdx} className="text-sm text-gray-700 flex items-start">
+                              <span className="text-green-500 mr-2 mt-1.5">-</span>
+                              <span className="leading-relaxed">{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -799,47 +909,29 @@ const ExercisePage = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Câu trước
             </Button>
-
-            {/* Progress Info */}
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex gap-1">
-                {questions
-                  .slice(0, Math.min(10, totalQuestions))
-                  .map((_, index) => (
-                    <div
-                      key={index}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index < currentQuestionIndex
-                          ? "bg-green-500"
-                          : index === currentQuestionIndex
-                          ? "bg-blue-500 w-3"
-                          : "bg-gray-300"
-                      }`}
-                    />
-                  ))}
-              </div>
-              <span className="text-sm text-gray-600 font-medium">
-                {currentQuestionIndex + 1}/{totalQuestions}
-              </span>
-            </div>
-
-            {/* Next Button */}
-            {currentQuestionIndex === totalQuestions - 1 ? (
-              // Câu hỏi cuối cùng - không hiển thị button
-              <div className="w-[200px]"></div>
-            ) : (
-              // Các câu hỏi thường - hiển thị button Tiếp tục
-              <Button
-                onClick={handleNextQuestion}
-                className="font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer transform hover:scale-105"
-              >
-                <span className="flex items-center gap-2">
-                  Tiếp tục
-                  <ArrowRight className="w-4 h-4" />
+            <div className="flex items-center gap-1 flex-col">
+              {/* Progress Info */}
+              <div className="hidden md:flex items-center gap-3">
+                <div className="flex gap-1">
+                  {questions
+                    .slice(0, Math.min(10, totalQuestions))
+                    .map((_, index) => (
+                      <div
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index < currentQuestionIndex
+                            ? "bg-green-500"
+                            : index === currentQuestionIndex
+                            ? "bg-blue-500 w-3"
+                            : "bg-gray-300"
+                        }`}
+                      />
+                    ))}
+                </div>
+                <span className="text-sm text-gray-600 font-medium">
+                  {currentQuestionIndex + 1}/{totalQuestions}
                 </span>
-              </Button>
-            )}
-
+              </div>
             {/* Quick Stats */}
             <div className="hidden md:flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1.5 text-green-600">
@@ -869,11 +961,139 @@ const ExercisePage = () => {
                 </span>
               </div>
             </div>
+            </div>
+            
+
+            {/* Next Button */}
+            {currentQuestionIndex === totalQuestions - 1 ? (
+              <Button
+                onClick={handleSubmit}
+                className="font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer transform hover:scale-105"
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Hoàn thành
+                </span>
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNextQuestion}
+                disabled={!recorded[currentQuestionIndex] && currentQuestion.status !== "Completed"}
+                className={`font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg ${
+                  recorded[currentQuestionIndex] || currentQuestion.status === "Completed"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer transform hover:scale-105"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  {recorded[currentQuestionIndex] || currentQuestion.status === "Completed" ? (
+                    <>
+                      Câu tiếp theo
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  ) : (
+                    "Vui lòng ghi âm để tiếp tục"
+                  )}
+                </span>
+              </Button>
+            )}
+
+            
           </div>
         </div>
       </div>
+      {openBuyReviewModal && (
+        <BuyReviewModal
+          open={openBuyReviewModal}
+          learnerAnswerId={learnerAnswerIds[currentQuestionIndex]}
+          onClose={() => {
+            setOpenBuyReviewModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };
 
+// Helper function to parse feedback text into structured sections
+const parseFeedbackText = (text: string): Array<{ title: string; description: string; items: string[] }> => {
+  if (!text) return [];
+
+  const sections: Array<{ title: string; description: string; items: string[] }> = [];
+  let currentSection: { title: string; description: string; items: string[] } | null = null;
+
+  const pushCurrentSection = () => {
+    if (currentSection && (currentSection.title || currentSection.description || currentSection.items.length > 0)) {
+      sections.push({
+        title: currentSection.title,
+        description: currentSection.description.trim(),
+        items: currentSection.items,
+      });
+    }
+  };
+
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+
+  lines.forEach((line) => {
+    // Match bold headings like **Overall Impression**: or **Specific Feedback**:
+    const sectionMatch = line.match(/^\*\*(.+?)\*\*:?\s*(.+)?$/);
+    
+    if (sectionMatch) {
+      pushCurrentSection();
+      currentSection = {
+        title: sectionMatch[1].trim(),
+        description: sectionMatch[2]?.trim() || "",
+        items: [],
+      };
+      return;
+    }
+
+    if (!currentSection) {
+      currentSection = { title: "", description: "", items: [] };
+    }
+
+    // Match bullet points starting with -
+    const bulletMatch = line.match(/^-\s*(.+)$/);
+    if (bulletMatch) {
+      currentSection.items.push(bulletMatch[1].trim());
+      return;
+    }
+
+    // Match numbered list items
+    const numberedMatch = line.match(/^\d+\.\s*(.+)$/);
+    if (numberedMatch) {
+      currentSection.items.push(numberedMatch[1].trim());
+      return;
+    }
+
+    // If we're in a list context, append to last item
+    if (currentSection.items.length > 0) {
+      currentSection.items[currentSection.items.length - 1] += ` ${line}`;
+    } else if (currentSection.description) {
+      // Append to description
+      currentSection.description += ` ${line}`;
+    } else {
+      // Start new description
+      currentSection.description = line;
+    }
+  });
+
+  pushCurrentSection();
+
+  return sections;
+};
+
 export default ExercisePage;
+  

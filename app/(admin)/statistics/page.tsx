@@ -1,6 +1,15 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Table,
   TableHeader,
@@ -13,7 +22,15 @@ import { Badge } from "@/components/ui/badge";
 import { Bar, Line } from "react-chartjs-2";
 import Image from "next/image";
 import { FaBox, FaChartLine, FaClock, FaUser } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -32,6 +49,14 @@ import {
   useAdminRevenue,
   useAdminSummary,
 } from "@/features/admin/hooks/useAdminSummary";
+import {
+  useAdminReviewerApprove,
+  useAdminReviewerLevel,
+  useAdminReviewerReject,
+} from "@/features/admin/hooks/useAdminReviewer";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
 
 ChartJS.register(
   CategoryScale,
@@ -56,7 +81,7 @@ interface ReviewerApplicant {
   phone: string;
   level: string;
   experienceYears: number;
-  status: "Chờ duyệt" | "Đã duyệt" | "Không duyệt";
+  status: string;
   joinedDate: string;
   certificates?: Certificate[];
 }
@@ -69,12 +94,13 @@ const PageStatistics = () => {
     (_, idx) => currentYear - idx
   );
 
+  const queryClient = useQueryClient();
   const { data: adminSummary } = useAdminSummary();
   const { data: adminPackages } = useAdminPackages(selectedYear.toString());
   const { data: adminRevenue } = useAdminRevenue(selectedYear.toString());
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const { data: adminRegisteredReviewer } = useAdminRegisteredReviewer(
+  const { data: adminRegisteredReviewer, refetch: refetchReviewers } = useAdminRegisteredReviewer(
     currentPage,
     pageSize
   );
@@ -114,40 +140,124 @@ const PageStatistics = () => {
   // Reviewers awaiting participation approval - now using API data
 
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
+  const [showUpdateLevelModal, setShowUpdateLevelModal] = useState<boolean>(false);
   const [selectedReviewer, setSelectedReviewer] =
     useState<ReviewerApplicant | null>(null);
+
+  // Form schema for updating reviewer level
+  const updateLevelSchema = z.object({
+    level: z.string().min(1, "Vui lòng nhập level"),
+  });
+
+  const updateLevelForm = useForm<z.infer<typeof updateLevelSchema>>({
+    resolver: zodResolver(updateLevelSchema),
+    defaultValues: {
+      level: "",
+    },
+  });
+  
+  const { mutate: updateLevel, isPending: isUpdatingLevel } = useAdminReviewerLevel();
+  const { mutateAsync: approveReviewerMutation } = useAdminReviewerApprove();
+  const { mutateAsync: rejectReviewerMutation } = useAdminReviewerReject();
+
+  // Helper function to map status to Vietnamese
+  const getStatusText = (status: string): "Chờ duyệt" | "Đã duyệt" | "Không duyệt" => {
+    const statusMap: Record<string, "Chờ duyệt" | "Đã duyệt" | "Không duyệt"> = {
+      "Approved": "Đã duyệt",
+      "Rejected": "Không duyệt",
+      "Pending": "Chờ duyệt",
+      "Chờ duyệt": "Chờ duyệt",
+      "Đã duyệt": "Đã duyệt",
+      "Không duyệt": "Không duyệt",
+    };
+    return statusMap[status] || "Chờ duyệt";
+  };
 
   const openReviewerDetails = (reviewer: ReviewerApplicant) => {
     setSelectedReviewer(reviewer);
     setShowDetailsModal(true);
   };
 
-  const approveReviewer = (id: string) => {
-    // TODO: Implement API call to approve reviewer
-    console.log("Approving reviewer:", id);
-    setShowDetailsModal(false);
-  };
+  const approveReviewer = async (id: string) => {
+    try {
+      const response = await approveReviewerMutation(id);
+      const isSuccess =
+        response?.isSucess ?? response?.isSuccess ?? response?.success ?? true;
 
-  const rejectReviewer = (id: string) => {
-    // TODO: Implement API call to reject reviewer
-    console.log("Rejecting reviewer:", id);
-    setShowDetailsModal(false);
-  };
-
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".dropdown-container")) {
-      setOpenDropdownId(null);
+      if (isSuccess) {
+        if (selectedReviewer) {
+          setSelectedReviewer({
+            ...selectedReviewer,
+            certificates: selectedReviewer.certificates?.filter(
+              (cert) => cert.id !== id
+            ),
+          });
+        }
+        setPreviewImageUrl(null);
+        setSelectedCertificateId(null);
+        await refetchReviewers();
+      }
+    } catch (error) {
+      console.error("Error approving reviewer:", error);
     }
   };
-  useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+
+  const rejectReviewer = async (id: string) => {
+    try {
+      const response = await rejectReviewerMutation(id);
+      const isSuccess =
+        response?.isSucess ?? response?.isSuccess ?? response?.success ?? true;
+
+      if (isSuccess) {
+        if (selectedReviewer) {
+          setSelectedReviewer({
+            ...selectedReviewer,
+            certificates: selectedReviewer.certificates?.filter(
+              (cert) => cert.id !== id
+            ),
+          });
+        }
+        setPreviewImageUrl(null);
+        setSelectedCertificateId(null);
+        await refetchReviewers();
+      }
+    } catch (error) {
+      console.error("Error rejecting reviewer:", error);
+    }
+  };
+
+  const handleUpdateLevel = (values: z.infer<typeof updateLevelSchema>) => {
+    if (!selectedReviewer) return;
+    
+    updateLevel(
+      {
+        reviewerProfileId: selectedReviewer.id,
+        level: values.level,
+      },
+      {
+        onSuccess: () => {
+          setShowUpdateLevelModal(false);
+          updateLevelForm.reset();
+          setShowDetailsModal(false);
+          // Refetch data to update the list
+          refetchReviewers();
+          queryClient.invalidateQueries({ queryKey: ["adminRegisteredReviewer"] });
+        },
+      }
+    );
+  };
+
+  const openUpdateLevelModal = () => {
+    if (selectedReviewer) {
+      updateLevelForm.setValue("level", selectedReviewer.level || "");
+      setShowUpdateLevelModal(true);
+    }
+  };
+
 
   // Image preview state for certificates
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>(null);
   const [previewZoom, setPreviewZoom] = useState<number>(1);
   const [previewOffset, setPreviewOffset] = useState<{ x: number; y: number }>({
     x: 0,
@@ -165,16 +275,16 @@ const PageStatistics = () => {
       icon: <FaUser />,
       color: "bg-violet-100",
       iconBg: "bg-violet-500",
-      change: "+8.5% so với hôm qua",
+     
       trendColor: "text-green-500",
     },
     {
-      label: "Tổng số người đang theo học",
+      label: "Tổng số người đang học",
       value: adminSummary?.data?.totalActiveLearners?.toString() || "0",
       icon: <FaBox />,
       color: "bg-yellow-100",
       iconBg: "bg-yellow-500",
-      change: "+1.3% so với hôm qua",
+     
       trendColor: "text-green-500",
     },
     {
@@ -183,7 +293,7 @@ const PageStatistics = () => {
       icon: <FaChartLine />,
       color: "bg-green-100",
       iconBg: "bg-green-500",
-      change: "-4.3% so với hôm qua",
+    
       trendColor: "text-red-500",
     },
     {
@@ -194,52 +304,67 @@ const PageStatistics = () => {
       icon: <FaClock />,
       color: "bg-red-100",
       iconBg: "bg-red-500",
-      change: "+1.8% so với hôm qua",
+      
       trendColor: "text-green-500",
     },
   ];
 
   return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="p-6 space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <Card
             key={stat.label}
-            className={`p-6 flex flex-col gap-2 ${stat.color} shadow cursor-pointer hover:shadow-lg transition`}
+            className="border-l-4 border-l-violet-500 hover:shadow-lg transition-all duration-200 overflow-hidden group bg-white"
           >
-            <div className="flex items-center gap-3">
-              <span
-                className={`rounded-full p-3 text-white text-xl ${stat.iconBg}`}
-              >
-                {stat.icon}
-              </span>
-              <span className="font-semibold text-gray-600">{stat.label}</span>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-2">
+                    {stat.label}
+                  </p>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {stat.value}
+                  </div>
+                </div>
+                <div className={`p-4 rounded-xl ${stat.iconBg} shadow-sm group-hover:scale-110 transition-transform duration-200`}>
+                  <div className="text-white text-2xl">
+                    {stat.icon}
+                  </div>
+                </div>
+              </div>
             </div>
-            <span className="text-3xl font-bold mt-2">{stat.value}</span>
           </Card>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">
-            Thống kê số gói bán theo tháng
-          </h2>
-
-          <select
-            className="border rounded px-3 py-2 text-sm bg-white w-32"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-          >
-            {availableYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+      <Card className="shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-violet-50 to-purple-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Thống kê số gói bán theo tháng
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Biểu đồ thể hiện số lượng gói dịch vụ đã bán theo từng tháng
+              </p>
+            </div>
+            <select
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm bg-white hover:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors cursor-pointer shadow-sm"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="h-96">
-          <Bar
+        <div className="p-6">
+          <div className="h-96">
+            <Bar
             data={{
               labels: [
                 "Th1",
@@ -321,30 +446,38 @@ const PageStatistics = () => {
               },
             }}
           />
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Biểu đồ doanh thu theo tháng */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">
-            Thống kê doanh thu theo tháng
-          </h2>
-
-          <select
-            className="border rounded px-3 py-2 text-sm bg-white w-32"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-          >
-            {availableYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+      <Card className="shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Thống kê doanh thu theo tháng
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Biểu đồ đường thể hiện doanh thu (đơn vị: nghìn VND) theo từng tháng
+              </p>
+            </div>
+            <select
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm bg-white hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors cursor-pointer shadow-sm"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="h-96">
-          <Line
+        <div className="p-6">
+          <div className="h-96">
+            <Line
             data={{
               labels: [
                 "Th1",
@@ -463,39 +596,48 @@ const PageStatistics = () => {
               },
             }}
           />
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Danh sách Reviewer đăng ký tham gia */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">
-            Danh sách Reviewer đăng ký tham gia
-          </h2>
+      <Card className="shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Danh sách Reviewer đăng ký tham gia
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Quản lý và duyệt các đơn đăng ký của reviewer mới
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="overflow-x-auto rounded-xl border shadow">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f7f9fa]">
-                <TableHead className="text-gray-700 font-semibold">
+        <div className="p-6">
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 hover:bg-gray-100">
+                <TableHead className="text-gray-700 font-bold text-sm">
                   Thông tin
                 </TableHead>
-                <TableHead className="text-gray-700 font-semibold">
+                <TableHead className="text-gray-700 font-bold text-sm">
                   Họ tên
                 </TableHead>
-                <TableHead className="text-gray-700 font-semibold">
+                <TableHead className="text-gray-700 font-bold text-sm">
                   Liên hệ
                 </TableHead>
-                <TableHead className="text-gray-700 font-semibold">
+                <TableHead className="text-gray-700 font-bold text-sm">
                   Trình độ
                 </TableHead>
-                <TableHead className="text-gray-700 font-semibold">
+                <TableHead className="text-gray-700 font-bold text-sm">
                   Kinh nghiệm
                 </TableHead>
-                <TableHead className="text-gray-700 font-semibold">
+                <TableHead className="text-gray-700 font-bold text-sm">
                   Trạng thái
                 </TableHead>
-                <TableHead className="text-center text-gray-700 font-semibold">
+                <TableHead className="text-center text-gray-700 font-bold text-sm">
                   Hành động
                 </TableHead>
               </TableRow>
@@ -504,16 +646,16 @@ const PageStatistics = () => {
               {adminRegisteredReviewer?.data?.items?.map((m) => (
                 <TableRow
                   key={m.reviewerProfileId}
-                  className="hover:bg-[#f0f7e6]"
+                  className="hover:bg-emerald-50/50 transition-colors border-b border-gray-100"
                 >
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+                        <div className="size-12 ring-2 ring-blue-100 hover:ring-blue-300 transition-all duration-200 shadow-md rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
                           {m.fullName.charAt(0).toUpperCase()}
                         </div>
                         <div
-                          className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
+                          className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full shadow-sm ${
                             m.status === "Approved"
                               ? "bg-green-500"
                               : m.status === "Rejected"
@@ -523,8 +665,8 @@ const PageStatistics = () => {
                         ></div>
                       </div>
                       <div>
-                        <div className="text-blue-600 font-semibold text-sm">
-                          {m.reviewerProfileId}
+                        <div className="text-blue-600 font-semibold text-xs font-mono">
+                          {m.reviewerProfileId.slice(0, 8)}...
                         </div>
                       </div>
                     </div>
@@ -578,79 +720,69 @@ const PageStatistics = () => {
                   </TableCell>
 
                   <TableCell className="text-center">
-                    <div className="relative dropdown-container">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setOpenDropdownId(
-                            openDropdownId === m.reviewerProfileId
-                              ? null
-                              : m.reviewerProfileId
-                          )
-                        }
-                        className="p-1 h-8 w-8 cursor-pointer relative z-10"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 h-8 w-8 cursor-pointer hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
                         >
-                          <circle cx="12" cy="12" r="1" />
-                          <circle cx="19" cy="12" r="1" />
-                          <circle cx="5" cy="12" r="1" />
-                        </svg>
-                      </Button>
-                      {openDropdownId === m.reviewerProfileId && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border z-50 transform -translate-x-4">
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                openReviewerDetails({
-                                  id: m.reviewerProfileId,
-                                  fullName: m.fullName,
-                                  email: m.email,
-                                  phone: m.phone,
-                                  level: m.experience,
-                                  experienceYears: 0,
-                                  status: m.status as
-                                    | "Chờ duyệt"
-                                    | "Đã duyệt"
-                                    | "Không duyệt",
-                                  joinedDate: new Date()
-                                    .toISOString()
-                                    .split("T")[0],
-                                  certificates: m.certificates?.map((cert) => ({
-                                    id: cert.certificateId,
-                                    name: cert.name,
-                                    imageUrl: cert.url,
-                                  })),
-                                });
-                                setOpenDropdownId(null);
-                              }}
-                              className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                className="inline mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
-                              Xem chi tiết
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="19" cy="12" r="1" />
+                            <circle cx="5" cy="12" r="1" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            openReviewerDetails({
+                              id: m.reviewerProfileId,
+                              fullName: m.fullName,
+                              email: m.email,
+                              phone: m.phone,
+                              level: m.experience,
+                              experienceYears: 0,
+                              status: m.status as
+                                | "Chờ duyệt"
+                                | "Đã duyệt"
+                                | "Không duyệt",
+                              joinedDate: new Date()
+                                .toISOString()
+                                .split("T")[0],
+                              certificates: m.certificates?.map((cert) => ({
+                                id: cert.certificateId,
+                                name: cert.name,
+                                imageUrl: cert.url,
+                              })),
+                            });
+                          }}
+                          className="cursor-pointer hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            className="inline mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -658,87 +790,96 @@ const PageStatistics = () => {
           </Table>
         </div>
 
+        </div>
         {/* Pagination Controls */}
-        <div className="flex items-center justify-between mt-4 px-4 py-3 bg-gray-50 border-t">
-          <div className="flex items-center gap-4">
+        <div className="p-4 border-t border-gray-200 bg-gray-50/50">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Hiển thị:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white hover:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors cursor-pointer"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <span className="text-sm text-gray-600">mục mỗi trang</span>
+              </div>
+              <div className="text-sm text-gray-600 font-medium">
+                Trang <span className="text-emerald-600 font-bold">{currentPage}</span> - Hiển thị{" "}
+                <span className="text-emerald-600 font-bold">
+                  {adminRegisteredReviewer?.data?.items?.length || 0}
+                </span>{" "}
+                kết quả
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-700">Hiển thị:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1); // Reset to first page when changing page size
-                }}
-                className="border rounded px-2 py-1 text-sm"
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border-gray-300 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-              <span className="text-sm text-gray-700">mục mỗi trang</span>
-            </div>
-            <div className="text-sm text-gray-600">
-              Trang {currentPage} - Hiển thị{" "}
-              {adminRegisteredReviewer?.data?.items?.length || 0} kết quả
-            </div>
-          </div>
+                Trước
+              </Button>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1"
-            >
-              Trước
-            </Button>
+              <div className="flex items-center gap-1">
+                {Array.from(
+                  {
+                    length: Math.min(
+                      5,
+                      Math.ceil(
+                        (adminRegisteredReviewer?.data?.items?.length || 0) /
+                          pageSize
+                      )
+                    ),
+                  },
+                  (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-9 h-9 p-0 ${
+                          currentPage === pageNum
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "border-gray-300 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700"
+                        } transition-colors`}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                )}
+              </div>
 
-            <div className="flex items-center gap-1">
-              {/* Show page numbers */}
-              {Array.from(
-                {
-                  length: Math.min(
-                    5,
-                    Math.ceil(
-                      (adminRegisteredReviewer?.data?.items?.length || 0) /
-                        pageSize
-                    )
-                  ),
-                },
-                (_, i) => {
-                  const pageNum = i + 1;
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {pageNum}
-                    </Button>
-                  );
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+                disabled={
+                  !adminRegisteredReviewer?.data?.items?.length ||
+                  adminRegisteredReviewer.data.items.length < pageSize
                 }
-              )}
+                className="px-4 py-2 border-gray-300 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Sau
+              </Button>
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => prev + 1)}
-              disabled={
-                !adminRegisteredReviewer?.data?.items?.length ||
-                adminRegisteredReviewer.data.items.length < pageSize
-              }
-              className="px-3 py-1"
-            >
-              Sau
-            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Reviewer Details Modal */}
       {showDetailsModal && selectedReviewer && (
@@ -925,17 +1066,40 @@ const PageStatistics = () => {
                       <span className="font-medium text-gray-700">
                         Trạng thái tài khoản
                       </span>
-                      <Badge
-                        className={
-                          selectedReviewer.status === "Đã duyệt"
-                            ? "bg-green-100 text-green-800 border-green-200"
-                            : selectedReviewer.status === "Không duyệt"
-                            ? "bg-red-100 text-red-800 border-red-200"
-                            : "bg-yellow-100 text-yellow-800 border-yellow-200"
-                        }
-                      >
-                        {selectedReviewer.status}
-                      </Badge>
+                      {(() => {
+                        const statusText = getStatusText(selectedReviewer.status);
+                        const statusConfig = {
+                          "Đã duyệt": {
+                            bg: "bg-green-100",
+                            text: "text-green-800",
+                            border: "border-green-200",
+                            dot: "bg-green-500",
+                          },
+                          "Không duyệt": {
+                            bg: "bg-red-100",
+                            text: "text-red-800",
+                            border: "border-red-200",
+                            dot: "bg-red-500",
+                          },
+                          "Chờ duyệt": {
+                            bg: "bg-yellow-100",
+                            text: "text-yellow-800",
+                            border: "border-yellow-200",
+                            dot: "bg-yellow-500",
+                          },
+                        };
+                        const config = statusConfig[statusText] || statusConfig["Chờ duyệt"];
+                        return (
+                          <Badge
+                            className={`${config.bg} ${config.text} ${config.border} hover:opacity-80 transition-opacity`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <div className={`w-2 h-2 rounded-full ${config.dot}`}></div>
+                              <span className="font-medium">{statusText}</span>
+                            </div>
+                          </Badge>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -986,6 +1150,7 @@ const PageStatistics = () => {
                             setPreviewZoom(1);
                             setPreviewOffset({ x: 0, y: 0 });
                             setPreviewImageUrl(cert.imageUrl);
+                            setSelectedCertificateId(cert.id);
                           }}
                           role="button"
                           aria-label={`Xem lớn ${cert.name}`}
@@ -1014,7 +1179,10 @@ const PageStatistics = () => {
               {previewImageUrl && (
                 <div
                   className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-0 select-none"
-                  onClick={() => setPreviewImageUrl(null)}
+                  onClick={() => {
+                    setPreviewImageUrl(null);
+                    setSelectedCertificateId(null);
+                  }}
                   onContextMenu={(e) => e.preventDefault()}
                 >
                   <div
@@ -1023,7 +1191,10 @@ const PageStatistics = () => {
                   >
                     <button
                       className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
-                      onClick={() => setPreviewImageUrl(null)}
+                      onClick={() => {
+                        setPreviewImageUrl(null);
+                        setSelectedCertificateId(null);
+                      }}
                       aria-label="Đóng xem ảnh"
                     >
                       <svg
@@ -1037,6 +1208,30 @@ const PageStatistics = () => {
                         <path d="M18 6L6 18M6 6l12 12" />
                       </svg>
                     </button>
+                    <Button
+                  onClick={() => {
+                    if (selectedCertificateId) {
+                      approveReviewer(selectedCertificateId);
+                     
+                    }
+                  }}
+                  className="absolute top-15 right-3 z-10 bg-green-600 hover:bg-green-700 cursor-pointer"
+                  disabled={!selectedCertificateId}
+                >
+                  Duyệt
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedCertificateId) {
+                      rejectReviewer(selectedCertificateId);
+                     
+                    }
+                  }}
+                  className="absolute top-25 right-3 z-10 bg-red-600 hover:bg-red-700 cursor-pointer"
+                  disabled={!selectedCertificateId}
+                >
+                  Không duyệt
+                </Button>
                     <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
                       <button
                         className="h-10 px-3 rounded-lg bg-white/15 hover:bg-white/25 text-white"
@@ -1146,18 +1341,127 @@ const PageStatistics = () => {
                   Đóng
                 </Button>
                 <Button
-                  onClick={() => approveReviewer(selectedReviewer.id)}
+                  onClick={openUpdateLevelModal}
                   className="bg-green-600 hover:bg-green-700 cursor-pointer"
                 >
-                  Duyệt
+                  Cập nhật Level của reviewer
                 </Button>
+               
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Level Modal */}
+      {showUpdateLevelModal && selectedReviewer && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <svg
+                      width="24"
+                      height="24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      Cập nhật Level Reviewer
+                    </h2>
+                    <p className="text-sm text-green-100 mt-0.5">
+                      {selectedReviewer.fullName}
+                    </p>
+                  </div>
+                </div>
                 <Button
-                  onClick={() => rejectReviewer(selectedReviewer.id)}
-                  className="bg-red-600 hover:bg-red-700 cursor-pointer"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowUpdateLevelModal(false);
+                    updateLevelForm.reset();
+                  }}
+                  className="text-white hover:bg-white/20 h-10 w-10 p-0 rounded-full transition-colors"
                 >
-                  Không duyệt
+                  <svg
+                    width="24"
+                    height="24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
                 </Button>
               </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <Form {...updateLevelForm}>
+                <form
+                  onSubmit={updateLevelForm.handleSubmit(handleUpdateLevel)}
+                  className="space-y-6"
+                >
+                  <FormField
+                    control={updateLevelForm.control}
+                    name="level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          Level *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="VD: Beginner, Intermediate, Advanced"
+                            {...field}
+                            className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Level hiện tại: <span className="font-medium text-gray-700">{selectedReviewer.level || "Chưa có"}</span>
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowUpdateLevelModal(false);
+                        updateLevelForm.reset();
+                      }}
+                      className="cursor-pointer border-gray-300 hover:bg-gray-50 px-6"
+                      disabled={isUpdatingLevel}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isUpdatingLevel}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer px-6 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdatingLevel ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Đang cập nhật...
+                        </>
+                      ) : (
+                        "Cập nhật Level"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </div>
           </div>
         </div>

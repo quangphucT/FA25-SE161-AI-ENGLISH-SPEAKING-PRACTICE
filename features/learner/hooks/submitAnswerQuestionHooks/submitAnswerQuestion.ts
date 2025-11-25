@@ -10,8 +10,28 @@ export interface SubmitAnswerQuestionRequest {
   explainTheWrongForVoiceAI: string;
 }
 
+export interface NextQuestion {
+  learningPathQuestionId: string;
+  questionId: string;
+  text: string;
+  type: string;
+  orderIndex: number;
+}
+
 export interface SubmitAnswerQuestionResponse {
-  isSuccess: boolean;
+  isSucess: boolean; // Note: API returns "isSucess" (typo in backend)
+  data: {
+    learnerAnswerId: string;
+    learningPathExerciseId: string;
+    exerciseId: string;
+    submittedScore: number;
+    averageScore: number;
+    totalQuestions: number;
+    numberDone: number;
+    exerciseStatus: string;
+    nextQuestion: NextQuestion | null;
+  };
+  businessCode: string;
   message: string;
 }
 
@@ -21,12 +41,18 @@ export const useSubmitAnswerQuestion = () => {
   return useMutation<SubmitAnswerQuestionResponse, Error, SubmitAnswerQuestionRequest>({
     mutationFn: submitAnswerQuestionService,
     onSuccess: (data) => {
+<<<<<<< HEAD
       console.log("Data:", data)
         // Invalidate và refetch ngay lập tức
         queryClient.invalidateQueries({ 
           queryKey: ["learningPathCourseFull"],
           refetchType: 'active' // Force refetch cho query đang active
         });
+=======
+      toast.success(data.message || "Nộp bài thành công");
+        queryClient.invalidateQueries({ queryKey: ["learningPathCourseFull"] ,refetchType: 'active' });
+        
+>>>>>>> a1ca835f2c1e25334bcef87d7ea2ad8c0412d2e9
     },
     onError: (error) => {
       toast.error(error.message || "Nộp bài thất bại");

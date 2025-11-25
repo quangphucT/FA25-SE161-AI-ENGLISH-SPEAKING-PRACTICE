@@ -6,7 +6,7 @@ import { useSubmitTestAssessment } from "@/features/learner/hooks/testAssessment
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mic } from "lucide-react";
 export interface ResultsAfterTest {
   averageScore: number;
   assignedLevel: string;
@@ -723,7 +723,7 @@ const EntranceTest = () => {
                     {isRecording
                       ? "Đang ghi âm..."
                       : recorded[currentQuestionIndex]
-                      ? "✓ Đã hoàn thành"
+                      ? "Đã hoàn thành"
                       : "Sẵn sàng ghi âm"}
                   </div>
                 </div>
@@ -751,20 +751,7 @@ const EntranceTest = () => {
                       disabled={uiBlocked && !isRecording}
                       aria-label="Ghi âm"
                     >
-                      <svg
-                        width="48"
-                        height="48"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="9" y="2" width="6" height="14" rx="3" />
-                        <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-                        <line x1="12" y1="22" x2="12" y2="16" />
-                      </svg>
+                      <Mic size={64} color="white"/>
                     </Button>
                   </div>
 
