@@ -12,15 +12,17 @@ export interface LearnerLevelsResponse {
 }
 
 export interface LearnerLevel {
-  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
-  courses: LearnerCourse[]; // thêm courses array
+  Level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"; // Chữ hoa L để khớp với API
+  TotalCourses: number;
+  CompletedCourses: number;
+  Courses: LearnerCourse[]; // Chữ hoa C để khớp với API
 }
 
 export interface LearnerCourse {
   learnerCourseId: string;
   learningPathCourseId: string;
   courseId: string;
-  status: "NotStarted" | "InProgress" | "Completed"; // nếu status có 3 trạng thái
+  status: "NotStarted" | "InProgress" | "Completed";
 }
 
 
