@@ -309,9 +309,7 @@ const ReviewerManagement = () => {
                           ></div>
                         </div>
                         <div>
-                          <div className="text-blue-600 font-semibold text-sm">
-                            {reviewer.reviewerProfileId}
-                          </div>
+                          
                         </div>
                       </div>
                     </TableCell>
@@ -323,14 +321,11 @@ const ReviewerManagement = () => {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-600">
-                      <div className="flex flex-col">
-                        <span className="text-sm">{reviewer.email}</span>
-                        <span className="text-xs text-gray-500">
-                          {reviewer.phone}
-                        </span>
-                      </div>
-                    </TableCell>
+                          <TableCell className="text-gray-600">
+  <div className="flex flex-col">
+    <span className="text-sm">{reviewer.email}</span>
+  </div>
+</TableCell>
                     <TableCell>{reviewer.level || "___"}</TableCell>
                     <TableCell>{reviewer.experience} năm</TableCell>
                     <TableCell>

@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
+import { useAdminReviewFeeDetailQuery } from "@/features/admin/hooks/useAdminReviewFee";
 
 const PAGE_SIZE = 10;
 
@@ -64,9 +65,19 @@ const createReviewFeeSchema = z.object({
 
 type CreateReviewFeeFormData = z.infer<typeof createReviewFeeSchema>;
 
+interface InfoItemProps {
+  label: string;
+  value: string | number | undefined | null;
+  className?: string;
+}
+
 export default function ReviewFeeManagement() {
   const [pageNumber, setPageNumber] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const [selectedReviewFeeId, setSelectedReviewFeeId] = useState<string | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
 
   const { data, isLoading, isError, error, refetch } = useAdminReviewFeePackagesQuery(
     pageNumber,
@@ -74,6 +85,12 @@ export default function ReviewFeeManagement() {
   );
 
   const { mutate: createReviewFee, isPending: isCreating } = useAdminReviewFeeCreateMutation();
+
+  const {
+    data: detailData,
+    isLoading: isDetailLoading,
+  } = useAdminReviewFeeDetailQuery(selectedReviewFeeId);
+ 
 
   const form = useForm<CreateReviewFeeFormData>({
     resolver: zodResolver(createReviewFeeSchema),
@@ -109,6 +126,15 @@ export default function ReviewFeeManagement() {
   const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
   const activePackages = packages.filter(pkg => pkg.currentPricePolicy).length;
   const inactivePackages = packages.length - activePackages;
+const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
+  <div>
+    <p className="text-sm text-gray-500">{label}</p>
+    <p className={`font-semibold text-gray-900 mt-1 ${className}`}>{value}</p>
+  </div>
+);
+
+
+
 
   return (
     <div className="p-6 space-y-6">
@@ -222,6 +248,8 @@ export default function ReviewFeeManagement() {
                       <TableHead className="font-bold text-sm text-gray-700">% Reviewer</TableHead>
                       <TableHead className="font-bold text-sm text-gray-700">Ngày áp dụng</TableHead>
                       <TableHead className="font-bold text-sm text-gray-700">Trạng thái</TableHead>
+                      <TableHead className="font-bold text-sm text-gray-700">Hành động</TableHead>
+
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -318,6 +346,20 @@ export default function ReviewFeeManagement() {
                               </div>
                             </Badge>
                           </TableCell>
+                          <TableCell>
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => {
+      setSelectedReviewFeeId(pkg.reviewFeeId);
+      setShowDetailModal(true);
+    }}
+    className="cursor-pointer"
+  >
+    Xem chi tiết
+  </Button>
+</TableCell>
+
                         </TableRow>
                       ))
                     )}
@@ -548,7 +590,102 @@ export default function ReviewFeeManagement() {
           </div>
         </div>
       )}
-          
+   {/* ============================
+    MODAL CHI TIẾT GÓI PHÍ ĐÁNH GIÁ
+============================= */}
+{showDetailModal && (
+  <div
+    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    onClick={() => {
+      setShowDetailModal(false);
+      setSelectedReviewFeeId(null);
+    }}
+  >
+    <div
+      className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl 
+                 max-h-[90vh] flex flex-col overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* HEADER – sticky */}
+      <div className="p-6 border-b bg-white flex items-center justify-between sticky top-0 z-20">
+        <h2 className="text-2xl font-bold text-gray-900">
+          Chi tiết gói phí đánh giá
+        </h2>
+        <Button
+          variant="ghost"
+          className="h-10 w-10 rounded-full hover:bg-gray-100"
+          onClick={() => setShowDetailModal(false)}
+        >
+          ✕
+        </Button>
+      </div>
+
+      {/* BODY – scroll only content */}
+      <div className="p-6 overflow-y-auto space-y-8">
+
+        {/* THÔNG TIN CHUNG */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-gray-50 p-5 rounded-xl border">
+          <InfoItem label="Mã gói" value={detailData?.data?.reviewFeeId} />
+          <InfoItem label="Số lượng đánh giá" value={detailData?.data?.numberOfReview} />
+
+          <InfoItem
+            label="Giá mỗi đánh giá"
+            value={formatCurrency(detailData?.data?.currentPolicy?.pricePerReviewFee)}
+            className="text-green-600 font-bold"
+          />
+
+          <InfoItem
+            label="% Reviewer"
+value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed(0) + "%"}
+            className="text-orange-600 font-bold"
+          />
+
+       
+          <InfoItem
+            label="Ngày áp dụng"
+            value={formatDate(detailData?.data?.currentPolicy?.appliedFrom)}
+          />
+        </div>
+
+        {/* LỊCH SỬ CHÍNH SÁCH */}
+        <div>
+          <h3 className="font-semibold text-gray-900 text-lg mb-3">
+            Lịch sử chính sách
+          </h3>
+
+          <div className="max-h-[280px] overflow-y-auto pr-2 space-y-3">
+            {detailData?.data?.historyPolicies?.map((h) => (
+              <div
+                key={h.reviewFeeDetailId}
+                className="p-4 bg-gray-50 border rounded-xl shadow-sm hover:shadow-md transition"
+              >
+                <p><strong>Giá:</strong> {formatCurrency(h.pricePerReviewFee)}</p>
+                <p><strong>% Reviewer:</strong> {(h.percentOfReviewer * 100).toFixed(0)}%</p>
+                <p><strong>% Hệ thống:</strong> {(h.percentOfSystem * 100).toFixed(0)}%</p>
+                <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate.toISOString())}</p>
+
+                <p className="mt-1">
+                  <strong>Trạng thái:</strong>{" "}
+                  <span
+                    className={
+                      h.isCurrent
+                        ? "text-green-600 font-semibold"
+                        : "text-gray-500"
+                    }
+                  >
+                    {h.isCurrent ? "Đang áp dụng" : "Cũ"}
+                  </span>
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
+ 
         </>
       )}
     </div>

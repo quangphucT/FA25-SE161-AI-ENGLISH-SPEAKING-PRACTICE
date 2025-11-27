@@ -87,7 +87,8 @@ interface ReviewerApplicant {
 }
 
 const PageStatistics = () => {
-  const [selectedYear, setSelectedYear] = useState(2025);
+const [selectedPackageYear, setSelectedPackageYear] = useState(2025);
+const [selectedRevenueYear, setSelectedRevenueYear] = useState(2025);
   const currentYear = new Date().getFullYear();
   const availableYears = Array.from(
     { length: currentYear - 2000 + 1 },
@@ -96,8 +97,9 @@ const PageStatistics = () => {
 
   const queryClient = useQueryClient();
   const { data: adminSummary } = useAdminSummary();
-  const { data: adminPackages } = useAdminPackages(selectedYear.toString());
-  const { data: adminRevenue } = useAdminRevenue(selectedYear.toString());
+const { data: adminPackages } = useAdminPackages(selectedPackageYear.toString());
+const { data: adminRevenue } = useAdminRevenue(selectedRevenueYear.toString());
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const { data: adminRegisteredReviewer, refetch: refetchReviewers } = useAdminRegisteredReviewer(
@@ -108,28 +110,27 @@ const PageStatistics = () => {
   console.log(adminRegisteredReviewer);
 
   // Dữ liệu từ API cho biểu đồ cột theo từng năm
-  const packageData =
-    adminPackages?.data?.reduce((acc, item) => {
-      if (!acc[selectedYear]) {
-        acc[selectedYear] = new Array(12).fill(0);
-      }
-      acc[selectedYear][item.month - 1] = item.count;
-      return acc;
-    }, {} as { [key: number]: number[] }) || {};
+const packageData =
+  adminPackages?.data?.reduce((acc, item) => {
+    acc[item.month - 1] = item.count;
+    return acc;
+  }, new Array(12).fill(0)) ?? new Array(12).fill(0);
+
+
 
   // Dữ liệu doanh thu từ API theo tháng (đơn vị: K)
   const revenueData =
     adminRevenue?.data?.reduce((acc, item) => {
-      if (!acc[selectedYear]) {
-        acc[selectedYear] = new Array(12).fill(0);
+      if (!acc[selectedPackageYear]) {
+        acc[selectedPackageYear] = new Array(12).fill(0);
       }
-      acc[selectedYear][item.month - 1] = Math.round(item.revenue / 1000); // Convert to K
+      acc[selectedPackageYear][item.month - 1] = Math.round(item.revenue / 1000); // Convert to K
       return acc;
     }, {} as { [key: number]: number[] }) || {};
 
   // Tính toán động trục Y dựa trên dữ liệu của năm đang chọn
-  const currentPackages = packageData[selectedYear] || new Array(12).fill(0);
-  const currentRevenue = revenueData[selectedYear] || new Array(12).fill(0);
+const currentPackages = packageData;
+const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0);
   const maxPackages = Math.max(...currentPackages);
   const maxRevenue = Math.max(...currentRevenue);
   const packagesYMax = Math.max(10, Math.ceil((maxPackages || 0) * 1.2));
@@ -351,8 +352,9 @@ const PageStatistics = () => {
             </div>
             <select
               className="border border-gray-300 rounded-lg px-4 py-2 text-sm bg-white hover:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors cursor-pointer shadow-sm"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
+value={selectedPackageYear}
+onChange={(e) => setSelectedPackageYear(Number(e.target.value))}
+
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -407,7 +409,7 @@ const PageStatistics = () => {
                   displayColors: false,
                   callbacks: {
                     title: function (context) {
-                      return context[0].label + " " + selectedYear;
+                     return context[0].label + " " + selectedPackageYear;
                     },
                     label: function (context) {
                       return `Gói bán ra: ${context.parsed.y}`;
@@ -464,8 +466,9 @@ const PageStatistics = () => {
             </div>
             <select
               className="border border-gray-300 rounded-lg px-4 py-2 text-sm bg-white hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors cursor-pointer shadow-sm"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
+           value={selectedRevenueYear}
+onChange={(e) => setSelectedRevenueYear(Number(e.target.value))}
+
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -536,7 +539,7 @@ const PageStatistics = () => {
                   },
                   callbacks: {
                     title: function (context) {
-                      return context[0].label + " " + selectedYear;
+return context[0].label + " " + selectedRevenueYear;
                     },
                     label: function (context) {
                       return `Doanh thu: ${context.parsed.y}K VND`;

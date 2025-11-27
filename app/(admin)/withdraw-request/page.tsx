@@ -117,7 +117,7 @@ const WithdrawRequest = () => {
     return normalized
       .split(" ")
       .filter(Boolean)
-      .map((word) => word.charAt(0))
+      .map((word: string) => word.charAt(0))
       .join("")
       .toUpperCase()
       .slice(0, 2);
@@ -168,7 +168,7 @@ const WithdrawRequest = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">

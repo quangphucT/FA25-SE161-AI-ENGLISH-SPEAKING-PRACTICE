@@ -211,82 +211,69 @@ const PurchasesManagement = () => {
     });
   };
 
-  const exportToPDF = () => {
-    // Tạo nội dung HTML cho PDF
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
+const exportToPDF = () => {
+  // Mở popup NGAY LẬP TỨC khi user nhấn nút
+  const printWindow = window.open("", "_blank");
+
+  if (!printWindow) {
+    alert("Trình duyệt đang chặn cửa sổ bật lên (popup). Hãy bật popup cho trang này.");
+    return;
+  }
+
+  const htmlContent = `
+    <html>
       <head>
-        <meta charset="utf-8">
-        <title>Purchase Report</title>
+        <meta charset="UTF-8" />
+        <title>Transaction Report</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #333; text-align: center; }
+          body { font-family: Arial; margin: 20px; }
+          h1 { text-align: center; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f2f2f2; font-weight: bold; }
-          .status-success { color: #16a34a; }
-          .status-failed { color: #dc2626; }
-          .status-pending { color: #ca8a04; }
-          .status-refunded { color: #6b7280; }
+          th, td { border: 1px solid #ddd; padding: 8px; }
+          th { background-color: #f5f5f5; }
         </style>
       </head>
       <body>
-        <h1>Purchase Management Report</h1>
-        <p><strong>Generated on:</strong> ${new Date().toLocaleDateString(
-          "vi-VN"
-        )} ${new Date().toLocaleTimeString("vi-VN")}</p>
-        <p><strong>Total Records:</strong> ${filteredTransactions.length}</p>
-        
+        <h1>Transaction Report</h1>
+        <p><strong>Generated:</strong> ${new Date().toLocaleString("vi-VN")}</p>
         <table>
           <thead>
             <tr>
-              <th>Transaction ID</th>
-              <th>User ID</th>
-              <th>Service Package</th>
-              <th>Amount Coin</th>
-              <th>Bank</th>
-              <th>Order Code</th>
-              <th>Created Date</th>
-              <th>Status</th>
+              <th>Mã giao dịch</th>
+              <th>Người dùng</th>
+              <th>Số coin</th>
+              <th>Loại</th>
+              <th>Ngày tạo</th>
+              <th>Trạng thái</th>
             </tr>
           </thead>
           <tbody>
-            ${filteredTransactions
-              .map(
-                (transaction) => `
+            ${filteredTransactions.map(t => `
               <tr>
-                <td>${transaction.TRANSACTIONS_id}</td>
-                <td>${transaction.user_id}</td>
-                <td>${transaction.servicePackage?.Name || "N/A"}</td>
-                <td>${transaction.amount_coin}</td>
-                <td>${transaction.Bankname}</td>
-                <td>${transaction.OrderCode}</td>
-                <td>${formatDate(transaction.CreatedTransaction)}</td>
-                <td class="status-${transaction.Status.toLowerCase()}">${
-                  transaction.Status
-                }</td>
+                <td>${t.TRANSACTIONS_id}</td>
+                <td>${t.UserName}</td>
+                <td>${t.amount_coin}</td>
+                <td>${t.type}</td>
+                <td>${formatDate(t.CreatedTransaction)}</td>
+                <td>${t.Status}</td>
               </tr>
-            `
-              )
-              .join("")}
+            `).join("")}
           </tbody>
         </table>
       </body>
-      </html>
-    `;
+    </html>
+  `;
 
-    // Tạo và mở cửa sổ mới để in PDF
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-    }
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+
+  printWindow.onload = () => {
+    printWindow.focus();
+    printWindow.print();   // mở dialog Save PDF
+    printWindow.close();
   };
+};
+
 
 
   return (

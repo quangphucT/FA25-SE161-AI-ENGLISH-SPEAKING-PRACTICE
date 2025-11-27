@@ -356,9 +356,8 @@ const LearnerManagement = () => {
                         ></div>
                       </div>
                       <div>
-                        <div className="text-blue-600 font-semibold text-sm">
-                          {learner.learnerProfileId}
-                        </div>
+                   
+
                       </div>
                   </div>
                 </TableCell>
@@ -370,14 +369,12 @@ const LearnerManagement = () => {
                     </span>
                   </div>
                 </TableCell>
-                  <TableCell className="text-gray-600">
-                    <div className="flex flex-col">
-                      <span className="text-sm">{learner.email}</span>
-                      <span className="text-xs text-gray-500">
-                        {learner.phone || "—"}
-                      </span>
-                    </div>
-                  </TableCell>
+                 <TableCell className="text-gray-600">
+  <div className="flex flex-col">
+    <span className="text-sm">{learner.email}</span>
+  </div>
+</TableCell>
+
 
                   <TableCell>
                     <Badge
