@@ -25,10 +25,12 @@ export interface Reviewer {
   lastActiveAt: Date;
   createdAt: Date;
   
+  
 }
 export interface ReviewerDetail {
     reviewerProfileId: string;
     fullName: string;
+    level: string;
     email: string;
     phone: string;
     experience: string;
@@ -142,3 +144,105 @@ export const adminReviewerBanService = async (
       throw new Error(message);
     }
   };
+  export const adminReviewerApproveService = async (
+    certificateId: string,
+  ): Promise<any> => {
+    try {
+      const response = await fetchWithAuth(`/api/AdminDashboard/reviewer/approve/${certificateId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      // Try to parse as JSON first
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { message: "Approve reviewer failed" };
+        }
+      } else {
+        // If not JSON, get text
+        const text = await response.text();
+        data = { message: text || "Approve reviewer failed" };
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Approve reviewer failed");
+      }
+      return data;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Approve reviewer failed");
+      }
+      throw new Error("Approve reviewer failed");
+    }
+  }
+  
+  export const adminReviewerRejectService = async (
+    certificateId: string,
+  ): Promise<any> => {
+    try {
+      const response = await fetchWithAuth(`/api/AdminDashboard/reviewer/reject/${certificateId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      // Try to parse as JSON first
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { message: "Reject reviewer failed" };
+        }
+      } else {
+        // If not JSON, get text
+        const text = await response.text();
+        data = { message: text || "Reject reviewer failed" };
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Reject reviewer failed");
+      }
+      return data;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Reject reviewer failed");
+      }
+      throw new Error("Reject reviewer failed");
+    }
+  };
+export const adminReviewerLevelService = async (
+  reviewerProfileId: string,
+  body: {
+    level: string;
+  }
+): Promise<any> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/reviewer/level/${reviewerProfileId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Update reviewer level failed");
+    return data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || error.message || "Update reviewer level failed";
+    throw new Error(message);
+  }
+};

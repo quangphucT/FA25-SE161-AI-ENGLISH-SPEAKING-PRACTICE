@@ -10,196 +10,113 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// Type definitions
-interface WithdrawRequest {
-  id: string;
-  reviewerId: string;
-  reviewerName: string;
-  reviewerEmail: string;
-  avatar: string;
-  amount: number;
-  bankName: string;
-  bankAccount: string;
-  accountHolder: string;
-  requestDate: string;
-  status: "Pending" | "Approved" | "Rejected" | "Processing";
-  processedDate?: string;
-  processedBy?: string;
-  notes?: string;
-  transactionId?: string;
-}
-
-const sampleWithdrawRequests: WithdrawRequest[] = [
-  {
-    id: "WR001",
-    reviewerId: "M001",
-    reviewerName: "Dr. Sarah Johnson",
-    reviewerEmail: "sarah.johnson@example.com",
-    avatar: "https://via.placeholder.com/150",
-    amount: 2500000,
-    bankName: "Vietcombank",
-    bankAccount: "1234567890",
-    accountHolder: "Sarah Johnson",
-    requestDate: "2024-01-15",
-    status: "Pending",
-  },
-  {
-    id: "WR002",
-    reviewerId: "M002",
-    reviewerName: "Prof. Michael Chen",
-    reviewerEmail: "michael.chen@example.com",
-    avatar: "https://via.placeholder.com/150",
-    amount: 1800000,
-    bankName: "Techcombank",
-    bankAccount: "0987654321",
-    accountHolder: "Michael Chen",
-    requestDate: "2024-01-14",
-    status: "Approved",
-    processedDate: "2024-01-16",
-    processedBy: "Admin User",
-    transactionId: "TXN123456789",
-  },
-  {
-    id: "WR003",
-    reviewerId: "M003",
-    reviewerName: "Ms. Emily Davis",
-    reviewerEmail: "emily.davis@example.com",
-    avatar: "https://via.placeholder.com/150",
-    amount: 3200000,
-    bankName: "BIDV",
-    bankAccount: "1122334455",
-    accountHolder: "Emily Davis",
-    requestDate: "2024-01-13",
-    status: "Rejected",
-    processedDate: "2024-01-15",
-    processedBy: "Admin User",
-    notes: "Insufficient documentation",
-  },
-  {
-    id: "WR004",
-    reviewerId: "M004",
-    reviewerName: "Dr. James Rodriguez",
-    reviewerEmail: "james.rodriguez@example.com",
-    avatar: "https://via.placeholder.com/150",
-    amount: 1500000,
-    bankName: "Agribank",
-    bankAccount: "5566778899",
-    accountHolder: "James Rodriguez",
-    requestDate: "2024-01-12",
-    status: "Processing",
-    processedDate: "2024-01-14",
-    processedBy: "Admin User",
-    transactionId: "TXN987654321",
-  },
-  {
-    id: "WR005",
-    reviewerId: "M005",
-    reviewerName: "Ms. Lisa Wang",
-    reviewerEmail: "lisa.wang@example.com",
-    avatar: "https://via.placeholder.com/150",
-    amount: 2800000,
-    bankName: "VietinBank",
-    bankAccount: "9988776655",
-    accountHolder: "Lisa Wang",
-    requestDate: "2024-01-11",
-    status: "Approved",
-    processedDate: "2024-01-13",
-    processedBy: "Admin User",
-    transactionId: "TXN456789123",
-  },
-  {
-    id: "WR006",
-    reviewerId: "M006",
-    reviewerName: "Dr. Robert Kim",
-    reviewerEmail: "robert.kim@example.com",
-    avatar: "https://via.placeholder.com/150",
-    amount: 2100000,
-    bankName: "ACB",
-    bankAccount: "4433221100",
-    accountHolder: "Robert Kim",
-    requestDate: "2024-01-10",
-    status: "Pending",
-  },
-];
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAdminWithdrawal, useAdminWithdrawalApprove, useAdminWithdrawalReject } from "@/features/admin/hooks/useAdminWithdrawal";
+import { Withdrawal } from "@/features/admin/services/adminWithdrawalService";
+import { toast } from "sonner";
 
 const WithdrawRequest = () => {
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [pageSize] = useState<number>(10);
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedRequest, setSelectedRequest] =
-    useState<WithdrawRequest | null>(null);
+    useState<Withdrawal | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [actionType, setActionType] = useState<"approve" | "reject">("approve");
   const [requestToAction, setRequestToAction] =
-    useState<WithdrawRequest | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    useState<Withdrawal | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>("");
+  const {
+    data: withdrawalData,
+    isLoading,
+    error,
+    refetch,
+  } = useAdminWithdrawal(
+    pageNumber,
+    pageSize,
+    statusFilter === "All" ? "" : statusFilter,
+    search
+  );
+  const { mutateAsync: approveWithdrawal, isPending: isApproving } =
+    useAdminWithdrawalApprove();
+  const { mutateAsync: rejectWithdrawal, isPending: isRejecting } =
+    useAdminWithdrawalReject();
 
-  // Filter requests by search and status
-  const filteredRequests = sampleWithdrawRequests.filter((request) => {
-    const matchesSearch =
-      request.reviewerName.toLowerCase().includes(search.toLowerCase()) ||
-      request.reviewerEmail.toLowerCase().includes(search.toLowerCase()) ||
-      request.id.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "All" || request.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const requestItems = withdrawalData?.data?.items;
+  const requests = useMemo(() => requestItems ?? [], [requestItems]);
+  const totalItems = withdrawalData?.data?.totalItems ?? 0;
+  const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
 
-  const handleSelectRow = (idx: number) => {
-    setSelectedRows(
-      selectedRows.includes(idx)
-        ? selectedRows.filter((i) => i !== idx)
-        : [...selectedRows, idx]
-    );
-  };
+  useEffect(() => {
+    setPageNumber(1);
+  }, [statusFilter, search]);
 
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredRequests.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredRequests.map((_, idx) => idx));
-    }
-  };
-
-  const handleViewDetails = (request: WithdrawRequest) => {
+  const handleViewDetails = (request: Withdrawal) => {
     setSelectedRequest(request);
     setShowDetailsModal(true);
   };
 
   const handleApproveReject = (
-    request: WithdrawRequest,
+    request: Withdrawal,
     action: "approve" | "reject"
   ) => {
     setRequestToAction(request);
     setActionType(action);
+    setRejectReason(""); // Reset reason when opening dialog
     setShowConfirmDialog(true);
   };
 
-  const confirmAction = () => {
-    // Here you would make the API call to approve/reject the request
-    console.log(`${actionType}ing request:`, requestToAction);
-    setShowConfirmDialog(false);
-    setRequestToAction(null);
-  };
+  const confirmAction = async () => {
+    if (!requestToAction) return;
+    
+    // Validate reason when rejecting
+    if (actionType === "reject" && !rejectReason.trim()) {
+      toast.error("Vui lòng nhập lý do từ chối");
+      return;
+    }
 
-  // Close dropdown when clicking outside
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".dropdown-container")) {
-      setOpenDropdownId(null);
+    try {
+      if (actionType === "approve") {
+        await approveWithdrawal(requestToAction.transactionId);
+        // Toast đã được xử lý trong hook
+      } else {
+        await rejectWithdrawal({
+          transactionId: requestToAction.transactionId,
+          reason: rejectReason.trim(),
+        });
+        // Toast đã được xử lý trong hook
+      }
+      setShowConfirmDialog(false);
+      setRequestToAction(null);
+      setRejectReason("");
+      await refetch();
+    } catch (err) {
+      // Error toast đã được xử lý trong hook, chỉ log nếu cần
+      console.error("Error in confirmAction:", err);
     }
   };
 
-  const getInitials = (fullName: string) => {
-    return fullName
+  const getInitials = (reviewerName?: string | null) => {
+    const normalized = typeof reviewerName === "string" ? reviewerName.trim() : "";
+    if (!normalized) {
+      return "NA";
+    }
+    return normalized
       .split(" ")
+      .filter(Boolean)
       .map((word) => word.charAt(0))
       .join("")
       .toUpperCase()
@@ -213,10 +130,24 @@ const WithdrawRequest = () => {
     }).format(amount);
   };
 
-  useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "Chờ xử lý";
+      case "Approved":
+        return "Đã duyệt";
+      case "Rejected":
+        return "Từ chối";
+     
+      default:
+        return status;
+    }
+  };
+
+  const pendingCount = requests.filter((r) => r.status === "Pending").length;
+  const approvedCount = requests.filter((r) => r.status === "Approved").length;
+  const rejectedCount = requests.filter((r) => r.status === "Rejected").length;
+
 
   return (
     <div className="p-6">
@@ -231,15 +162,13 @@ const WithdrawRequest = () => {
         </div>
         <div className="flex items-center gap-4">
           <div className="text-sm text-gray-600">
-            Tổng:{" "}
-            <span className="font-semibold">{filteredRequests.length}</span> yêu
-            cầu
+            Tổng: <span className="font-semibold">{totalItems}</span> yêu cầu
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -248,10 +177,7 @@ const WithdrawRequest = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {
-                sampleWithdrawRequests.filter((r) => r.status === "Pending")
-                  .length
-              }
+              {pendingCount}
             </div>
           </CardContent>
         </Card>
@@ -263,10 +189,7 @@ const WithdrawRequest = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {
-                sampleWithdrawRequests.filter((r) => r.status === "Approved")
-                  .length
-              }
+              {approvedCount}
             </div>
           </CardContent>
         </Card>
@@ -278,28 +201,10 @@ const WithdrawRequest = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {
-                sampleWithdrawRequests.filter((r) => r.status === "Rejected")
-                  .length
-              }
+              {rejectedCount}
             </div>
           </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Đang xử lý
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {
-                sampleWithdrawRequests.filter((r) => r.status === "Processing")
-                  .length
-              }
-            </div>
-          </CardContent>
-        </Card>
+        </Card> 
       </div>
 
       {/* Filters */}
@@ -328,16 +233,6 @@ const WithdrawRequest = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-100">
-              <TableHead>
-                <Checkbox
-                  checked={
-                    selectedRows.length === filteredRequests.length &&
-                    filteredRequests.length > 0
-                  }
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                />
-              </TableHead>
               <TableHead className="text-gray-700 font-semibold">
                 Reviewer
               </TableHead>
@@ -359,23 +254,36 @@ const WithdrawRequest = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredRequests.map((request, idx) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  Đang tải dữ liệu...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-red-500">
+                  {error.message}
+                </TableCell>
+              </TableRow>
+            ) : requests.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  Không có yêu cầu nào
+                </TableCell>
+              </TableRow>
+            ) : (
+              requests.map((request, idx) => (
               <TableRow
-                key={request.id}
+                key={request.transactionId}
                 className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
               >
-                <TableCell>
-                  <Checkbox
-                    checked={selectedRows.includes(idx)}
-                    onCheckedChange={() => handleSelectRow(idx)}
-                    aria-label={`Select row ${idx}`}
-                  />
-                </TableCell>
+           
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">
                     <Avatar className="size-10 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
                       <AvatarImage
-                        src={request.avatar}
+                        src={undefined}
                         alt={request.reviewerName}
                         className="object-cover"
                       />
@@ -388,15 +296,17 @@ const WithdrawRequest = () => {
                         {request.reviewerName}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {request.reviewerEmail}
+                        {request.email}
                       </div>
-                      <div className="text-xs text-blue-600">{request.id}</div>
+                      <div className="text-xs text-blue-600">
+                        {request.transactionId}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="font-semibold text-green-600">
-                    {formatCurrency(request.amount)}
+                    {formatCurrency(request.amountMoney)}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -405,16 +315,16 @@ const WithdrawRequest = () => {
                       {request.bankName}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {request.bankAccount}
+                      {request.accountNumber}
                     </div>
                     <div className="text-xs text-gray-400">
-                      {request.accountHolder}
+                      {request.orderCode}
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="text-sm text-gray-600">
-                    {request.requestDate}
+                    {new Date(request.createdAt).toLocaleString("vi-VN")}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -429,47 +339,51 @@ const WithdrawRequest = () => {
                         : "bg-blue-100 text-blue-700 border-blue-300"
                     }`}
                   >
-                    {request.status === "Pending" && "Chờ xử lý"}
-                    {request.status === "Approved" && "Đã duyệt"}
-                    {request.status === "Rejected" && "Từ chối"}
-                    {request.status === "Processing" && "Đang xử lý"}
+                    {getStatusLabel(request.status)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
-                  <div className="relative dropdown-container">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setOpenDropdownId(
-                          openDropdownId === request.id ? null : request.id
-                        )
-                      }
-                      className="p-1 h-8 w-8 cursor-pointer"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-1 h-8 w-8 cursor-pointer">
+                        <svg
+                          width="16"
+                          height="16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="12" cy="12" r="1" />
+                          <circle cx="19" cy="12" r="1" />
+                          <circle cx="5" cy="12" r="1" />
+                        </svg>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={() => handleViewDetails(request)}
+                        className="cursor-pointer text-gray-700 focus:text-gray-900"
                       >
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="19" cy="12" r="1" />
-                        <circle cx="5" cy="12" r="1" />
-                      </svg>
-                    </Button>
-
-                    {openDropdownId === request.id && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              handleViewDetails(request);
-                              setOpenDropdownId(null);
-                            }}
-                            className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        <svg
+                          width="16"
+                          height="16"
+                          className="inline mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        Xem chi tiết
+                      </DropdownMenuItem>
+                      {request.status === "Pending" && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleApproveReject(request, "approve")}
+                            className="cursor-pointer text-green-600 focus:text-green-700"
                           >
                             <svg
                               width="16"
@@ -480,62 +394,35 @@ const WithdrawRequest = () => {
                               strokeWidth="2"
                               viewBox="0 0 24 24"
                             >
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                              <circle cx="12" cy="12" r="3" />
+                              <path d="M5 13l4 4L19 7" />
                             </svg>
-                            Xem chi tiết
-                          </button>
-                          {request.status === "Pending" && (
-                            <>
-                              <button
-                                onClick={() => {
-                                  handleApproveReject(request, "approve");
-                                  setOpenDropdownId(null);
-                                }}
-                                className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-gray-100"
-                              >
-                                <svg
-                                  width="16"
-                                  height="16"
-                                  className="inline mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M5 13l4 4L19 7" />
-                                </svg>
-                                Duyệt yêu cầu
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleApproveReject(request, "reject");
-                                  setOpenDropdownId(null);
-                                }}
-                                className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                              >
-                                <svg
-                                  width="16"
-                                  height="16"
-                                  className="inline mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Từ chối yêu cầu
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                            Duyệt yêu cầu
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleApproveReject(request, "reject")}
+                            className="cursor-pointer text-red-600 focus:text-red-700"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              className="inline mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Từ chối yêu cầu
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -543,17 +430,33 @@ const WithdrawRequest = () => {
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
         <div>
-          Hiển thị 1-{filteredRequests.length} trong tổng số{" "}
-          {filteredRequests.length} yêu cầu
+          {requests.length > 0
+            ? `Hiển thị ${(pageNumber - 1) * pageSize + 1}-${Math.min(
+                pageNumber * pageSize,
+                totalItems
+              )} trong tổng số ${totalItems} yêu cầu`
+            : "Không có dữ liệu"}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pageNumber === 1}
+            onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
+          >
             Trước
           </Button>
-          <Button variant="default" size="sm">
-            1
-          </Button>
-          <Button variant="outline" size="sm" disabled>
+          <div className="px-3 py-1 border rounded">
+            Trang {pageNumber} / {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pageNumber >= totalPages}
+            onClick={() =>
+              setPageNumber((prev) => Math.min(prev + 1, totalPages))
+            }
+          >
             Sau
           </Button>
         </div>
@@ -597,17 +500,25 @@ const WithdrawRequest = () => {
                   <div className="space-y-3">
                     <div>
                       <span className="font-medium">Mã yêu cầu:</span>{" "}
-                      {selectedRequest.id}
+                      {selectedRequest.transactionId}
                     </div>
                     <div>
                       <span className="font-medium">Số tiền:</span>{" "}
                       <span className="text-green-600 font-semibold">
-                        {formatCurrency(selectedRequest.amount)}
+                        {formatCurrency(selectedRequest.amountMoney)}
                       </span>
                     </div>
                     <div>
+                      <span className="font-medium">Số xu:</span>{" "}
+                      {selectedRequest.coin}
+                    </div>
+                    <div>
+                      <span className="font-medium">Mã đơn hàng:</span>{" "}
+                      {selectedRequest.orderCode || "—"}
+                    </div>
+                    <div>
                       <span className="font-medium">Ngày yêu cầu:</span>{" "}
-                      {selectedRequest.requestDate}
+                      {new Date(selectedRequest.createdAt).toLocaleString("vi-VN")}
                     </div>
                     <div>
                       <span className="font-medium">Trạng thái:</span>
@@ -622,11 +533,7 @@ const WithdrawRequest = () => {
                             : "bg-blue-100 text-blue-700"
                         }`}
                       >
-                        {selectedRequest.status === "Pending" && "Chờ xử lý"}
-                        {selectedRequest.status === "Approved" && "Đã duyệt"}
-                        {selectedRequest.status === "Rejected" && "Từ chối"}
-                        {selectedRequest.status === "Processing" &&
-                          "Đang xử lý"}
+                        {getStatusLabel(selectedRequest.status)}
                       </Badge>
                     </div>
                   </div>
@@ -642,51 +549,19 @@ const WithdrawRequest = () => {
                     </div>
                     <div>
                       <span className="font-medium">Số tài khoản:</span>{" "}
-                      {selectedRequest.bankAccount}
+                      {selectedRequest.accountNumber}
                     </div>
                     <div>
-                      <span className="font-medium">Chủ tài khoản:</span>{" "}
-                      {selectedRequest.accountHolder}
+                      <span className="font-medium">Người dùng:</span>{" "}
+                      {selectedRequest.reviewerName}
+                    </div>
+                    <div>
+                      <span className="font-medium">Email:</span>{" "}
+                      {selectedRequest.email}
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Processing Info */}
-              {(selectedRequest.processedDate ||
-                selectedRequest.processedBy) && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    Thông tin xử lý
-                  </h3>
-                  <div className="space-y-3">
-                    {selectedRequest.processedDate && (
-                      <div>
-                        <span className="font-medium">Ngày xử lý:</span>{" "}
-                        {selectedRequest.processedDate}
-                      </div>
-                    )}
-                    {selectedRequest.processedBy && (
-                      <div>
-                        <span className="font-medium">Người xử lý:</span>{" "}
-                        {selectedRequest.processedBy}
-                      </div>
-                    )}
-                    {selectedRequest.transactionId && (
-                      <div>
-                        <span className="font-medium">Mã giao dịch:</span>{" "}
-                        {selectedRequest.transactionId}
-                      </div>
-                    )}
-                    {selectedRequest.notes && (
-                      <div>
-                        <span className="font-medium">Ghi chú:</span>{" "}
-                        {selectedRequest.notes}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -699,16 +574,34 @@ const WithdrawRequest = () => {
             <h3 className="text-lg font-semibold mb-4">
               Xác nhận {actionType === "approve" ? "Duyệt" : "Từ chối"} Yêu cầu
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-4">
               Bạn có chắc chắn muốn{" "}
               {actionType === "approve" ? "duyệt" : "từ chối"} yêu cầu rút tiền
               của <strong>{requestToAction.reviewerName}</strong> với số tiền{" "}
-              <strong>{formatCurrency(requestToAction.amount)}</strong> không?
+              <strong>{formatCurrency(requestToAction.amountMoney)}</strong> không?
             </p>
+            {actionType === "reject" && (
+              <div className="mb-6">
+                <Label htmlFor="rejectReason" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Lý do từ chối *
+                </Label>
+                <Textarea
+                  id="rejectReason"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Nhập lý do từ chối yêu cầu rút tiền..."
+                  className="min-h-[100px] resize-none"
+                  required
+                />
+              </div>
+            )}
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
-                onClick={() => setShowConfirmDialog(false)}
+                onClick={() => {
+                  setShowConfirmDialog(false);
+                  setRejectReason("");
+                }}
                 className="cursor-pointer"
               >
                 Hủy
@@ -720,8 +613,15 @@ const WithdrawRequest = () => {
                     ? "bg-green-600 hover:bg-green-700 cursor-pointer"
                     : "bg-red-600 hover:bg-red-700 cursor-pointer"
                 }
+                disabled={isApproving || isRejecting}
               >
-                {actionType === "approve" ? "Duyệt" : "Từ chối"}
+                {actionType === "approve"
+                  ? isApproving
+                    ? "Đang duyệt..."
+                    : "Duyệt"
+                  : isRejecting
+                  ? "Đang từ chối..."
+                  : "Từ chối"}
               </Button>
             </div>
           </div>
