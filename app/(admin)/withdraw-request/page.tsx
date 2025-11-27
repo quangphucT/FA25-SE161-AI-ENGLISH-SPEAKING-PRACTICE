@@ -117,7 +117,7 @@ const WithdrawRequest = () => {
     return normalized
       .split(" ")
       .filter(Boolean)
-      .map((word) => word.charAt(0))
+      .map((word: string) => word.charAt(0))
       .join("")
       .toUpperCase()
       .slice(0, 2);

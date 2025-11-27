@@ -65,6 +65,12 @@ const createReviewFeeSchema = z.object({
 
 type CreateReviewFeeFormData = z.infer<typeof createReviewFeeSchema>;
 
+interface InfoItemProps {
+  label: string;
+  value: string | number | undefined | null;
+  className?: string;
+}
+
 export default function ReviewFeeManagement() {
   const [pageNumber, setPageNumber] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -120,7 +126,7 @@ export default function ReviewFeeManagement() {
   const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
   const activePackages = packages.filter(pkg => pkg.currentPricePolicy).length;
   const inactivePackages = packages.length - activePackages;
-const InfoItem = ({ label, value, className = "" }: any) => (
+const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
   <div>
     <p className="text-sm text-gray-500">{label}</p>
     <p className={`font-semibold text-gray-900 mt-1 ${className}`}>{value}</p>
@@ -648,7 +654,7 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
           </h3>
 
           <div className="max-h-[280px] overflow-y-auto pr-2 space-y-3">
-            {detailData?.data?.historyPolicies?.map((h: any) => (
+            {detailData?.data?.historyPolicies?.map((h) => (
               <div
                 key={h.reviewFeeDetailId}
                 className="p-4 bg-gray-50 border rounded-xl shadow-sm hover:shadow-md transition"
@@ -656,7 +662,7 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                 <p><strong>Giá:</strong> {formatCurrency(h.pricePerReviewFee)}</p>
                 <p><strong>% Reviewer:</strong> {(h.percentOfReviewer * 100).toFixed(0)}%</p>
                 <p><strong>% Hệ thống:</strong> {(h.percentOfSystem * 100).toFixed(0)}%</p>
-                <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate)}</p>
+                <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate.toISOString())}</p>
 
                 <p className="mt-1">
                   <strong>Trạng thái:</strong>{" "}

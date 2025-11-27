@@ -61,7 +61,7 @@ export interface HistoryPolicies {
   percentOfReviewer: number;
   percentOfSystem: number;
   appliedDate: Date;
-  isCurrentL:boolean;
+  isCurrent:boolean;
   isUpcoming:boolean
 }
 

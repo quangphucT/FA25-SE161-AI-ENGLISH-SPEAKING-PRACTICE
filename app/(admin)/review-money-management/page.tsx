@@ -40,10 +40,20 @@ interface ReviewRecord {
   category: string;
 }
 
+interface ReviewDetailItem {
+  reviewId: string;
+  score: number;
+  question: string;
+  comment: string | null;
+  status: string;
+  createdAt: Date;
+  learner: string;
+  earnedFromThisReview: number;
+}
 
 
 const ReviewMoneyManagement = () => {
-  const [selectedReviewItem, setSelectedReviewItem] = useState<any>(null);
+  const [selectedReviewItem, setSelectedReviewItem] = useState<ReviewDetailItem | null>(null);
 const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
 
     const { data: feePackages } = useAdminReviewFeePackagesQuery(1, 10);
