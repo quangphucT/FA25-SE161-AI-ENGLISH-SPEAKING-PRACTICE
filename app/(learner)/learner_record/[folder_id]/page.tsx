@@ -7,7 +7,8 @@ import { uploadAudioToCloudinary } from "@/utils/upload";
 import { useLearnerRecords, useLearnerRecordUpdate } from "@/features/learner/hooks/useLearnerRecord";
 import type { Record } from "@/features/learner/services/learnerRecordService";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, BookOpen, Play, Volume2, Mic } from "lucide-react";
+import BuyReviewModal from "@/components/BuyReviewModal";
 
 const PracticeRecordLayout = () => {
   const params = useParams();
@@ -53,9 +54,7 @@ const PracticeRecordLayout = () => {
   const [language, setLanguage] = useState<"en-gb" | "en">("en-gb");
   const [score, setScore] = useState<number>(0);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
-  const [difficulty, setDifficulty] = useState<
-    "random" | "easy" | "medium" | "hard"
-  >("easy");
+
   const [recording, setRecording] = useState<boolean>(false);
   const [uiBlocked, setUiBlocked] = useState<boolean>(false);
   const [mainTitle, setMainTitle] = useState<string>(
@@ -77,10 +76,9 @@ const PracticeRecordLayout = () => {
   );
   const [singleWordPair, setSingleWordPair] =
     useState<string>("Reference | Spoken");
-  const [currentSample, setCurrentSample] = useState<number>(0);
+
   const [currentSoundRecorded, setCurrentSoundRecorded] =
     useState<boolean>(false);
-  const [scoreMultiplier, setScoreMultiplier] = useState<number>(1);
   const [serverIsInitialized, setServerIsInitialized] =
     useState<boolean>(false);
   const [serverWorking, setServerWorking] = useState<boolean>(true);
@@ -88,7 +86,8 @@ const PracticeRecordLayout = () => {
   // removed unused lettersOfWordAreCorrect state
   const [shouldFetchNext, setShouldFetchNext] = useState<boolean>(false);
   const [languageFound, setLanguageFound] = useState<boolean>(true);
-
+  
+  const [openBuyReviewModal, setOpenBuyReviewModal] = useState(false);
   // Word-level analysis data
   const [realTranscriptsIpa, setRealTranscriptsIpa] = useState<string[]>([]);
   const [matchedTranscriptsIpa, setMatchedTranscriptsIpa] = useState<string[]>(
@@ -347,26 +346,10 @@ const PracticeRecordLayout = () => {
 
     const parsedAcc = parseFloat(pronunciationAccuracy || "0");
     if (!Number.isNaN(parsedAcc))
-      setScore((s) => Math.round(s + parsedAcc * scoreMultiplier));
+      setScore((s) => Math.round(s + parsedAcc * 1));
 
     setMainTitle("Processing new sample...");
-    const difficultyIdx =
-      difficulty === "random"
-        ? 0
-        : difficulty === "easy"
-        ? 1
-        : difficulty === "medium"
-        ? 2
-        : 3;
-    const nextMultiplier =
-      difficulty === "random"
-        ? 1.3
-        : difficulty === "easy"
-        ? 1.0
-        : difficulty === "medium"
-        ? 1.3
-        : 1.6;
-    setScoreMultiplier(nextMultiplier);
+   
 
     try {
       // // Try to fetch from API
@@ -387,7 +370,7 @@ const PracticeRecordLayout = () => {
       const res = await fetch(apiMainPathSample + "/getSample", {
         method: "post",
         body: JSON.stringify({
-          category: String(difficultyIdx),
+          category: 1,
           language: AILanguage,
           question: currentContent || content,
         }),
@@ -401,7 +384,7 @@ const PracticeRecordLayout = () => {
       setRecordedIpaScript("");
       setPronunciationAccuracy("");
       setSingleWordPair("Reference | Spoken");
-      setCurrentSample((s) => s + 1);
+ 
       setMainTitle("AI Pronunciation Trainer");
       setTranslatedScript(data.transcript_translation);
       setCurrentSoundRecorded(false);
@@ -417,9 +400,7 @@ const PracticeRecordLayout = () => {
     AILanguage,
     STScoreAPIKey,
     apiMainPathSample,
-    difficulty,
     pronunciationAccuracy,
-    scoreMultiplier,
     serverIsInitialized,
     serverWorking,
     initializeServer,
@@ -940,13 +921,11 @@ const PracticeRecordLayout = () => {
 
             const acc = parseFloat(data.pronunciation_accuracy);
             if (!Number.isNaN(acc)) playSoundForAnswerAccuracy(acc);
-            setRecordedIpaScript(`/ ${data.ipa_transcript} /`);
+            setRecordedIpaScript(`/ ${data.ipa_transcript} /`); 
             setMainTitle("AI Pronunciation Trainer");
             setPronunciationAccuracy(`${data.pronunciation_accuracy}%`);
-            // Store AI feedback if available in response
-            if (data.ai_feedback || data.feedback || data.aiFeedback) {
-              setAiFeedback(data.ai_feedback || data.feedback || data.aiFeedback);
-            }
+            setAiFeedback(data.AIFeedback);
+            
 
             const isLetterCorrectAll: string[] = String(
               data.is_letter_correct_all_words || ""
@@ -1110,13 +1089,28 @@ const PracticeRecordLayout = () => {
               )}
             </div>
 
-            <p id="section_accuracy" className="text-black text-lg">
-              | Score: {score} - ({currentSample})
-            </p>
             {recordsList.length > 0 && (
               <p className="text-black text-lg">
                 | Câu {currentQuestionIndex + 1}/{recordsList.length}
               </p>
+            )}
+            {/* Nút Đánh giá phát âm - hiển thị khi đã có record hợp lệ */}
+            {currentRecordId && currentRecord?.audioRecordingURL && (
+              <Button
+                variant="outline"
+                className="px-6 py-3 rounded-xl font-semibold cursor-pointer"
+                onClick={() => setOpenBuyReviewModal(true)}
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Đánh giá phát âm
+              </Button>
+            )}
+            {openBuyReviewModal && currentRecordId && (
+              <BuyReviewModal
+                open={openBuyReviewModal}
+                recordId={currentRecordId}
+                onClose={() => setOpenBuyReviewModal(false)}
+              />
             )}
           </div>
         </div>
@@ -1133,7 +1127,7 @@ const PracticeRecordLayout = () => {
               disabled={uiBlocked}
               className={`box-border w-12 h-12 rounded-full border-[6px] border-white text-white bg-[#467387] flex items-center justify-center transition disabled:opacity-50`}
             >
-              <i className="material-icons text-base">play_arrow</i>
+              <Play className="w-5 h-5" />
             </button>
 
             <button
@@ -1142,7 +1136,7 @@ const PracticeRecordLayout = () => {
               disabled={uiBlocked || !currentSoundRecorded}
               className={`box-border w-12 h-12 rounded-full border-[6px] border-white text-white bg-[#467387] flex items-center justify-center transition disabled:opacity-50`}
             >
-              <i className="material-icons text-base">record_voice_over</i>
+              <Volume2 className="w-5 h-5" />
             </button>
 
             <p id="pronunciation_accuracy" className="text-center text-black">
@@ -1180,6 +1174,38 @@ const PracticeRecordLayout = () => {
               {translatedScript}
             </p>
           </div>
+
+          {/* AI Feedback Panel */}
+          {aiFeedback && (
+            <div className="absolute left-[2%] right-[2%] bottom-[-22%] h-[18%] bg-white overflow-y-auto rounded-2xl shadow-[0_0_20px_8px_#d0d0d0] p-5 z-10">
+              <div 
+                className="text-[0.95em] text-gray-700 leading-relaxed"
+                style={{ 
+                  whiteSpace: 'pre-wrap',
+                  wordWrap: 'break-word'
+                }}
+                dangerouslySetInnerHTML={{ 
+                  __html: aiFeedback
+                    .split('\n')
+                    .map((line: string) => {
+                      // Handle headers (###)
+                      if (line.trim().startsWith('###')) {
+                        const text = line.replace(/^###\s*/, '');
+                        return `<h3 style="font-size: 1.15em; font-weight: 600; color: #363850; margin-top: 0.8em; margin-bottom: 0.4em;">${text}</h3>`;
+                      }
+                      // Handle bold text (**text**)
+                      let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 600; color: #153C57;">$1</strong>');
+                      // Handle numbered lists
+                      if (/^\d+\.\s/.test(processedLine.trim())) {
+                        return `<div style="margin: 0.3em 0; padding-left: 0.5em;">${processedLine}</div>`;
+                      }
+                      return processedLine || '<br />';
+                    })
+                    .join('')
+                }} 
+              />
+            </div>
+          )}
 
           {/* Navigation buttons */}
           {recordsList.length > 1 && (
@@ -1241,67 +1267,11 @@ const PracticeRecordLayout = () => {
               recording ? "bg-[#477c5b]" : "bg-[#49d67d]"
             }`}
           >
-            <i id="recordIcon" className="material-icons text-[2.5em]">
-              mic
-            </i>
+            <Mic id="recordIcon" className="w-10 h-10" />
           </button>
         </div>
 
-        {/* Difficulty radio buttons */}
-        <div
-          id="radio-difficulty"
-          className="fixed bottom-2 left-2 bg-[#f6f7fd] p-1 rounded shadow-[inset_0_0_0_3px_rgba(35,33,45,0.3),0_0_0_3px_rgba(185,185,185,0.3)] flex gap-1"
-        >
-          <label className="px-2 py-1">
-            <input
-              type="radio"
-              name="length"
-              checked={difficulty === "random"}
-              onChange={() => {
-                setDifficulty("random");
-                getNextSample();
-              }}
-            />
-            <span className="ml-1">Random</span>
-          </label>
-          <label className="px-2 py-1">
-            <input
-              type="radio"
-              name="length"
-              checked={difficulty === "easy"}
-              onChange={() => {
-                setDifficulty("easy");
-                getNextSample();
-              }}
-            />
-            <span className="ml-1">Easy</span>
-          </label>
-          <label className="px-2 py-1">
-            <input
-              type="radio"
-              name="length"
-              checked={difficulty === "medium"}
-              onChange={() => {
-                setDifficulty("medium");
-                getNextSample();
-              }}
-            />
-            <span className="ml-1">Medium</span>
-          </label>
-          <label className="px-2 py-1">
-            <input
-              type="radio"
-              name="length"
-              checked={difficulty === "hard"}
-              onChange={() => {
-                setDifficulty("hard");
-                getNextSample();
-              }}
-            />
-
-            <span className="ml-1">Hard</span>
-          </label>
-        </div>
+       
       </div>
     </>
   );

@@ -60,22 +60,16 @@ export function middleware(request: NextRequest) {
       if (
         role === "REVIEWER" &&
         !isReviewerActive &&
-        pathName !== "/entrance_information"
+        pathName !== "/entrance_information" &&
+        pathName !== "/reviewer-waiting"
       ) {
         return NextResponse.redirect(
           new URL("/entrance_information", request.url)
         );
       }
-      // Nếu REVIEWER đã active nhưng vẫn cố vào trang /entrance_information → đá về dashboard-reviewer-layout
-      if (
-        role === "REVIEWER" &&
-        isReviewerActive &&
-        pathName === "/entrance_information"
-      ) {
-        return NextResponse.redirect(
-          new URL("/dashboard-reviewer-layout", request.url)
-        );
-      }
+      // Cho phép reviewer vào /entrance_information từ reviewer-waiting hoặc khi chưa active
+      // Không chặn reviewer vào /entrance_information vì họ có thể cần thêm/chỉnh sửa chứng chỉ
+      // Trang entrance_information sẽ tự kiểm tra và xử lý logic phù hợp
       // Reviewer active thì KHÔNG ĐƯỢC vào trang entrance_test (dành riêng cho Learner)
       if (role === "REVIEWER" && pathName === "/entrance_test") {
         return NextResponse.redirect(
