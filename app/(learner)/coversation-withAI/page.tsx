@@ -67,7 +67,7 @@ const ConversationWithAI = () => {
   const userCoins = userData?.coinBalance || 0;
   const hasEnoughCoins = userCoins >= requiredCoins;
 
-  const getToken = useCallback(async (userName: string) => {
+  const getToken = useCallback(async (userName: string): Promise<boolean> => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL}?name=${encodeURIComponent(
@@ -91,18 +91,14 @@ const ConversationWithAI = () => {
       
       setToken(data.token);
       setServerUrl(data.url);
+      return true; // Trả về true nếu thành công
     } catch (error) {
      
       toast.error("Không thể kết nối. Vui lòng thử lại!");
       setShowLiveKit(false);
+      throw error; // Throw error để handleStart có thể catch
     }
   }, []);
-
-  useEffect(() => {
-    if (showLiveKit && name) {
-      getToken(name);
-    }
-  }, [showLiveKit, name, getToken]);
 
   // Handle disconnect
   const handleDisconnect = useCallback(() => {
@@ -188,7 +184,7 @@ const ConversationWithAI = () => {
 
 
   
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!name.trim()) {
       toast.error("Vui lòng nhập tên của bạn");
       return;
@@ -207,19 +203,37 @@ const ConversationWithAI = () => {
       return;
     }
 
-    chartCoinForConversationMutation(
-      { aiConversationChargeId: selectedOption.id },
-      {
-        onSuccess: () => {
-          // Clear old messages from previous conversation
-          localStorage.removeItem("messages");
-          
-          toast.success("Bắt đầu trò chuyện với AI!");
-          setShowLiveKit(true);
-          refetchUserData();
-        },
+    // Gọi getToken trước để đảm bảo kết nối thành công
+    try {
+      const tokenSuccess = await getToken(name);
+      
+      // Chỉ gọi mutation nếu getToken thành công
+      if (tokenSuccess) {
+        chartCoinForConversationMutation(
+          { aiConversationChargeId: selectedOption.id },
+          {
+            onSuccess: () => {
+              // Clear old messages from previous conversation
+              localStorage.removeItem("messages");
+              setShowLiveKit(true);
+              toast.success("Bắt đầu trò chuyện với AI!");
+              refetchUserData();
+            },
+            onError: (error) => {
+              // Nếu mutation thất bại, reset token và serverUrl
+              setToken(null);
+              setServerUrl(null);
+              setShowLiveKit(false);
+              toast.error(error.message || "Không thể khấu trừ coin. Vui lòng thử lại!");
+            },
+          }
+        );
       }
-    );
+    } catch (error) {
+      // getToken đã thất bại, không gọi mutation
+      // Error đã được xử lý trong getToken (toast.error)
+      console.error("Failed to get token:", error);
+    }
   };
 
   return (

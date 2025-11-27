@@ -12,7 +12,7 @@ export const deleteCoinServicePackageMutation = () => {
     onSuccess: (data) => {
       toast.success(data.message || "Xóa gói dịch vụ thành công");
       // 👇 invalidate để reload danh sách mới
-      queryClient.invalidateQueries({ queryKey: ["getCoinServicePackages"] });
+      queryClient.invalidateQueries({ queryKey: ["getServicePackages"] });
     },
     onError: (error: any) => {
       toast.error(error.message || "Xóa gói dịch vụ thất bại");

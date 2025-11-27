@@ -10,74 +10,105 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useReviewReviewPending, useReviewReviewSubmit } from "@/features/reviewer/hooks/useReviewReview";
+import { useReviewReviewPending, useReviewReviewSubmit, useReviewReviewStatistics, useReviewerTipAfterReview } from "@/features/reviewer/hooks/useReviewReview";
+import { useReviewFeedback } from "@/features/reviewer/hooks/useReviewFeedback";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { signalRService } from "@/lib/realtime/realtime";
 import { ReviewCompleted } from "@/lib/realtime/realtime";
 import { useRealtime } from "@/providers/RealtimeProvider";
+import { CircleCheck } from "lucide-react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 const StatisticsForMentor = () => {
   const [showAllFeedback, setShowAllFeedback] = useState(false);
-  // Sample data for mentor stats
-  const mentorStats = {
-    totalFeedbacks: 42,
-    totalReviews: 186,
-    avgRating: 4.8,
-    AmountOfMoneyEarned: "23.000",
+  
+  // Pagination state for feedback summary
+  const [feedbackPageNumber, setFeedbackPageNumber] = useState(1);
+  const [feedbackPageSize] = useState(5); // Show 5 feedbacks in summary
+  
+  // Pagination state for modal
+  const [modalPageNumber, setModalPageNumber] = useState(1);
+  const [modalPageSize] = useState(10); // Show 10 feedbacks per page in modal
+  
+  // Fetch statistics from API
+  const { data: statisticsData, isLoading: isLoadingStats, isError: isErrorStats } = useReviewReviewStatistics();
+  
+  // Fetch feedback from API with pagination
+  const { data: feedbackData, isLoading: isLoadingFeedback } = useReviewFeedback(feedbackPageNumber, feedbackPageSize);
+  const { data: allFeedbackData, isLoading: isLoadingAllFeedback } = useReviewFeedback(modalPageNumber, modalPageSize);
+  
+  // Map API response to mentorStats format
+  const mentorStats = useMemo(() => {
+    if (!statisticsData?.isSucess || !statisticsData?.data) {
+      return {
+        totalFeedbacks: 0,
+        totalReviews: 0,
+        avgRating: 0,
+        AmountOfMoneyEarned: "0",
+      };
+    }
+    
+    const stats = statisticsData.data;
+    return {
+      totalFeedbacks: stats.totalFeedback || 0,
+      totalReviews: stats.totalReviews || 0,
+      avgRating: stats.averageRating || 0,
+      AmountOfMoneyEarned: (stats.coinBalance || 0).toLocaleString("vi-VN"),
+    };
+  }, [statisticsData]);
+
+  // Helper function to get initials from name
+  const getInitials = (name: string) => {
+    const words = name.trim().split(" ");
+    if (words.length >= 2) {
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
-  const feedbackSummary = [
-    {
-      id: 1,
-      studentName: "Nguyễn Văn An",
-      rating: 5,
-      comment:
-        "Excellent teaching method! Very clear explanations and patient guidance.",
-      sessionType: "Luyện nói",
-      date: "20/09/2025",
-      avatar: "NVA",
-    },
-    {
-      id: 2,
-      studentName: "Trần Thị Bình",
-      rating: 4,
-      comment:
-        "Great IELTS preparation. Helped me improve my speaking confidence significantly.",
-      sessionType: "IELTS Nói",
-      date: "19/09/2025",
-      avatar: "TTB",
-    },
-    {
-      id: 3,
-      studentName: "Lê Minh Hoàng",
-      rating: 5,
-      comment:
-        "Professional business English training. Very practical and useful content.",
-      sessionType: "Tiếng Anh thương mại",
-      date: "18/09/2025",
-      avatar: "LMH",
-    },
-    {
-      id: 4,
-      studentName: "Phạm Thu Dung",
-      rating: 4,
-      comment:
-        "Good grammar lessons with clear examples. Would recommend to others.",
-      sessionType: "Ôn tập ngữ pháp",
-      date: "17/09/2025",
-      avatar: "PTD",
-    },
-    {
-      id: 5,
-      studentName: "Nguyễn Thị Lan",
-      rating: 5,
-      comment:
-        "Amazing mentor! Very encouraging and creates comfortable learning environment.",
-      sessionType: "Luyện hội thoại",
-      date: "16/09/2025",
-      avatar: "NTL",
-    },
-  ];
+  // Map API feedback data to component format
+  const feedbackSummary = useMemo(() => {
+    if (!feedbackData?.isSucess || !feedbackData?.data?.items) return [];
+    
+    return feedbackData.data.items.map((item) => ({
+      id: item.feedbackId,
+      studentName: item.learnerName,
+      rating: item.rating,
+      comment: item.content,
+      sessionType: item.reviewType || "Đánh giá phát âm",
+      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: vi }),
+      avatar: getInitials(item.learnerName),
+    }));
+  }, [feedbackData]);
+
+  // Calculate pagination info for summary
+  const feedbackPagination = useMemo(() => {
+    if (!feedbackData?.data) {
+      return { totalPages: 0, currentPage: 1, totalItems: 0 };
+    }
+    const totalItems = feedbackData.data.totalItems || 0;
+    const totalPages = Math.ceil(totalItems / feedbackPageSize);
+    return {
+      totalPages,
+      currentPage: feedbackPageNumber,
+      totalItems,
+    };
+  }, [feedbackData, feedbackPageNumber, feedbackPageSize]);
+
+  // Calculate pagination info for modal
+  const modalPagination = useMemo(() => {
+    if (!allFeedbackData?.data) {
+      return { totalPages: 0, currentPage: 1, totalItems: 0 };
+    }
+    const totalItems = allFeedbackData.data.totalItems || 0;
+    const totalPages = Math.ceil(totalItems / modalPageSize);
+    return {
+      totalPages,
+      currentPage: modalPageNumber,
+      totalItems,
+    };
+  }, [allFeedbackData, modalPageNumber, modalPageSize]);
 
   const [reviewedAnswers, setReviewedAnswers] = useState<string[]>([]);
   // Track numberOfReview updates from SignalR events
@@ -88,7 +119,9 @@ const StatisticsForMentor = () => {
   const [score, setScore] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  
+  const [showRewardForm, setShowRewardForm] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState("");
+  const [rewardMessage, setRewardMessage] = useState("");
   // Fetch pending reviews
   const { data: pendingReviewsData, isLoading, error } = useReviewReviewPending(1, 100);
   
@@ -115,6 +148,9 @@ const StatisticsForMentor = () => {
       setComment("");
       setScore("");
       setShowAnswer(false);
+      setShowRewardForm(false);
+      setRewardAmount("");
+      setRewardMessage("");
     }
   };
 
@@ -124,12 +160,37 @@ const StatisticsForMentor = () => {
     setShowAnswer(false);
     setComment("");
     setScore("");
+    setShowRewardForm(false);
+    setRewardAmount("");
+    setRewardMessage("");
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
   };
+  const tipAfterReviewMutation = useReviewerTipAfterReview();
 
+  const handleRewardLearner = async () => {
+    if (!selectedReview?.id) {
+      return;
+    }
+    const amount = Number(rewardAmount);
+    if (!amount || amount <= 0) {
+      return;
+    }
+    try {
+      await tipAfterReviewMutation.mutateAsync({
+        reviewerId: selectedReview.id,
+        amountCoin: amount,
+        message: rewardMessage.trim(),
+      });
+      setRewardAmount("");
+      setRewardMessage("");
+      setShowRewardForm(false);
+    } catch (error) {
+      console.error("Reward learner failed:", error);
+    }
+  };
   const handleSaveAndFinish = async () => {
     if (!selectedReview) return;
     
@@ -230,76 +291,49 @@ const StatisticsForMentor = () => {
     };
   }, [isConnected]);
 
-  // Full feedback data cho modal
-  const allFeedbackData = [
-    ...feedbackSummary,
-    {
-      id: 6,
-      studentName: "Hoàng Văn Tùng",
-      rating: 5,
-      comment:
-        "Outstanding mentor! The lessons are well-structured and very engaging. I've learned so much in just a few sessions.",
-      sessionType: "Nói nâng cao",
-      date: "15/09/2025",
-      avatar: "HVT",
-    },
-    {
-      id: 7,
-      studentName: "Lý Thị Mai",
-      rating: 4,
-      comment:
-        "Great pronunciation coaching. Helped me overcome my accent issues and speak more confidently.",
-      sessionType: "Phát âm",
-      date: "14/09/2025",
-      avatar: "LTM",
-    },
-    {
-      id: 8,
-      studentName: "Trương Minh Đức",
-      rating: 5,
-      comment:
-        "Excellent TOEFL preparation. The practice tests and tips were incredibly helpful for my exam.",
-      sessionType: "Chuẩn bị TOEFL",
-      date: "13/09/2025",
-      avatar: "TMD",
-    },
-    {
-      id: 9,
-      studentName: "Phan Thị Hương",
-      rating: 4,
-      comment:
-        "Very patient teacher. Explains complex grammar rules in an easy-to-understand way.",
-      sessionType: "Tập trung ngữ pháp",
-      date: "12/09/2025",
-      avatar: "PTH",
-    },
-    {
-      id: 10,
-      studentName: "Ngô Văn Khang",
-      rating: 5,
-      comment:
-        "Amazing business English course! Really practical for my work environment. Highly recommended.",
-      sessionType: "Tiếng Anh thương mại",
-      date: "11/09/2025",
-      avatar: "NVK",
-    },
-  ];
+  // Full feedback data cho modal - map từ API
+  const allFeedbackDataForModal = useMemo(() => {
+    if (!allFeedbackData?.isSucess || !allFeedbackData?.data?.items) return [];
+    
+    return allFeedbackData.data.items.map((item) => ({
+      id: item.feedbackId,
+      studentName: item.learnerName,
+      rating: item.rating,
+      comment: item.content,
+      sessionType: item.reviewType || "Đánh giá phát âm",
+      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: vi }),
+      avatar: getInitials(item.learnerName),
+    }));
+  }, [allFeedbackData]);
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Tổng phản hồi
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {mentorStats.totalFeedbacks}
-                </p>
-              </div>
+      {isLoadingStats ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="border-2 border-dashed border-gray-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-center h-24">
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Tổng phản hồi
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {mentorStats.totalFeedbacks}
+                  </p>
+                </div>
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg
                   width="20"
@@ -383,7 +417,7 @@ const StatisticsForMentor = () => {
                   Số tiền trong ví
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {mentorStats.AmountOfMoneyEarned} VND
+                  {mentorStats.AmountOfMoneyEarned} coin
                 </p>
               </div>
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -403,7 +437,8 @@ const StatisticsForMentor = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -430,13 +465,10 @@ const StatisticsForMentor = () => {
                 </div>
               ) : availableReviews.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="text-gray-400 text-6xl mb-4">✅</div>
+                 <CircleCheck size={64} color="green" className="text-6xl mb-4 text-center w-full"/>
                   <div className="text-gray-500 text-lg font-medium">
                     Tất cả câu trả lời đã được review
-                  </div>
-                  <div className="text-gray-400 text-sm mt-2">
-                    Không còn câu trả lời nào cần review
-                  </div>
+                  </div>  
                 </div>
               ) : (
                 availableReviews.map((review) => (
@@ -522,7 +554,16 @@ const StatisticsForMentor = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {feedbackSummary.map((feedback) => (
+              {isLoadingFeedback ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-sm">Đang tải phản hồi...</div>
+                </div>
+              ) : feedbackSummary.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-500 text-sm">Chưa có phản hồi nào</div>
+                </div>
+              ) : (
+                feedbackSummary.map((feedback) => (
                 <div
                   key={feedback.id}
                   className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
@@ -562,16 +603,58 @@ const StatisticsForMentor = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
-            <div className="mt-4 pt-3 border-t">
-              <button
-                onClick={() => setShowAllFeedback(true)}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
-              >
-                Xem tất cả phản hồi →
-              </button>
-            </div>
+            
+            {/* Pagination for summary */}
+            {feedbackPagination.totalPages > 1 && (
+              <div className="mt-4 pt-3 border-t flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFeedbackPageNumber((prev) => Math.max(1, prev - 1))}
+                    disabled={feedbackPageNumber === 1 || isLoadingFeedback}
+                  >
+                    Trước
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Trang {feedbackPagination.currentPage} / {feedbackPagination.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFeedbackPageNumber((prev) => Math.min(feedbackPagination.totalPages, prev + 1))}
+                    disabled={feedbackPageNumber >= feedbackPagination.totalPages || isLoadingFeedback}
+                  >
+                    Sau
+                  </Button>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowAllFeedback(true);
+                    setModalPageNumber(1); // Reset to first page when opening modal
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                >
+                  Xem tất cả phản hồi →
+                </button>
+              </div>
+            )}
+            
+            {feedbackPagination.totalPages <= 1 && (
+              <div className="mt-4 pt-3 border-t">
+                <button
+                  onClick={() => {
+                    setShowAllFeedback(true);
+                    setModalPageNumber(1);
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                >
+                  Xem tất cả phản hồi →
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -613,7 +696,16 @@ const StatisticsForMentor = () => {
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
               <div className="grid gap-4">
-                {allFeedbackData.map((feedback) => (
+                {isLoadingAllFeedback ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-lg">Đang tải phản hồi...</div>
+                  </div>
+                ) : allFeedbackDataForModal.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-500 text-lg">Chưa có phản hồi nào</div>
+                  </div>
+                ) : (
+                  allFeedbackDataForModal.map((feedback) => (
                   <div
                     key={feedback.id}
                     className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -662,22 +754,52 @@ const StatisticsForMentor = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                )))}
               </div>
             </div>
 
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  Tổng phản hồi:{" "}
-                  <span className="font-semibold">
-                    {allFeedbackData.length}
-                  </span>{" "}
-                  đánh giá
-                </p>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-gray-600">
+                    Tổng phản hồi:{" "}
+                    <span className="font-semibold">
+                      {modalPagination.totalItems}
+                    </span>{" "}
+                    đánh giá
+                  </p>
+                  
+                  {/* Pagination Controls */}
+                  {modalPagination.totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setModalPageNumber((prev) => Math.max(1, prev - 1))}
+                        disabled={modalPageNumber === 1 || isLoadingAllFeedback}
+                      >
+                        Trước
+                      </Button>
+                      <span className="text-sm text-gray-600">
+                        Trang {modalPagination.currentPage} / {modalPagination.totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setModalPageNumber((prev) => Math.min(modalPagination.totalPages, prev + 1))}
+                        disabled={modalPageNumber >= modalPagination.totalPages || isLoadingAllFeedback}
+                      >
+                        Sau
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <Button
-                  onClick={() => setShowAllFeedback(false)}
+                  onClick={() => {
+                    setShowAllFeedback(false);
+                    setModalPageNumber(1); // Reset to first page when closing
+                  }}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Đóng
@@ -728,7 +850,7 @@ const StatisticsForMentor = () => {
                     className="mt-2 w-full h-28 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-xl p-3"
                   />
                 </div>
-                <div>
+                <div className="relative">
                   <Label
                     htmlFor="modal-score"
                     className="text-sm font-semibold text-gray-700"
@@ -745,6 +867,16 @@ const StatisticsForMentor = () => {
                   <p className="text-xs text-slate-500 mt-2">
                     Enter a numeric score, e.g., 8.5
                   </p>
+                  <div className="mt-2 inline-flex items-start gap-3">
+                    <Button
+                      variant="outline"
+                      className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50 text-white"
+                      onClick={() => setShowRewardForm((prev) => !prev)}
+                    >
+                      {showRewardForm ? "Close reward form" : "Reward Learner"}
+                    </Button>
+                   
+                  </div>
                 </div>
               </div>
 

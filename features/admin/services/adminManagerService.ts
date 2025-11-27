@@ -24,6 +24,22 @@ export interface AdminManagerCreateResponse {
   message: string;
   email: string;
 }
+export interface AdminManagerDetailResponse {
+  isSucess: boolean;
+  data: ManagerDetail;
+  businessCode: number;
+  message: string;
+}
+export interface ManagerDetail {
+  userId: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  role: string;
+  password: string;
+  status: string;
+  createdAt: string;
+}
 export const adminManagerService = async (
   pageNumber: number,
   pageSize: number,
@@ -80,6 +96,29 @@ export const adminManagerCreateService = async (
   } catch (error: any) {
     const message =
       error?.response?.data?.message || error.message || "Create manager failed";
+    throw new Error(message);
+  }
+};
+export const adminManagerDetailService = async (userId: string): Promise<AdminManagerDetailResponse> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/manager/${userId}`);
+    const data = await response.json();
+    return data;
+  } catch (error: unknown) {
+    const message =
+      (error &&
+      typeof error === "object" &&
+      "response" in error &&
+      error.response &&
+      typeof error.response === "object" &&
+      "data" in error.response &&
+      error.response.data &&
+      typeof error.response.data === "object" &&
+      "message" in error.response.data
+        ? (error.response.data as { message: string }).message
+        : null) ||
+      (error instanceof Error ? error.message : null) ||
+      "An unknown error occurred";
     throw new Error(message);
   }
 };

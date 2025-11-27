@@ -12,7 +12,7 @@ export async function GET(
   try {
     // Build URL with path parameter and query parameters
     const backendUrl = new URL(
-      `${process.env.BE_API_URL}/AdminReviewerIncome/${reviewerProfileId}/detail`
+      `${process.env.BE_API_URL}/AdminReviewerIncome/reviewer-detail/${reviewerProfileId}`
     );
 
     if (fromDate) {

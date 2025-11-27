@@ -53,7 +53,12 @@ const AiConversationPackageManagement = () => {
   const { mutate: createPackage, isPending: isCreating } = useCreateAIConversationPackages();
   const { mutate: deletePackage } = useDeleteAIConversationPackage();
   const { mutate: updatePackage, isPending: isUpdating } = useUpdateAIConversationPackage();
-  const { data: packagesData, isPending: isLoading } = getAIConversationPackages();
+  // Pagination
+const [pageNumber, setPageNumber] = useState(1);
+const [pageSize, setPageSize] = useState(5); // hoặc 10 tùy ý
+
+const { data: packagesData, isPending: isLoading } =
+  getAIConversationPackages(pageNumber, pageSize);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -139,7 +144,9 @@ const AiConversationPackageManagement = () => {
     );
   };
 
-  const packages = packagesData?.data?.items || [];
+const packages = packagesData?.data?.items ?? [];
+const totalItems = packagesData?.data?.totalItems ?? 0;
+const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -393,6 +400,52 @@ const AiConversationPackageManagement = () => {
                   ))}
                 </TableBody>
               </Table>
+              {/* Pagination Footer */}
+<div className="flex justify-between items-center px-6 py-4 border-t text-sm text-gray-700">
+
+  {/* Left: Rows per page */}
+  <div className="flex items-center gap-2">
+    <span>Rows per page:</span>
+    <span className="font-medium">{pageSize}</span>
+  </div>
+
+  {/* Middle: 1–5 of 18 */}
+  <div>
+    {totalItems === 0
+      ? "0–0 of 0"
+      : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} of ${totalItems}`}
+  </div>
+
+  {/* Right: Previous / Page number / Next */}
+  <div className="flex items-center gap-2">
+
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={pageNumber === 1}
+      onClick={() => setPageNumber(pageNumber - 1)}
+      className="cursor-pointer"
+    >
+      Previous
+    </Button>
+
+    <span className="px-3 py-1 border rounded-md bg-gray-50">
+      {pageNumber}
+    </span>
+
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={pageNumber === totalPages}
+      onClick={() => setPageNumber(pageNumber + 1)}
+      className="cursor-pointer"
+    >
+      Next
+    </Button>
+
+  </div>
+</div>
+
             </div>
           )}
         </div>

@@ -14,7 +14,7 @@ export interface AdminWithdrawalResponse {
 export interface Withdrawal {
     transactionId: string;  
     userId: string;
-    fullName: string;
+    reviewerName: string;
     email: string;
     coin: number;
     amountMoney: number;
@@ -35,9 +35,21 @@ export interface AdminWithdrawalPutResponse {
     businessCode: number;
     message: string;
 }
-export const adminWithdrawalService = async (pageNumber: number, pageSize: number): Promise<AdminWithdrawalResponse> => {
+export interface AdminWithdrawalSummaryResponse {
+  isSuccess: boolean;
+  data: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    processing: number;
+    total: number;
+  };
+  businessCode: number;
+  message: string;
+}
+export const adminWithdrawalService = async (pageNumber: number, pageSize: number, status: string, keyword: string): Promise<AdminWithdrawalResponse> => {
   try {
-    const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+    const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest?pageNumber=${pageNumber}&pageSize=${pageSize}&status=${status}&keyword=${keyword}`);
     const data = await response.json();
     return data;
   } catch (error: unknown) {
@@ -60,8 +72,16 @@ export const adminWithdrawalService = async (pageNumber: number, pageSize: numbe
 };
 export const adminWithdrawalApproveService = async (transactionId: string): Promise<AdminWithdrawalPutResponse> => {
   try {
-    const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/approve/${transactionId}`);
+    const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/approve/${transactionId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Approve withdrawal failed");
+    }
     return data;
   } catch (error: unknown) {
     const message =
@@ -81,10 +101,21 @@ export const adminWithdrawalApproveService = async (transactionId: string): Prom
     throw new Error(message);
   }
 };
-export const adminWithdrawalRejectService = async (transactionId: string): Promise<AdminWithdrawalPutResponse> => {
+export const adminWithdrawalRejectService = async (transactionId: string, reason: string): Promise<AdminWithdrawalPutResponse> => {
     try {
-        const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/reject/${transactionId}`);
+        const response = await fetchWithAuth(`/api/AdminDashboard/withdrawalRequest/reject/${transactionId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                reason: reason,
+            }),
+        });
         const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Reject withdrawal failed");
+        }
         return data;
     } catch (error: unknown) {
         const message =
@@ -103,4 +134,27 @@ export const adminWithdrawalRejectService = async (transactionId: string): Promi
             "An unknown error occurred";
         throw new Error(message);
     }
+};
+export const adminWithdrawalSummaryService = async (): Promise<AdminWithdrawalSummaryResponse> => {
+  try {
+    const response = await fetchWithAuth("/api/AdminDashboard/withdrawalRequest/summary");
+    const data = await response.json();
+    return data;
+  } catch (error: unknown) {
+    const message =
+      (error &&
+      typeof error === "object" &&
+      "response" in error &&
+      error.response &&
+      typeof error.response === "object" &&
+      "data" in error.response &&
+      error.response.data &&
+      typeof error.response.data === "object" &&
+      "message" in error.response.data
+        ? (error.response.data as { message: string }).message
+        : null) ||
+      (error instanceof Error ? error.message : null) ||
+      "An unknown error occurred";
+    throw new Error(message);
+  }
 };

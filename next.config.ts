@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      // {
+      //   protocol: "https",
+      //   hostname: "youtube.com",
+      // },
       {
         protocol: "https",
         hostname: "sununi.edu.vn",

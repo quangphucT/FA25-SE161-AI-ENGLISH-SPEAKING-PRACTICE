@@ -32,10 +32,14 @@ export async function POST(request: NextRequest) {
     const base64 = buffer.toString("base64");
     const dataURI = `data:${file.type};base64,${base64}`;
 
+    // Determine resource type based on file type
+    const isAudio = file.type.startsWith("audio/");
+    const resourceType = isAudio ? "raw" : "auto"; // Use "raw" for audio files
+    
     // Upload to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(dataURI, {
-      resource_type: "auto", // Auto-detect image, video, etc.
-      folder: "uploads", // Optional: organize uploads in a folder
+      resource_type: resourceType, // Use "raw" for audio, "auto" for images/videos
+      folder: isAudio ? "AESP/audios" : "uploads", // Organize audio files in AESP/audios folder
     });
 
     // Return optimized URL with auto-format and auto-quality

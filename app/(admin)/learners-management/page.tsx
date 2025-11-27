@@ -24,6 +24,12 @@ import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Carousel,
   CarouselContent,
   CarouselItem,
@@ -110,7 +116,6 @@ const LearnerManagement = () => {
   const [banReason, setBanReason] = useState<string>("");
   const queryClient = useQueryClient();
   const { mutate: banLearner, isPending: isBanning } = useAdminLearnerBan();
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const learnersQuery = useAdminLearner(
@@ -235,13 +240,6 @@ const LearnerManagement = () => {
     }
   };
 
-  // Close dropdown when clicking outside
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".dropdown-container")) {
-      setOpenDropdownId(null);
-    }
-  };
   const getInitials = (fullName: string) => {
     return fullName
       .split(" ")
@@ -250,10 +248,6 @@ const LearnerManagement = () => {
       .toUpperCase()
       .slice(0, 2);
   };
-  useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
 
   return (
     <div className="p-6">
@@ -362,9 +356,8 @@ const LearnerManagement = () => {
                         ></div>
                       </div>
                       <div>
-                        <div className="text-blue-600 font-semibold text-sm">
-                          {learner.learnerProfileId}
-                        </div>
+                   
+
                       </div>
                   </div>
                 </TableCell>
@@ -376,14 +369,12 @@ const LearnerManagement = () => {
                     </span>
                   </div>
                 </TableCell>
-                  <TableCell className="text-gray-600">
-                    <div className="flex flex-col">
-                      <span className="text-sm">{learner.email}</span>
-                      <span className="text-xs text-gray-500">
-                        {learner.phone || "—"}
-                      </span>
-                    </div>
-                  </TableCell>
+                 <TableCell className="text-gray-600">
+  <div className="flex flex-col">
+    <span className="text-sm">{learner.email}</span>
+  </div>
+</TableCell>
+
 
                   <TableCell>
                     <Badge
@@ -417,127 +408,115 @@ const LearnerManagement = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="relative dropdown-container">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setOpenDropdownId(
-                            openDropdownId === learner.learnerProfileId ? null : learner.learnerProfileId
-                          )
-                        }
-                        className="p-1 h-8 w-8 cursor-pointer"
-                      >
-                      <svg
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="19" cy="12" r="1" />
-                        <circle cx="5" cy="12" r="1" />
-                      </svg>
-                    </Button>
-
-                    {openDropdownId === learner.learnerProfileId && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10 ">
-                        <div className="py-1 ">
-                          <button
-                            onClick={() => {
-                              handleViewDetails(learner);
-                              setOpenDropdownId(null);
-                            }}
-                            className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 h-8 w-8 cursor-pointer"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              width="16"
-                              height="16"
-                              className="inline mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                            Xem chi tiết
-                          </button>
-                          <button
-                            onClick={() => {
-                              const normalizedStatus = normalizeStatus(learner.status);
-                              handleBlockUnblock(
-                                learner,
-                                  normalizedStatus === "Active" ||
-                                    normalizedStatus === "Inactive"
-                                  ? "block"
-                                  : "unblock"
-                              );
-                              setOpenDropdownId(null);
-                            }}
-                            className={`block cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                                normalizeStatus(learner.status) === "Active" ||
-                                normalizeStatus(learner.status) === "Inactive"
-                                ? "text-red-600"
-                                : "text-green-600"
-                            }`}
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="19" cy="12" r="1" />
+                            <circle cx="5" cy="12" r="1" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleViewDetails(learner)}
+                          className="cursor-pointer"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            className="inline mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
                           >
-                              {normalizeStatus(learner.status) === "Active" ||
-                              normalizeStatus(learner.status) === "Inactive" ? (
-                              <>
-                                <svg
-                                  width="16"
-                                  height="16"
-                                  className="inline mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <rect
-                                    x="3"
-                                    y="11"
-                                    width="18"
-                                    height="10"
-                                    rx="2"
-                                  />
-                                  <circle cx="12" cy="16" r="1" />
-                                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                </svg>
-                                Chặn người dùng
-                              </>
-                            ) : (
-                              <>
-                                <svg
-                                  width="16"
-                                  height="16"
-                                  className="inline mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <rect
-                                    x="3"
-                                    y="11"
-                                    width="18"
-                                    height="10"
-                                    rx="2"
-                                  />
-                                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                </svg>
-                                Bỏ chặn người dùng
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const normalizedStatus = normalizeStatus(learner.status);
+                            handleBlockUnblock(
+                              learner,
+                              normalizedStatus === "Active" ||
+                                normalizedStatus === "Inactive"
+                                ? "block"
+                                : "unblock"
+                            );
+                          }}
+                          className={`cursor-pointer ${
+                            normalizeStatus(learner.status) === "Active" ||
+                            normalizeStatus(learner.status) === "Inactive"
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {normalizeStatus(learner.status) === "Active" ||
+                          normalizeStatus(learner.status) === "Inactive" ? (
+                            <>
+                              <svg
+                                width="16"
+                                height="16"
+                                className="inline mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <rect
+                                  x="3"
+                                  y="11"
+                                  width="18"
+                                  height="10"
+                                  rx="2"
+                                />
+                                <circle cx="12" cy="16" r="1" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                              </svg>
+                              Chặn người dùng
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                width="16"
+                                height="16"
+                                className="inline mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <rect
+                                  x="3"
+                                  y="11"
+                                  width="18"
+                                  height="10"
+                                  rx="2"
+                                />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                              </svg>
+                              Bỏ chặn người dùng
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
               </TableRow>
               ))
             )}

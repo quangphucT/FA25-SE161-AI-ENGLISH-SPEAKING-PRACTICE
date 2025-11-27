@@ -7,33 +7,16 @@ import CurriculumManagementPage from "../curriculum-management/page";
 import QuestionForAssessmentPage from "../question-for-assessment/page";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import LevelA1 from "../levels/levelA1";
+import { handleLogout } from "@/utils/auth";
 
 const DashboardManagerLayout = () => {
-  const [activeTab, setActiveTab] = useState("statisticsForManagers");
+  const [activeTab, setActiveTab] = useState("assesmentManagement");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const { data: getMe } = useGetMeQuery();
 
   const navigationItems = [
-    {
-      id: "statisticsForManagers",
-      label: "Statistics",
-      icon: (
-        <svg
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path d="M3 3v5h5M21 21v-5h-5" />
-          <path d="M21 12A9 9 0 0 0 3 12a9 9 0 0 0 18 0" />
-          <line x1="9" y1="9" x2="15" y2="15" />
-        </svg>
-      ),
-      path: "/statistics-for-managers",
-    },
+    
     {
       id: "assesmentManagement",
       label: "Assessment Management",
@@ -43,7 +26,7 @@ const DashboardManagerLayout = () => {
           height="20"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="1"
           viewBox="0 0 24 24"
         >
           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -51,23 +34,7 @@ const DashboardManagerLayout = () => {
       ),
       path: "/assesment-management",
     },
-    {
-      id: "curriculumManagement",
-      label: "Curriculum Management",
-      icon: (
-        <svg
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ),
-      path: "/curriculum-management",
-    },
+   
 
     {
       id: "questionForAssessment",
@@ -167,12 +134,12 @@ const DashboardManagerLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
       {/* White Sidebar */}
       <aside
         className={`${
           sidebarOpen ? "w-72" : "w-20"
-        } bg-white text-gray-800 transition-all duration-300 flex flex-col shadow-lg border-r border-gray-200`}
+        } bg-white text-gray-800 transition-all duration-300 flex flex-col shadow-lg border-r border-gray-200 h-full`}
       >
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
@@ -348,6 +315,7 @@ const DashboardManagerLayout = () => {
                 variant="ghost"
                 size="sm"
                 className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1"
+                onClick={() => handleLogout()}  
               >
                 <svg
                   width="16"
@@ -368,7 +336,7 @@ const DashboardManagerLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen">
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Modern Header */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
           <div className="px-6 py-4">
@@ -395,24 +363,16 @@ const DashboardManagerLayout = () => {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 bg-white">
-          <div className="p-6 h-full">
-            {activeTab === "statisticsForManagers" && (
-              <div className="h-full">
-                <StatisticsForManagers />
-              </div>
-            )}
+        <div className="flex-1 bg-white overflow-y-auto">
+          <div className="p-6 min-h-full">
+            
 
             {activeTab === "assesmentManagement" && (
               <div className="h-full">
                 <AssesmentManagement />
               </div>
             )}
-            {activeTab === "curriculumManagement" && (
-              <div className="h-full">
-                <CurriculumManagementPage />
-              </div>
-            )}
+           
             {activeTab === "questionForAssessment" && (
               <div className="h-full">
                 <QuestionForAssessmentPage />

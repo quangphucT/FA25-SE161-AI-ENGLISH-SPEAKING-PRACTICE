@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { reviewerReviewHistoryService, reviewerReviewPendingService, reviewerReviewSubmitService, ReviewerReviewSubmitResponse } from "../services/reviewerReviewService";
+import { reviewerReviewHistoryService, reviewerReviewPendingService, reviewerReviewSubmitService, ReviewerReviewSubmitResponse, ReviewerReviewStatisticsResponse, reviewerReviewStatisticsService, ReviewerReviewWalletResponse, reviewerReviewWalletService, reviewerTipAfterReviewService } from "../services/reviewerReviewService";
 import { ReviewerReviewHistoryResponse, ReviewerReviewPendingResponse } from "../services/reviewerReviewService";
 import { useQuery } from "@tanstack/react-query";
 export const useReviewReviewSubmit = () => {
@@ -36,5 +36,28 @@ export const useReviewReviewPending = (pageNumber: number, pageSize: number) => 
     return useQuery<ReviewerReviewPendingResponse, Error>({
         queryKey: ["reviewReviewPending", pageNumber, pageSize],
         queryFn: () => reviewerReviewPendingService(pageNumber, pageSize),
+    });
+}
+export const useReviewReviewStatistics = () => {
+    return useQuery<ReviewerReviewStatisticsResponse, Error>({
+        queryKey: ["reviewReviewStatistics"],
+        queryFn: () => reviewerReviewStatisticsService(),
+    });
+}
+export const useReviewReviewWallet = (pageNumber: number, pageSize: number) => {
+    return useQuery<ReviewerReviewWalletResponse, Error>({
+        queryKey: ["reviewReviewWallet", pageNumber, pageSize],
+        queryFn: () => reviewerReviewWalletService(pageNumber, pageSize),
+    });
+}
+export const useReviewerTipAfterReview = () => {
+    return useMutation<any, Error, { reviewerId: string; amountCoin: number; message: string }>({
+        mutationFn: ({ reviewerId, amountCoin, message }) => reviewerTipAfterReviewService(reviewerId, amountCoin, message),
+        onSuccess: (data) => {
+            toast.success(data.message || "Tip after review successful");
+        },
+        onError: (error) => {
+            toast.error(error.message || "Tip after review failed");
+        },
     });
 }
