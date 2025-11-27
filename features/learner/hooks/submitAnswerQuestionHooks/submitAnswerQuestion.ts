@@ -42,9 +42,8 @@ export const useSubmitAnswerQuestion = () => {
     mutationFn: submitAnswerQuestionService,
     onSuccess: (data) => {
       toast.success(data.message || "Nộp bài thành công");
-      queryClient.invalidateQueries({ queryKey: ["learningPathCourseFull"] });
-      console.log("Submit answer response:", data);
-      
+        queryClient.invalidateQueries({ queryKey: ["learningPathCourseFull"] ,refetchType: 'active' });
+        
     },
     onError: (error) => {
       toast.error(error.message || "Nộp bài thất bại");

@@ -17,7 +17,9 @@ const ExercisePage = () => {
   const searchParams = useSearchParams();
   const exerciseId = params?.exerciseId as string;
   const chapterId = searchParams.get('chapterId');
+
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
+  const setAllLearnerData = useLearnerStore((state) => state.setAllLearnerData);
   const learnerData = getAllLearnerData();
   
   // Get full learning path data
@@ -25,7 +27,6 @@ const ExercisePage = () => {
     {
       learningPathCourseId: learnerData?.learningPathCourseId || "",
       courseId: learnerData?.courseId || "",
-      status: learnerData?.status || "",
     },
     Boolean(learnerData)
   );
@@ -89,6 +90,23 @@ const ExercisePage = () => {
   const totalQuestions = questions.length;
   const progressPercentage =
     ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
+  // Update store when apiResponse changes
+  useEffect(() => {
+    if (apiResponse?.data?.status && learnerData?.learnerCourseId && learnerData?.courseId && learnerData?.learningPathCourseId) {
+      const newStatus = apiResponse.data.status as "InProgress" | "Completed";
+     
+      // Chỉ update nếu status thực sự thay đổi
+      if (newStatus !== learnerData.status) {
+        setAllLearnerData({
+          learnerCourseId: learnerData.learnerCourseId,
+          courseId: learnerData.courseId,
+          learningPathCourseId: learnerData.learningPathCourseId,
+          status: newStatus,
+        });
+      } 
+    } 
+  }, [apiResponse?.data?.status, apiResponse]);
 
   // Initialize recorded state
   useEffect(() => {
@@ -408,6 +426,7 @@ const ExercisePage = () => {
       : "/dashboard-learner-layout?menu=learningPath";
     router.push(url);
   };
+
 
   if (isLoading || !isMounted) {
     return (

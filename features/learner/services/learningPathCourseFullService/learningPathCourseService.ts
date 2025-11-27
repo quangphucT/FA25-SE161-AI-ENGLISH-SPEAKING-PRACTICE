@@ -4,7 +4,7 @@ import { LearningPathCourseParams } from "../../hooks/learningPathCourseFullHook
 
 export const learningPathCourseFullService = async (params: LearningPathCourseParams) => {
     try {
-        const { learningPathCourseId, courseId, status } = params;
+        const { learningPathCourseId, courseId } = params;
         
         const queryParams = new URLSearchParams();
         if (learningPathCourseId) {
@@ -13,9 +13,7 @@ export const learningPathCourseFullService = async (params: LearningPathCoursePa
         if (courseId) {
             queryParams.append('courseId', courseId.toString());
         }
-        if (status) {
-            queryParams.append('status', status);
-        }
+     
         
         const url = `/api/learner/learning-path-course-full?${queryParams.toString()}`;
         

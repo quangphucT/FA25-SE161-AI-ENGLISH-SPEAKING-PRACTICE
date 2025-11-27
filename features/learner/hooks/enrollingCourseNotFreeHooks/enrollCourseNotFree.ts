@@ -1,8 +1,7 @@
 
 
-import { useLearnerStore } from "@/store/useLearnerStore";
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
+
 import { enrollCourseNotFreeService } from "../../services/enrollingCourseNotFreeService/enrollingCourseNotFree";
 
 export interface EnrollingCourseNotFreeResponse {
@@ -18,13 +17,10 @@ export interface LearnerLevelDetail {
   courseId: string;
   status:  "InProgress" | "Completed"; 
 }
-
-
 export interface EnrollCourseNotFreeRequest{
     learnerCourseId: string;
     courseId: string;
 }
-
 export const useEnrollCourseNotFree = () => {
 
     return useMutation<EnrollingCourseNotFreeResponse, Error, EnrollCourseNotFreeRequest>({
