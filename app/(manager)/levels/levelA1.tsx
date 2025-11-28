@@ -1,7 +1,7 @@
 "use client";
 
 import { useGetCoursesOfLevelMutation } from "@/features/manager/hook/coursesHooks/courseHooks";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -88,8 +88,9 @@ interface Chapter {
   chapterId: string;
   title: string;
   description: string;
-  orderIndex: number;
+orderIndex?: number;
   numberOfExercise?: number;
+  createdAt?: string;
   exercises?: Exercise[];
 }
 
@@ -108,7 +109,7 @@ interface Question {
   text?: string;
   type: string | number;
   orderIndex: number;
-  phonemeJson?: string;
+phonemeJson?: string | number;
 }
 
 interface Media {
@@ -136,6 +137,7 @@ const LevelA1 = ({ level }: LevelProps) => {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [showEditQuestionModal, setShowEditQuestionModal] = useState(false);
+const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
 
   // State for multiple questions
   const [questionsList, setQuestionsList] = useState<Array<{text: string;type: number;orderIndex: number;
@@ -157,21 +159,16 @@ const LevelA1 = ({ level }: LevelProps) => {
   const [deletingExercise, setDeletingExercise] = useState<Exercise | null>(null);
   const [deletingQuestion, setDeletingQuestion] = useState<Question | null>(null);
   const [deletingMedia, setDeletingMedia] = useState<Media | null>(null);
-  const [viewMode, setViewMode] = useState<"course" | "chapter" | "exercise" | "question">("course");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
     null
   );
-  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(
-    null
-  );
-  const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(
-    null
-  );
-  const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(
-    null
-  );
+  const [viewingCourseDetails, setViewingCourseDetails] = useState<Course | null>(null);
+const [viewingChapterDetails, setViewingChapterDetails] = useState<Chapter | null>(null);
+const [viewingExerciseDetails, setViewingExerciseDetails] = useState<Exercise | null>(null);
+const [viewingQuestionDetails, setViewingQuestionDetails] = useState<Question | null>(null);
+
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [editingMedia, setEditingMedia] = useState<Media | null>(null);
   const [viewingMediaDetails, setViewingMediaDetails] = useState<Media | null>(null);
@@ -199,19 +196,24 @@ const LevelA1 = ({ level }: LevelProps) => {
     error: questionsError,
     refetch: refetchQuestions,
   } = useGetQuestionsFollowingExerciseId(
-    expandedExerciseId || "",
-    !!expandedExerciseId
-  );
-  const {
-    data: mediaData,
-    isLoading: isMediaLoading,
-    isError: isMediaError,
-    error: mediaError,
-    refetch: refetchMedia,
-  } = useGetMediaFollowingQuestionId(
-    expandedQuestionId || "",
-    !!expandedQuestionId
-  );
+  selectedExercise?.exerciseId || "",
+  !!selectedExercise?.exerciseId
+);
+
+const {
+  data: mediaData,
+  refetch: refetchMedia,
+} = useGetMediaFollowingQuestionId(
+  selectedQuestion?.questionId || "",
+  !!selectedQuestion?.questionId
+);
+
+useEffect(() => {
+  if (selectedQuestion?.questionId) {
+    refetchMedia();
+  }
+}, [selectedQuestion]);
+
   const {
     data: exercisesData,
     isLoading: isExercisesLoading,
@@ -219,9 +221,10 @@ const LevelA1 = ({ level }: LevelProps) => {
     error: exercisesError,
     refetch: refetchExercises,
   } = useGetExcerciseFollowingChapterId(
-    expandedChapterId || "",
-    !!expandedChapterId
-  );
+  selectedChapter?.chapterId || "",
+  !!selectedChapter?.chapterId
+);
+
 
 
   const {
@@ -231,9 +234,10 @@ const LevelA1 = ({ level }: LevelProps) => {
     error: chaptersError,
     refetch: refetchChapters,
   } = useGetChapterFollowingCourseId(
-    selectedCourse?.courseId || "",
-    viewMode === "chapter" && !!selectedCourse?.courseId
-  );
+  selectedCourse?.courseId || "",
+  !!selectedCourse?.courseId
+);
+
 
 
 
@@ -430,16 +434,17 @@ const LevelA1 = ({ level }: LevelProps) => {
     setShowChapterModal(true);
   };
 
-  const handleEditChapter = (chapter: Record<string, unknown>) => {
-    setEditingChapter(chapter as unknown as Chapter);
-    chapterFormMethods.reset({
-      title: chapter.title as string,
-      description: chapter.description as string,
-      numberOfExercise: (chapter.numberOfExercise as number) || 0,
-      courseId: selectedCourse?.courseId || "", // Set current course as default
-    });
-    setShowChapterModal(true);
-  };
+  const handleEditChapter = (chapter: Chapter) => {
+  setEditingChapter(chapter);
+  chapterFormMethods.reset({
+    title: chapter.title,
+    description: chapter.description,
+    numberOfExercise: chapter.numberOfExercise || 0,
+    courseId: selectedCourse?.courseId || "",
+  });
+  setShowChapterModal(true);
+};
+
 
   const onSubmitChapter = (values: ChapterFormValues) => {
     // For create: must have selectedCourse
@@ -499,7 +504,8 @@ const LevelA1 = ({ level }: LevelProps) => {
   };
 
   const onSubmitExercise = (values: ExerciseFormValues) => {
-    if (!expandedChapterId && !editingExercise) {
+    if (!selectedChapter && !editingExercise)
+ {
       console.error("No chapter selected");
       toast.error("Please select a chapter first");
       return;
@@ -509,7 +515,7 @@ const LevelA1 = ({ level }: LevelProps) => {
       updateExerciseMutation({
         id: editingExercise.exerciseId,
         payload: {
-          chapterId: expandedChapterId || "", // Use current expanded chapter
+          chapterId: selectedChapter!.chapterId || "", // Use current expanded chapter
           title: values.title,
           description: values.description,
           orderIndex: values.orderIndex,
@@ -518,7 +524,7 @@ const LevelA1 = ({ level }: LevelProps) => {
       });
     } else {
       createExerciseMutation({
-        chapterId: expandedChapterId!,
+  chapterId: selectedChapter!.chapterId,
         title: values.title,
         description: values.description,
         orderIndex: values.orderIndex,
@@ -569,7 +575,8 @@ const LevelA1 = ({ level }: LevelProps) => {
   };
 
   const onSubmitQuestion = () => {
-    if (!expandedExerciseId) {
+    if (!selectedExercise)
+ {
       console.error("No exercise selected");
       toast.error("Please select an exercise first");
       return;
@@ -580,10 +587,11 @@ const LevelA1 = ({ level }: LevelProps) => {
       return;
     }
 
-    createQuestionMutation({
-      exerciseId: expandedExerciseId,
-      questions: questionsList,
-    });
+  createQuestionMutation({
+  exerciseId: selectedExercise!.exerciseId,
+  questions: questionsList,
+});
+
 
     setShowQuestionModal(false);
     setQuestionsList([]);
@@ -625,14 +633,7 @@ const LevelA1 = ({ level }: LevelProps) => {
   };
 
   // Media Handlers
-  const handleToggleMedia = (questionId: string) => {
-    if (expandedQuestionId === questionId) {
-      setExpandedQuestionId(null);
-    } else {
-      setExpandedQuestionId(questionId);
-      setTimeout(() => refetchMedia(), 0);
-    }
-  };
+  
 
   const handleCreateMedia = () => {
     setEditingMedia(null);
@@ -660,34 +661,36 @@ const LevelA1 = ({ level }: LevelProps) => {
   };
 
   const onSubmitMedia = (values: MediaFormValues) => {
-    if (!expandedQuestionId) {
-      toast.error("Please select a question first");
-      return;
-    }
+  if (!selectedQuestion) {
+    toast.error("Please select a question first");
+    return;
+  }
 
-    if (editingMedia) {
-      updateMediaMutation({
-        id: editingMedia.questionMediaId,
-        payload: {
-          accent: values.accent,
-          audioUrl: values.audioUrl,
-          videoUrl: values.videoUrl,
-          imageUrl: values.imageUrl,
-          source: values.source,
-        },
-      });
-    } else {
-      createMediaMutation({
-        questionId: expandedQuestionId,
+  if (editingMedia) {
+    updateMediaMutation({
+      id: editingMedia.questionMediaId,
+      payload: {
         accent: values.accent,
         audioUrl: values.audioUrl,
         videoUrl: values.videoUrl,
         imageUrl: values.imageUrl,
         source: values.source,
-      });
-    }
-    setShowMediaModal(false);
-  };
+      },
+    });
+  } else {
+    createMediaMutation({
+      questionId: selectedQuestion.questionId, // ✅ ĐÚNG
+      accent: values.accent,
+      audioUrl: values.audioUrl,
+      videoUrl: values.videoUrl,
+      imageUrl: values.imageUrl,
+      source: values.source,
+    });
+  }
+
+  setShowMediaModal(false);
+};
+
 
   const handleDelete = (course: Course) => {
     setDeletingCourse(course);
@@ -758,221 +761,370 @@ const LevelA1 = ({ level }: LevelProps) => {
     setDeletingMedia(null);
   };
 
-  const handleViewChapters = (course: Course) => {
-    setSelectedCourse(course);
-    setViewMode("chapter");
-    setExpandedChapterId(null); // Reset expanded chapter when switching courses
-    // Trigger refetch when switching to chapter view
-    setTimeout(() => refetchChapters(), 0);
-  };
-
-  const handleToggleExercises = (chapterId: string) => {
-    if (expandedChapterId === chapterId) {
-      setExpandedChapterId(null); // Collapse if already expanded
-      setExpandedExerciseId(null); // Also collapse any expanded exercises
-    } else {
-      setExpandedChapterId(chapterId); // Expand this chapter
-      setExpandedExerciseId(null); // Reset expanded exercise
-      setTimeout(() => refetchExercises(), 0);
-    }
-  };
-
-  const handleToggleQuestions = (exerciseId: string) => {
-    if (expandedExerciseId === exerciseId) {
-      setExpandedExerciseId(null); // Collapse if already expanded
-    } else {
-      setExpandedExerciseId(exerciseId); // Expand this exercise
-      setTimeout(() => refetchQuestions(), 0);
-    }
-  };
-
-
-
-  const handleViewQuestions = (exercise: Exercise) => {
-    setSelectedExercise(exercise);
-    setViewMode("question");
-    // TODO: Fetch questions for this exercise
-  };
-
-  const handleBackToCourses = () => {
-    setViewMode("course");
-    setSelectedCourse(null);
-    setSelectedChapter(null);
-    setSelectedExercise(null);
-  };
-
  
 
   return (
     <div className="space-y-6">
    
 
-      {/* Course Table */}
-      <Card className="shadow-sm border-slate-200">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Layers className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Course Management</h2>
-                <p className="text-sm text-slate-500 font-normal">Manage all courses for level {level}</p>
-              </div>
-            </div>
+    <div className="flex gap-6">
+
+  {/* LEFT PANEL - COURSE + CHAPTER */}
+  <div className="w-1/3 bg-white border p-4 rounded-lg">
+
+<div className="flex justify-between items-center mb-3">
+  <h2 className="text-lg font-semibold">Courses</h2>
+  <Button size="sm" onClick={handleCreateCourse}>
+    + Add Course
+  </Button>
+</div>
+  {sortedCourses.map((course) => (
+  <div
+    key={course.courseId}
+    onClick={() => {
+      setSelectedCourse(course);
+      setSelectedChapter(null);
+    }}
+    className={`p-3 mb-2 rounded-lg cursor-pointer border flex justify-between items-center ${
+      selectedCourse?.courseId === course.courseId
+        ? "bg-blue-50 border-blue-500"
+        : "hover:bg-gray-50"
+    }`}
+  >
+   <p className="font-medium">{course.title}</p>
+
+<div className="flex gap-2">
+  <Button
+    size="icon"
+    variant="ghost"
+    onClick={(e) => {
+      e.stopPropagation();
+      setViewingCourseDetails(course);
+    }}
+  >
+    👁
+  </Button>
+
+  <Button
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEditCourse(course);
+        }}
+      >
+        ✏️
+      </Button>
+
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDelete(course);
+        }}
+      >
+        🗑
+      </Button>
+</div>
+
+  </div>
+))}
+
+    {selectedCourse && (
+      <>
+        <h3 className="mt-5 mb-2 font-semibold">Chapters</h3>
+
+   {chaptersData?.data?.map((chapter) => (
+  <div
+    key={chapter.chapterId}
+    onClick={() => setSelectedChapter(chapter)}
+    className={`p-3 mb-2 rounded-lg cursor-pointer border flex justify-between items-center ${
+      selectedChapter?.chapterId === chapter.chapterId
+        ? "bg-green-50 border-green-600"
+        : "hover:bg-gray-50"
+    }`}
+  >
+    <p className="font-medium">{chapter.title}</p>
+
+    <div className="flex gap-2">
+
+    <Button
+  size="icon"
+  variant="ghost"
+  onClick={(e) => {
+    e.stopPropagation();
+    setViewingChapterDetails(chapter);
+  }}
+>
+  👁
+</Button>
+
+
+
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEditChapter(chapter);
+        }}
+      >
+        ✏️
+      </Button>
+
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDeleteChapter(chapter);
+        }}
+      >
+        🗑
+      </Button>
+    </div>
+  </div>
+))}
+
+
+
+
+        <Button
+          size="sm"
+          className="mt-3 w-full"
+          onClick={handleCreateChapter}
+        >
+          + Add Chapter
+        </Button>
+      </>
+    )}
+  </div>
+
+  {/* RIGHT PANEL - TẠM THỜI ĐỂ TRỐNG */}
+  <div className="flex-1 bg-white border p-6 rounded-lg">
+    {!selectedCourse && (
+      <p className="text-gray-500">Chọn khóa học để xem chương</p>
+    )}
+
+    {selectedCourse && !selectedChapter && (
+      <p className="text-gray-500">Chọn chương để xem bài tập</p>
+    )}
+
+  {selectedChapter && (
+  <div>
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-lg font-semibold">Exercises</h2>
+      <Button size="sm" onClick={handleCreateExercise}>
+        + Add Exercise
+      </Button>
+    </div>
+
+    {isExercisesLoading && <p>Loading exercises...</p>}
+
+    {exercisesData?.data?.map((exercise) => (
+      <div
+        key={exercise.exerciseId}
+onClick={() => {
+  setSelectedExercise(exercise);
+  setSelectedQuestion(null);     // ✅ reset question
+}}
+        className={`p-3 mb-2 rounded-lg border cursor-pointer ${
+          selectedExercise?.exerciseId === exercise.exerciseId
+            ? "bg-yellow-50 border-yellow-500"
+            : "hover:bg-gray-50"
+        }`}
+      >
+        <div className="flex justify-between items-center">
+          <p className="font-medium">{exercise.title}</p>
+
+          <div className="flex gap-2">
+
+
+
+<Button
+  size="icon"
+  variant="ghost"
+  onClick={(e) => {
+    e.stopPropagation();
+    setViewingExerciseDetails(exercise);
+  }}
+>
+  👁
+</Button>
+
+
+
+
             <Button
-              onClick={handleCreateCourse}
-              size="sm"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white cursor-pointer shadow-md hover:shadow-lg transition-all"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Course
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : isError ? (
-            <div className="text-center py-12">
-              <div className="text-red-500 text-lg font-semibold mb-2">
-                Error loading courses
-              </div>
-              <p className="text-slate-600">Please try again later</p>
-            </div>
-          ) : sortedCourses.length === 0 ? (
-            <div className="text-center py-12">
-              <BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <div className="text-slate-500 text-lg font-semibold mb-2">
-                No courses found
-              </div>
-              <p className="text-slate-600 mb-4">
-                Get started by creating your first course
-              </p>
-              <Button onClick={handleCreateCourse} variant="outline" className="cursor-pointer">
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Course
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead className="w-24 font-semibold">ID</TableHead>
-                    <TableHead className="font-semibold">Title</TableHead>
-                    <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="text-center font-semibold w-32">Chapters</TableHead>
-                    <TableHead className="text-center font-semibold w-24">Order</TableHead>
-                    <TableHead className="text-center font-semibold w-28">Price</TableHead>
-                    <TableHead className="text-center font-semibold w-20">Level</TableHead>
-                    <TableHead className="text-center font-semibold w-28">Duration</TableHead>
-                    <TableHead className="text-center font-semibold w-28">Status</TableHead>
-                    <TableHead className="text-center font-semibold w-52">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedCourses.map((course: Course) => (
-                    <TableRow key={course.courseId} className="hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="font-mono text-xs text-slate-500">
-                        <div className="truncate max-w-[80px]" title={course.courseId}>
-                          {course.courseId.substring(0, 8)}...
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-semibold text-slate-900">
-                          {course.title}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-slate-600 text-sm max-w-xs truncate" title={course.description || ''}>
-                          {course.description || '-'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="font-medium bg-blue-50 text-blue-700 border-blue-200">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          {course.numberOfChapter}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="secondary" className="font-medium">
-                          #{course.orderIndex}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="font-semibold text-slate-700">
-                          {course.price === 0 ? (
-                            <Badge className="bg-green-100 text-green-700 border-green-200">Free</Badge>
-                          ) : (
-                            <span className="text-orange-600">{course.price} Xu</span>
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200 font-semibold">
-                          {course.level}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="text-slate-600 font-medium">
-                          {course.duration || 0} Ngày
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge 
-                          className={
-                            course.status === "Active" 
-                              ? "bg-green-100 text-green-700 border-green-200 font-medium" 
-                              : "bg-gray-100 text-gray-600 border-gray-200 font-medium"
-                          }
-                        >
-                          {course.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer transition-all"
-                            onClick={() => handleViewChapters(course)}
-                            title="View Chapters"
-                          >
-                            <FolderOpen className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditCourse(course)}
-                            className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
-                            title="Edit Course"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
-                            onClick={() => handleDelete(course)}
-                            title="Delete Course"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEditExercise(exercise);
+        }}
+      >
+        ✏️
+      </Button>
+
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDeleteExercise(exercise);
+        }}
+      >
+        🗑
+      </Button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{selectedExercise && (
+  <div className="mt-8 border-t pt-4">
+    <div className="flex justify-between items-center mb-3">
+      <h2 className="text-lg font-semibold">Questions</h2>
+      <Button size="sm" onClick={handleCreateQuestion}>
+        + Add Question
+      </Button>
+    </div>
+
+    {isQuestionsLoading && <p>Loading questions...</p>}
+
+  {questionsData?.data?.map((question) => (
+  <div
+    key={question.questionId}
+   onClick={() => setSelectedQuestion(question)}
+
+className={`p-3 mb-2 border rounded-lg cursor-pointer 
+${
+  selectedQuestion?.questionId === question.questionId
+    ? "bg-purple-100 border-purple-500"
+    : "hover:bg-purple-50"
+}`}
+  >
+    <div className="flex justify-between">
+      <div>
+        <p className="font-medium">{question.text}</p>
+        <p className="text-sm text-gray-500">
+          Type: {question.type} | Order: {question.orderIndex}
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+
+
+<Button
+  size="icon"
+  variant="ghost"
+  onClick={(e) => {
+    e.stopPropagation();
+    setViewingQuestionDetails(question);
+  }}
+>
+  👁
+</Button>
+
+
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditQuestion(question);
+          }}
+        >
+          ✏️
+        </Button>
+
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteQuestion(question);
+          }}
+        >
+          🗑
+        </Button>
+      </div>
+    </div>
+  </div>
+))}
+
+  </div>
+)}
+{/* MEDIA OF QUESTION */}
+{selectedQuestion && mediaData?.data && mediaData.data.length > 0 && (
+  <div className="mt-6 border-t pt-4">
+    <div className="flex justify-between items-center mb-3">
+     <h2 className="text-lg font-semibold">
+  Media của câu hỏi: 
+  <span className="text-purple-600 ml-2">
+    {selectedQuestion?.text}
+  </span>
+</h2>
+
+      <Button size="sm" onClick={handleCreateMedia}>
+        + Add Media
+      </Button>
+    </div>
+
+{mediaData?.data?.map((media) => (
+      <div
+        key={media.questionMediaId}
+        className="p-3 mb-2 border rounded-lg flex justify-between items-center"
+      >
+        <div>
+          <p className="font-medium">Accent: {media.accent}</p>
+          <p className="text-sm text-gray-500">
+            {media.audioUrl || media.videoUrl || media.imageUrl || "No source"}
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setViewingMediaDetails(media);
+            }}
+          >
+            👁
+          </Button>
+
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              handleEditMedia(media);
+            }}
+          >
+            ✏️
+          </Button>
+
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              handleDeleteMedia(media);
+            }}
+          >
+            🗑
+          </Button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+  </div>
+
+</div>
+
 
       {/* Course Create/Edit Modal */}
       <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
@@ -1217,16 +1369,50 @@ const LevelA1 = ({ level }: LevelProps) => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sortedCourses.map((course) => (
-                            <SelectItem
-                              key={course.courseId}
-                              value={course.courseId}
-                            >
-                              {course.title}
-                              {course.courseId === selectedCourse?.courseId &&
-                                " (Current)"}
-                            </SelectItem>
-                          ))}
+                    {sortedCourses.map((course) => (
+  <div
+    key={course.courseId}
+    onClick={() => {
+      setSelectedCourse(course);
+      setSelectedChapter(null);
+      refetchChapters();
+    }}
+    className={`p-3 mb-2 rounded-lg cursor-pointer border flex justify-between items-center ${
+      selectedCourse?.courseId === course.courseId
+        ? "bg-blue-50 border-blue-500"
+        : "hover:bg-gray-50"
+    }`}
+  >
+    <p className="font-medium">{course.title}</p>
+
+    <div className="flex gap-2">
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEditCourse(course);
+        }}
+      >
+        ✏️
+      </Button>
+
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDelete(course);
+        }}
+      >
+        🗑
+      </Button>
+    </div>
+  </div>
+))}
+
+
+
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -1350,12 +1536,10 @@ const LevelA1 = ({ level }: LevelProps) => {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  className="cursor-pointer"
-                >
-                  Create Exercise
-                </Button>
+              <Button type="submit" className="cursor-pointer">
+  {editingExercise ? "Update Exercise" : "Create Exercise"}
+</Button>
+
               </DialogFooter>
             </form>
           </Form>
@@ -2120,874 +2304,118 @@ const LevelA1 = ({ level }: LevelProps) => {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+<Dialog
+  open={!!viewingCourseDetails}
+  onOpenChange={() => setViewingCourseDetails(null)}
+>
+  <DialogContent className="max-w-3xl bg-white text-black">
+    <DialogHeader>
+      <DialogTitle>Course Details</DialogTitle>
+    </DialogHeader>
+
+    {viewingCourseDetails && (
+      <div className="space-y-3">
+        <p><b>Title:</b> {viewingCourseDetails.title}</p>
+        <p><b>Description:</b> {viewingCourseDetails.description}</p>
+        <p><b>Level:</b> {viewingCourseDetails.level}</p>
+        <p><b>Price:</b> {viewingCourseDetails.price}</p>
+        <p><b>NumberOfChapters:</b> {viewingCourseDetails.numberOfChapter}</p>
+        <p><b>Status:</b> {viewingCourseDetails.status}</p>
+      </div>
+    )}
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setViewingCourseDetails(null)}>
+        Close
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+
+
+<Dialog
+  open={!!viewingChapterDetails}
+  onOpenChange={() => setViewingChapterDetails(null)}
+>
+  <DialogContent className="max-w-3xl bg-white text-black">
+    <DialogHeader>
+      <DialogTitle>Chapter Details</DialogTitle>
+    </DialogHeader>
+
+    {viewingChapterDetails && (
+      <div className="space-y-3">
+        <p><b>Title:</b> {viewingChapterDetails.title}</p>
+        <p><b>Description:</b> {viewingChapterDetails.description}</p>
+        <p><b>NumberOfExercises:</b> {viewingChapterDetails.numberOfExercise}</p>
+        <p><b>CreatedAt:</b> {viewingChapterDetails.createdAt}</p>
+
+      </div>
+    )}
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setViewingChapterDetails(null)}>
+        Close
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+<Dialog
+  open={!!viewingExerciseDetails}
+  onOpenChange={() => setViewingExerciseDetails(null)}
+>
+  <DialogContent className="max-w-3xl bg-white text-black">
+    <DialogHeader>
+      <DialogTitle>Exercise Details</DialogTitle>
+    </DialogHeader>
+
+    {viewingExerciseDetails && (
+      <div className="space-y-3">
+        <p><b>Title:</b> {viewingExerciseDetails.title}</p>
+        <p><b>Description:</b> {viewingExerciseDetails.description}</p>
+        <p><b>Order:</b> {viewingExerciseDetails.orderIndex}</p>
+        <p><b>NumberQuestions:</b> {viewingExerciseDetails.numberOfQuestion}</p>
+      </div>
+    )}
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setViewingExerciseDetails(null)}>
+        Close
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+
+<Dialog
+  open={!!viewingQuestionDetails}
+  onOpenChange={() => setViewingQuestionDetails(null)}
+>
+  <DialogContent className="max-w-3xl bg-white text-black">
+    <DialogHeader>
+      <DialogTitle>Question Details</DialogTitle>
+    </DialogHeader>
+
+    {viewingQuestionDetails && (
+      <div className="space-y-3">
+        <p><b>Text:</b> {viewingQuestionDetails.text}</p>
+        <p><b>Type:</b> {viewingQuestionDetails.type}</p>
+        <p><b>Order:</b> {viewingQuestionDetails.orderIndex}</p>
+        <p><b>Phoneme:</b> {viewingQuestionDetails.phonemeJson || "N/A"}</p>
+      </div>
+    )}
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setViewingQuestionDetails(null)}>
+        Close
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
 
       {/* Chapter View - When viewMode === 'chapter' */}
-      {viewMode === "chapter" && selectedCourse && (
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Button
-                  onClick={handleBackToCourses}
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer hover:bg-slate-100"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Back
-                </Button>
-                <div className="h-8 w-px bg-slate-200"></div>
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <FolderOpen className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">Chapter Management</h2>
-                  <p className="text-sm text-slate-500 font-normal">
-                    Course: <span className="font-medium text-slate-700">{selectedCourse.title}</span>
-                  </p>
-                </div>
-              </div>
-              <Button
-                onClick={handleCreateChapter}
-                size="sm"
-                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white cursor-pointer shadow-md hover:shadow-lg transition-all"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Chapter
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            {isChaptersLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : isChaptersError ? (
-              <div className="text-center py-12">
-                <div className="text-red-500 text-lg font-semibold mb-2">
-                  Error loading chapters
-                </div>
-                <p className="text-slate-600 mb-4">
-                  {chaptersError?.message || "Please try again later"}
-                </p>
-                <Button onClick={() => refetchChapters()} variant="outline" className="cursor-pointer">
-                  Retry
-                </Button>
-              </div>
-            ) : chaptersData?.data && chaptersData.data.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead className="w-24 font-semibold">ID</TableHead>
-                      <TableHead className="font-semibold">Title</TableHead>
-                      <TableHead className="font-semibold">Description</TableHead>
-                      <TableHead className="text-center font-semibold w-32">Exercises</TableHead>
-                      <TableHead className="text-center font-semibold w-32">Created</TableHead>
-                      <TableHead className="text-center font-semibold w-64">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {chaptersData.data.map((chapter) => (
-                      <React.Fragment key={chapter.chapterId}>
-                        <TableRow className="hover:bg-slate-50/50 transition-colors">
-                          <TableCell className="font-mono text-xs text-slate-500">
-                            <div className="truncate max-w-[80px]" title={chapter.chapterId}>
-                              {chapter.chapterId.substring(0, 8)}...
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-semibold text-slate-900">
-                              {chapter.title}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-slate-600 max-w-md truncate" title={chapter.description || "No description"}>
-                              {chapter.description || <span className="italic text-slate-400">No description</span>}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="font-medium bg-blue-50 text-blue-700 border-blue-200">
-                              <FileText className="h-3 w-3 mr-1" />
-                              {chapter.numberOfExercise}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center text-sm text-slate-600 font-medium">
-                            {new Date(chapter.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <Button
-                                size="sm"
-                                variant={
-                                  expandedChapterId === chapter.chapterId
-                                    ? "default"
-                                    : "outline"
-                                }
-                                className={
-                                  expandedChapterId === chapter.chapterId
-                                    ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-                                    : "bg-white border border-gray-300 text-black hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-sm transition-all"
-                                }
-                                onClick={() =>
-                                  handleToggleExercises(chapter.chapterId)
-                                }
-                                title={expandedChapterId === chapter.chapterId ? "Hide Exercises" : "View Exercises"}
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditChapter(chapter as unknown as Record<string, unknown>)}
-                                title="Edit Chapter"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
-                                onClick={() => handleDeleteChapter(chapter)}
-                                title="Delete Chapter"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-
-                      {/* Expanded Exercises Row */}
-                      {expandedChapterId === chapter.chapterId && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="bg-slate-50 p-0">
-                            <div className="p-6">
-                              <div className="mb-4 flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-slate-800 flex items-center">
-                                  <FileText className="h-5 w-5 mr-2 " />
-                                  Exercises
-                                </h3>
-                                <Button
-                                  size="sm"
-                                  className="bg-white border border-gray-300 text-black hover:bg-gray-100 cursor-pointer shadow-sm"
-                                  onClick={handleCreateExercise}
-                                >
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  Add Exercise
-                                </Button>
-                              </div>
-
-                              {isExercisesLoading ? (
-                                <div className="space-y-3">
-                                  {[1, 2].map((i) => (
-                                    <Skeleton key={i} className="h-12 w-full" />
-                                  ))}
-                                </div>
-                              ) : isExercisesError ? (
-                                <div className="text-center py-8 bg-white rounded-md">
-                                  <div className="text-red-500 font-semibold mb-2">
-                                    Error loading exercises
-                                  </div>
-                                  <p className="text-slate-600 text-sm mb-3">
-                                    {exercisesError?.message ||
-                                      "Please try again"}
-                                  </p>
-                                  <Button
-                                    onClick={() => refetchExercises()}
-                                    size="sm"
-                                    variant="outline"
-                                    className="cursor-pointer"
-                                  >
-                                    Retry
-                                  </Button>
-                                </div>
-                              ) : exercisesData?.data &&
-                                exercisesData.data.length > 0 ? (
-                                <div className="bg-white rounded-md border overflow-x-auto">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow className="bg-slate-50">
-                                        <TableHead className="w-24 font-semibold">ID</TableHead>
-                                        <TableHead className="font-semibold">Title</TableHead>
-                                        <TableHead className="font-semibold">Description</TableHead>
-                                        <TableHead className="text-center font-semibold w-24">Order</TableHead>
-                                        <TableHead className="text-center font-semibold w-32">Questions</TableHead>
-                                        <TableHead className="text-center font-semibold w-64">Actions</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {[...exercisesData.data]
-                                        .sort(
-                                          (a, b) => a.orderIndex - b.orderIndex
-                                        )
-                                        .map((exercise) => (
-                                          <React.Fragment
-                                            key={exercise.exerciseId}
-                                          >
-                                            <TableRow className="hover:bg-slate-50/50 transition-colors">
-                                              <TableCell className="font-mono text-xs text-slate-500">
-                                                <div className="truncate max-w-[80px]" title={exercise.exerciseId}>
-                                                  {exercise.exerciseId.substring(0, 8)}...
-                                                </div>
-                                              </TableCell>
-                                              <TableCell>
-                                                <div className="font-semibold text-slate-900">
-                                                  {exercise.title}
-                                                </div>
-                                              </TableCell>
-                                              <TableCell>
-                                                <div className="text-sm text-slate-600 max-w-xs truncate" title={exercise.description || "No description"}>
-                                                  {exercise.description || <span className="italic text-slate-400">No description</span>}
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="text-center">
-                                                <Badge variant="secondary" className="font-medium">
-                                                  #{exercise.orderIndex}
-                                                </Badge>
-                                              </TableCell>
-                                              <TableCell className="text-center">
-                                                <Badge variant="outline" className="font-medium bg-purple-50 text-purple-700 border-purple-200">
-                                                  <HelpCircle className="h-3 w-3 mr-1" />
-                                                  {exercise.numberOfQuestion}
-                                                </Badge>
-                                              </TableCell>
-                                              <TableCell className="text-center">
-                                                <div className="flex items-center justify-center gap-1.5">
-                                                  <Button
-                                                    size="sm"
-                                                    variant={
-                                                      expandedExerciseId ===
-                                                      exercise.exerciseId
-                                                        ? "default"
-                                                        : "outline"
-                                                    }
-                                                    className={
-                                                      expandedExerciseId === exercise.exerciseId
-                                                        ? "bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
-                                                        : "bg-white border border-gray-300 text-black hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 cursor-pointer shadow-sm transition-all"
-                                                    }
-                                                    onClick={() =>
-                                                      handleToggleQuestions(
-                                                        exercise.exerciseId
-                                                      )
-                                                    }
-                                                    title={expandedExerciseId === exercise.exerciseId ? "Hide Questions" : "View Questions"}
-                                                  >
-                                                    <HelpCircle className="h-4 w-4" />
-                                                  </Button>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleEditExercise(exercise)}
-                                                    className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
-                                                    title="Edit Exercise"
-                                                  >
-                                                    <Pencil className="h-4 w-4" />
-                                                  </Button>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleDeleteExercise(exercise)}
-                                                    className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
-                                                    title="Delete Exercise"
-                                                  >
-                                                    <Trash2 className="h-4 w-4" />
-                                                  </Button>
-                                                </div>
-                                              </TableCell>
-                                            </TableRow>
-
-                                            {/* Expanded Questions Row */}
-                                            {expandedExerciseId ===
-                                              exercise.exerciseId && (
-                                              <TableRow>
-                                                <TableCell
-                                                  colSpan={6}
-                                                  className="bg-purple-50 p-0"
-                                                >
-                                                  <div className="p-6">
-                                                    <div className="mb-4 flex items-center justify-between">
-                                                      <h3 className="text-lg font-semibold text-slate-800 flex items-center">
-                                                        <HelpCircle className="h-5 w-5 mr-2 text-purple-600" />
-                                                        Questions
-                                                      </h3>
-                                                      <Button
-                                                        size="sm"
-                                                        className="bg-white border border-gray-300 text-black hover:bg-gray-100 cursor-pointer shadow-sm"
-                                                        onClick={
-                                                          handleCreateQuestion
-                                                        }
-                                                      >
-                                                        <Plus className="h-4 w-4 mr-1" />
-                                                        Add Question
-                                                      </Button>
-                                                    </div>
-
-                                                    {isQuestionsLoading ? (
-                                                      <div className="space-y-3">
-                                                        {[1, 2].map((i) => (
-                                                          <Skeleton
-                                                            key={i}
-                                                            className="h-12 w-full"
-                                                          />
-                                                        ))}
-                                                      </div>
-                                                    ) : isQuestionsError ? (
-                                                      <div className="text-center py-8 bg-white rounded-md">
-                                                        <div className="text-red-500 font-semibold mb-2">
-                                                          Error loading
-                                                          questions
-                                                        </div>
-                                                        <p className="text-slate-600 text-sm mb-3">
-                                                          {questionsError?.message ||
-                                                            "Please try again"}
-                                                        </p>
-                                                        <Button
-                                                          onClick={() =>
-                                                            refetchQuestions()
-                                                          }
-                                                          size="sm"
-                                                          variant="outline"
-                                                          className="cursor-pointer"
-                                                        >
-                                                          Retry
-                                                        </Button>
-                                                      </div>
-                                                    ) : questionsData?.data &&
-                                                      questionsData.data
-                                                        .length > 0 ? (
-                                                      <div className="bg-white rounded-md border overflow-x-auto">
-                                                        <Table>
-                                                          <TableHeader>
-                                                            <TableRow className="bg-slate-50">
-                                                              <TableHead className="w-24 font-semibold">ID</TableHead>
-                                                              <TableHead className="font-semibold">Text</TableHead>
-                                                              <TableHead className="text-center font-semibold w-24">Type</TableHead>
-                                                              <TableHead className="text-center font-semibold w-24">Order</TableHead>
-                                                              <TableHead className="text-center font-semibold w-32">Phoneme</TableHead>
-                                                              <TableHead className="text-center font-semibold w-64">Actions</TableHead>
-                                                            </TableRow>
-                                                          </TableHeader>
-                                                          <TableBody>
-                                                            {[
-                                                              ...questionsData.data,
-                                                            ]
-                                                              .sort(
-                                                                (a, b) =>
-                                                                  a.orderIndex -
-                                                                  b.orderIndex
-                                                              )
-                                                              .map(
-                                                                (question) => (
-                                                                  <React.Fragment
-                                                                    key={
-                                                                      question.questionId
-                                                                    }
-                                                                  >
-                                                                    <TableRow className="hover:bg-slate-50/50 transition-colors">
-                                                                      <TableCell className="font-mono text-xs text-slate-500">
-                                                                        <div className="truncate max-w-[80px]" title={question.questionId}>
-                                                                          {question.questionId.substring(0, 8)}...
-                                                                        </div>
-                                                                      </TableCell>
-                                                                      <TableCell>
-                                                                        <div className="text-sm font-semibold text-slate-900">
-                                                                          {
-                                                                            question.text
-                                                                          }
-                                                                        </div>
-                                                                      </TableCell>
-                                                                      <TableCell className="text-center">
-                                                                        <Badge variant="outline" className="font-medium bg-indigo-50 text-indigo-700 border-indigo-200">
-                                                                          {questionTypeOptions.find(
-                                                                            opt => opt.value === parseInt(question.type)
-                                                                          )?.label || question.type}
-                                                                        </Badge>
-                                                                      </TableCell>
-                                                                      <TableCell className="text-center">
-                                                                        <Badge variant="secondary" className="font-medium">
-                                                                          #{
-                                                                            question.orderIndex
-                                                                          }
-                                                                        </Badge>
-                                                                      </TableCell>
-                                                                      <TableCell className="text-center">
-                                                                        <Badge variant="outline" className="font-mono text-xs truncate max-w-[100px]" title={String(question.phonemeJson)}>
-                                                                          {String(question.phonemeJson).substring(0, 10)}...
-                                                                        </Badge>
-                                                                      </TableCell>
-                                                                      <TableCell className="text-center">
-                                                                        <div className="flex items-center justify-center gap-1.5">
-                                                                          <Button
-                                                                            size="sm"
-                                                                            variant={
-                                                                              expandedQuestionId ===
-                                                                              question.questionId
-                                                                                ? "default"
-                                                                                : "outline"
-                                                                            }
-                                                                            className={
-                                                                              expandedQuestionId === question.questionId
-                                                                                ? "bg-pink-600 text-white hover:bg-pink-700 cursor-pointer"
-                                                                                : "bg-white border border-gray-300 text-black hover:bg-pink-50 hover:text-pink-700 hover:border-pink-300 cursor-pointer shadow-sm transition-all"
-                                                                            }
-                                                                            onClick={() =>
-                                                                              handleToggleMedia(
-                                                                                question.questionId
-                                                                              )
-                                                                            }
-                                                                            title={expandedQuestionId === question.questionId ? "Hide Media" : "View Media"}
-                                                                          >
-                                                                            <FileImage className="h-4 w-4" />
-                                                                          </Button>
-                                                                          <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            onClick={() => handleEditQuestion(question)}
-                                                                            className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
-                                                                            title="Edit Question"
-                                                                          >
-                                                                            <Pencil className="h-4 w-4" />
-                                                                          </Button>
-                                                                          <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
-                                                                            onClick={() => handleDeleteQuestion(question)}
-                                                                            title="Delete Question"
-                                                                          >
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                          </Button>
-                                                                        </div>
-                                                                      </TableCell>
-                                                                    </TableRow>
-
-                                                                    {/* Expanded Media Row */}
-                                                                    {expandedQuestionId ===
-                                                                      question.questionId && (
-                                                                      <TableRow>
-                                                                        <TableCell
-                                                                          colSpan={
-                                                                            6
-                                                                          }
-                                                                          className="bg-purple-50 p-0"
-                                                                        >
-                                                                          <div className="p-6">
-                                                                            <div className="mb-4 flex items-center justify-between">
-                                                                              <h4 className="text-md font-semibold text-slate-800 flex items-center">
-                                                                                <FileImage className="h-5 w-5 mr-2 text-purple-600" />
-                                                                                Media
-                                                                                Library
-                                                                              </h4>
-                                                                              <Button
-                                                                                size="sm"
-                                                                             className="bg-white border border-gray-300 text-black hover:bg-gray-100 cursor-pointer shadow-sm"
-                                                                                onClick={
-                                                                                  handleCreateMedia
-                                                                                }
-                                                                              >
-                                                                                <Plus className="h-4 w-4 mr-2" />
-                                                                                Add
-                                                                                Media
-                                                                              </Button>
-                                                                            </div>
-
-                                                                            {isMediaLoading ? (
-                                                                              <div className="text-center py-4">
-                                                                                <div className="text-slate-500">
-                                                                                  Loading
-                                                                                  media...
-                                                                                </div>
-                                                                              </div>
-                                                                            ) : isMediaError ? (
-                                                                              <div className="text-center py-4 text-red-500">
-                                                                                Error
-                                                                                loading
-                                                                                media:{" "}
-                                                                                {
-                                                                                  mediaError?.message
-                                                                                }
-                                                                              </div>
-                                                                            ) : mediaData?.data &&
-                                                                              mediaData
-                                                                                .data
-                                                                                .length >
-                                                                                0 ? (
-                                                                              <div className="overflow-x-auto">
-                                                                                <Table>
-                                                                                  <TableHeader>
-                                                                                    <TableRow className="bg-slate-50">
-                                                                                      <TableHead className="w-24 font-semibold">
-                                                                                        ID
-                                                                                      </TableHead>
-                                                                                      <TableHead className="w-24 font-semibold">
-                                                                                        Accent
-                                                                                      </TableHead>
-                                                                                      <TableHead className="text-center font-semibold">
-                                                                                        Actions
-                                                                                      </TableHead>
-                                                                                    </TableRow>
-                                                                                  </TableHeader>
-                                                                                  <TableBody>
-                                                                                    {mediaData.data.map(
-                                                                                      (
-                                                                                        media
-                                                                                      ) => (
-                                                                                        <TableRow
-                                                                                          key={
-                                                                                            media.questionMediaId
-                                                                                          }
-                                                                                          className="hover:bg-slate-50/50 transition-colors"
-                                                                                        >
-                                                                                          <TableCell className="text-xs font-mono text-slate-500">
-                                                                                            <div className="truncate max-w-[80px]" title={media.questionMediaId}>
-                                                                                              {media.questionMediaId.substring(0, 8)}...
-                                                                                            </div>
-                                                                                          </TableCell>
-                                                                                          <TableCell>
-                                                                                            <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 font-medium">
-                                                                                              {
-                                                                                                media.accent
-                                                                                              }
-                                                                                            </Badge>
-                                                                                          </TableCell>
-                                                                                          <TableCell className="text-center">
-                                                                                            <div className="flex items-center justify-center gap-1.5">
-                                                                                              <Button
-                                                                                                size="sm"
-                                                                                                variant="outline"
-                                                                                                onClick={() => setViewingMediaDetails(media)}
-                                                                                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all"
-                                                                                                title="View Details"
-                                                                                              >
-                                                                                                <FileText className="h-4 w-4" />
-                                                                                              </Button>
-                                                                                              <Button
-                                                                                                size="sm"
-                                                                                                variant="outline"
-                                                                                                onClick={() =>
-                                                                                                  handleEditMedia(
-                                                                                                    media
-                                                                                                  )
-                                                                                                }
-                                                                                                className="hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 cursor-pointer transition-all"
-                                                                                                title="Edit Media"
-                                                                                              >
-                                                                                                <Pencil className="h-4 w-4" />
-                                                                                              </Button>
-                                                                                              <Button
-                                                                                                size="sm"
-                                                                                                variant="outline"
-                                                                                                onClick={() => handleDeleteMedia(media)}
-                                                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 cursor-pointer transition-all"
-                                                                                                title="Delete Media"
-                                                                                              >
-                                                                                                <Trash2 className="h-4 w-4" />
-                                                                                              </Button>
-                                                                                            </div>
-                                                                                          </TableCell>
-                                                                                        </TableRow>
-                                                                                      )
-                                                                                    )}
-                                                                                  </TableBody>
-                                                                                </Table>
-                                                                              </div>
-                                                                            ) : (
-                                                                              <div className="text-center py-8 bg-white rounded-md">
-                                                                                <FileImage className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                                                                                <div className="text-slate-500 font-semibold mb-2">
-                                                                                  No
-                                                                                  media
-                                                                                  yet
-                                                                                </div>
-                                                                                <p className="text-slate-600 text-sm mb-3">
-                                                                                  Add
-                                                                                  media
-                                                                                  files
-                                                                                  for
-                                                                                  this
-                                                                                  question
-                                                                                </p>
-                                                                                <Button
-                                                                                  onClick={
-                                                                                    handleCreateMedia
-                                                                                  }
-                                                                                  size="sm"
-                                                                                  variant="outline"
-                                                                                  className="cursor-pointer"
-                                                                                >
-                                                                                  <Plus className="h-4 w-4 mr-2" />
-                                                                                  Add
-                                                                                  First
-                                                                                  Media
-                                                                                </Button>
-                                                                              </div>
-                                                                            )}
-                                                                          </div>
-                                                                        </TableCell>
-                                                                      </TableRow>
-                                                                    )}
-                                                                  </React.Fragment>
-                                                                )
-                                                              )}
-                                                          </TableBody>
-                                                        </Table>
-                                                      </div>
-                                                    ) : (
-                                                      <div className="text-center py-8 bg-white rounded-md">
-                                                        <HelpCircle className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                                                        <div className="text-slate-500 font-semibold mb-2">
-                                                          No questions yet
-                                                        </div>
-                                                        <p className="text-slate-600 text-sm mb-3">
-                                                          Create the first
-                                                          question for this
-                                                          exercise
-                                                        </p>
-                                                        <Button
-                                                          onClick={
-                                                            handleCreateQuestion
-                                                          }
-                                                          size="sm"
-                                                          variant="outline"
-                                                        >
-                                                          <Plus className="h-4 w-4 mr-2" />
-                                                          Create Question
-                                                        </Button>
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                </TableCell>
-                                              </TableRow>
-                                            )}
-                                          </React.Fragment>
-                                        ))}
-                                    </TableBody>
-                                  </Table>
-                                </div>
-                              ) : (
-                                <div className="text-center py-8 bg-white rounded-md">
-                                  <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                                  <div className="text-slate-500 font-semibold mb-2">
-                                    No exercises yet
-                                  </div>
-                                  <p className="text-slate-600 text-sm mb-3">
-                                    Create the first exercise for this chapter
-                                  </p>
-                                  <Button
-                                    onClick={handleCreateExercise}
-                                    size="sm"
-                                    variant="outline"
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Create Exercise
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </TableBody>
-              </Table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <FolderOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                <div className="text-slate-500 text-lg font-semibold mb-2">
-                  No chapters yet
-                </div>
-                <p className="text-slate-600 mb-4">
-                  Start by creating your first chapter for this course
-                </p>
-                <Button className="cursor-pointer" onClick={handleCreateChapter} variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Chapter
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Exercise View - When viewMode === 'exercise' */}
-      {viewMode === "exercise" && selectedChapter && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FileText className="h-5 w-5" />
-              <span>Exercises List</span>
-              <div className="ml-auto">
-                <Button
-                  onClick={handleCreateExercise}
-                  size="sm"
-                  className="bg-gradient-to-r cursor-pointer from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Exercise
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isExercisesLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : isExercisesError ? (
-              <div className="text-center py-12">
-                <div className="text-red-500 text-lg font-semibold mb-2">
-                  Error loading exercises
-                </div>
-                <p className="text-slate-600 mb-4">
-                  {exercisesError?.message || "Please try again later"}
-                </p>
-                <Button onClick={() => refetchExercises()} variant="outline" className="cursor-pointer">
-                  Retry
-                </Button>
-              </div>
-            ) : exercisesData?.data && exercisesData.data.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">ExerciseId</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-center">Order Index</TableHead>
-                    <TableHead className="text-center">Questions</TableHead>
-                    <TableHead className="text-center">Created At</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[...exercisesData.data]
-                    .sort((a, b) => a.orderIndex - b.orderIndex)
-                    .map((exercise) => (
-                      <TableRow
-                        key={exercise.exerciseId}
-                        className="hover:bg-slate-50"
-                      >
-                        <TableCell className="font-medium text-slate-600">
-                          {exercise.exerciseId}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-slate-800">
-                            {exercise.title}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-slate-600 max-w-md truncate">
-                            {exercise.description || "No description"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline">{exercise.orderIndex}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary">
-                            {exercise.numberOfQuestion || 0}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-sm text-slate-600">
-                          {new Date(exercise.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
-                              onClick={() =>
-                                handleViewQuestions({
-                                  exerciseId: exercise.exerciseId,
-                                  title: exercise.title,
-                                  description: exercise.description,
-                                  orderIndex: exercise.orderIndex,
-                                })
-                              }
-                            >
-                              <HelpCircle className="h-4 w-4 mr-1" />
-                              <span className="text-xs">Questions</span>
-                            </Button>
-                            <Button size="sm" variant="outline" className="cursor-pointer">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-12">
-                <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                <div className="text-slate-500 text-lg font-semibold mb-2">
-                  No exercises yet
-                </div>
-                <p className="text-slate-600 mb-4">
-                  Start by creating your first exercise for this chapter
-                </p>
-                <Button onClick={handleCreateExercise} variant="outline" className="cursor-pointer">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Exercise
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Question View - When viewMode === 'question' */}
-      {viewMode === "question" && selectedExercise && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <HelpCircle className="h-5 w-5" />
-              <span>Questions List</span>
-              <div className="ml-auto">
-                <Button
-                  onClick={handleCreateQuestion}
-                  size="sm"
-                  className="bg-gradient-to-r cursor-pointer from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Question
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Mock data - replace with actual API call */}
-            <div className="text-center py-12">
-              <HelpCircle className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <div className="text-slate-500 text-lg font-semibold mb-2">
-                No questions yet
-              </div>
-              <p className="text-slate-600 mb-4">
-                Start by creating your first question for this exercise
-              </p>
-              <Button onClick={handleCreateQuestion} variant="outline" className="cursor-pointer">
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Question
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+     
     </div>
   );
 };

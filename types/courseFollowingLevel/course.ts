@@ -85,4 +85,3 @@ interface CourseOfLevel {
   level: string;
   price: number;
 }
-
