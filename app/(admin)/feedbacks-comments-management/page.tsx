@@ -24,6 +24,7 @@ import {
   useAdminFeedback,
   useAdminFeedbackDetail,
   useAdminFeedbackReject,
+  useAdminFeedbackApprove,
 } from "@/features/admin/hooks/useAdminFeedback";
 import {
   Feedback as ApiFeedback,
@@ -127,6 +128,8 @@ const FeedbacksCommentsManagement = () => {
     null
   );
   const [showActionModal, setShowActionModal] = useState<boolean>(false);
+  const [actionType, setActionType] = useState<"approve" | "reject" | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const queryClient = useQueryClient();
@@ -158,6 +161,7 @@ const FeedbacksCommentsManagement = () => {
 
   // Reject mutation
   const rejectMutation = useAdminFeedbackReject();
+  const approveMutation = useAdminFeedbackApprove();
 
   // Map API feedbacks to UI structure
   const apiFeedbacks = useMemo<ApiFeedback[]>(() => {
@@ -241,31 +245,84 @@ const FeedbacksCommentsManagement = () => {
     setShowDetailsModal(true);
   };
 
-  const handleAction = (feedback: Feedback, action: "reject") => {
+  const handleAction = (feedback: Feedback, action: "approve" | "reject") => {
     setSelectedFeedbackId(feedback.feedbackId);
+    setActionType(action);
     setShowActionModal(true);
+    if (action === "reject") {
+      setRejectReason("");
+    }
+  };
+  const closeActionModal = () => {
+    setShowActionModal(false);
+    setSelectedFeedbackId(null);
+    setActionType(null);
+    setRejectReason("");
   };
 
-  const handleReject = () => {
-    if (!selectedFeedbackId) return;
-    
-    rejectMutation.mutate(selectedFeedbackId, {
+  const handleConfirmAction = () => {
+    if (!selectedFeedbackId || !actionType) return;
+
+    const isApprove = actionType === "approve";
+    const successMessage = isApprove
+      ? "Phê duyệt phản hồi thành công"
+      : "Từ chối phản hồi thành công";
+    const errorMessage = isApprove
+      ? "Có lỗi xảy ra khi phê duyệt phản hồi"
+      : "Có lỗi xảy ra khi từ chối phản hồi";
+
+    const onSettled = {
       onSuccess: () => {
-        toast.success("Từ chối phản hồi thành công");
+        toast.success(successMessage);
         queryClient.invalidateQueries({ queryKey: ["adminFeedback"] });
-        setShowActionModal(false);
-        setSelectedFeedbackId(null);
+        closeActionModal();
       },
       onError: (error: Error) => {
-        toast.error(error.message || "Có lỗi xảy ra khi từ chối phản hồi");
+        toast.error(error.message || errorMessage);
       },
-    });
+    };
+
+    if (isApprove) {
+      approveMutation.mutate(selectedFeedbackId, onSettled);
+    } else {
+      if (!rejectReason.trim()) {
+        toast.error("Vui lòng nhập lý do từ chối.");
+        return;
+      }
+      rejectMutation.mutate({ feedbackId: selectedFeedbackId, reason: rejectReason.trim() }, onSettled);
+    }
   };
 
   const handleSearchInput = (value: string) => {
     setSearch(value);
     setPageNumber(1);
   };
+
+  const isApproveAction = actionType === "approve";
+  const actionModalConfig = isApproveAction
+    ? {
+        title: "Phê duyệt phản hồi",
+        description: "Xác nhận hành động phê duyệt này",
+        headerBg: "from-green-50 to-emerald-50",
+        iconBg: "bg-green-100",
+        iconColor: "text-green-600",
+        primaryButtonClass: "bg-green-600 text-white hover:bg-green-700 cursor-pointer",
+        primaryLabel: "Phê duyệt",
+      }
+    : {
+        title: "Từ chối phản hồi",
+        description: "Xác nhận hành động này",
+        headerBg: "from-red-50 to-pink-50",
+        iconBg: "bg-red-100",
+        iconColor: "text-red-600",
+        primaryButtonClass: "bg-red-600 text-white hover:bg-red-700 cursor-pointer",
+        primaryLabel: "Từ chối",
+      };
+
+  const isActionPending =
+    actionType === "approve" ? approveMutation.isPending : rejectMutation.isPending;
+  const isPrimaryDisabled =
+    isActionPending || (!isApproveAction && !rejectReason.trim());
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -329,12 +386,7 @@ const FeedbacksCommentsManagement = () => {
                 </TabsList>
               </Tabs>
             </div>
-            <Button 
-              className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 cursor-pointer transition-all hover:shadow-lg flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Xuất báo cáo
-            </Button>
+            
           </div>
         </CardContent>
       </Card>
@@ -450,7 +502,6 @@ const FeedbacksCommentsManagement = () => {
                   <TableRow className="bg-gray-50 hover:bg-gray-50">
                     <TableHead className="font-semibold text-gray-700">ID</TableHead>
                     <TableHead className="font-semibold text-gray-700">Người đánh giá</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Mục tiêu</TableHead>
                     <TableHead className="font-semibold text-gray-700">Điểm</TableHead>
                     <TableHead className="font-semibold text-gray-700">Ngày tạo</TableHead>
                     <TableHead className="font-semibold text-gray-700">Trạng thái</TableHead>
@@ -477,18 +528,6 @@ const FeedbacksCommentsManagement = () => {
                             {feedback.reviewer.userType === "learner"
                               ? "người học"
                               : "người hướng dẫn"}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">
-                            {feedback.target.name}
-                          </span>
-                          <Badge variant="secondary" className="w-fit text-xs mt-1">
-                            {feedback.target.type === "mentor"
-                              ? "người hướng dẫn"
-                              : "gói dịch vụ"}
                           </Badge>
                         </div>
                       </TableCell>
@@ -536,6 +575,7 @@ const FeedbacksCommentsManagement = () => {
                               <MoreVertical className="w-4 h-4 text-gray-600" />
                             </Button>
                           </DropdownMenuTrigger>
+                          
                           <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem
                               onClick={() => handleViewDetails(feedback)}
@@ -544,13 +584,24 @@ const FeedbacksCommentsManagement = () => {
                               <Eye className="w-4 h-4" />
                               Xem chi tiết
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleAction(feedback, "reject")}
-                              className="cursor-pointer flex items-center gap-2 text-red-600 focus:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                              Từ chối
-                            </DropdownMenuItem>
+                            {feedback.status=== "Pending" && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => handleAction(feedback, "approve")}
+                                  className="cursor-pointer flex items-center gap-2 text-green-600 focus:text-green-700"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Phê duyệt
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleAction(feedback, "reject")}
+                                  className="cursor-pointer flex items-center gap-2 text-red-600 focus:text-red-700"
+                                >
+                                  <X className="w-4 h-4" />
+                                  Từ chối
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -629,29 +680,27 @@ const FeedbacksCommentsManagement = () => {
 
       {/* Modal xác nhận từ chối */}
       {showActionModal && selectedFeedback && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => {
-          setShowActionModal(false);
-          setSelectedFeedbackId(null);
-        }}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeActionModal}>
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b bg-gradient-to-r from-red-50 to-pink-50">
+            <div className={`p-6 border-b bg-gradient-to-r ${actionModalConfig.headerBg}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-full">
-                    <XCircle className="w-6 h-6 text-red-600" />
+                  <div className={`p-2 ${actionModalConfig.iconBg} rounded-full`}>
+                    {isApproveAction ? (
+                      <CheckCircle2 className={`w-6 h-6 ${actionModalConfig.iconColor}`} />
+                    ) : (
+                      <XCircle className={`w-6 h-6 ${actionModalConfig.iconColor}`} />
+                    )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">Từ chối phản hồi</h3>
-                    <p className="text-sm text-gray-600 mt-1">Xác nhận hành động này</p>
+                    <h3 className="text-lg font-bold text-gray-900">{actionModalConfig.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{actionModalConfig.description}</p>
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    setShowActionModal(false);
-                    setSelectedFeedbackId(null);
-                  }}
+                  onClick={closeActionModal}
                   className="h-8 w-8 p-0 cursor-pointer hover:bg-white/50 rounded-full"
                 >
                   <X className="w-4 h-4" />
@@ -660,7 +709,7 @@ const FeedbacksCommentsManagement = () => {
             </div>
             <div className="p-6">
               <p className="text-sm text-gray-600 mb-4">
-                Bạn có chắc muốn từ chối phản hồi này? Hành động này không thể hoàn tác.
+                Bạn có chắc muốn {isApproveAction ? "phê duyệt" : "từ chối"} phản hồi này? Hành động này không thể hoàn tác.
               </p>
               <div className="p-4 bg-gray-50 rounded-lg space-y-2">
                 <div>
@@ -678,30 +727,40 @@ const FeedbacksCommentsManagement = () => {
                   </p>
                 </div>
               </div>
+              {!isApproveAction && (
+                <div className="mt-4 space-y-2">
+                  <label className="text-xs font-semibold text-gray-600">
+                    Lý do từ chối (bắt buộc)
+                  </label>
+                  <textarea
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Nhập lý do của bạn..."
+                    className="w-full min-h-[90px] rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+                  />
+                </div>
+              )}
               <div className="flex items-center justify-end gap-3 mt-6">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setShowActionModal(false);
-                    setSelectedFeedbackId(null);
-                  }}
-                  disabled={rejectMutation.isPending}
+                  onClick={closeActionModal}
+                  disabled={isActionPending}
                   className="cursor-pointer"
                 >
                   Hủy
                 </Button>
                 <Button
-                  onClick={handleReject}
-                  disabled={rejectMutation.isPending}
-                  className="bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+                  onClick={handleConfirmAction}
+                  disabled={isPrimaryDisabled}
+                  className={actionModalConfig.primaryButtonClass}
                 >
-                  {rejectMutation.isPending ? (
+                  {isActionPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Đang xử lý...
                     </>
                   ) : (
-                    "Từ chối"
+                    actionModalConfig.primaryLabel
                   )}
                 </Button>
               </div>

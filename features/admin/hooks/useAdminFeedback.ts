@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
-import { AdminFeedbackDetailResponse, adminFeedbackDetailService, AdminFeedbackRejectResponse, adminFeedbackRejectService, AdminFeedbackResponse, adminFeedbackService } from "../services/adminFeedbackService";
+import { adminFeedbackApproveService, AdminFeedbackDetailResponse, adminFeedbackDetailService, AdminFeedbackRejectPayload, AdminFeedbackRejectResponse, adminFeedbackRejectService, AdminFeedbackResponse, adminFeedbackService } from "../services/adminFeedbackService";
 export const useAdminFeedback = (pageNumber: number, pageSize: number, status: string, keyword: string) => {
     return useQuery<AdminFeedbackResponse, Error>({
         queryKey: ["adminFeedback", pageNumber, pageSize, status, keyword],
@@ -16,7 +16,12 @@ export const useAdminFeedbackDetail = (feedbackId: string) => {
     });
 };
 export const useAdminFeedbackReject = () => {
+    return useMutation<AdminFeedbackRejectResponse, Error, AdminFeedbackRejectPayload>({
+        mutationFn: (payload: AdminFeedbackRejectPayload) => adminFeedbackRejectService(payload),
+    });
+};
+export const useAdminFeedbackApprove = () => {
     return useMutation<AdminFeedbackRejectResponse, Error, string>({
-        mutationFn: (feedbackId: string) => adminFeedbackRejectService(feedbackId),
+        mutationFn: (feedbackId: string) => adminFeedbackApproveService(feedbackId),
     });
 };

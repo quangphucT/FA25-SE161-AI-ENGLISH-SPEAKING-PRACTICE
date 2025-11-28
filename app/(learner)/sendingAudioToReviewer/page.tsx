@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -21,6 +21,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -39,6 +46,9 @@ import {
   Calendar,
   User,
   Send,
+  Search,
+  X,
+  Filter,
 } from "lucide-react";
 import type { LearnerReviewHistory } from "@/features/learner/services/learnerReviewService";
 
@@ -46,15 +56,39 @@ const PAGE_SIZE = 10;
 
 const SendingAudioToReviewer = () => {
   const [pageNumber, setPageNumber] = useState<number>(1);
+  const [status, setStatus] = useState<string>("all"); // Use "all" instead of empty string
+  const [keyword, setKeyword] = useState<string>("");
+  const [searchKeyword, setSearchKeyword] = useState<string>(""); // Debounced keyword
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<LearnerReviewHistory | null>(null);
   const [feedbackRating, setFeedbackRating] = useState<number>(5);
   const [feedbackContent, setFeedbackContent] = useState("");
   
+  // Convert "all" to empty string for API call
+  const apiStatus = status === "all" ? "" : status;
+  
   const { data, isLoading, isError, error } = useLearnerReviewHistory(
     pageNumber,
-    PAGE_SIZE
+    PAGE_SIZE,
+    apiStatus,
+    searchKeyword
   );
+
+  // Debounce keyword search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchKeyword(keyword);
+      setPageNumber(1); // Reset to first page when search changes
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [keyword]);
+
+  // Reset to first page when status filter changes
+  // React Query will automatically refetch when status changes (queryKey includes status)
+  useEffect(() => {
+    setPageNumber(1);
+  }, [status]);
   const { mutate: submitFeedback, isPending: isSubmittingFeedback } = useLearnerFeedback();
 
   const reviews = useMemo(() => data?.data?.items ?? [], [data]);
@@ -73,6 +107,21 @@ const SendingAudioToReviewer = () => {
     }
   };
 
+  const handleKeywordChange = (value: string) => {
+    setKeyword(value);
+  };
+
+  const handleClearSearch = () => {
+    setKeyword("");
+    setSearchKeyword("");
+    setPageNumber(1);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
+    setPageNumber(1); // Reset to first page when filter changes
+  };
+
   const handleOpenFeedback = (review: LearnerReviewHistory) => {
     setSelectedReview(review);
     setFeedbackRating(5);
@@ -81,7 +130,23 @@ const SendingAudioToReviewer = () => {
   };
 
   const handleSubmitFeedback = () => {
-    if (!selectedReview) return;
+    if (!selectedReview) {
+      return;
+    }
+    
+    // Validate inputs
+    if (!feedbackContent.trim()) {
+      return;
+    }
+    
+    if (feedbackRating < 1 || feedbackRating > 5) {
+      return;
+    }
+    
+    if (!selectedReview.reviewId) {
+      return;
+    }
+    
     submitFeedback(
       {
         reviewId: selectedReview.reviewId,
@@ -92,7 +157,12 @@ const SendingAudioToReviewer = () => {
         onSuccess: () => {
           setIsFeedbackDialogOpen(false);
           setFeedbackContent("");
+          setFeedbackRating(5);
           setSelectedReview(null);
+        },
+        onError: (error) => {
+          // Error is already handled by the hook's onError callback
+          console.error("Feedback submission error:", error);
         },
       }
     );
@@ -198,12 +268,50 @@ const SendingAudioToReviewer = () => {
       {/* Reviews Table */}
       <Card className="shadow-sm">
         <CardHeader className="border-b bg-white">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-shrink-0">
               <CardTitle className="text-xl font-semibold">Danh sách đánh giá</CardTitle>
               <CardDescription className="mt-1">
                 Hiển thị {reviews.length} trên {totalItems} review
               </CardDescription>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <Select value={status} onValueChange={handleStatusChange}>
+                  <SelectTrigger className="w-full sm:w-[180px] h-10">
+                    <SelectValue placeholder="Lọc theo trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="Completed">Hoàn thành</SelectItem>
+                    <SelectItem value="Pending">Đang chờ</SelectItem>
+                    <SelectItem value="InProgress">Đang xử lý</SelectItem>
+                    <SelectItem value="Rejected">Từ chối</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Search Bar */}
+              <div className="w-full sm:w-auto sm:min-w-[300px] sm:max-w-md relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+                <Input
+                  type="text"
+                  placeholder="Tìm kiếm theo câu hỏi, reviewer, hoặc nhận xét..."
+                  value={keyword}
+                  onChange={(e) => handleKeywordChange(e.target.value)}
+                  className="pl-10 pr-10 h-10 w-full"
+                />
+                {keyword && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -301,7 +409,7 @@ const SendingAudioToReviewer = () => {
                           size="sm"
                           variant="outline"
                           className="cursor-pointer"
-                          disabled={review.status !== "Completed"}
+                          disabled={review.status == "Completed" || review.status == "Rejected"}
                           onClick={() => handleOpenFeedback(review)}
                         >
                           <Send className="w-4 h-4 mr-2" />

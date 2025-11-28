@@ -1,10 +1,22 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useReviewReviewHistory } from "@/features/reviewer/hooks/useReviewReview";
-import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useReviewReviewHistory, useReviewerTipAfterReview } from "@/features/reviewer/hooks/useReviewReview";
+import { useGetMeQuery } from "@/hooks/useGetMeQuery";
+import { useEffect, useRef, useState } from "react";
 import { ReviewerReviewHistory } from "@/features/reviewer/services/reviewerReviewService";
+import { Loader2, Gift, Play } from "lucide-react";
 
 type ReviewedAnswer = {
   id: string;
@@ -17,6 +29,7 @@ type ReviewedAnswer = {
   status: "Approved" | "Rejected" | "Pending";
   reviewedAt: string; // DD/MM/YYYY
   questionType: "Word" | "Phrase" | "Sentence" | "Conversation";
+  learnerAnswerId?: string;
 };
 
 const formatDate = (date: Date | string): string => {
@@ -31,12 +44,13 @@ const mapReviewToReviewedAnswer = (review: ReviewerReviewHistory): ReviewedAnswe
   return {
     id: review.reviewId,
     question: review.questionContent,
-    audioUrl: "", // ReviewerReviewHistory doesn't have audioUrl field
+    audioUrl: review.learnerAudioUrl, // ReviewerReviewHistory doesn't have audioUrl field
     comment: review.comment,
     score: review.score,
     status: (review.status as "Approved" | "Rejected" | "Pending") || "Pending",
     reviewedAt: formatDate(review.createdAt),
     questionType: (review.reviewType as "Word" | "Phrase" | "Sentence" | "Conversation") || "Word",
+    learnerAnswerId: review.learnerAnswerId,
   };
 };
 
@@ -44,6 +58,16 @@ const ReviewHistory = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(20);
   const { data, isLoading, error } = useReviewReviewHistory(pageNumber, pageSize);
+  const { data: meData } = useGetMeQuery();
+  const tipAfterReviewMutation = useReviewerTipAfterReview();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingReviewId, setPlayingReviewId] = useState<string | null>(null);
+  
+  // Tip modal state
+  const [showTipModal, setShowTipModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<ReviewedAnswer | null>(null);
+  const [tipAmount, setTipAmount] = useState("");
+  const [tipMessage, setTipMessage] = useState("");
 
   // Calculate pagination info
   const totalItems = data?.data?.totalItems || 0;
@@ -67,6 +91,93 @@ const ReviewHistory = () => {
   const handlePageChange = (newPage: number) => {
     setPageNumber(newPage);
   };
+
+  const handleOpenTipModal = (review: ReviewedAnswer) => {
+    setSelectedReview(review);
+    setShowTipModal(true);
+    setTipAmount("");
+    setTipMessage("");
+  };
+
+  const handleCloseTipModal = () => {
+    setShowTipModal(false);
+    setSelectedReview(null);
+    setTipAmount("");
+    setTipMessage("");
+  };
+
+  const handleTipSubmit = async () => {
+    if (!selectedReview || !meData?.reviewerProfile?.reviewerProfileId) {
+      console.error("Missing review or reviewer profile ID");
+      return;
+    }
+    const amount = Number(tipAmount);
+    if (!amount || amount <= 0) {
+      console.error("Invalid tip amount");
+      return;
+    }
+    try {
+      console.log("Submitting tip:", {
+        reviewerId: meData.reviewerProfile.reviewerProfileId,
+        amountCoin: amount,
+        message: tipMessage.trim() || "Thank you for your submission!",
+        reviewId: selectedReview.id,
+        learnerAnswerId: selectedReview.learnerAnswerId,
+      });
+      
+      if (!selectedReview.id) {
+        console.error("Review ID is missing");
+        return;
+      }
+      
+      await tipAfterReviewMutation.mutateAsync({
+        reviewId: selectedReview.id,
+        amountCoin: amount,
+        message: tipMessage.trim() || "Thank you for your submission!",
+      });
+      handleCloseTipModal();
+    } catch (error) {
+      console.error("Tip after review failed:", error);
+    }
+  };
+
+  // Type assertion: API returns ReviewerReviewHistory[] but type says ReviewerReview[]
+  const reviewedAnswers: ReviewedAnswer[] = (data?.data?.items as unknown as ReviewerReviewHistory[])?.map(mapReviewToReviewedAnswer) || [];
+
+  const handlePlayAudio = (audioUrl: string | undefined, reviewId: string) => {
+    if (!audioUrl) {
+      console.warn("Audio URL is missing for review:", reviewId);
+      return;
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+    setPlayingReviewId(reviewId);
+
+    audio.play().catch((err) => {
+      console.error("Failed to play audio:", err);
+      setPlayingReviewId(null);
+    });
+
+    audio.onended = () => {
+      setPlayingReviewId(null);
+      audioRef.current = null;
+    };
+  };
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -98,9 +209,6 @@ const ReviewHistory = () => {
     );
   }
 
-  // Type assertion: API returns ReviewerReviewHistory[] but type says ReviewerReview[]
-  const reviewedAnswers: ReviewedAnswer[] = (data?.data?.items as unknown as ReviewerReviewHistory[])?.map(mapReviewToReviewedAnswer) || [];
-
   return (
     <div className="space-y-6">
       <div>
@@ -111,82 +219,120 @@ const ReviewHistory = () => {
       </div>
 
       {reviewedAnswers.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
-          No reviewed answers found.
-        </div>
+        <Card className="p-8">
+          <div className="text-center text-slate-500">
+            No reviewed answers found.
+          </div>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {reviewedAnswers.map((item) => (
-          <Card
-            key={item.id}
-            className="overflow-hidden border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={
-                      item.questionType === "Word"
-                        ? "default"
-                        : item.questionType === "Phrase"
-                        ? "secondary"
-                        : "outline"
-                    }
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100 hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-150">
+                  
+                  <TableHead className="font-bold text-slate-900">Question Type</TableHead>
+                  <TableHead className="font-bold text-slate-900">Question</TableHead>
+                  <TableHead className="font-bold text-slate-900">Comment</TableHead>
+                  <TableHead className="font-bold text-slate-900 text-center">Score</TableHead>
+                  
+                  <TableHead className="font-bold text-slate-900">Reviewed At</TableHead>
+                  <TableHead className="font-bold text-slate-900">Audio</TableHead>
+                  <TableHead className="font-bold text-slate-900 text-center">Actions</TableHead>
+                  
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reviewedAnswers.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    className="hover:bg-slate-50 transition-colors"
                   >
-                    {item.questionType}
-                  </Badge>
-                  <span className="text-xs text-slate-400">•</span>
-                  <span className="text-xs text-slate-500">ID: {item.id}</span>
-                </div>
-                <Badge
-                  variant={
-                    item.status === "Approved"
-                      ? "default"
-                      : item.status === "Rejected"
-                      ? "destructive"
-                      : "secondary"
-                  }
-                >
-                  {item.status}
-                </Badge>
-              </div>
-              <CardTitle className="text-[15px] font-semibold mt-2 leading-6 line-clamp-2">
-                <span className="text-slate-500">Read this {item.questionType}: </span> {item.question}
-              </CardTitle>
-              <div className="text-xs text-slate-500 mt-1">
-                Reviewed at: {item.reviewedAt}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-0">
-              {item.audioUrl && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-xs font-medium text-slate-700 mb-2">
-                    Audio
-                  </div>
-                  <audio controls className="w-full">
-                    <source src={item.audioUrl} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
-                </div>
-              )}
-              <div>
-                <div className="text-sm font-medium text-slate-700 mb-1">
-                  Comment
-                </div>
-                <p className="text-sm text-slate-700 bg-white border border-slate-200 rounded-lg p-3">
-                  {item.comment}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-slate-500">Status:</div>
-                <div className="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                  Score {item.score}/10
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        </div>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          item.questionType === "Word"
+                            ? "default"
+                            : item.questionType === "Phrase"
+                            ? "secondary"
+                            : "outline"
+                        }
+                        className="text-xs"
+                      >
+                        {item.questionType}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      <div className="text-sm text-slate-900 font-medium line-clamp-2">
+                        {item.question}
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-md">
+                      <div className="text-sm text-slate-700 line-clamp-3">
+                        {item.comment}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 inline-block">
+                        {item.score}/10
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell className="text-sm text-slate-600">
+                      {item.reviewedAt}
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handlePlayAudio(item.audioUrl, item.id)}
+                          disabled={!item.audioUrl}
+                          className={[
+                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400",
+                            item.audioUrl
+                              ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                              : "bg-slate-100 text-slate-400 cursor-not-allowed opacity-60",
+                            playingReviewId === item.id ? "ring-2 ring-slate-400 animate-pulse" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          aria-label={item.audioUrl ? "Play learner audio" : "Audio unavailable"}
+                        >
+                          <Play
+                            className={`w-5 h-5 ${playingReviewId === item.id ? "scale-110 transition-transform" : ""}`}
+                          />
+                        </button>
+                       
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenTipModal(item)}
+                        className="gap-2"
+                        disabled={tipAfterReviewMutation.isPending}
+                      >
+                        {tipAfterReviewMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Gift className="w-4 h-4" />
+                            Tip
+                          </>
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       )}
 
       {/* Pagination */}
@@ -238,6 +384,80 @@ const ReviewHistory = () => {
               Next
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Tip Modal */}
+      {showTipModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Tip Learner</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Reward the learner for their submission
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tipAmount" className="text-sm font-semibold">
+                    Amount (Coins) *
+                  </Label>
+                  <Input
+                    id="tipAmount"
+                    type="number"
+                    min="1"
+                    value={tipAmount}
+                    onChange={(e) => setTipAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tipMessage" className="text-sm font-semibold">
+                    Message
+                  </Label>
+                  <Input
+                    id="tipMessage"
+                    type="text"
+                    value={tipMessage}
+                    onChange={(e) => setTipMessage(e.target.value)}
+                    placeholder="Optional message"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseTipModal}
+                  disabled={tipAfterReviewMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleTipSubmit}
+                  disabled={tipAfterReviewMutation.isPending || !tipAmount || Number(tipAmount) <= 0}
+                  className="gap-2"
+                >
+                  {tipAfterReviewMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="w-4 h-4" />
+                      Send Tip
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </Card>
         </div>
       )}
     </div>

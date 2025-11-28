@@ -18,7 +18,7 @@ import { ReviewCompleted } from "@/lib/realtime/realtime";
 import { useRealtime } from "@/providers/RealtimeProvider";
 import { CircleCheck } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 const StatisticsForMentor = () => {
   const [showAllFeedback, setShowAllFeedback] = useState(false);
@@ -76,8 +76,8 @@ const StatisticsForMentor = () => {
       studentName: item.learnerName,
       rating: item.rating,
       comment: item.content,
-      sessionType: item.reviewType || "Đánh giá phát âm",
-      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: vi }),
+      sessionType: item.reviewType || "Pronunciation review",
+      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: enUS }),
       avatar: getInitials(item.learnerName),
     }));
   }, [feedbackData]);
@@ -114,7 +114,7 @@ const StatisticsForMentor = () => {
   // Track numberOfReview updates from SignalR events
   const [numberOfReviewUpdates, setNumberOfReviewUpdates] = useState<Record<string, number>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; duration?: string } | null>(null);
+  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; type: string } | null>(null);
   const [comment, setComment] = useState("");
   const [score, setScore] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
@@ -142,7 +142,7 @@ const StatisticsForMentor = () => {
         question: review.question,
         audioUrl: review.audioUrl,
         submittedAt: review.submittedAt,
-        duration: review.duration,
+        type: review.type ,
       });
       setIsModalOpen(true);
       setComment("");
@@ -168,29 +168,9 @@ const StatisticsForMentor = () => {
       audioRef.current.currentTime = 0;
     }
   };
-  const tipAfterReviewMutation = useReviewerTipAfterReview();
+ 
 
-  const handleRewardLearner = async () => {
-    if (!selectedReview?.id) {
-      return;
-    }
-    const amount = Number(rewardAmount);
-    if (!amount || amount <= 0) {
-      return;
-    }
-    try {
-      await tipAfterReviewMutation.mutateAsync({
-        reviewerId: selectedReview.id,
-        amountCoin: amount,
-        message: rewardMessage.trim(),
-      });
-      setRewardAmount("");
-      setRewardMessage("");
-      setShowRewardForm(false);
-    } catch (error) {
-      console.error("Reward learner failed:", error);
-    }
-  };
+  
   const handleSaveAndFinish = async () => {
     if (!selectedReview) return;
     
@@ -207,13 +187,23 @@ const StatisticsForMentor = () => {
     }
     
     try {
-      await submitReviewMutation.mutateAsync({
-        learnerAnswerId: selectedReview.id,
-        recordId: null, // Can be null as per requirement
-        reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
-        score: scoreValue,
-        comment: comment.trim(),
-      });
+      if(selectedReview.type === "Record"){
+        await submitReviewMutation.mutateAsync({
+          learnerAnswerId: null,
+          recordId: selectedReview.id,
+          reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
+          score: scoreValue,
+          comment: comment.trim(),
+        });
+      } else {
+        await submitReviewMutation.mutateAsync({
+          learnerAnswerId: selectedReview.id,
+          recordId: null,
+          reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
+          score: scoreValue,
+          comment: comment.trim(),
+        });
+      }
       
       // Remove review from current reviewer's list immediately
       // SignalR event will handle updates for other reviewers
@@ -235,8 +225,7 @@ const StatisticsForMentor = () => {
       id: item.id,
       question: item.questionText,
       audioUrl: item.audioUrl,
-      duration: undefined, // Duration not available in API
-      submittedAt: new Date(item.submittedAt).toLocaleDateString('vi-VN'),
+      submittedAt: new Date(item.submittedAt).toLocaleDateString("en-US"),
       status: "Pending",
       learnerFullName: item.learnerFullName,
       type: item.type,
@@ -291,7 +280,7 @@ const StatisticsForMentor = () => {
     };
   }, [isConnected]);
 
-  // Full feedback data cho modal - map từ API
+  // Full feedback data for modal - mapped from API
   const allFeedbackDataForModal = useMemo(() => {
     if (!allFeedbackData?.isSucess || !allFeedbackData?.data?.items) return [];
     
@@ -300,8 +289,8 @@ const StatisticsForMentor = () => {
       studentName: item.learnerName,
       rating: item.rating,
       comment: item.content,
-      sessionType: item.reviewType || "Đánh giá phát âm",
-      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: vi }),
+      sessionType: item.reviewType || "Pronunciation review",
+      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: enUS }),
       avatar: getInitials(item.learnerName),
     }));
   }, [allFeedbackData]);
@@ -328,7 +317,7 @@ const StatisticsForMentor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Tổng phản hồi
+                    Total feedback
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {mentorStats.totalFeedbacks}
@@ -359,7 +348,7 @@ const StatisticsForMentor = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng đánh giá
+                  Total reviews
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {mentorStats.totalReviews}
@@ -388,7 +377,7 @@ const StatisticsForMentor = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Đánh giá trung bình
+                  Average rating
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {mentorStats.avgRating}/5
@@ -414,7 +403,7 @@ const StatisticsForMentor = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Số tiền trong ví
+                  Wallet balance
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {mentorStats.AmountOfMoneyEarned} coin
@@ -446,7 +435,7 @@ const StatisticsForMentor = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Câu trả lời cần review</CardTitle>
+              <CardTitle>Answers needing review</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -454,20 +443,20 @@ const StatisticsForMentor = () => {
               {isLoading ? (
                 <div className="text-center py-12">
                   <div className="text-gray-400 text-lg font-medium">
-                    Đang tải...
+                    Loading...
                   </div>
                 </div>
               ) : error ? (
                 <div className="text-center py-12">
                   <div className="text-red-400 text-lg font-medium">
-                    Lỗi khi tải dữ liệu: {error.message}
+                    Failed to load data: {error.message}
                   </div>
                 </div>
               ) : availableReviews.length === 0 ? (
                 <div className="text-center py-12">
                  <CircleCheck size={64} color="green" className="text-6xl mb-4 text-center w-full"/>
                   <div className="text-gray-500 text-lg font-medium">
-                    Tất cả câu trả lời đã được review
+                    All answers have been reviewed
                   </div>  
                 </div>
               ) : (
@@ -484,7 +473,7 @@ const StatisticsForMentor = () => {
                         <div className="mb-3">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-semibold text-gray-900">
-                              Câu hỏi:
+                              Question:
                             </h4>
                           </div>
                           <p className="text-sm text-gray-700 leading-relaxed">
@@ -510,11 +499,7 @@ const StatisticsForMentor = () => {
                                 <span className="text-sm font-medium text-gray-900">
                                   Audio Response
                                 </span>
-                                {review.duration && (
-                                  <span className="text-xs text-gray-500">
-                                    ({review.duration})
-                                  </span>
-                                )}
+                               
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div
@@ -547,20 +532,20 @@ const StatisticsForMentor = () => {
         {/* Feedback Summary */}
         <Card>
           <CardHeader>
-            <CardTitle>Tóm tắt phản hồi</CardTitle>
+            <CardTitle>Feedback summary</CardTitle>
             <p className="text-sm text-gray-500">
-              Phản hồi gần đây từ học viên của bạn
+              Recent feedback from your learners
             </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {isLoadingFeedback ? (
                 <div className="text-center py-8">
-                  <div className="text-gray-400 text-sm">Đang tải phản hồi...</div>
+                  <div className="text-gray-400 text-sm">Loading feedback...</div>
                 </div>
               ) : feedbackSummary.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-gray-500 text-sm">Chưa có phản hồi nào</div>
+                  <div className="text-gray-500 text-sm">No feedback yet</div>
                 </div>
               ) : (
                 feedbackSummary.map((feedback) => (
@@ -616,10 +601,10 @@ const StatisticsForMentor = () => {
                     onClick={() => setFeedbackPageNumber((prev) => Math.max(1, prev - 1))}
                     disabled={feedbackPageNumber === 1 || isLoadingFeedback}
                   >
-                    Trước
+                    Previous
                   </Button>
                   <span className="text-sm text-gray-600">
-                    Trang {feedbackPagination.currentPage} / {feedbackPagination.totalPages}
+                    Page {feedbackPagination.currentPage} / {feedbackPagination.totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -627,7 +612,7 @@ const StatisticsForMentor = () => {
                     onClick={() => setFeedbackPageNumber((prev) => Math.min(feedbackPagination.totalPages, prev + 1))}
                     disabled={feedbackPageNumber >= feedbackPagination.totalPages || isLoadingFeedback}
                   >
-                    Sau
+                    Next
                   </Button>
                 </div>
                 <button
@@ -637,7 +622,7 @@ const StatisticsForMentor = () => {
                   }}
                   className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
                 >
-                  Xem tất cả phản hồi →
+                  View all feedback →
                 </button>
               </div>
             )}
@@ -651,7 +636,7 @@ const StatisticsForMentor = () => {
                   }}
                   className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
                 >
-                  Xem tất cả phản hồi →
+                  View all feedback →
                 </button>
               </div>
             )}
@@ -667,10 +652,10 @@ const StatisticsForMentor = () => {
             <div className="px-6 py-1.5 border-b border-gray-200 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  Tất cả phản hồi học viên
+                  All learner feedback
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Lịch sử phản hồi đầy đủ từ học viên của bạn
+                  Complete feedback history from your learners
                 </p>
               </div>
               <Button
@@ -698,11 +683,11 @@ const StatisticsForMentor = () => {
               <div className="grid gap-4">
                 {isLoadingAllFeedback ? (
                   <div className="text-center py-12">
-                    <div className="text-gray-400 text-lg">Đang tải phản hồi...</div>
+                    <div className="text-gray-400 text-lg">Loading feedback...</div>
                   </div>
                 ) : allFeedbackDataForModal.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="text-gray-500 text-lg">Chưa có phản hồi nào</div>
+                    <div className="text-gray-500 text-lg">No feedback yet</div>
                   </div>
                 ) : (
                   allFeedbackDataForModal.map((feedback) => (
@@ -763,11 +748,11 @@ const StatisticsForMentor = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <p className="text-sm text-gray-600">
-                    Tổng phản hồi:{" "}
+                    Total feedback:{" "}
                     <span className="font-semibold">
                       {modalPagination.totalItems}
                     </span>{" "}
-                    đánh giá
+                    reviews
                   </p>
                   
                   {/* Pagination Controls */}
@@ -779,10 +764,10 @@ const StatisticsForMentor = () => {
                         onClick={() => setModalPageNumber((prev) => Math.max(1, prev - 1))}
                         disabled={modalPageNumber === 1 || isLoadingAllFeedback}
                       >
-                        Trước
+                        Previous
                       </Button>
                       <span className="text-sm text-gray-600">
-                        Trang {modalPagination.currentPage} / {modalPagination.totalPages}
+                        Page {modalPagination.currentPage} / {modalPagination.totalPages}
                       </span>
                       <Button
                         variant="outline"
@@ -790,7 +775,7 @@ const StatisticsForMentor = () => {
                         onClick={() => setModalPageNumber((prev) => Math.min(modalPagination.totalPages, prev + 1))}
                         disabled={modalPageNumber >= modalPagination.totalPages || isLoadingAllFeedback}
                       >
-                        Sau
+                        Next
                       </Button>
                     </div>
                   )}
@@ -802,7 +787,7 @@ const StatisticsForMentor = () => {
                   }}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Đóng
+                  Close
                 </Button>
               </div>
             </div>
@@ -867,41 +852,32 @@ const StatisticsForMentor = () => {
                   <p className="text-xs text-slate-500 mt-2">
                     Enter a numeric score, e.g., 8.5
                   </p>
-                  <div className="mt-2 inline-flex items-start gap-3">
-                    <Button
-                      variant="outline"
-                      className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50 text-white"
-                      onClick={() => setShowRewardForm((prev) => !prev)}
-                    >
-                      {showRewardForm ? "Close reward form" : "Reward Learner"}
-                    </Button>
-                   
-                  </div>
+                  
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <Button
+              <div className="flex items-center justify-end">
+                {/* <Button
                   variant="outline"
                   onClick={() => setShowAnswer(!showAnswer)}
                   className="cursor-pointer"
                 >
                   {showAnswer ? "Hide Ai Feedback" : "> View Ai Feedback"}
-                </Button>
+                </Button> */}
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={handleCloseModal}
                     className="cursor-pointer"
                   >
-                    Hủy
+                    Cancel
                   </Button>
                   <Button
                     onClick={handleSaveAndFinish}
                     disabled={submitReviewMutation.isPending}
                     className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50"
                   >
-                    {submitReviewMutation.isPending ? "Đang xử lý..." : "Hoàn thành (Finish)"}
+                    {submitReviewMutation.isPending ? "Processing..." : "Complete"}
                   </Button>
                 </div>
               </div>

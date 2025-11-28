@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     );
     
     if (keyword) {
-        backendUrl.searchParams.set("search", keyword);
+        backendUrl.searchParams.set("keyword", keyword);
       }
     if (pageNumber) {
       backendUrl.searchParams.set("pageNumber", pageNumber);

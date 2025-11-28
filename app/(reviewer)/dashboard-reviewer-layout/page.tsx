@@ -263,7 +263,7 @@ const DashboardReviewerLayout = () => {
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 mt-1">
-                    Chào mừng đã trở lại <strong>{meData?.fullName}</strong>! Đây là những cập nhật hôm nay.
+                    Welcome back <strong>{meData?.fullName}</strong>! Here are today's updates.
                   </p>
                 </div>
               </div>
