@@ -7,6 +7,8 @@ import {
   CreateReviewFeeResponse,
   getReviewFeePackages,
   ReviewFeePackagesResponse,
+    getReviewFeeDetail,   
+
 } from "../services/adminReviewFeeService";
 import { toast } from "sonner";
 
@@ -29,5 +31,14 @@ export const useAdminReviewFeePackagesQuery = (pageNumber: number, pageSize: num
     queryKey: ["adminReviewFeePackages", pageNumber, pageSize],
     queryFn: () => getReviewFeePackages(pageNumber, pageSize),
     placeholderData: keepPreviousData,
+  });
+};
+
+
+export const useAdminReviewFeeDetailQuery = (reviewFeeId: string | null) => {
+  return useQuery({
+    queryKey: ["adminReviewFeeDetail", reviewFeeId],
+    queryFn: () => getReviewFeeDetail(reviewFeeId!),
+    enabled: !!reviewFeeId,
   });
 };

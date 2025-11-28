@@ -25,6 +25,7 @@ export interface Reviewer {
   lastActiveAt: Date;
   createdAt: Date;
   
+  
 }
 export interface ReviewerDetail {
     reviewerProfileId: string;

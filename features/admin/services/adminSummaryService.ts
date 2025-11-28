@@ -49,6 +49,8 @@ export interface Reviewer {
   status: string;
   hasCertificate: boolean;
   certificates: Certificate[];
+    reviewCount: number;   // 👈 THÊM
+  totalIncome: number;   // 👈 THÊM
 }
 export interface Certificate {
   certificateId: string;
@@ -89,10 +91,13 @@ export const adminPackagesService = async (
       `/api/AdminDashboard/packages?year=${year}`
     );
     const data = await response.json();
+
     if (!response.ok) {
       throw new Error(data.message);
     }
-    return data.data;
+
+    // 🔥 Trả toàn bộ object, KHÔNG phải chỉ mảng data
+    return data;
   } catch (error: unknown) {
     const message =
       (error &&
@@ -111,6 +116,7 @@ export const adminPackagesService = async (
     throw new Error(message);
   }
 };
+
 export const adminRevenueService = async (
   year: string
 ): Promise<AdminRevenueResponse> => {

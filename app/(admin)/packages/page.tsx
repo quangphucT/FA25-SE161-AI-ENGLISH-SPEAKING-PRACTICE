@@ -32,6 +32,9 @@ import { CreateCoinServicePackageRequest } from "@/types/coin_servicePackage";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ServicePackageManagement = () => {
+  const [pageNumber, setPageNumber] = useState(1);
+const [pageSize] = useState(10);
+
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   
@@ -41,8 +44,15 @@ const ServicePackageManagement = () => {
     isLoading,
     error,
     refetch
-  } = useGetServicePackages("1", "100", search, statusFilter === "All" ? "" : statusFilter);
-  
+  } = useGetServicePackages(
+  String(pageNumber),
+  String(pageSize),
+  search,
+  statusFilter === "All" ? "" : statusFilter
+);
+
+  const totalItems = servicePackagesData?.data?.totalItems ?? 0;
+const totalPages = Math.ceil(totalItems / pageSize);
   const {mutateAsync: createServicePackage} = useCreateCoinServicePackage();
   const {mutateAsync: deleteServicePackage} = deleteCoinServicePackageMutation();
   const {mutateAsync: updateServicePackage} = useUpdateCoinServicePackage();
@@ -265,9 +275,11 @@ const ServicePackageManagement = () => {
                 <TableCell>
                   <div className="font-semibold">{formatPrice(pkg.price)}</div>
                 </TableCell>
-                <TableCell>{pkg.numberOfCoin}</TableCell>
+                <TableCell>{Math.trunc(pkg.numberOfCoin)}</TableCell>
                 <TableCell>{pkg.bonusPercent}</TableCell>
-                <TableCell>{pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100)}</TableCell>
+<TableCell>
+  {Math.trunc(pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100))}
+</TableCell>
                 <TableCell>
                   <Badge
                     variant={pkg.status === "Active" ? "default" : "secondary"}
@@ -364,6 +376,76 @@ const ServicePackageManagement = () => {
             )}
           </TableBody>
         </Table>
+       {packages.length > 0 && (
+  <div className="flex items-center justify-between mt-6">
+    {/* Text */}
+    <div className="text-sm text-gray-600">
+      Hiển thị{" "}
+      <span className="font-semibold">{(pageNumber - 1) * pageSize + 1}</span>{" "}
+      đến{" "}
+      <span className="font-semibold">
+        {Math.min(pageNumber * pageSize, totalItems)}
+      </span>{" "}
+      của <span className="font-semibold">{totalItems}</span> gói dịch vụ
+    </div>
+
+    {/* Pagination */}
+    <div className="flex items-center gap-2">
+      {/* Prev */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+        disabled={pageNumber === 1}
+      >
+        Trước
+      </Button>
+
+      {/* Page Numbers */}
+      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+        let page;
+
+        if (totalPages <= 5) {
+          page = i + 1;
+        } else if (pageNumber <= 3) {
+          page = i + 1;
+        } else if (pageNumber >= totalPages - 2) {
+          page = totalPages - 4 + i;
+        } else {
+          page = pageNumber - 2 + i;
+        }
+
+        return (
+          <Button
+            key={page}
+            size="sm"
+            variant={page === pageNumber ? "default" : "outline"}
+            onClick={() => setPageNumber(page)}
+            className={
+              page === pageNumber
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "cursor-pointer hover:bg-gray-50"
+            }
+          >
+            {page}
+          </Button>
+        );
+      })}
+
+      {/* Next */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setPageNumber((p) => Math.min(totalPages, p + 1))}
+        disabled={pageNumber === totalPages}
+      >
+        Sau
+      </Button>
+    </div>
+  </div>
+)}
+
+
       </div>
 
       {/* Confirm Dialog */}

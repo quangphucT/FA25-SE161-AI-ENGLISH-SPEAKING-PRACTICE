@@ -39,6 +39,7 @@
     "dayjs": "^1.11.19",
     "embla-carousel-react": "^8.6.0",
     "firebase": "^12.4.0",
+    "html2pdf.js": "^0.12.1",
     "jwt-decode": "^4.0.0",
     "lightningcss": "^1.28.2",
     "livekit-client": "^2.15.15",

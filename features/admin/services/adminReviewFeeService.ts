@@ -34,6 +34,37 @@ export interface CurrentPricePolicy {
   percentOfSystem: number;
   percentOfReviewer: number;
 }
+
+export interface ReviewFeeDetailResponse {
+  isSucess: boolean;
+  data: {
+    reviewFeeId: string;
+    numberOfReview: number;
+    status: string;
+    currentPolicy: {
+      reviewFeeDetailId: string;
+      pricePerReviewFee: number;
+      reviewerIncome: number;
+      percentOfReviewer: number;
+      percentOfSystem: number;
+      appliedFrom: string;
+    };
+    historyPolicies: HistoryPolicies[];
+  };
+  businessCode: string;
+  message: string;
+}
+export interface HistoryPolicies {
+  reviewFeeDetailId: string;
+  pricePerReviewFee: number;
+  reviewerIncome: string;
+  percentOfReviewer: number;
+  percentOfSystem: number;
+  appliedDate: Date;
+  isCurrent:boolean;
+  isUpcoming:boolean
+}
+
 export const adminReviewFeeService = async (
   body: CreateReviewFeeRequest
 ): Promise<CreateReviewFeeResponse> => {
@@ -77,5 +108,28 @@ export const getReviewFeePackages = async (pageNumber: number, pageSize: number)
       throw new Error(error.message);
     }
     throw new Error("An unknown error occurred");
+  }
+};
+
+
+export const getReviewFeeDetail = async (reviewFeeId: string): Promise<ReviewFeeDetailResponse> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/reviewfee/${reviewFeeId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+            credentials: "include",
+
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Lấy chi tiết gói phí đánh giá thất bại");
+    }
+
+    return data;
+  } catch (error: any) {
+    throw new Error(error?.message || "Đã xảy ra lỗi khi lấy chi tiết gói phí đánh giá");
   }
 };

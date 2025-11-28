@@ -247,11 +247,14 @@ const ManagerManagement = () => {
                       <div className="flex items-center gap-3">
                         <div className="relative">
                           <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
-                            <AvatarImage
-                              src={undefined}
-                              alt={Manager.fullName}
-                              className="object-cover"
-                            />
+                          <AvatarImage
+  src={`https://ui-avatars.com/api/?background=1e293b&color=fff&name=${encodeURIComponent(
+    Manager.fullName || "User"
+  )}`}
+  alt={Manager.fullName}
+  className="object-cover"
+/>
+
                             <AvatarFallback className="bg-linear-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
                               {getInitials(Manager.fullName)}
                             </AvatarFallback>
@@ -264,27 +267,20 @@ const ManagerManagement = () => {
                             }`}
                           ></div>
                         </div>
-                        <div>
-                          <div className="text-blue-600 font-semibold text-sm">
-                            {Manager.userId.slice(0, 8)}...
-                          </div>
-                          {/* <div className="text-gray-500 text-xs">Manager</div> */}
-                        </div>
+                     
                       </div>
                     </TableCell>
                 <TableCell className="font-medium">
                   <div className="flex flex-col">
                     <span className="font-semibold text-gray-900">
-                      {Manager.fullName}
+                      {Manager.fullName}AvatarImage
                     </span>
                   </div>
                 </TableCell>
                 <TableCell className="text-gray-600">
                   <div className="flex flex-col">
                     <span className="text-sm">{Manager.email}</span>
-                    <span className="text-xs text-gray-500">
-                      {Manager.phoneNumber}
-                    </span>
+                   
                   </div>
                 </TableCell>
                     <TableCell>
