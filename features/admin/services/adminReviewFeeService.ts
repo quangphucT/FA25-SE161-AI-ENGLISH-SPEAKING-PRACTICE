@@ -60,7 +60,7 @@ export interface HistoryPolicies {
   reviewerIncome: string;
   percentOfReviewer: number;
   percentOfSystem: number;
-  appliedDate: Date;
+  appliedDate: string;
   isCurrent:boolean;
   isUpcoming:boolean
 }

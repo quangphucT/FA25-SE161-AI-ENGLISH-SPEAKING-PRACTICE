@@ -34,7 +34,6 @@ export interface AdminReviewerIncomeResponse {
         reviewId: string;
         score: number;
         question: string;
-
         comment: string;
         status: string;
         createdAt: Date;
