@@ -30,7 +30,7 @@ import "@livekit/components-styles";
 import EnhancedVoiceAssistant from "@/components/ai-conversation/EnhancedVoiceAssistant";
 import { useChartCoinForConversation } from "@/features/learner/hooks/chartCoinForConversation/useChartCoinForConversation";
 import { useGetAIPackages } from "@/features/learner/hooks/ai-packagesHooks/aiPackages";
-
+import "@livekit/components-styles";
 interface AIPackage {
   allowedMinutes: number;
   amountCoin: number;
@@ -185,10 +185,10 @@ const ConversationWithAI = () => {
 
   
   const handleStart = async () => {
-    if (!name.trim()) {
-      toast.error("Vui lòng nhập tên của bạn");
-      return;
-    }
+    // if (!name.trim()) {
+    //   toast.error("Vui lòng nhập tên của bạn");
+    //   return;
+    // }
     if (!duration) {
       toast.error("Vui lòng chọn thời gian muốn trò chuyện");
       return;
@@ -205,6 +205,7 @@ const ConversationWithAI = () => {
 
     // Gọi getToken trước để đảm bảo kết nối thành công
     try {
+      const name = userData?.fullName || "";
       const tokenSuccess = await getToken(name);
       
       // Chỉ gọi mutation nếu getToken thành công
@@ -438,13 +439,13 @@ const ConversationWithAI = () => {
           <div className="grid grid-cols-3 gap-6">
             {/* Left Column - Input Form */}
             <div className="col-span-2 space-y-4">
-              <h3 className="text-base font-semibold text-gray-900 mb-3">
+              {/* <h3 className="text-base font-semibold text-gray-900 mb-3">
                 Thông tin trò chuyện
-              </h3>
+              </h3> */}
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Name Input */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
                     Tên của bạn
@@ -456,7 +457,7 @@ const ConversationWithAI = () => {
                     onChange={(e) => setName(e.target.value)}
                     className="h-11 border border-gray-300 focus:border-blue-500 rounded-lg bg-white"
                   />
-                </div>
+                </div> */}
 
                 {/* Duration Select */}
                 <div className="space-y-2">
@@ -597,9 +598,9 @@ const ConversationWithAI = () => {
           <div className="mt-4">
             <Button
               onClick={handleStart}
-              disabled={!name.trim() || !duration}
+              disabled={ !duration}
               className={`w-full h-12 text-base font-bold rounded-lg transition-all duration-300 ${
-                hasEnoughCoins && name.trim() && duration
+                hasEnoughCoins  && duration
                   ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl cursor-pointer rounded-4xl"
                   : "bg-gray-300 hover:bg-gray-300 text-black-500 cursor-not-allowed rounded-4xl"
               }`}

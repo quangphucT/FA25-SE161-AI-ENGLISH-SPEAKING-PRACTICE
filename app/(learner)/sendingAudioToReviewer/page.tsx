@@ -49,6 +49,7 @@ import {
   Search,
   X,
   Filter,
+  Play,
 } from "lucide-react";
 import type { LearnerReviewHistory } from "@/features/learner/services/learnerReviewService";
 
@@ -348,6 +349,7 @@ const SendingAudioToReviewer = () => {
                     <TableHead className="font-semibold text-center">Trạng thái</TableHead>
                     <TableHead className="font-semibold">Nhận xét</TableHead>
                     <TableHead className="font-semibold">Loại</TableHead>
+                    <TableHead className="font-semibold text-center">Audio</TableHead>
                     <TableHead className="font-semibold text-center">Hành động</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -403,6 +405,25 @@ const SendingAudioToReviewer = () => {
                         <Badge variant="outline" className="font-medium">
                           {review.reviewType === "Record" ? "Record" : "Learner Answer"}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {review.reviewAudioUrl ? (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="cursor-pointer"
+                            onClick={() => {
+                              const audio = new Audio(review.reviewAudioUrl as string);
+                              audio.play().catch((err) => {
+                                console.error("Error playing audio:", err);
+                              });
+                            }}
+                          >
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Không có audio</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button

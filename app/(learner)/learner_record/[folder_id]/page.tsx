@@ -7,7 +7,7 @@ import { uploadAudioToCloudinary } from "@/utils/upload";
 import { useLearnerRecords, useLearnerRecordUpdate } from "@/features/learner/hooks/useLearnerRecord";
 import type { Record } from "@/features/learner/services/learnerRecordService";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, BookOpen, Play, Volume2, Mic } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, BookOpen, Play, Volume2, Mic, MessageSquare, X } from "lucide-react";
 import BuyReviewModal from "@/components/BuyReviewModal";
 
 const PracticeRecordLayout = () => {
@@ -63,17 +63,10 @@ const PracticeRecordLayout = () => {
   const [pronunciationAccuracy, setPronunciationAccuracy] =
     useState<string>("");
   const [aiFeedback, setAiFeedback] = useState<string>(""); // Store AI feedback
-  const [originalScriptHtml, setOriginalScriptHtml] = useState<string>(
-  );
-  const [ipaScript, setIpaScript] = useState<string>(
-
-  );
-  const [recordedIpaScript, setRecordedIpaScript] = useState<string>(
-
-  );
-  const [translatedScript, setTranslatedScript] = useState<string>(
-  
-  );
+  const [originalScriptHtml, setOriginalScriptHtml] = useState<string>("");
+  const [ipaScript, setIpaScript] = useState<string>("");
+  const [recordedIpaScript, setRecordedIpaScript] = useState<string>("");
+  const [translatedScript, setTranslatedScript] = useState<string>("");
   const [singleWordPair, setSingleWordPair] =
     useState<string>("Reference | Spoken");
 
@@ -88,6 +81,7 @@ const PracticeRecordLayout = () => {
   const [languageFound, setLanguageFound] = useState<boolean>(true);
   
   const [openBuyReviewModal, setOpenBuyReviewModal] = useState(false);
+  const [openAiFeedbackModal, setOpenAiFeedbackModal] = useState(false);
   // Word-level analysis data
   const [realTranscriptsIpa, setRealTranscriptsIpa] = useState<string[]>([]);
   const [matchedTranscriptsIpa, setMatchedTranscriptsIpa] = useState<string[]>(
@@ -271,6 +265,99 @@ const PracticeRecordLayout = () => {
       }
     }
   }, [recording]);
+
+  // Handle submit record - upload audio and update record after API returns result
+  const handleSubmitRecord = useCallback(async (apiScore?: number, apiFeedback?: string) => {
+    setTimeout(async () => {
+      try {
+        setUiBlocked(true);
+        setMainTitle("Đang tải audio lên...");
+
+        const recordedMp3Blob = recordedAudioBlobMp3Ref.current;
+        if (!recordedMp3Blob) {
+          setMainTitle("Không tìm thấy audio để tải lên");
+          setUiBlocked(false);
+          return;
+        }
+
+        // Convert blob to File
+        const audioFile = new File(
+          [recordedMp3Blob],
+          `record-${Date.now()}.mp3`,
+          { type: "audio/mp3" }
+        );
+        console.log("audioFile", audioFile);
+        // Upload to Cloudinary
+        const audioUrl = await uploadAudioToCloudinary(audioFile);
+        
+        if (!audioUrl) {
+          setMainTitle("Lỗi khi tải audio lên");
+          setUiBlocked(false);
+          return;
+        }
+
+        setMainTitle("Đang tạo record...");
+
+        // Validate recordId
+        const targetRecordId = currentRecordId || recordId;
+        if (!targetRecordId) {
+          setMainTitle("Không tìm thấy record ID");
+          setUiBlocked(false);
+          return;
+        }
+
+        // Get score and feedback - use API values if provided, otherwise use state
+        let finalScore: number;
+        if (apiScore !== undefined && !isNaN(apiScore) && isFinite(apiScore)) {
+          finalScore = Math.round(apiScore);
+        } else {
+          const scoreValue = Number(score);
+          finalScore = (!isNaN(scoreValue) && isFinite(scoreValue)) ? Math.round(scoreValue) : 0;
+        }
+        
+        const finalFeedback = apiFeedback || aiFeedback || "";
+
+        // Validate data before sending
+        if (!audioUrl || audioUrl.trim() === "") {
+          setMainTitle("URL audio không hợp lệ");
+          setUiBlocked(false);
+          return;
+        }
+
+        console.log("Submitting record:", {
+          recordId: targetRecordId,
+          audioUrl,
+          score: finalScore,
+          feedback: finalFeedback.substring(0, 50) + "...",
+        });
+
+        // Update record
+        await updateRecord({
+          recordId: targetRecordId,
+          reviewData: {
+            audioRecordingURL: audioUrl,
+            score: finalScore,
+            aiFeedback: finalFeedback,
+            transcribedText: Array.isArray(matchedTranscriptsIpa) ? matchedTranscriptsIpa.join(" ") : matchedTranscriptsIpa || "",
+          },
+        });
+
+        setMainTitle("Tạo record thành công!");
+      } catch (error) {
+        console.error("Error creating record:", error);
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : "Lỗi khi tạo record";
+        setMainTitle(`Lỗi: ${errorMessage}`);
+        // Show error for 3 seconds before allowing retry
+        setTimeout(() => {
+          setMainTitle("AI Pronunciation Trainer");
+        }, 3000);
+      } finally {
+        setUiBlocked(false);
+      }
+    }, 500); // Wait 500ms for onstop handler to complete
+  }, [folderId, score, aiFeedback, updateRecord, router, currentRecordId, recordId, matchedTranscriptsIpa]);
   const cacheSoundFiles = useCallback(async () => {
     try {
       if (!audioContextRef.current) return;
@@ -378,15 +465,15 @@ const PracticeRecordLayout = () => {
       });
       const data = await res.json();
 
-      setCurrentText([data.real_transcript]);
-      setOriginalScriptHtml(data.real_transcript);
-      setIpaScript(`/ ${data.ipa_transcript} /`);
+      setCurrentText([data.real_transcript || ""]);
+      setOriginalScriptHtml(data.real_transcript || "");
+      setIpaScript(`/ ${data.ipa_transcript || ""} /`);
       setRecordedIpaScript("");
       setPronunciationAccuracy("");
       setSingleWordPair("Reference | Spoken");
  
       setMainTitle("AI Pronunciation Trainer");
-      setTranslatedScript(data.transcript_translation);
+      setTranslatedScript(data.transcript_translation || "");
       setCurrentSoundRecorded(false);
     } catch {
       setMainTitle("Server Error");
@@ -522,6 +609,7 @@ const PracticeRecordLayout = () => {
           audioRecordingURL: audioUrl,
           score: Number(finalScore),
           aiFeedback: finalFeedback,
+          transcribedText: Array.isArray(matchedTranscriptsIpa) ? matchedTranscriptsIpa.join(" ") : matchedTranscriptsIpa || "",
         },
       });
 
@@ -538,7 +626,7 @@ const PracticeRecordLayout = () => {
     } finally {
       setUiBlocked(false);
     }
-  }, [folderId, score, aiFeedback, updateRecord, router, currentRecordId, recordId]);
+  }, [folderId, score, aiFeedback, updateRecord, router, currentRecordId, recordId, matchedTranscriptsIpa]);
 
   // Utility functions from original code
   const convertBlobToBase64 = useCallback(async (blob: Blob) => {
@@ -685,6 +773,11 @@ const PracticeRecordLayout = () => {
     }
   }, [currentContent]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Debug: Log when aiFeedback changes
+  useEffect(() => {
+    console.log("aiFeedback state changed:", aiFeedback, "Type:", typeof aiFeedback, "Length:", aiFeedback?.length, "Trimmed:", aiFeedback?.trim());
+  }, [aiFeedback]);
+
   useEffect(() => {
     audioContextRef.current = new AudioContext();
     synthRef.current =
@@ -717,6 +810,7 @@ const PracticeRecordLayout = () => {
   const playNativeAndRecordedWordRef = useRef(playNativeAndRecordedWord);
   const playReferenceWordRef = useRef(playReferenceWord);
   const playSpokenWordRef = useRef(playSpokenWord);
+  const handleSubmitRecordRef = useRef(handleSubmitRecord);
 
   // Update refs when functions change - use useEffect to avoid stale closures
   useEffect(() => {
@@ -724,11 +818,13 @@ const PracticeRecordLayout = () => {
     playNativeAndRecordedWordRef.current = playNativeAndRecordedWord;
     playReferenceWordRef.current = playReferenceWord;
     playSpokenWordRef.current = playSpokenWord;
+    handleSubmitRecordRef.current = handleSubmitRecord;
   }, [
     generateWordModal,
     playNativeAndRecordedWord,
     playReferenceWord,
     playSpokenWord,
+    handleSubmitRecord,
   ]);
 
   // Separate useEffect for exposing functions to window
@@ -919,27 +1015,39 @@ const PracticeRecordLayout = () => {
             const data = await res.json();
             console.log("Response data:", data);
 
-            const acc = parseFloat(data.pronunciation_accuracy);
+            const pronunciationAccuracyValue = data?.pronunciation_accuracy || "0";
+            const acc = parseFloat(pronunciationAccuracyValue);
             if (!Number.isNaN(acc)) playSoundForAnswerAccuracy(acc);
-            setRecordedIpaScript(`/ ${data.ipa_transcript} /`); 
+            setRecordedIpaScript(`/ ${data?.ipa_transcript || ""} /`); 
             setMainTitle("AI Pronunciation Trainer");
-            setPronunciationAccuracy(`${data.pronunciation_accuracy}%`);
-            setAiFeedback(data.AIFeedback);
+            setPronunciationAccuracy(`${pronunciationAccuracyValue}%`);
+            const feedbackValue = data?.AIFeedback || data?.aiFeedback || data?.feedback || "";
+            console.log("data?.AIFeedback", data?.AIFeedback);
+            console.log("Setting aiFeedback to:", feedbackValue);
+            setAiFeedback(feedbackValue);
             
+            // Call handleSubmitRecord after API returns result to upload and update record
+            // Pass score and feedback directly from API response
+            const apiScore = parseFloat(pronunciationAccuracyValue) || 0;
+            const apiFeedback = feedbackValue;
+            console.log("Passing to handleSubmitRecord - apiScore:", apiScore, "apiFeedback:", apiFeedback);
+            setTimeout(() => {
+              handleSubmitRecordRef.current(apiScore, apiFeedback);
+            }, 100);
 
             const isLetterCorrectAll: string[] = String(
-              data.is_letter_correct_all_words || ""
+              data?.is_letter_correct_all_words || ""
             ).split(" ");
 
             // Store word-level data for playback
             const realTranscriptsIpaData =
-              data.real_transcripts_ipa?.split(" ") || [];
+              data?.real_transcripts_ipa?.split(" ") || [];
             const matchedTranscriptsIpaData =
-              data.matched_transcripts_ipa?.split(" ") || [];
+              data?.matched_transcripts_ipa?.split(" ") || [];
             const wordCategoriesData =
-              data.pair_accuracy_category?.split(" ") || [];
-            const startTimeData = data.start_time?.split(" ") || [];
-            const endTimeData = data.end_time?.split(" ") || [];
+              data?.pair_accuracy_category?.split(" ") || [];
+            const startTimeData = data?.start_time?.split(" ") || [];
+            const endTimeData = data?.end_time?.split(" ") || [];
 
             // Update state with word-level data
             setRealTranscriptsIpa(realTranscriptsIpaData);
@@ -1029,119 +1137,142 @@ const PracticeRecordLayout = () => {
           rel="stylesheet"
         />
       </Head>
-      <div className="min-h-screen w-full bg-white max-w-[90%] mx-auto relative">
-        <div className="flex flex-row items-center gap-4 py-4">
-          <Button
-            onClick={handleGoBack}
-            disabled={uiBlocked || isUpdatingRecord}
-            variant="outline"
-            className="ml-6"
-          >
-            {isUpdatingRecord ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Đang lưu...
-              </>
-            ) : (
-              <>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Quay lại
-              </>
-            )}
-          </Button>
-          <h1 id="main_title" className="text-2xl font-semibold">
-            {mainTitle}
-          </h1>
-        </div>
-
-        <div className="mx-auto">
-          <div className="flex flex-row items-center gap-4">
-            <p className="text-transparent bg-clip-text bg-gradient-to-r from-[#363850] to-[#153C57] text-2xl ml-2">
-              Language:
-            </p>
-
-            <div className="relative inline-block">
-              <button
-                id="languageBox"
-                onClick={() => setDropdownOpen((o) => !o)}
-                disabled={uiBlocked}
-                className="text-transparent bg-clip-text bg-gradient-to-r from-[#363850] to-[#153C57] text-base px-2 py-1 border border-transparent rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 max-w-[95%] mx-auto relative">
+        {/* Header Section */}
+        <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm sticky top-0 z-40">
+          <div className="flex flex-row items-center justify-between gap-4 py-4 px-6 flex-wrap">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleGoBack}
+                disabled={uiBlocked || isUpdatingRecord}
+                variant="outline"
+                size="sm"
+                className="shadow-sm hover:shadow-md transition-shadow"
               >
-                {languageLabel}
-              </button>
-              {dropdownOpen && (
-                <div className="absolute mt-1 w-40 bg-white rounded shadow-md z-10">
-                  <button
-                    onClick={() => changeLanguage("en-gb")}
-                    disabled={uiBlocked}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    English-UK
-                  </button>
-                  <button
-                    onClick={() => changeLanguage("en")}
-                    disabled={uiBlocked}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    English-USA
-                  </button>
-                </div>
-              )}
+                {isUpdatingRecord ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Quay lại
+                  </>
+                )}
+              </Button>
+              <h1 id="main_title" className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {mainTitle}
+              </h1>
             </div>
 
-            {recordsList.length > 0 && (
-              <p className="text-black text-lg">
-                | Câu {currentQuestionIndex + 1}/{recordsList.length}
-              </p>
-            )}
-            {/* Nút Đánh giá phát âm - hiển thị khi đã có record hợp lệ */}
-            {currentRecordId && currentRecord?.audioRecordingURL && (
-              <Button
-                variant="outline"
-                className="px-6 py-3 rounded-xl font-semibold cursor-pointer"
-                onClick={() => setOpenBuyReviewModal(true)}
-              >
-                <BookOpen className="w-4 h-4 mr-2" />
-                Đánh giá phát âm
-              </Button>
-            )}
-            {openBuyReviewModal && currentRecordId && (
-              <BuyReviewModal
-                open={openBuyReviewModal}
-                recordId={currentRecordId}
-                onClose={() => setOpenBuyReviewModal(false)}
-              />
-            )}
+            <div className="flex flex-row items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">Language:</span>
+                <div className="relative">
+                  <button
+                    id="languageBox"
+                    onClick={() => setDropdownOpen((o) => !o)}
+                    disabled={uiBlocked}
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-blue-400 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {languageLabel} ▼
+                  </button>
+                  {dropdownOpen && (
+                    <div className="absolute mt-2 w-40 bg-white rounded-lg shadow-lg z-20 border border-gray-200 overflow-hidden">
+                      <button
+                        onClick={() => changeLanguage("en-gb")}
+                        disabled={uiBlocked}
+                        className="block w-full text-left px-4 py-2.5 hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        English-UK
+                      </button>
+                      <button
+                        onClick={() => changeLanguage("en")}
+                        disabled={uiBlocked}
+                        className="block w-full text-left px-4 py-2.5 hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        English-USA
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {recordsList.length > 0 && (
+                <div className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg border border-blue-200">
+                  <p className="text-sm font-semibold text-blue-700">
+                    Câu {currentQuestionIndex + 1}/{recordsList.length}
+                  </p>
+                </div>
+              )}
+              
+              {currentRecordId && currentRecord?.audioRecordingURL && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-4 py-2 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all border-blue-300 text-blue-700 hover:bg-blue-50"
+                  onClick={() => setOpenBuyReviewModal(true)}
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Đánh giá phát âm
+                </Button>
+              )}
+            </div>
           </div>
         </div>
+
+        {openBuyReviewModal && currentRecordId && (
+          <BuyReviewModal
+            open={openBuyReviewModal}
+            recordId={currentRecordId}
+            onClose={() => setOpenBuyReviewModal(false)}
+          />
+        )}
 
         <div className="mb-[200px]"></div>
 
         {/* Main card container */}
-        <div className="block absolute left-[2%] top-[18%] h-[59%] w-[96%] max-w-[96%] bg-white overflow-hidden rounded-2xl shadow-[0_0_20px_8px_#d0d0d0]">
+        <div className="block absolute left-[2%] top-[18%] h-[59%] w-[96%] max-w-[96%] bg-white overflow-hidden rounded-3xl shadow-2xl border border-gray-200/50">
           {/* Left floating controls */}
-          <div className="absolute top-[2%] left-0 flex flex-col items-start gap-6 p-2">
+          <div className="absolute top-4 left-4 flex flex-col items-start gap-4 z-10">
             <button
               id="playSampleAudio"
               onClick={playAudio}
               disabled={uiBlocked}
-              className={`box-border w-12 h-12 rounded-full border-[6px] border-white text-white bg-[#467387] flex items-center justify-center transition disabled:opacity-50`}
+              className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center transition-all hover:scale-110 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg border-4 border-white"
+              title="Phát âm thanh mẫu"
             >
-              <Play className="w-5 h-5" />
+              <Play className="w-6 h-6" fill="white" />
             </button>
 
             <button
               id="playRecordedAudio"
               onClick={() => playRecording()}
               disabled={uiBlocked || !currentSoundRecorded}
-              className={`box-border w-12 h-12 rounded-full border-[6px] border-white text-white bg-[#467387] flex items-center justify-center transition disabled:opacity-50`}
+              className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center transition-all hover:scale-110 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg border-4 border-white"
+              title="Phát âm thanh đã ghi"
             >
-              <Volume2 className="w-5 h-5" />
+              <Volume2 className="w-6 h-6" fill="white" />
             </button>
 
-            <p id="pronunciation_accuracy" className="text-center text-black">
-              {pronunciationAccuracy || "-"}
-            </p>
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl px-4 py-3 shadow-md border border-emerald-200">
+              <p className="text-xs text-gray-600 mb-1 font-medium">Điểm số</p>
+              <p id="pronunciation_accuracy" className="text-center text-2xl font-bold text-emerald-600">
+                {pronunciationAccuracy || "-"}
+              </p>
+            </div>
+            
+            {/* AI Feedback Button - Only show when feedback is available */}
+            {aiFeedback && aiFeedback.trim() && (
+              <button
+                onClick={() => setOpenAiFeedbackModal(true)}
+                className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center transition-all hover:scale-110 hover:shadow-xl shadow-lg border-4 border-white"
+                title="Xem AI Feedback"
+              >
+                <MessageSquare className="w-6 h-6" fill="white" />
+              </button>
+            )}
           </div>
 
           {/* Scrollable text area */}
@@ -1175,78 +1306,122 @@ const PracticeRecordLayout = () => {
             </p>
           </div>
 
-          {/* AI Feedback Panel */}
-          {aiFeedback && (
-            <div className="absolute left-[2%] right-[2%] bottom-[-22%] h-[18%] bg-white overflow-y-auto rounded-2xl shadow-[0_0_20px_8px_#d0d0d0] p-5 z-10">
-              <div 
-                className="text-[0.95em] text-gray-700 leading-relaxed"
-                style={{ 
-                  whiteSpace: 'pre-wrap',
-                  wordWrap: 'break-word'
-                }}
-                dangerouslySetInnerHTML={{ 
-                  __html: aiFeedback
-                    .split('\n')
-                    .map((line: string) => {
-                      // Handle headers (###)
-                      if (line.trim().startsWith('###')) {
-                        const text = line.replace(/^###\s*/, '');
-                        return `<h3 style="font-size: 1.15em; font-weight: 600; color: #363850; margin-top: 0.8em; margin-bottom: 0.4em;">${text}</h3>`;
-                      }
-                      // Handle bold text (**text**)
-                      let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 600; color: #153C57;">$1</strong>');
-                      // Handle numbered lists
-                      if (/^\d+\.\s/.test(processedLine.trim())) {
-                        return `<div style="margin: 0.3em 0; padding-left: 0.5em;">${processedLine}</div>`;
-                      }
-                      return processedLine || '<br />';
-                    })
-                    .join('')
-                }} 
-              />
-            </div>
-          )}
 
           {/* Navigation buttons */}
           {recordsList.length > 1 && (
-            <div className="absolute left-[90%] top-0 h-full flex flex-col justify-center gap-2">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3">
               <Button
                 onClick={handlePreviousQuestion}
                 disabled={uiBlocked || currentQuestionIndex === 0}
                 variant="outline"
                 size="icon"
-                className="w-12 h-12 rounded-full bg-[#58636d] hover:bg-[#6383a1] text-white border-0 disabled:opacity-50"
+                className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-7 h-7" />
               </Button>
               <Button
                 onClick={handleNextQuestion}
                 disabled={uiBlocked || currentQuestionIndex >= recordsList.length - 1}
                 variant="outline"
                 size="icon"
-                className="w-12 h-12 rounded-full bg-[#58636d] hover:bg-[#6383a1] text-white border-0 disabled:opacity-50"
+                className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all"
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="w-7 h-7" />
               </Button>
             </div>
           )}
           {/* Next button on right side (fallback if no records list) */}
           {recordsList.length === 0 && (
-            <div id="nextButtonDiv" className="absolute left-[90%] top-0 h-full">
+            <div id="nextButtonDiv" className="absolute right-4 top-1/2 -translate-y-1/2">
               <button
                 id="buttonNext"
                 onClick={getNextSample}
                 disabled={uiBlocked}
-                className="rounded block border-0 text-white text-left text-[3em] box-border absolute top-0 left-0 right-[2%] bottom-[2%] bg-[#58636d] w-[10em] transition-all hover:bg-[#6383a1] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span></span>
+                Next Sample
               </button>
             </div>
           )}
         </div>
 
+        {/* AI Feedback Modal - Outside main container for proper z-index */}
+        {openAiFeedbackModal && aiFeedback && aiFeedback.trim() && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
+            onClick={() => setOpenAiFeedbackModal(false)}
+          >
+            <div 
+              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b-2 border-gray-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 shadow-lg">
+                    <MessageSquare className="w-6 h-6 text-white" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                      AI Feedback
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-0.5">Phân tích phát âm chi tiết</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOpenAiFeedbackModal(false)}
+                  className="w-10 h-10 rounded-full hover:bg-gray-200 flex items-center justify-center transition-all hover:scale-110"
+                  aria-label="Đóng"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+                <div 
+                  className="text-[1.1em] text-gray-800 leading-relaxed"
+                  style={{ 
+                    whiteSpace: 'pre-wrap',
+                    wordWrap: 'break-word'
+                  }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: (typeof aiFeedback === 'string' ? aiFeedback : String(aiFeedback || ''))
+                      .split('\n')
+                      .map((line: string) => {
+                        // Handle headers (###)
+                        if (line.trim().startsWith('###')) {
+                          const text = line.replace(/^###\s*/, '');
+                          return `<h3 style="font-size: 1.5em; font-weight: 700; color: #1e40af; margin-top: 1.2em; margin-bottom: 0.8em; padding-bottom: 0.5em; border-bottom: 2px solid #e0e7ff;">${text}</h3>`;
+                        }
+                        // Handle bold text (**text**)
+                        const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 700; color: #1e40af; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">$1</strong>');
+                        // Handle numbered lists
+                        if (/^\d+\.\s/.test(processedLine.trim())) {
+                          return `<div style="margin: 0.8em 0; padding: 1em 1.2em; padding-left: 1.5em; font-size: 1.05em; background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.05)); border-left: 4px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">${processedLine}</div>`;
+                        }
+                        return `<p style="margin: 0.6em 0; line-height: 1.8;">${processedLine}</p>` || '<br />';
+                      })
+                      .join('')
+                  }} 
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-5 border-t-2 border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <Button
+                  onClick={() => setOpenAiFeedbackModal(false)}
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Small container for single word pair */}
-        <div className="fixed left-[68%] top-[79%] h-[7%] w-[30%] bg-white overflow-hidden rounded-2xl shadow-[0_0_20px_8px_#d0d0d0] flex items-center justify-center text-center">
+        <div className="fixed left-[68%] top-[79%] h-[7%] w-[25%] bg-white overflow-hidden rounded-2xl shadow-[0_0_20px_8px_#d0d0d0] flex items-center justify-center text-center">
           <p
             id="single_word_ipa_pair"
             className="text-[1.5em]"

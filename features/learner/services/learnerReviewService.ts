@@ -8,6 +8,8 @@ export interface LearnerReviewHistory {
     createdAt: Date;
     questionContent: string;
     reviewerFullName: string;
+    // API trả về field reviewAudioUrl
+    reviewAudioUrl: string | null;
     reviewType: "Record" | "LearnerAnswer";
 }
 export interface LearnerReviewHistoryResponse {

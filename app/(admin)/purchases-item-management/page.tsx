@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAdminPurchase, useAdminPurchaseDetails } from "@/features/admin/hooks/useAdminPurchase";
+import { useAdminPurchase, useAdminPurchaseDetails, useAdminPurchaseDashboard } from "@/features/admin/hooks/useAdminPurchase";
 import { useDownloadPurchaseExcel } from "@/features/admin/hooks/useAdminPurchaseExcel";
 import { Loader2, Search, Download, Eye, CheckCircle2, XCircle, Clock, DollarSign } from "lucide-react";
 import type { AIConversationPurchaseDetail, Purchase } from "@/features/admin/services/adminPurchaseService";
@@ -73,6 +73,9 @@ const PurchasesItemManagement = () => {
 
   // Excel download hook
   const { mutate: downloadExcel, isPending: isDownloadingExcel } = useDownloadPurchaseExcel();
+
+  // Dashboard statistics hook
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useAdminPurchaseDashboard();
 
   const handleViewDetails = (purchase: Purchase) => {
     setSelectedPurchaseId(purchase.purchaseId);
@@ -243,9 +246,9 @@ const PurchasesItemManagement = () => {
       </Card>
 
       {/* Statistics Cards */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
+      {isLoadingDashboard ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
             <Card key={i} className="border-2 border-dashed border-gray-200">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-center h-24">
@@ -263,7 +266,7 @@ const PurchasesItemManagement = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Giao dịch thành công</p>
                   <div className="text-3xl font-bold text-gray-900">
-                    {purchases.filter((p) => p.status === "Success" || p.status === "Completed").length}
+                    {dashboardData?.data?.totalSuccessTransaction ?? 0}
                   </div>
                 </div>
                 <div className="p-3 bg-green-100 rounded-full">
@@ -278,9 +281,7 @@ const PurchasesItemManagement = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Tổng doanh thu</p>
                   <div className="text-2xl font-bold text-gray-900">
-                    {formatPrice(
-                      purchases.reduce((sum, p) => sum + (p.coin || 0), 0)
-                    )}
+                    {formatPrice(dashboardData?.data?.totalRevenue ?? 0)}
                   </div>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-full">

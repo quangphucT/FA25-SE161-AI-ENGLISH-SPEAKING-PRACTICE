@@ -5,7 +5,7 @@ import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import TokenRefresher from "@/providers/TokenRefresher";
 import RealtimeProvider from "@/providers/RealtimeProvider";
-
+import "@livekit/components-styles";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

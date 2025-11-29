@@ -74,6 +74,7 @@ export const reviewerReviewSubmitService = async (
       reviewerProfileId: string | null;
       score: number;
       comment: string;
+      recordAudioUrl: string | null;
     }
   ): Promise<ReviewerReviewSubmitResponse> => {
     try {

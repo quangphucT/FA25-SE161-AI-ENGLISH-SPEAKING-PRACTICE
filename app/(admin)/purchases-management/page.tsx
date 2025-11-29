@@ -59,7 +59,7 @@ interface Transaction {
   Bankname: string;
   AccountNumber: string;
   Description: string;
-  Status: "Approved" | "Pending" | "Failed" ;
+  Status: "Approved" | "Pending" | "Cancelled" ;
   amount_coin: number;
   type: string;
   OrderCode: string;
@@ -73,6 +73,7 @@ interface Transaction {
 const PurchasesManagement = () => {
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(
     null
@@ -93,13 +94,14 @@ const PurchasesManagement = () => {
   // Reset to page 1 when search or status filter changes
   useEffect(() => {
     setPageNumber(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, typeFilter]);
 
   const { data: transactionsData, isLoading, error } = useAdminTransactions(
     pageNumber,
     pageSize,
     debouncedSearch,
-    statusFilter === "All" ? "" : statusFilter
+    statusFilter === "All" ? "" : statusFilter,
+    typeFilter === "All" ? "" : typeFilter
   );
 
   // Map API data to Transaction format
@@ -129,13 +131,11 @@ const PurchasesManagement = () => {
     
     return dataArray.map((item: TransactionAdmin) => {
       // Map status: "Pending" -> "Pending", "Success" -> "Success", "Cancelled" -> "Failed", etc.
-      let mappedStatus: "Approved" | "Pending" | "Failed" | "Refunded" = "Pending";
-      if (item.status === "Success" || item.status === "Approved") {
+      let mappedStatus: "Approved" | "Pending" | "Cancelled"  = "Pending";
+      if (item.status === "Approved") {
         mappedStatus = "Approved";
-      } else if (item.status === "Failed" || item.status === "Cancelled") {
-        mappedStatus = "Failed";
-      } else if (item.status === "Refunded") {
-        mappedStatus = "Refunded";
+      } else if (item.status === "Cancelled") {
+        mappedStatus = "Cancelled";
       } else {
         mappedStatus = "Pending";
       }
@@ -348,7 +348,7 @@ const exportToPDF = () => {
             <TabsList className="grid grid-cols-3 md:grid-cols-4 gap-2 w-full">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
               <TabsTrigger value="Approved">Thành công</TabsTrigger>
-              <TabsTrigger value="Failed">Thất bại</TabsTrigger>
+              <TabsTrigger value="Cancelled">Thất bại</TabsTrigger>
               <TabsTrigger value="Pending">Đang xử lý</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -391,7 +391,7 @@ const exportToPDF = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {transactions.filter((t) => t.Status === "Failed").length}
+              {transactions.filter((t) => t.Status === "Cancelled").length}
             </div>
           </CardContent>
         </Card>
@@ -414,7 +414,7 @@ const exportToPDF = () => {
       {/* Bảng giao dịch */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <CardTitle>Danh sách giao dịch</CardTitle>
               <CardDescription className="mt-1">
@@ -426,6 +426,21 @@ const exportToPDF = () => {
                   `Hiển thị ${filteredTransactions.length} giao dịch`
                 )}
               </CardDescription>
+            </div>
+            {/* Type Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Loại giao dịch:</span>
+              <Tabs
+                value={typeFilter}
+                onValueChange={(v) => setTypeFilter(v)}
+                className="w-auto"
+              >
+                <TabsList className="grid grid-cols-3 gap-2">
+                  <TabsTrigger value="All" className="text-xs">Tất cả</TabsTrigger>
+                  <TabsTrigger value="Deposit" className="text-xs">Nạp tiền</TabsTrigger>
+                  <TabsTrigger value="Withdrawal" className="text-xs">Rút tiền</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </CardHeader>
@@ -504,7 +519,7 @@ const exportToPDF = () => {
                       variant={
                         transaction.Status === "Approved"
                           ? "default"
-                          : transaction.Status === "Failed"
+                          : transaction.Status === "Cancelled"
                           ? "destructive"
                           : transaction.Status === "Pending"
                           ? "secondary"
@@ -706,7 +721,7 @@ const exportToPDF = () => {
                         variant={
                           selectedTransaction.Status === "Approved"
                             ? "default"
-                            : selectedTransaction.Status === "Failed"
+                            : selectedTransaction.Status === "Cancelled"
                             ? "destructive"
                             : selectedTransaction.Status === "Pending"
                             ? "secondary"

@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get("accessToken")?.value;
-  const { id } = await params;
 
   try {
-    const body = await request.json();
     const backendResponse = await fetch(
-      `${process.env.BE_API_URL}/AdminFeedback/${id}/reject`,
+      `${process.env.BE_API_URL}/AdminPurchase/purchases/dashboard`,
       {
-        method: "PUT",
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
         credentials: "include",
       }
     );
@@ -29,9 +23,15 @@ export async function PUT(
     }
 
     return NextResponse.json(data, { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { message: error.message || "Failed to fetch summary" },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Reject feedback failed" },
+      { message: "Failed to fetch summary" },
       { status: 500 }
     );
   }

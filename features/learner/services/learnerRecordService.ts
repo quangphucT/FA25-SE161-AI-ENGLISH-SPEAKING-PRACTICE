@@ -54,6 +54,7 @@ export interface ReviewRecordRequest {
   score?: number;
   aiFeedback?: string;
   audioRecordingURL?: string;
+  transcribedText?: string;
 }
 
 export interface ReviewRecordResponse {

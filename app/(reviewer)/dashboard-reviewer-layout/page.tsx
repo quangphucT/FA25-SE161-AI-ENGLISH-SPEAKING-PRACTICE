@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import StatisticsForMentor from "../statistics-for-mentor/page";
@@ -263,7 +263,7 @@ const DashboardReviewerLayout = () => {
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 mt-1">
-                    Welcome back <strong>{meData?.fullName}</strong>! Here are today's updates.
+                    Welcome back <strong>{meData?.fullName}</strong>! Here are today&apos;s updates.
                   </p>
                 </div>
               </div>
