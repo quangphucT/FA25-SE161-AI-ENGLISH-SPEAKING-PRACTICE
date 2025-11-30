@@ -73,8 +73,8 @@ const Wallet = () => {
     
     const data = walletData.data;
     return {
-      totalEarned: (data.totalEarnedMoney || 0).toLocaleString("vi-VN"),
-      currentBalance: (data.currentBalanceMoney || 0).toLocaleString("vi-VN"),
+      totalEarned: (data.totalEarnedMoney || 0).toLocaleString("en-US"),
+      currentBalance: (data.currentBalanceMoney || 0).toLocaleString("en-US"),
       currency: "VND",
     };
   }, [walletData]);
@@ -96,8 +96,8 @@ const Wallet = () => {
 
       return {
         id: item.orderCode,
-        amount: (item.money || 0).toLocaleString("vi-VN"),
-        createdTransaction: new Date(item.createdAt).toLocaleDateString("vi-VN"),
+        amount: (item.money || 0).toLocaleString("en-US"),
+        createdTransaction: new Date(item.createdAt).toLocaleDateString("en-US"),
         fk: item.orderCode,
         wallet_id: item.orderCode,
         bankName: item.bankName || "",
@@ -193,7 +193,7 @@ const Wallet = () => {
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
-                  Số tiền đã kiếm được
+                  Total earned
                 </p>
                 <p className="text-3xl font-bold text-gray-900 mb-2">
                   {totals.totalEarned} {totals.currency}
@@ -201,7 +201,7 @@ const Wallet = () => {
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">
                     <DollarSign className="w-3 h-3 mr-1" />
-                    {(walletData?.data?.totalEarnedCoin || 0).toLocaleString("vi-VN")} coin
+                    {(walletData?.data?.totalEarnedCoin || 0).toLocaleString("en-US")} coin
                   </Badge>
                 </div>
               </div>
@@ -218,7 +218,7 @@ const Wallet = () => {
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600 mb-1 flex items-center gap-2">
                   <WalletIcon className="w-4 h-4" />
-                  Số dư hiện tại
+                  Current balance
                 </p>
                 <p className="text-3xl font-bold text-gray-900 mb-2">
                   {totals.currentBalance} {totals.currency}
@@ -226,7 +226,7 @@ const Wallet = () => {
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
                     <DollarSign className="w-3 h-3 mr-1" />
-                    {(walletData?.data?.currentBalanceCoin || 0).toLocaleString("vi-VN")} coin
+                    {(walletData?.data?.currentBalanceCoin || 0).toLocaleString("en-US")} coin
                   </Badge>
                 </div>
               </div>
@@ -246,14 +246,14 @@ const Wallet = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Giao dịch của reviewer</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">Reviewer transactions</CardTitle>
             </div>
             <Button
               onClick={openCreateModal}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 rounded-xl font-semibold"
             >
               <Plus className="w-5 h-5 mr-2" />
-              Thêm giao dịch
+              Add transaction
             </Button>
           </div>
         </CardHeader>
@@ -261,7 +261,7 @@ const Wallet = () => {
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" />
-              <p className="text-gray-600 font-medium">Đang tải dữ liệu...</p>
+              <p className="text-gray-600 font-medium">Loading data...</p>
             </div>
           )}
           {error && (
@@ -269,7 +269,7 @@ const Wallet = () => {
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
-              <p className="text-lg font-semibold text-red-600 mb-2">Lỗi khi tải dữ liệu</p>
+              <p className="text-lg font-semibold text-red-600 mb-2">Failed to load data</p>
               <p className="text-sm text-gray-600">{error.message}</p>
             </div>
           )}
@@ -278,8 +278,8 @@ const Wallet = () => {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <FileText className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-lg font-semibold text-gray-600 mb-2">Chưa có giao dịch nào</p>
-              <p className="text-sm text-gray-500">Bắt đầu bằng cách tạo giao dịch mới</p>
+              <p className="text-lg font-semibold text-gray-600 mb-2">No transactions yet</p>
+              <p className="text-sm text-gray-500">Start by creating your first transaction</p>
             </div>
           )}
           {!isLoading && !error && transactions.length > 0 && (
@@ -317,27 +317,27 @@ const Wallet = () => {
                               : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300"
                           }`}
                         >
-                          {tx.transactionEnum === "Withdraw" ? "Đã rút" : tx.transactionEnum === "Reject" ? "Từ chối" : "Chờ xử lý"}
+                          {tx.transactionEnum === "Withdraw" ? "Withdrawn" : tx.transactionEnum === "Reject" ? "Rejected" : "Pending"}
                         </Badge>
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Building2 className="w-4 h-4" />
-                          <span>{tx.bankName || "Chưa có"}</span>
+                          <span>{tx.bankName || "Not provided"}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <CreditCard className="w-4 h-4" />
-                          <span>{tx.accountNumber || "Chưa có"}</span>
+                          <span>{tx.accountNumber || "Not provided"}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-400">
                           <Calendar className="w-3 h-3" />
-                          <span>Ngày tạo: {tx.createdTransaction}</span>
+                          <span>Created on: {tx.createdTransaction}</span>
                         </div>
                         {tx.reasonWithdrawReject && (
                           <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-xs text-red-700 font-medium flex items-center gap-1">
                               <AlertCircle className="w-3 h-3" />
-                              Lý do từ chối: {tx.reasonWithdrawReject}
+                              Rejection reason: {tx.reasonWithdrawReject}
                             </p>
                           </div>
                         )}
@@ -359,8 +359,8 @@ const Wallet = () => {
                   <Plus className="w-5 h-5 text-white" />
                 </div>
                 {editingTransaction
-                  ? "Chỉnh sửa giao dịch"
-                  : "Thêm giao dịch mới"}
+                  ? "Edit transaction"
+                  : "Add new transaction"}
               </h2>
               <Button
                 variant="ghost"
@@ -380,7 +380,7 @@ const Wallet = () => {
                     className="text-sm font-semibold text-gray-700 flex items-center gap-2"
                   >
                     <DollarSign className="w-4 h-4" />
-                    Số coin muốn rút *
+                    Coins to withdraw *
                   </Label>
                   <Input
                     id="amount"
@@ -389,12 +389,12 @@ const Wallet = () => {
                     onChange={(e) =>
                       handleInputChange("amount", e.target.value)
                     }
-                    placeholder="VD: 100"
+                    placeholder="e.g., 100"
                     className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl transition-all"
                   />
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     <span>💡</span>
-                    Nhập số coin bạn muốn rút (1 coin = 1000 VND)
+                    Enter the number of coins you want to withdraw (1 coin = 1000 VND)
                   </p>
                 </div>
 
@@ -404,7 +404,7 @@ const Wallet = () => {
                     className="text-sm font-semibold text-gray-700 flex items-center gap-2"
                   >
                     <Building2 className="w-4 h-4" />
-                    Tên ngân hàng *
+                    Bank name *
                   </Label>
                   <Input
                     id="bankName"
@@ -412,7 +412,7 @@ const Wallet = () => {
                     onChange={(e) =>
                       handleInputChange("bankName", e.target.value)
                     }
-                    placeholder="VD: Vietcombank, Techcombank..."
+                    placeholder="e.g., Vietcombank, Techcombank..."
                     className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl transition-all"
                   />
                 </div>
@@ -422,7 +422,7 @@ const Wallet = () => {
                     className="text-sm font-semibold text-gray-700 flex items-center gap-2"
                   >
                     <CreditCard className="w-4 h-4" />
-                    Số tài khoản *
+                    Account number *
                   </Label>
                   <Input
                     id="accountNumber"
@@ -430,7 +430,7 @@ const Wallet = () => {
                     onChange={(e) =>
                       handleInputChange("accountNumber", e.target.value)
                     }
-                    placeholder="VD: 1234567890"
+                    placeholder="e.g., 1234567890"
                     className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl transition-all"
                   />
                 </div>
@@ -449,7 +449,7 @@ const Wallet = () => {
                     handleInputChange("reasonWithdrawReject", e.target.value)
                   }
                   className="w-full h-24 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl p-3"
-                  placeholder="Nhập lý do nếu có"
+                  placeholder="Enter a reason if needed"
                 />
               </div> */}
             </div>
@@ -462,7 +462,7 @@ const Wallet = () => {
                 className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-semibold transition-all"
               >
                 <X className="w-4 h-4 mr-2" />
-                Hủy
+                Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -472,12 +472,12 @@ const Wallet = () => {
                 {withdrawMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Đang xử lý...
+                    Processing...
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    {editingTransaction ? "Cập nhật" : "Thêm giao dịch"}
+                    {editingTransaction ? "Update" : "Add transaction"}
                   </>
                 )}
               </Button>

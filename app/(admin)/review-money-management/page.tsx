@@ -210,7 +210,7 @@ const pricePerReview = feePackages?.data?.items
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Tổng thu nhập</p>
                   <div className="text-2xl font-bold text-gray-900">
-{formatCoin(adminReviewerIncome?.data?.totalIncome)}
+                    {formatCoin(adminReviewerIncome?.data?.totalIncome)}
                   </div>
                 </div>
                 <div className="p-3 bg-green-100 rounded-full">
@@ -341,16 +341,16 @@ const pricePerReview = feePackages?.data?.items
                           </div>
                         </TableCell>
                        <TableCell>
-  <div className="font-semibold text-blue-600">
-    {reviewer.reviewCount ?? 0}
-  </div>
-</TableCell>
+                          <div className="font-semibold text-blue-600">
+                            {reviewer.reviewCount ?? 0}
+                          </div>
+                        </TableCell>
 
-<TableCell>
-  <div className="font-semibold text-green-600">
-{formatCoin(reviewer.totalIncome)}
-  </div>
-</TableCell>
+                        <TableCell>
+                          <div className="font-semibold text-green-600">
+                        {formatCoin(reviewer.totalIncome)}
+                          </div>
+                        </TableCell>
 
                         <TableCell className="text-center">
                           <DropdownMenu>

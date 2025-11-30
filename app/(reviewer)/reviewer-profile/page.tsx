@@ -253,7 +253,7 @@ const ReviewerProfile = () => {
 
   const mentorData = {
     id: profileData?.reviewerProfileId || "",
-    name: meData?.fullName || "Chưa có tên",
+    name: meData?.fullName || "Name not provided",
     avatar: meData?.avatarUrl || "/api/placeholder/150/150",
     rating: profileData?.rating || 0,
     totalReviews: 0, // TODO: Get from API if available
@@ -305,7 +305,7 @@ const ReviewerProfile = () => {
                         </p>
                       )}
                       <p className="text-base text-gray-600">
-                        {mentorData.yearsExperience} năm kinh nghiệm
+                        {mentorData.yearsExperience} years of experience
                       </p>
                     </div>
                   </div>
@@ -318,7 +318,7 @@ const ReviewerProfile = () => {
                       </span>
                       {mentorData.totalFeedbacks > 0 && (
                         <span className="text-gray-600 text-sm font-medium">
-                          ({mentorData.totalFeedbacks} đánh giá)
+                          ({mentorData.totalFeedbacks} reviews)
                         </span>
                       )}
                     </div>
@@ -334,18 +334,18 @@ const ReviewerProfile = () => {
                     <div className="p-2 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl">
                       <Award className="w-5 h-5 text-white" />
                     </div>
-                    Trình độ & Chuyên môn
+                    Qualifications & Expertise
                   </h3>
                   <div className="space-y-5">
                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-5 rounded-2xl border border-blue-100">
                       <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                         <Star className="w-4 h-4 text-yellow-500" />
-                        Thông tin cơ bản
+                        Basic Information
                       </h4>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-gray-600">
-                            Tổng số chứng chỉ:
+                            Total certificates:
                           </span>
                           <span className="text-sm font-semibold text-gray-900">
                             {mentorData.certifications?.length || 0}
@@ -371,10 +371,10 @@ const ReviewerProfile = () => {
                           </div>
                           <div>
                             <h4 className="font-bold text-gray-900 text-sm">
-                              Kinh nghiệm
+                              Experience
                             </h4>
                             <span className="text-gray-700 font-medium">
-                              {mentorData.yearsExperience} năm kinh nghiệm
+                              {mentorData.yearsExperience} years of experience
                             </span>
                           </div>
                         </div>
@@ -386,12 +386,12 @@ const ReviewerProfile = () => {
                           </div>
                           <div>
                             <h4 className="font-bold text-gray-900 text-sm">
-                              Nhận xét
+                              Reviews
                             </h4>
                             <span className="text-gray-700 font-medium">
                               {mentorData.rating.toFixed(1)}/5
                               {mentorData.totalFeedbacks > 0 && (
-                                <> ({mentorData.totalFeedbacks} nhận xét)</>
+                                <> ({mentorData.totalFeedbacks} reviews)</>
                               )}
                             </span>
                           </div>
@@ -410,7 +410,7 @@ const ReviewerProfile = () => {
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 rounded-2xl font-semibold"
                 >
                   <Edit className="w-5 h-5 mr-2" />
-                  Chỉnh sửa hồ sơ
+                  Edit profile
                 </Button>
               </div>
             </div>
@@ -427,13 +427,13 @@ const ReviewerProfile = () => {
                 <div className="p-2 bg-linear-to-br from-indigo-500 to-purple-600 rounded-xl">
                   <Award className="w-5 h-5 text-white" />
                 </div>
-                Chứng chỉ
+                Certificates
               </h3>
               <Button
                 onClick={() => setIsAddingCert(true)}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 rounded-2xl font-semibold"
               >
-                Thêm chứng chỉ
+                Add certificate
               </Button>
             </div>
 
@@ -472,24 +472,24 @@ const ReviewerProfile = () => {
                               {cert.status === "Approved" && (
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-xs font-semibold border border-green-200">
                                   <CheckCircle className="w-4 h-4" />
-                                  Đã duyệt
+                                  Approved
                                 </div>
                               )}
                               {cert.status === "Pending" && (
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold border border-yellow-200">
                                   <Clock className="w-4 h-4" />
-                                  Chờ duyệt
+                                  Pending approval
                                 </div>
                               )}
                               {cert.status === "Rejected" && (
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-800 rounded-full text-xs font-semibold border border-red-200">
                                   <AlertCircle className="w-4 h-4" />
-                                  Bị từ chối
+                                  Rejected
                                 </div>
                               )}
                             </div>
                             <p className="text-sm text-gray-600">
-                              Chứng chỉ chuyên môn
+                              Professional certification
                             </p>
                           </div>
                         </div>
@@ -506,7 +506,7 @@ const ReviewerProfile = () => {
               </div>
             ) : (
               <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-2xl border border-gray-200">
-                <div className="text-gray-600">Chưa có chứng chỉ.</div>
+                <div className="text-gray-600">No certificates yet.</div>
               </div>
             )}
           </CardContent>
@@ -535,7 +535,7 @@ const ReviewerProfile = () => {
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Thông tin cơ bản
+                  Basic information
                 </h3>
 
                 <div className="grid grid-cols-1 gap-4">
@@ -544,7 +544,7 @@ const ReviewerProfile = () => {
                       htmlFor="fullname"
                       className="text-sm font-medium text-gray-700"
                     >
-                      Họ và tên
+                      Full name
                     </Label>
                     <Input
                       id="fullname"
@@ -561,7 +561,7 @@ const ReviewerProfile = () => {
                       htmlFor="experience"
                       className="text-sm font-medium text-gray-700"
                     >
-                      Kinh nghiệm
+                      Experience
                     </Label>
                     <Input
                       id="experience"
@@ -569,7 +569,7 @@ const ReviewerProfile = () => {
                       onChange={(e) =>
                         handleInputChange("experience", e.target.value)
                       }
-                      placeholder="Nhập số năm kinh nghiệm của bạn..."
+                      placeholder="Enter your years of experience..."
                     />
                   </div>
 
@@ -578,7 +578,7 @@ const ReviewerProfile = () => {
                       htmlFor="phoneNumber"
                       className="text-sm font-medium text-gray-700"
                     >
-                      Số điện thoại
+                      Phone number
                     </Label>
                     <Input
                       id="phoneNumber"
@@ -588,7 +588,7 @@ const ReviewerProfile = () => {
                         handleInputChange("phoneNumber", e.target.value)
                       }
                       className="mt-1"
-                      placeholder="Nhập số điện thoại..."
+                      placeholder="Enter your phone number..."
                     />
                   </div>
                 </div>
@@ -598,7 +598,7 @@ const ReviewerProfile = () => {
             {/* Modal Footer */}
             <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
               <Button variant="outline" onClick={handleCancel}>
-                Hủy
+                Cancel
               </Button>
               <Button 
                 onClick={handleSave} 
@@ -606,7 +606,7 @@ const ReviewerProfile = () => {
                 className="flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
-                {isPending ? "Đang lưu..." : "Lưu thay đổi"}
+                {isPending ? "Saving..." : "Save changes"}
               </Button>
             </div>
           </div>
@@ -623,7 +623,7 @@ const ReviewerProfile = () => {
                   <div className="p-2 bg-linear-to-br from-indigo-500 to-purple-600 rounded-xl">
                     <Award className="w-6 h-6 text-white" />
                   </div>
-                  Thêm chứng chỉ mới
+                  Add new certificate
                 </h2>
                 <Button
                   onClick={handleCancelCert}
@@ -642,7 +642,7 @@ const ReviewerProfile = () => {
                     htmlFor="certName"
                     className="text-sm font-medium text-gray-700 mb-2 block"
                   >
-                    Tên chứng chỉ *
+                    Certificate name *
                   </Label>
                   <Input
                     id="certName"
@@ -650,7 +650,7 @@ const ReviewerProfile = () => {
                     onChange={(e) =>
                       handleCertInputChange("name", e.target.value)
                     }
-                    placeholder="Nhập tên chứng chỉ..."
+                    placeholder="Enter certificate name..."
                     className="w-full"
                   />
                 </div>
@@ -658,7 +658,7 @@ const ReviewerProfile = () => {
                 {/* Image Upload Section */}
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                    Hình ảnh chứng chỉ *
+                    Certificate image *
                   </Label>
 
                   <FileDropZone
@@ -697,14 +697,14 @@ const ReviewerProfile = () => {
                         <div className="text-center">
                           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                           <p className="text-gray-600 mb-2">
-                            Kéo thả hình ảnh vào đây hoặc
+                            Drag and drop images here or
                           </p>
                           <Button
                             onClick={handleImageClick}
                             variant="outline"
                             className="border-blue-500 text-blue-600 hover:bg-blue-50"
                           >
-                            Chọn hình ảnh
+                            Choose images
                           </Button>
                         </div>
                       )}
@@ -729,7 +729,7 @@ const ReviewerProfile = () => {
                   variant="outline"
                   className="px-6 py-2"
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button
                   onClick={handleSaveCert}
@@ -737,7 +737,7 @@ const ReviewerProfile = () => {
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {isCertUploadPending ? "Đang tải lên..." : "Lưu chứng chỉ"}
+                  {isCertUploadPending ? "Uploading..." : "Save certificate"}
                 </Button>
               </div>
             </div>

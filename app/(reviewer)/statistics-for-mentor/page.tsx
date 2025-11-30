@@ -9,25 +9,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useReviewReviewPending, useReviewReviewSubmit, useReviewReviewStatistics, useReviewerTipAfterReview } from "@/features/reviewer/hooks/useReviewReview";
 import { useReviewFeedback } from "@/features/reviewer/hooks/useReviewFeedback";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { signalRService } from "@/lib/realtime/realtime";
 import { ReviewCompleted } from "@/lib/realtime/realtime";
 import { useRealtime } from "@/providers/RealtimeProvider";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, Mic } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
+import { uploadAudioToCloudinary } from "@/utils/upload";
 
 const StatisticsForMentor = () => {
   const [showAllFeedback, setShowAllFeedback] = useState(false);
+  
+  // Pagination state for "Answers needing review"
+  const [pendingPageNumber, setPendingPageNumber] = useState(1);
+  const [pendingPageSize] = useState(5); // Show 5 pending reviews per page
   
   // Pagination state for feedback summary
   const [feedbackPageNumber, setFeedbackPageNumber] = useState(1);
   const [feedbackPageSize] = useState(5); // Show 5 feedbacks in summary
   
-  // Pagination state for modal
+  // Pagination state for modal (all feedback)
   const [modalPageNumber, setModalPageNumber] = useState(1);
   const [modalPageSize] = useState(10); // Show 10 feedbacks per page in modal
   
@@ -76,8 +81,8 @@ const StatisticsForMentor = () => {
       studentName: item.learnerName,
       rating: item.rating,
       comment: item.content,
-      sessionType: item.reviewType || "Đánh giá phát âm",
-      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: vi }),
+      sessionType: item.reviewType || "Pronunciation review",
+      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: enUS }),
       avatar: getInitials(item.learnerName),
     }));
   }, [feedbackData]);
@@ -95,6 +100,15 @@ const StatisticsForMentor = () => {
       totalItems,
     };
   }, [feedbackData, feedbackPageNumber, feedbackPageSize]);
+
+  const feedbackStartItem =
+    feedbackPagination.totalItems === 0
+      ? 0
+      : (feedbackPageNumber - 1) * feedbackPageSize + 1;
+  const feedbackEndItem = Math.min(
+    feedbackPageNumber * feedbackPageSize,
+    feedbackPagination.totalItems
+  );
 
   // Calculate pagination info for modal
   const modalPagination = useMemo(() => {
@@ -114,7 +128,7 @@ const StatisticsForMentor = () => {
   // Track numberOfReview updates from SignalR events
   const [numberOfReviewUpdates, setNumberOfReviewUpdates] = useState<Record<string, number>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; duration?: string } | null>(null);
+  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; type: string } | null>(null);
   const [comment, setComment] = useState("");
   const [score, setScore] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
@@ -122,8 +136,8 @@ const StatisticsForMentor = () => {
   const [showRewardForm, setShowRewardForm] = useState(false);
   const [rewardAmount, setRewardAmount] = useState("");
   const [rewardMessage, setRewardMessage] = useState("");
-  // Fetch pending reviews
-  const { data: pendingReviewsData, isLoading, error } = useReviewReviewPending(1, 100);
+  // Fetch pending reviews with pagination
+  const { data: pendingReviewsData, isLoading, error } = useReviewReviewPending(pendingPageNumber, pendingPageSize);
   
   // Get user info for reviewerProfileId
   const { data: userData } = useGetMeQuery();
@@ -142,7 +156,7 @@ const StatisticsForMentor = () => {
         question: review.question,
         audioUrl: review.audioUrl,
         submittedAt: review.submittedAt,
-        duration: review.duration,
+        type: review.type ,
       });
       setIsModalOpen(true);
       setComment("");
@@ -163,35 +177,18 @@ const StatisticsForMentor = () => {
     setShowRewardForm(false);
     setRewardAmount("");
     setRewardMessage("");
+    setRecording(false);
+    recordedAudioBlobMp3Ref.current = null;
+    audioChunksRef.current = [];
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
   };
-  const tipAfterReviewMutation = useReviewerTipAfterReview();
+ 
 
-  const handleRewardLearner = async () => {
-    if (!selectedReview?.id) {
-      return;
-    }
-    const amount = Number(rewardAmount);
-    if (!amount || amount <= 0) {
-      return;
-    }
-    try {
-      await tipAfterReviewMutation.mutateAsync({
-        reviewerId: selectedReview.id,
-        amountCoin: amount,
-        message: rewardMessage.trim(),
-      });
-      setRewardAmount("");
-      setRewardMessage("");
-      setShowRewardForm(false);
-    } catch (error) {
-      console.error("Reward learner failed:", error);
-    }
-  };
-  const handleSaveAndFinish = async () => {
+  
+  const handleSaveAndFinish = useCallback(async () => {
     if (!selectedReview) return;
     
     // Validate inputs
@@ -207,17 +204,50 @@ const StatisticsForMentor = () => {
     }
     
     try {
-      await submitReviewMutation.mutateAsync({
-        learnerAnswerId: selectedReview.id,
-        recordId: null, // Can be null as per requirement
-        reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
-        score: scoreValue,
-        comment: comment.trim(),
-      });
+      let audioUrl: string | null = null;
+      
+      // Upload audio if recorded
+      const recordedMp3Blob = recordedAudioBlobMp3Ref.current;
+      if (recordedMp3Blob) {
+        // Convert blob to File
+        const audioFile = new File(
+          [recordedMp3Blob],
+          `record-${Date.now()}.mp3`,
+          { type: "audio/mp3" }
+        );
+        audioUrl = await uploadAudioToCloudinary(audioFile);
+        if (!audioUrl) {
+          console.error("Failed to upload audio to Cloudinary");
+          // Continue without audio URL if upload fails
+        }
+      }
+      
+      if(selectedReview.type === "Record"){
+        await submitReviewMutation.mutateAsync({
+          learnerAnswerId: null,
+          recordId: selectedReview.id,
+          reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
+          score: scoreValue,
+          comment: comment.trim(),
+          recordAudioUrl: audioUrl || null,
+        });
+      } else {
+        await submitReviewMutation.mutateAsync({
+          learnerAnswerId: selectedReview.id,
+          recordId: null,
+          reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
+          score: scoreValue,
+          comment: comment.trim(),
+          recordAudioUrl: audioUrl || null,
+        });
+      }
       
       // Remove review from current reviewer's list immediately
       // SignalR event will handle updates for other reviewers
       setReviewedAnswers((prev) => [...prev, selectedReview.id]);
+      
+      // Reset audio blob after successful submission
+      recordedAudioBlobMp3Ref.current = null;
       
       // Close modal
       handleCloseModal();
@@ -225,7 +255,7 @@ const StatisticsForMentor = () => {
       // Error is already handled by the mutation's onError callback
       console.error("Error submitting review:", error);
     }
-  };
+  }, [selectedReview, comment, score, userData, submitReviewMutation]);
 
   // Transform API data to component format
   // Merge with numberOfReview updates from SignalR events
@@ -235,21 +265,44 @@ const StatisticsForMentor = () => {
       id: item.id,
       question: item.questionText,
       audioUrl: item.audioUrl,
-      duration: undefined, // Duration not available in API
-      submittedAt: new Date(item.submittedAt).toLocaleDateString('vi-VN'),
+      submittedAt: new Date(item.submittedAt).toLocaleDateString("en-US"),
       status: "Pending",
       learnerFullName: item.learnerFullName,
       type: item.type,
       // Use updated numberOfReview from SignalR if available, otherwise use from API
-      numberOfReview: numberOfReviewUpdates[item.id] !== undefined 
-        ? numberOfReviewUpdates[item.id] 
-        : item.numberOfReview,
+      numberOfReview:
+        numberOfReviewUpdates[item.id] !== undefined
+          ? numberOfReviewUpdates[item.id]
+          : item.numberOfReview,
     }));
   }, [pendingReviewsData, numberOfReviewUpdates]);
 
-  // Filter out reviewed answers
+  // Filter out reviewed answers (local state)
   const availableReviews = pendingReviews.filter(
     (review) => !reviewedAnswers.includes(review.id)
+  );
+
+  // Pagination info for "Answers needing review"
+  const pendingPagination = useMemo(() => {
+    if (!pendingReviewsData?.data) {
+      return { totalPages: 0, currentPage: 1, totalItems: 0 };
+    }
+    const totalItems = pendingReviewsData.data.totalItems || 0;
+    const totalPages = Math.ceil(totalItems / pendingPageSize);
+    return {
+      totalPages,
+      currentPage: pendingPageNumber,
+      totalItems,
+    };
+  }, [pendingReviewsData, pendingPageNumber, pendingPageSize]);
+
+  const pendingStartItem =
+    pendingPagination.totalItems === 0
+      ? 0
+      : (pendingPageNumber - 1) * pendingPageSize + 1;
+  const pendingEndItem = Math.min(
+    pendingPageNumber * pendingPageSize,
+    pendingPagination.totalItems
   );
 
   // Setup SignalR listener for reviewCompleted events
@@ -291,7 +344,7 @@ const StatisticsForMentor = () => {
     };
   }, [isConnected]);
 
-  // Full feedback data cho modal - map từ API
+  // Full feedback data for modal - mapped from API
   const allFeedbackDataForModal = useMemo(() => {
     if (!allFeedbackData?.isSucess || !allFeedbackData?.data?.items) return [];
     
@@ -300,11 +353,72 @@ const StatisticsForMentor = () => {
       studentName: item.learnerName,
       rating: item.rating,
       comment: item.content,
-      sessionType: item.reviewType || "Đánh giá phát âm",
-      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: vi }),
+      sessionType: item.reviewType || "Pronunciation review",
+      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: enUS }),
       avatar: getInitials(item.learnerName),
     }));
   }, [allFeedbackData]);
+  const [recording, setRecording] = useState<boolean>(false);
+  const streamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordedAudioBlobMp3Ref = useRef<Blob | null>(null); // Store recorded audio blob
+  
+  const updateRecordingState = useCallback(() => {
+    if (recording) {
+      setRecording(false);
+      if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
+    } else {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "recording"
+      ) {
+        audioChunksRef.current = [];
+        setRecording(true);
+        mediaRecorderRef.current.start();
+      }
+    }
+  }, [recording]);
+
+  // Initialize MediaRecorder on component mount
+  useEffect(() => {
+    const constraints: MediaStreamConstraints = {
+      audio: { channelCount: 1, sampleRate: 48000 },
+    };
+    
+    navigator.mediaDevices
+      .getUserMedia(constraints)
+      .then((stream) => {
+        streamRef.current = stream;
+        const mr = new MediaRecorder(stream);
+        mediaRecorderRef.current = mr;
+        
+        mr.ondataavailable = (ev) => {
+          // Some browsers use ev.data.size
+          if (ev.data && ev.data.size > 0) {
+            audioChunksRef.current.push(ev.data);
+          }
+        };
+        
+        mr.onstop = async () => {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/ogg" });
+          const blobMp3 = new Blob(audioChunksRef.current, { type: "audio/mp3" });
+          recordedAudioBlobMp3Ref.current = blobMp3; // Store blob for later upload
+          console.log("Recording stopped, blob stored:", blobMp3.size, "bytes");
+        };
+      })
+      .catch((error) => {
+        console.error("Error accessing microphone:", error);
+      });
+
+    // Cleanup function
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -328,7 +442,7 @@ const StatisticsForMentor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Tổng phản hồi
+                    Total feedback
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {mentorStats.totalFeedbacks}
@@ -359,7 +473,7 @@ const StatisticsForMentor = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng đánh giá
+                  Total reviews
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {mentorStats.totalReviews}
@@ -388,7 +502,7 @@ const StatisticsForMentor = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Đánh giá trung bình
+                  Average rating
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {mentorStats.avgRating}/5
@@ -414,7 +528,7 @@ const StatisticsForMentor = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Số tiền trong ví
+                  Wallet balance
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {mentorStats.AmountOfMoneyEarned} coin
@@ -446,7 +560,7 @@ const StatisticsForMentor = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Câu trả lời cần review</CardTitle>
+              <CardTitle>Answers needing review</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -454,20 +568,20 @@ const StatisticsForMentor = () => {
               {isLoading ? (
                 <div className="text-center py-12">
                   <div className="text-gray-400 text-lg font-medium">
-                    Đang tải...
+                    Loading...
                   </div>
                 </div>
               ) : error ? (
                 <div className="text-center py-12">
                   <div className="text-red-400 text-lg font-medium">
-                    Lỗi khi tải dữ liệu: {error.message}
+                    Failed to load data: {error.message}
                   </div>
                 </div>
               ) : availableReviews.length === 0 ? (
                 <div className="text-center py-12">
                  <CircleCheck size={64} color="green" className="text-6xl mb-4 text-center w-full"/>
                   <div className="text-gray-500 text-lg font-medium">
-                    Tất cả câu trả lời đã được review
+                    All answers have been reviewed
                   </div>  
                 </div>
               ) : (
@@ -484,7 +598,7 @@ const StatisticsForMentor = () => {
                         <div className="mb-3">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-semibold text-gray-900">
-                              Câu hỏi:
+                              Question:
                             </h4>
                           </div>
                           <p className="text-sm text-gray-700 leading-relaxed">
@@ -510,11 +624,7 @@ const StatisticsForMentor = () => {
                                 <span className="text-sm font-medium text-gray-900">
                                   Audio Response
                                 </span>
-                                {review.duration && (
-                                  <span className="text-xs text-gray-500">
-                                    ({review.duration})
-                                  </span>
-                                )}
+                               
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div
@@ -541,26 +651,79 @@ const StatisticsForMentor = () => {
                 ))
               )}
             </div>
+
+            {/* Pagination for pending reviews */}
+            {pendingPagination.totalItems > 0 && (
+              <div className="mt-4 pt-3 border-t border-dashed border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="text-xs sm:text-sm text-gray-600">
+                  Showing{" "}
+                  <span className="font-semibold">
+                    {pendingStartItem}-{pendingEndItem}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold">
+                    {pendingPagination.totalItems}
+                  </span>{" "}
+                  answers
+                </div>
+                <div className="inline-flex items-center justify-center gap-1 rounded-full bg-gray-50 px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-200">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full"
+                    onClick={() =>
+                      setPendingPageNumber((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={pendingPageNumber === 1 || isLoading}
+                  >
+                    <span className="text-xs">‹</span>
+                  </Button>
+                  <span className="text-xs sm:text-sm text-gray-700 px-1">
+                    Page{" "}
+                    <span className="font-semibold">
+                      {pendingPagination.currentPage}
+                    </span>{" "}
+                    / {pendingPagination.totalPages}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full"
+                    onClick={() =>
+                      setPendingPageNumber((prev) =>
+                        Math.min(pendingPagination.totalPages, prev + 1)
+                      )
+                    }
+                    disabled={
+                      pendingPageNumber >= pendingPagination.totalPages ||
+                      isLoading
+                    }
+                  >
+                    <span className="text-xs">›</span>
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Feedback Summary */}
         <Card>
           <CardHeader>
-            <CardTitle>Tóm tắt phản hồi</CardTitle>
+            <CardTitle>Feedback summary</CardTitle>
             <p className="text-sm text-gray-500">
-              Phản hồi gần đây từ học viên của bạn
+              Recent feedback from your learners
             </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {isLoadingFeedback ? (
                 <div className="text-center py-8">
-                  <div className="text-gray-400 text-sm">Đang tải phản hồi...</div>
+                  <div className="text-gray-400 text-sm">Loading feedback...</div>
                 </div>
               ) : feedbackSummary.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-gray-500 text-sm">Chưa có phản hồi nào</div>
+                  <div className="text-gray-500 text-sm">No feedback yet</div>
                 </div>
               ) : (
                 feedbackSummary.map((feedback) => (
@@ -607,52 +770,55 @@ const StatisticsForMentor = () => {
             </div>
             
             {/* Pagination for summary */}
-            {feedbackPagination.totalPages > 1 && (
-              <div className="mt-4 pt-3 border-t flex items-center justify-between">
-                <div className="flex items-center gap-2">
+            {feedbackPagination.totalItems > 0 && (
+              <div className="mt-4 pt-3 border-t border-dashed border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="text-xs sm:text-sm text-gray-600">
+                  Showing{" "}
+                  <span className="font-semibold">
+                    {feedbackStartItem}-{feedbackEndItem}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold">
+                    {feedbackPagination.totalItems}
+                  </span>{" "}
+                  feedback
+                </div>
+                <div className="inline-flex items-center justify-center gap-1 rounded-full bg-gray-50 px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-200">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFeedbackPageNumber((prev) => Math.max(1, prev - 1))}
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full"
+                    onClick={() =>
+                      setFeedbackPageNumber((prev) => Math.max(1, prev - 1))
+                    }
                     disabled={feedbackPageNumber === 1 || isLoadingFeedback}
                   >
-                    Trước
+                    <span className="text-xs">‹</span>
                   </Button>
-                  <span className="text-sm text-gray-600">
-                    Trang {feedbackPagination.currentPage} / {feedbackPagination.totalPages}
+                  <span className="text-xs sm:text-sm text-gray-700 px-1">
+                    Page{" "}
+                    <span className="font-semibold">
+                      {feedbackPagination.currentPage}
+                    </span>{" "}
+                    / {feedbackPagination.totalPages}
                   </span>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFeedbackPageNumber((prev) => Math.min(feedbackPagination.totalPages, prev + 1))}
-                    disabled={feedbackPageNumber >= feedbackPagination.totalPages || isLoadingFeedback}
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full"
+                    onClick={() =>
+                      setFeedbackPageNumber((prev) =>
+                        Math.min(feedbackPagination.totalPages, prev + 1)
+                      )
+                    }
+                    disabled={
+                      feedbackPageNumber >= feedbackPagination.totalPages ||
+                      isLoadingFeedback
+                    }
                   >
-                    Sau
+                    <span className="text-xs">›</span>
                   </Button>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowAllFeedback(true);
-                    setModalPageNumber(1); // Reset to first page when opening modal
-                  }}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
-                >
-                  Xem tất cả phản hồi →
-                </button>
-              </div>
-            )}
-            
-            {feedbackPagination.totalPages <= 1 && (
-              <div className="mt-4 pt-3 border-t">
-                <button
-                  onClick={() => {
-                    setShowAllFeedback(true);
-                    setModalPageNumber(1);
-                  }}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
-                >
-                  Xem tất cả phản hồi →
-                </button>
               </div>
             )}
           </CardContent>
@@ -667,10 +833,10 @@ const StatisticsForMentor = () => {
             <div className="px-6 py-1.5 border-b border-gray-200 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  Tất cả phản hồi học viên
+                  All learner feedback
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Lịch sử phản hồi đầy đủ từ học viên của bạn
+                  Complete feedback history from your learners
                 </p>
               </div>
               <Button
@@ -698,11 +864,11 @@ const StatisticsForMentor = () => {
               <div className="grid gap-4">
                 {isLoadingAllFeedback ? (
                   <div className="text-center py-12">
-                    <div className="text-gray-400 text-lg">Đang tải phản hồi...</div>
+                    <div className="text-gray-400 text-lg">Loading feedback...</div>
                   </div>
                 ) : allFeedbackDataForModal.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="text-gray-500 text-lg">Chưa có phản hồi nào</div>
+                    <div className="text-gray-500 text-lg">No feedback yet</div>
                   </div>
                 ) : (
                   allFeedbackDataForModal.map((feedback) => (
@@ -763,11 +929,11 @@ const StatisticsForMentor = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <p className="text-sm text-gray-600">
-                    Tổng phản hồi:{" "}
+                    Total feedback:{" "}
                     <span className="font-semibold">
                       {modalPagination.totalItems}
                     </span>{" "}
-                    đánh giá
+                    reviews
                   </p>
                   
                   {/* Pagination Controls */}
@@ -779,10 +945,10 @@ const StatisticsForMentor = () => {
                         onClick={() => setModalPageNumber((prev) => Math.max(1, prev - 1))}
                         disabled={modalPageNumber === 1 || isLoadingAllFeedback}
                       >
-                        Trước
+                        Previous
                       </Button>
                       <span className="text-sm text-gray-600">
-                        Trang {modalPagination.currentPage} / {modalPagination.totalPages}
+                        Page {modalPagination.currentPage} / {modalPagination.totalPages}
                       </span>
                       <Button
                         variant="outline"
@@ -790,7 +956,7 @@ const StatisticsForMentor = () => {
                         onClick={() => setModalPageNumber((prev) => Math.min(modalPagination.totalPages, prev + 1))}
                         disabled={modalPageNumber >= modalPagination.totalPages || isLoadingAllFeedback}
                       >
-                        Sau
+                        Next
                       </Button>
                     </div>
                   )}
@@ -802,7 +968,7 @@ const StatisticsForMentor = () => {
                   }}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Đóng
+                  Close
                 </Button>
               </div>
             </div>
@@ -867,45 +1033,53 @@ const StatisticsForMentor = () => {
                   <p className="text-xs text-slate-500 mt-2">
                     Enter a numeric score, e.g., 8.5
                   </p>
-                  <div className="mt-2 inline-flex items-start gap-3">
-                    <Button
-                      variant="outline"
-                      className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50 text-white"
-                      onClick={() => setShowRewardForm((prev) => !prev)}
-                    >
-                      {showRewardForm ? "Close reward form" : "Reward Learner"}
-                    </Button>
-                   
-                  </div>
+                  
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <Button
+              <div className="flex items-center justify-end">
+                {/* <Button
                   variant="outline"
                   onClick={() => setShowAnswer(!showAnswer)}
                   className="cursor-pointer"
                 >
                   {showAnswer ? "Hide Ai Feedback" : "> View Ai Feedback"}
-                </Button>
+                </Button> */}
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={handleCloseModal}
                     className="cursor-pointer"
                   >
-                    Hủy
+                    Cancel
                   </Button>
                   <Button
                     onClick={handleSaveAndFinish}
                     disabled={submitReviewMutation.isPending}
                     className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50"
                   >
-                    {submitReviewMutation.isPending ? "Đang xử lý..." : "Hoàn thành (Finish)"}
+                    {submitReviewMutation.isPending ? "Processing..." : "Complete"}
                   </Button>
                 </div>
               </div>
 
+        {/* Mic button */}
+        <div
+          id="btn-record"
+          className="flex items-center justify-center mt-6 mb-4"
+        >
+          <button
+            id="recordAudio"
+            onClick={updateRecordingState}
+            disabled={!mediaRecorderRef.current || submitReviewMutation.isPending}
+            className={`box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${
+              recording ? "bg-[#477c5b] hover:bg-[#3a6549]" : "bg-[#49d67d] hover:bg-[#3db868]"
+            }`}
+            title={recording ? "Click to stop recording" : "Click to start recording"}
+          >
+            <Mic id="recordIcon" className="w-10 h-10" />
+          </button>
+        </div>
               {showAnswer && (
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="text-sm font-medium text-slate-700 mb-1">

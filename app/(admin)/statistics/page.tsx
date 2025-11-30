@@ -3,6 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Form,
   FormControl,
   FormField,
@@ -659,9 +666,9 @@ return context[0].label + " " + selectedRevenueYear;
                         </div>
                         <div
                           className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full shadow-sm ${
-                            m.status === "Approved"
+                            m.reviewerStatus === "Approved" || m.reviewerStatus === "Active"
                               ? "bg-green-500"
-                              : m.status === "Rejected"
+                              : m.reviewerStatus === "Rejected"
                               ? "bg-red-500"
                               : "bg-yellow-500"
                           }`}
@@ -690,15 +697,15 @@ return context[0].label + " " + selectedRevenueYear;
                     </div>
                   </TableCell>
 
-                  <TableCell>{m.experience || "Chưa có"}</TableCell>
+                  <TableCell>{m.level || "Chưa có"}</TableCell>
                   <TableCell>{m.experience || "0"} năm</TableCell>
 
                   <TableCell>
                     <Badge
                       className={
-                        m.status === "Approved"
+                        m.reviewerStatus === "Approved" || m.reviewerStatus === "Active"
                           ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
-                          : m.status === "Rejected"
+                          : m.reviewerStatus === "Rejected"
                           ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-200"
                           : "bg-yellow-100 text-yellow-800 border-yellow-200"
                       }
@@ -706,18 +713,21 @@ return context[0].label + " " + selectedRevenueYear;
                       <div className="flex items-center gap-1">
                         <div
                           className={`w-2 h-2 rounded-full ${
-                            m.status === "Approved"
+                            m.reviewerStatus === "Approved" || m.reviewerStatus === "Active"
                               ? "bg-green-500"
-                              : m.status === "Rejected"
+                              : m.reviewerStatus === "Rejected"
                               ? "bg-red-500"
                               : "bg-yellow-500"
                           }`}
                         ></div>
-                        {m.status === "Approved"
+                        {m.reviewerStatus === "Approved" || m.reviewerStatus === "Active"
                           ? "Đã duyệt"
-                          : m.status === "Rejected"
+                          : m.reviewerStatus === "Rejected"
                           ? "Không duyệt"
                           : "Chờ duyệt"}
+                        {m.certificates?.some(cert => cert.status === "Pending") && (
+                          <span className="ml-1 text-xs">({m.certificates.filter(cert => cert.status === "Pending").length} chứng chỉ chờ duyệt)</span>
+                        )}
                       </div>
                     </Badge>
                   </TableCell>
@@ -752,12 +762,13 @@ return context[0].label + " " + selectedRevenueYear;
                               fullName: m.fullName,
                               email: m.email,
                               phone: m.phone,
-                              level: m.experience,
-                              experienceYears: 0,
-                              status: m.status as
-                                | "Chờ duyệt"
-                                | "Đã duyệt"
-                                | "Không duyệt",
+                              level: m.level || "",
+                              experienceYears: Number(m.experience || 0),
+                              status: (m.reviewerStatus === "Approved" || m.reviewerStatus === "Active"
+                                ? "Đã duyệt"
+                                : m.reviewerStatus === "Rejected"
+                                ? "Không duyệt"
+                                : "Chờ duyệt") as "Chờ duyệt" | "Đã duyệt" | "Không duyệt",
                               joinedDate: new Date()
                                 .toISOString()
                                 .split("T")[0],
@@ -765,7 +776,7 @@ return context[0].label + " " + selectedRevenueYear;
                                 id: cert.certificateId,
                                 name: cert.name,
                                 imageUrl: cert.url,
-                              })),
+                              })) || [],
                             });
                           }}
                           className="cursor-pointer hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
@@ -935,7 +946,7 @@ return context[0].label + " " + selectedRevenueYear;
             {/* Content */}
             <div className="p-8">
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-linear-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -958,30 +969,6 @@ return context[0].label + " " + selectedRevenueYear;
                       <p className="text-2xl font-bold text-blue-900">
                         {selectedReviewer.experienceYears}
                         <span className="text-sm font-normal"> năm</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-linear-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
-                      <svg
-                        width="24"
-                        height="24"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        className="text-white"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-yellow-600">
-                        Điểm đánh giá
-                      </p>
-                      <p className="text-sm font-medium text-yellow-900">
-                        Đánh giá chưa có
                       </p>
                     </div>
                   </div>
@@ -1032,7 +1019,7 @@ return context[0].label + " " + selectedRevenueYear;
                         Levels
                       </p>
                       <p className="text-2xl font-bold text-green-900">
-                        {selectedReviewer.level}
+                        {selectedReviewer.level || "Chưa có"}
                         <span className="text-sm font-normal"></span>
                       </p>
                     </div>
@@ -1420,13 +1407,24 @@ return context[0].label + " " + selectedRevenueYear;
                         <FormLabel className="text-base font-semibold">
                           Level *
                         </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="VD: Beginner, Intermediate, Advanced"
-                            {...field}
-                            className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                          />
-                        </FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                              <SelectValue placeholder="Chọn level" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="A1">A1</SelectItem>
+                            <SelectItem value="A2">A2</SelectItem>
+                            <SelectItem value="B1">B1</SelectItem>
+                            <SelectItem value="B2">B2</SelectItem>
+                            <SelectItem value="C1">C1</SelectItem>
+                            <SelectItem value="C2">C2</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                         <p className="text-sm text-gray-500 mt-1">
                           Level hiện tại: <span className="font-medium text-gray-700">{selectedReviewer.level || "Chưa có"}</span>

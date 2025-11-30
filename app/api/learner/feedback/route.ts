@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     try {
         const backendResponse = await fetch(
-      `${process.env.BE_API_URL}/LearnerReview/feedback`, {
+      `${process.env.BE_API_URL}/Feedback/create`, {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",

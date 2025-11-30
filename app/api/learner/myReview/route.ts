@@ -13,12 +13,20 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const pageNumber = searchParams.get("pageNumber");
         const pageSize = searchParams.get("pageSize");
+        const status = searchParams.get("status");
+        const keyword = searchParams.get("keyword");
         const params = new URLSearchParams();
         if (pageNumber) {
             params.set("pageNumber", pageNumber.toString());
         }
         if (pageSize) {
             params.set("pageSize", pageSize.toString());
+        }
+        if (status) {
+            params.set("status", status);
+        }
+        if (keyword) {
+            params.set("keyword", keyword);
         }
         const response = await fetch(`${apiUrl}/LearnerReview/my-history?${params.toString()}`, {
             method: 'GET',

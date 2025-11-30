@@ -18,10 +18,16 @@ export interface AdminReviewerIncomeResponse {
     data: {
       pageNumber: number;
       pageSize: number;
-      items: Reviewer[];
+      items: ReviewerFee[];
     };
   }
-
+  export interface ReviewerFee{
+    reviewerProfileId: string;
+    fullName: string;
+    email: string;
+    totalIncome: number;
+    reviewCount: number;
+  }
   export interface AdminReviewerIncomeDetailResponse {
     isSucess: boolean;
     data: {
@@ -34,7 +40,6 @@ export interface AdminReviewerIncomeResponse {
         reviewId: string;
         score: number;
         question: string;
-
         comment: string;
         status: string;
         createdAt: Date;

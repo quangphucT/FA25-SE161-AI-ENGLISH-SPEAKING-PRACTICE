@@ -35,22 +35,22 @@ export interface AdminRegisteredReviewerResponse {
   data: {
     pageNumber: number;
     pageSize: number;
+    totalItems: number;
     items: Reviewer[];
   };
   businessCode: number;
   message: string;
 }
 export interface Reviewer {
-  reviewerProfileId: string;
-  fullName: string;
   email: string;
+  experience: number;
+  fullName: string;
+  level: string;
   phone: string;
-  experience: string;
-  status: string;
-  hasCertificate: boolean;
+  reviewerProfileId: string;
+  reviewerStatus: string;
+  userId: string;
   certificates: Certificate[];
-    reviewCount: number;   // 👈 THÊM
-  totalIncome: number;   // 👈 THÊM
 }
 export interface Certificate {
   certificateId: string;

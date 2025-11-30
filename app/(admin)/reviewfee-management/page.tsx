@@ -662,7 +662,7 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                 <p><strong>Giá:</strong> {formatCurrency(h.pricePerReviewFee)}</p>
                 <p><strong>% Reviewer:</strong> {(h.percentOfReviewer * 100).toFixed(0)}%</p>
                 <p><strong>% Hệ thống:</strong> {(h.percentOfSystem * 100).toFixed(0)}%</p>
-                <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate.toISOString())}</p>
+                <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate)}</p>
 
                 <p className="mt-1">
                   <strong>Trạng thái:</strong>{" "}
