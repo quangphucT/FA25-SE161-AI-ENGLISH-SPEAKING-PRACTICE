@@ -201,6 +201,7 @@ const EntranceTest = () => {
               questionAssessmentId: q.id,
               score: pronunciationScores[questionIndex] || 0,
               aI_Feedback: "",
+              answerAudio:  "abc"
             };
           }),
         })
@@ -211,7 +212,7 @@ const EntranceTest = () => {
         numberOfQuestion: totalQuestions,
         tests,
       };
-
+      console.log("payload:", payload)
       submitTestAssessmentMutation(payload, {
         onSuccess: (data) => {
           toast.success("Đã nộp bài thành công!");
