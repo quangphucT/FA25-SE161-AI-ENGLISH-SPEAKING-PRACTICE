@@ -49,8 +49,8 @@ export interface Reviewer {
   status: string;
   hasCertificate: boolean;
   certificates: Certificate[];
-    reviewCount: number;   // 👈 THÊM
-  totalIncome: number;   // 👈 THÊM
+    reviewCount: number;   
+  totalIncome: number;   
 }
 export interface Certificate {
   certificateId: string;
