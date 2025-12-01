@@ -119,3 +119,42 @@ export const getPurchaseDetails = async (purchaseId: string): Promise<PurchaseDe
   }
   
 };
+export interface AdminPurchaseDashboardResponse {
+  isSucess: boolean;
+  data: {
+    totalSuccessTransaction: number;
+    totalRevenue: number;
+  };
+  businessCode: number;
+  message: string;
+}
+
+export const adminDashboardPurchaseService = async (): Promise<AdminPurchaseDashboardResponse> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/purchase/dashboard`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
+    return data;
+  } catch (error: unknown) {
+    const message =
+      (error &&
+      typeof error === "object" &&
+      "response" in error &&
+      error.response &&
+      typeof error.response === "object" &&
+      "data" in error.response &&
+      error.response.data &&
+      typeof error.response.data === "object" &&
+      "message" in error.response.data
+        ? (error.response.data as { message: string }).message
+        : null) ||
+      (error instanceof Error ? error.message : null) ||
+      "An unknown error occurred";
+    throw new Error(message);
+  }
+};

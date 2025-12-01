@@ -44,6 +44,10 @@ export interface AdminFeedbackRejectResponse {
     businessCode: string;
     message: string;
 }
+export interface AdminFeedbackRejectPayload {
+    feedbackId: string;
+    reason?: string;
+}
 export const adminFeedbackService = async (pageNumber: number, pageSize: number, status: string, keyword: string): Promise<AdminFeedbackResponse> => {
     try {
         const response = await fetchWithAuth(`/api/AdminDashboard/feedback?pageNumber=${pageNumber}&pageSize=${pageSize}&status=${status}&keyword=${keyword}`);
@@ -69,7 +73,7 @@ export const adminFeedbackService = async (pageNumber: number, pageSize: number,
     };
 export const adminFeedbackDetailService = async (feedbackId: string): Promise<AdminFeedbackDetailResponse> => {
     try {
-        const response = await fetchWithAuth(`/api/AdminDashboard/feedback/${feedbackId}`);
+        const response = await fetchWithAuth(`/api/AdminDashboard/feedback/${feedbackId}`,);
         const data = await response.json();
         return data;
     } catch (error: unknown) {
@@ -90,9 +94,43 @@ export const adminFeedbackDetailService = async (feedbackId: string): Promise<Ad
         throw new Error(message);
     }
 };
-export const adminFeedbackRejectService = async (feedbackId: string): Promise<AdminFeedbackRejectResponse> => {
+export const adminFeedbackRejectService = async ({ feedbackId, reason = "" }: AdminFeedbackRejectPayload): Promise<AdminFeedbackRejectResponse> => {
     try {
-        const response = await fetchWithAuth(`/api/AdminDashboard/feedback/${feedbackId}/reject`);
+        const response = await fetchWithAuth(`/api/AdminDashboard/feedback/reject/${feedbackId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(reason),
+        });
+        const data = await response.json();
+        return data;
+    } catch (error: unknown) {
+        const message =
+            (error &&
+            typeof error === "object" &&
+            "response" in error &&
+            error.response &&
+            typeof error.response === "object" &&
+            "data" in error.response &&
+            error.response.data &&
+            typeof error.response.data === "object" &&
+            "message" in error.response.data
+                ? (error.response.data as { message: string }).message
+                : null) ||
+            (error instanceof Error ? error.message : null) ||
+            "An unknown error occurred";
+        throw new Error(message);
+    }
+};
+export const adminFeedbackApproveService = async (feedbackId: string): Promise<AdminFeedbackRejectResponse> => {
+    try {
+        const response = await fetchWithAuth(`/api/AdminDashboard/feedback/approve/${feedbackId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
         const data = await response.json();
         return data;
     } catch (error: unknown) {

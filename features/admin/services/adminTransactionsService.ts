@@ -33,7 +33,15 @@ export interface AdminTransactionsResponse {
   message: string;
 }
 
-export const adminTransactionsService = async (pageNumber: number, pageSize: number, search: string, status: string): Promise<AdminTransactionsResponse> => {
+export interface AdminDashboardResponse {
+  isSuccess: boolean;
+  data: {
+    totalSuccessTransaction: number;
+    totalFailTransaction: number;
+    totalPendingTransaction: number;
+  };
+}
+export const adminTransactionsService = async (pageNumber: number, pageSize: number, search: string, status: string, type: string): Promise<AdminTransactionsResponse> => {
   try {
     const queryParams = new URLSearchParams({
       pageNumber: pageNumber.toString(),
@@ -44,7 +52,10 @@ export const adminTransactionsService = async (pageNumber: number, pageSize: num
     }
     if (status) {
       queryParams.set("status", status.toString());
-    } 
+    }
+    if (type) {
+      queryParams.set("type", type.toString());
+    }
     const response = await fetchWithAuth(`/api/coin/transactions?${queryParams.toString()}`, {
       method: "GET",
       headers: {
@@ -57,6 +68,36 @@ export const adminTransactionsService = async (pageNumber: number, pageSize: num
     if (!response.ok) {
       throw new Error(data.message || data.error || "Failed to fetch transactions");
     }
+    return data;
+  } catch (error: unknown) {
+    const message =
+      (error &&
+      typeof error === "object" &&
+      "response" in error &&
+      error.response &&
+      typeof error.response === "object" &&
+      "data" in error.response &&
+      error.response.data &&
+      typeof error.response.data === "object" &&
+      "message" in error.response.data
+        ? (error.response.data as { message: string }).message
+        : null) ||
+      (error instanceof Error ? error.message : null) ||
+      "An unknown error occurred";
+    throw new Error(message);
+  }
+};
+
+export const adminDashboardTransactionService = async (): Promise<AdminDashboardResponse> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/transaction/dashboard`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
     return data;
   } catch (error: unknown) {
     const message =

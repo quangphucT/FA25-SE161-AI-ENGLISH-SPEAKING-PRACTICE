@@ -44,7 +44,7 @@ export async function PUT(
 ) {
     const accessToken = request.cookies.get("accessToken")?.value;
     const { recordId } = await params;
-    const { audioRecordingURL,  score, aiFeedback } = await request.json();
+    const { audioRecordingURL,  score, aiFeedback, transcribedText } = await request.json();
     if (!recordId) {
         return NextResponse.json({ message: "Record ID is required" }, { status: 400 });
     }
@@ -62,7 +62,7 @@ export async function PUT(
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${accessToken}`,
             },
-            body: JSON.stringify({ audioRecordingURL, score, aiFeedback }),
+            body: JSON.stringify({ audioRecordingURL, score, aiFeedback, transcribedText }),
         });
         const data = await response.json();
         if (!response.ok) {

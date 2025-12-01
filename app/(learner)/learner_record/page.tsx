@@ -234,7 +234,7 @@ export default function LearnerRecordPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
         {/* Sidebar - Folders List */}
-        <Card className={`lg:col-span-1 transition-all duration-300 flex flex-col ${isFoldersCollapsed ? 'lg:col-span-0 overflow-hidden' : ''}`}>
+        <Card className={`lg:col-span-1 transition-all duration-300 flex flex-col h-full min-h-0 ${isFoldersCollapsed ? 'lg:col-span-0 overflow-hidden' : ''}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="flex items-center gap-2">
               <CardTitle className="flex items-center gap-2">
@@ -320,7 +320,7 @@ export default function LearnerRecordPage() {
         </Card>
 
         {/* Main Content - Records List */}
-        <Card className={`lg:col-span-2 transition-all duration-300 flex flex-col ${isRecordsCollapsed ? 'lg:col-span-0 overflow-hidden' : ''}`}>
+        <Card className={`lg:col-span-2 transition-all duration-300 flex flex-col h-full min-h-0 ${isRecordsCollapsed ? 'lg:col-span-0 overflow-hidden' : ''}`}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex-1">

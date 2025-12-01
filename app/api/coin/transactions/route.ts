@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const pageSize = searchParams.get("pageSize");
   const search = searchParams.get("search");
   const status = searchParams.get("status");
+  const type = searchParams.get("type");
   try {
     const backendUrl = new URL(
       `${process.env.BE_API_URL}/Coin/transactions/all`
@@ -22,6 +23,9 @@ export async function GET(request: NextRequest) {
     }
     if (status) {
       backendUrl.searchParams.set("status", status);
+    }
+    if (type) {
+      backendUrl.searchParams.set("type", type);
     }
     const backendResponse = await fetch(
       backendUrl.toString(),

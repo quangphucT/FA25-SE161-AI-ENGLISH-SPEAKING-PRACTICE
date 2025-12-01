@@ -8,6 +8,8 @@ export interface LearnerReviewHistory {
     createdAt: Date;
     questionContent: string;
     reviewerFullName: string;
+    // API trả về field reviewAudioUrl
+    reviewAudioUrl: string | null;
     reviewType: "Record" | "LearnerAnswer";
 }
 export interface LearnerReviewHistoryResponse {
@@ -16,16 +18,21 @@ export interface LearnerReviewHistoryResponse {
         pageNumber: number;
         pageSize: number;
         totalItems: number;
+        completed: number;
+        pending: number;
+        rejected: number;
         items: LearnerReviewHistory[];          
     };
     businessCode: number;
     message: string;
 }
-export const learnerReviewHistoryService = async (pageNumber: number, pageSize: number): Promise<LearnerReviewHistoryResponse> => {
+export const learnerReviewHistoryService = async (pageNumber: number, pageSize: number, status: string, keyword: string): Promise<LearnerReviewHistoryResponse> => {
     try {
         const params = new URLSearchParams({
             pageNumber: pageNumber.toString(),
             pageSize: pageSize.toString(),
+            status: status,
+            keyword: keyword,
         });
         const response = await fetchWithAuth(`/api/learner/myReview?${params.toString()}`, {
             method: 'GET',

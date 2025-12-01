@@ -35,8 +35,10 @@ import {
   Search,
   Download,
   Eye,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
+import { useDownloadTransactionExcel } from "@/features/admin/hooks/useAdminPurchaseExcel";
 
 // Type definitions
 interface ServicePackage {
@@ -57,7 +59,7 @@ interface Transaction {
   Bankname: string;
   AccountNumber: string;
   Description: string;
-  Status: "Approved" | "Pending" | "Failed" ;
+  Status: "Approved" | "Pending" | "Cancelled" ;
   amount_coin: number;
   type: string;
   OrderCode: string;
@@ -71,6 +73,7 @@ interface Transaction {
 const PurchasesManagement = () => {
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(
     null
@@ -91,13 +94,14 @@ const PurchasesManagement = () => {
   // Reset to page 1 when search or status filter changes
   useEffect(() => {
     setPageNumber(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, typeFilter]);
 
   const { data: transactionsData, isLoading, error } = useAdminTransactions(
     pageNumber,
     pageSize,
     debouncedSearch,
-    statusFilter === "All" ? "" : statusFilter
+    statusFilter === "All" ? "" : statusFilter,
+    typeFilter === "All" ? "" : typeFilter
   );
 
   // Map API data to Transaction format
@@ -127,13 +131,11 @@ const PurchasesManagement = () => {
     
     return dataArray.map((item: TransactionAdmin) => {
       // Map status: "Pending" -> "Pending", "Success" -> "Success", "Cancelled" -> "Failed", etc.
-      let mappedStatus: "Approved" | "Pending" | "Failed" | "Refunded" = "Pending";
-      if (item.status === "Success" || item.status === "Approved") {
+      let mappedStatus: "Approved" | "Pending" | "Cancelled"  = "Pending";
+      if (item.status === "Approved") {
         mappedStatus = "Approved";
-      } else if (item.status === "Failed" || item.status === "Cancelled") {
-        mappedStatus = "Failed";
-      } else if (item.status === "Refunded") {
-        mappedStatus = "Refunded";
+      } else if (item.status === "Cancelled") {
+        mappedStatus = "Cancelled";
       } else {
         mappedStatus = "Pending";
       }
@@ -176,6 +178,42 @@ const PurchasesManagement = () => {
   // Transactions are already filtered by the API, so we just use them directly
   const filteredTransactions = transactions;
 
+  const paginationMeta = useMemo(() => {
+    if (
+      transactionsData?.data &&
+      typeof transactionsData.data === "object" &&
+      "totalItems" in transactionsData.data
+    ) {
+      const meta = transactionsData.data as {
+        pageNumber?: number;
+        pageSize?: number;
+        totalItems?: number;
+        totalPages?: number;
+      };
+      const totalItems = meta.totalItems ?? transactions.length;
+      const metaPageSize = meta.pageSize ?? pageSize;
+      const totalPages =
+        meta.totalPages ?? Math.max(1, Math.ceil(totalItems / metaPageSize));
+      return {
+        totalItems,
+        totalPages,
+        pageNumber: meta.pageNumber ?? pageNumber,
+        pageSize: metaPageSize,
+      };
+    }
+    const totalItems = transactions.length;
+    return {
+      totalItems,
+      totalPages: Math.max(1, Math.ceil(totalItems / pageSize)),
+      pageNumber,
+      pageSize,
+    };
+  }, [transactionsData, transactions.length, pageNumber, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    setPageNumber(Math.min(Math.max(1, newPage), paginationMeta.totalPages));
+  };
+
   // const handleSelectRow = (idx: number) => {
   //   setSelectedRows(
   //     selectedRows.includes(idx)
@@ -200,7 +238,7 @@ const PurchasesManagement = () => {
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + " VND";
   };
-
+  const { mutate: downloadTransactionExcel, isPending: isDownloadingExcel } = useDownloadTransactionExcel();
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN", {
       year: "numeric",
@@ -291,44 +329,42 @@ const exportToPDF = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Tìm theo mã giao dịch, Order Code..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-[300px] pl-10"
+              className="w-full pl-10"
             />
           </div>
-          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
-            <TabsList className="grid grid-cols-4 w-[500px]">
+          <Tabs
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v)}
+            className="w-full lg:w-auto"
+          >
+            <TabsList className="grid grid-cols-3 md:grid-cols-4 gap-2 w-full">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
               <TabsTrigger value="Approved">Thành công</TabsTrigger>
-              <TabsTrigger value="Failed">Thất bại</TabsTrigger>
+              <TabsTrigger value="Cancelled">Thất bại</TabsTrigger>
               <TabsTrigger value="Pending">Đang xử lý</TabsTrigger>
-              
             </TabsList>
           </Tabs>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-blue-700 cursor-pointer">
-              <Download className="h-4 w-4 mr-2" />
-              Xuất báo cáo
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={exportToPDF}
-              className="cursor-pointer"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Xuất PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          onClick={() => downloadTransactionExcel()}
+          disabled={isDownloadingExcel}
+          className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 cursor-pointer transition-all hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isDownloadingExcel ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          Xuất báo cáo
+        </Button>
       </div>
 
       {/* Thống kê */}
@@ -355,7 +391,7 @@ const exportToPDF = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {transactions.filter((t) => t.Status === "Failed").length}
+              {transactions.filter((t) => t.Status === "Cancelled").length}
             </div>
           </CardContent>
         </Card>
@@ -378,7 +414,7 @@ const exportToPDF = () => {
       {/* Bảng giao dịch */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <CardTitle>Danh sách giao dịch</CardTitle>
               <CardDescription className="mt-1">
@@ -390,6 +426,21 @@ const exportToPDF = () => {
                   `Hiển thị ${filteredTransactions.length} giao dịch`
                 )}
               </CardDescription>
+            </div>
+            {/* Type Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Loại giao dịch:</span>
+              <Tabs
+                value={typeFilter}
+                onValueChange={(v) => setTypeFilter(v)}
+                className="w-auto"
+              >
+                <TabsList className="grid grid-cols-3 gap-2">
+                  <TabsTrigger value="All" className="text-xs">Tất cả</TabsTrigger>
+                  <TabsTrigger value="Deposit" className="text-xs">Nạp tiền</TabsTrigger>
+                  <TabsTrigger value="Withdrawal" className="text-xs">Rút tiền</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </CardHeader>
@@ -468,7 +519,7 @@ const exportToPDF = () => {
                       variant={
                         transaction.Status === "Approved"
                           ? "default"
-                          : transaction.Status === "Failed"
+                          : transaction.Status === "Cancelled"
                           ? "destructive"
                           : transaction.Status === "Pending"
                           ? "secondary"
@@ -525,6 +576,90 @@ const exportToPDF = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {!isLoading && filteredTransactions.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="text-sm text-gray-600">
+                Hiển thị{" "}
+                <span className="font-semibold text-gray-900">
+                  {paginationMeta.totalItems > 0
+                    ? (pageNumber - 1) * pageSize + 1
+                    : 0}
+                </span>{" "}
+                đến{" "}
+                <span className="font-semibold text-gray-900">
+                  {Math.min(pageNumber * pageSize, paginationMeta.totalItems)}
+                </span>{" "}
+                trong tổng số{" "}
+                <span className="font-semibold text-gray-900">
+                  {paginationMeta.totalItems}
+                </span>{" "}
+                giao dịch
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pageNumber - 1)}
+                  disabled={pageNumber === 1 || isLoading}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  Trước
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from(
+                    { length: Math.min(5, paginationMeta.totalPages) },
+                    (_, i) => {
+                      let pageNum;
+                      if (paginationMeta.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pageNumber <= 3) {
+                        pageNum = i + 1;
+                      } else if (
+                        pageNumber >=
+                        paginationMeta.totalPages - 2
+                      ) {
+                        pageNum = paginationMeta.totalPages - 4 + i;
+                      } else {
+                        pageNum = pageNumber - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={
+                            pageNumber === pageNum ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`cursor-pointer min-w-[40px] ${
+                            pageNumber === pageNum
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    }
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pageNumber + 1)}
+                  disabled={pageNumber >= paginationMeta.totalPages || isLoading}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modal chi tiết giao dịch */}
       {showDetailsModal && selectedTransaction && (
@@ -586,7 +721,7 @@ const exportToPDF = () => {
                         variant={
                           selectedTransaction.Status === "Approved"
                             ? "default"
-                            : selectedTransaction.Status === "Failed"
+                            : selectedTransaction.Status === "Cancelled"
                             ? "destructive"
                             : selectedTransaction.Status === "Pending"
                             ? "secondary"

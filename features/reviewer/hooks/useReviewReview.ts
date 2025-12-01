@@ -5,8 +5,8 @@ import { ReviewerReviewHistoryResponse, ReviewerReviewPendingResponse } from "..
 import { useQuery } from "@tanstack/react-query";
 export const useReviewReviewSubmit = () => {
     const queryClient = useQueryClient();
-    return useMutation<ReviewerReviewSubmitResponse, Error, { learnerAnswerId: string; recordId: string | null; reviewerProfileId: string | null; score: number; comment: string }>({
-        mutationFn: ({ learnerAnswerId, recordId, reviewerProfileId, score, comment }) => reviewerReviewSubmitService({ learnerAnswerId, recordId, reviewerProfileId, score, comment }),
+    return useMutation<ReviewerReviewSubmitResponse, Error, { learnerAnswerId: string | null; recordId: string | null; reviewerProfileId: string | null; score: number; comment: string; recordAudioUrl: string | null }>({
+        mutationFn: ({ learnerAnswerId, recordId, reviewerProfileId, score, comment ,recordAudioUrl}) => reviewerReviewSubmitService({ learnerAnswerId, recordId, reviewerProfileId, score, comment ,recordAudioUrl}),
         onSuccess: (data) => {
             const message = data.message || "Review answer submitted successfully";
             const remainingReviews = data.data?.remainingReviews;
@@ -51,8 +51,8 @@ export const useReviewReviewWallet = (pageNumber: number, pageSize: number) => {
     });
 }
 export const useReviewerTipAfterReview = () => {
-    return useMutation<any, Error, { reviewerId: string; amountCoin: number; message: string }>({
-        mutationFn: ({ reviewerId, amountCoin, message }) => reviewerTipAfterReviewService(reviewerId, amountCoin, message),
+    return useMutation<any, Error, { reviewId: string; amountCoin: number; message: string }>({
+        mutationFn: ({ reviewId, amountCoin, message }) => reviewerTipAfterReviewService(reviewId, amountCoin, message),
         onSuccess: (data) => {
             toast.success(data.message || "Tip after review successful");
         },

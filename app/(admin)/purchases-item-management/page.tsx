@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAdminPurchase, useAdminPurchaseDetails } from "@/features/admin/hooks/useAdminPurchase";
+import { useAdminPurchase, useAdminPurchaseDetails, useAdminPurchaseDashboard } from "@/features/admin/hooks/useAdminPurchase";
 import { useDownloadPurchaseExcel } from "@/features/admin/hooks/useAdminPurchaseExcel";
 import { Loader2, Search, Download, Eye, CheckCircle2, XCircle, Clock, DollarSign } from "lucide-react";
 import type { AIConversationPurchaseDetail, Purchase } from "@/features/admin/services/adminPurchaseService";
@@ -73,6 +73,9 @@ const PurchasesItemManagement = () => {
 
   // Excel download hook
   const { mutate: downloadExcel, isPending: isDownloadingExcel } = useDownloadPurchaseExcel();
+
+  // Dashboard statistics hook
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useAdminPurchaseDashboard();
 
   const handleViewDetails = (purchase: Purchase) => {
     setSelectedPurchaseId(purchase.purchaseId);
@@ -243,9 +246,9 @@ const PurchasesItemManagement = () => {
       </Card>
 
       {/* Statistics Cards */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
+      {isLoadingDashboard ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
             <Card key={i} className="border-2 border-dashed border-gray-200">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-center h-24">
@@ -256,48 +259,18 @@ const PurchasesItemManagement = () => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
           <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Giao dịch thành công</p>
                   <div className="text-3xl font-bold text-gray-900">
-                    {purchases.filter((p) => p.status === "Success" || p.status === "Completed").length}
+                    {dashboardData?.data?.totalSuccessTransaction ?? 0}
                   </div>
                 </div>
                 <div className="p-3 bg-green-100 rounded-full">
                   <CheckCircle2 className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Giao dịch thất bại</p>
-                  <div className="text-3xl font-bold text-gray-900">
-                    {purchases.filter((p) => p.status === "Failed").length}
-                  </div>
-                </div>
-                <div className="p-3 bg-red-100 rounded-full">
-                  <XCircle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-yellow-500 hover:shadow-lg transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Đang xử lý</p>
-                  <div className="text-3xl font-bold text-gray-900">
-                    {purchases.filter((p) => p.status === "Pending").length}
-                  </div>
-                </div>
-                <div className="p-3 bg-yellow-100 rounded-full">
-                  <Clock className="w-6 h-6 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
@@ -308,11 +281,7 @@ const PurchasesItemManagement = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Tổng doanh thu</p>
                   <div className="text-2xl font-bold text-gray-900">
-                    {formatPrice(
-                      purchases
-                        .filter((p) => p.status === "Success" || p.status === "Completed")
-                        .reduce((sum, p) => sum + (p.coin || 0), 0)
-                    )}
+                    {formatPrice(dashboardData?.data?.totalRevenue ?? 0)}
                   </div>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-full">
