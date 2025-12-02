@@ -45,14 +45,13 @@ export interface GetAiConversationChargeResponse {
   businessCode: number;
   message: string;
 }
-export const getAIConversationPackages = () => {
-
-  return useQuery<GetAiConversationChargeResponse, Error>({
-    queryKey: ["getAIConversationPackages"],
-    queryFn: () => getAllAIConversationPackagesService(),
+export const getAIConversationPackages = (pageNumber: number, pageSize: number) => {
+  return useQuery<GetAiConversationChargeResponse>({
+    queryKey: ["getAIConversationPackages", pageNumber, pageSize],
+    queryFn: () => getAllAIConversationPackagesService(pageNumber, pageSize),
   });
-  
-}
+};
+
 export interface DeleteAIConversationPackageResponse {
   message: string;
 }

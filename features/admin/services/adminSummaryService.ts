@@ -35,19 +35,21 @@ export interface AdminRegisteredReviewerResponse {
   data: {
     pageNumber: number;
     pageSize: number;
+    totalItems: number;
     items: Reviewer[];
   };
   businessCode: number;
   message: string;
 }
 export interface Reviewer {
-  reviewerProfileId: string;
-  fullName: string;
   email: string;
+  experience: number;
+  fullName: string;
+  level: string;
   phone: string;
-  experience: string;
-  status: string;
-  hasCertificate: boolean;
+  reviewerProfileId: string;
+  reviewerStatus: string;
+  userId: string;
   certificates: Certificate[];
 }
 export interface Certificate {
@@ -89,10 +91,13 @@ export const adminPackagesService = async (
       `/api/AdminDashboard/packages?year=${year}`
     );
     const data = await response.json();
+
     if (!response.ok) {
       throw new Error(data.message);
     }
-    return data.data;
+
+    // 🔥 Trả toàn bộ object, KHÔNG phải chỉ mảng data
+    return data;
   } catch (error: unknown) {
     const message =
       (error &&
@@ -111,6 +116,7 @@ export const adminPackagesService = async (
     throw new Error(message);
   }
 };
+
 export const adminRevenueService = async (
   year: string
 ): Promise<AdminRevenueResponse> => {

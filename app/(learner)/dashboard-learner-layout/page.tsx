@@ -23,6 +23,9 @@ import { handleLogout } from "@/utils/auth";
 import ConversationWithAI from "../coversation-withAI/page";
 import SendingAudioToReviewer from "../sendingAudioToReviewer/page";
 import EnrollingCourses from "../enrolling-courses/page";
+import ReviewRecordPage from "../review_record/page";
+import LearnerRecordPage from "../learner_record/page";
+
 
 function DashboardContent() {
   const router = useRouter();
@@ -45,6 +48,7 @@ function DashboardContent() {
     { id: "conversationWithAI", label: "Trò chuyện với AI", icon: PlayCircle, description: "Giao tiếp và luyện tập" },
     { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
+    { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
   ];
 
 
@@ -52,7 +56,7 @@ function DashboardContent() {
   return (
     <div className="min-h-screen flex bg-linear-to-br from-gray-50 to-blue-50/30">
       {/* SIDEBAR - Professional White Design */}
-      <aside className="w-77 bg-white shadow-xl flex flex-col border-r border-gray-300">
+      <aside className="w-77 bg-white shadow-xl flex flex-col border-r border-gray-300 fixed top-0 left-0 h-screen overflow-y-auto">
         {/* Logo Section */}
         <div className="p-8 border-b border-gray-100">
           <div className="flex items-center gap-3">
@@ -129,9 +133,9 @@ function DashboardContent() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto bg-white">
+      <main className="flex-1 ml-[308px] overflow-y-auto bg-white h-screen">
         {/* Modern Header */}
-        <header className="border-b border-gray-200 px-8 py-2 sticky top-0 z-10 backdrop-blur-sm bg-white/95">
+        <header className="border-b border-gray-200 px-8 py-2 sticky top-0 z-20 backdrop-blur-sm bg-white/95">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-1">
@@ -181,8 +185,6 @@ function DashboardContent() {
           {activeMenu === "conversationWithAI" && (
            <ConversationWithAI   />
           )}
-
-
           {/* WALLET PAGE */}
           {activeMenu === "wallet" && (
            <WalletCoinPurchase  />
@@ -192,7 +194,14 @@ function DashboardContent() {
           {activeMenu === "learnerSendingAudioToReviewer" && (
             <SendingAudioToReviewer />
           )}
-
+          {/* LEARNER RECORD PAGE */}
+          {activeMenu === "learnerRecord" && (
+            <LearnerRecordPage />
+          )}
+          {/* REVIEW RECORD PAGE */}
+          {activeMenu === "reviewRecord" && (
+            <ReviewRecordPage />
+          )}
           {/* PROFILE PAGE */}
           {activeMenu === "profile" && (
             <>

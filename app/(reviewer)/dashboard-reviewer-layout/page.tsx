@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import StatisticsForMentor from "../statistics-for-mentor/page";
@@ -107,7 +107,7 @@ const DashboardReviewerLayout = () => {
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                   <svg
                     width="20"
                     height="20"
@@ -195,7 +195,7 @@ const DashboardReviewerLayout = () => {
               sidebarOpen ? "space-x-3" : "justify-center"
             }`}
           >
-            <div className="w-10 h-10 bg-linear-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-white font-medium text-sm">
                 {meData?.fullName
                   ? meData.fullName
@@ -263,7 +263,7 @@ const DashboardReviewerLayout = () => {
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 mt-1">
-                    Chào mừng đã trở lại <strong>{meData?.fullName}</strong>! Đây là những cập nhật hôm nay.
+                    Welcome back <strong>{meData?.fullName}</strong>! Here are today&apos;s updates.
                   </p>
                 </div>
               </div>
@@ -272,7 +272,7 @@ const DashboardReviewerLayout = () => {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 bg-linear-to-br from-slate-50 to-white">
+        <div className="flex-1 bg-gradient-to-br from-slate-50 to-white">
           <div className="p-6 h-full">
             {activeTab === "statisticsForMentor" && (
               <div className="h-full">
@@ -305,5 +305,4 @@ const DashboardReviewerLayout = () => {
     </div>
   );
 };
-
 export default DashboardReviewerLayout;

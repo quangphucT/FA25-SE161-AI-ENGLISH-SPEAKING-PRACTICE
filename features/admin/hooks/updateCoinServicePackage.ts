@@ -11,7 +11,7 @@ export const useUpdateCoinServicePackage = () => {
     mutationFn: updateCoinServicePackage,
     onSuccess: (data) => {
       toast.success(data.message || "Cập nhật gói thành công");
-      queryClient.invalidateQueries({ queryKey: ["getCoinServicePackages"] });
+      queryClient.invalidateQueries({ queryKey: ["getServicePackages"] });
     },
     onError: (error) => {
       toast.error(error.message || "Cập nhật gói thất bại");

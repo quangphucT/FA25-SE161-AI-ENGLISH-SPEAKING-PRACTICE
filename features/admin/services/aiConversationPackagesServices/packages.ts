@@ -37,21 +37,25 @@ export const createAIConversationPackagesService = async (
   }
 };
 
-export const getAllAIConversationPackagesService = async () => {
+export const getAllAIConversationPackagesService = async (
+  pageNumber: number,
+  pageSize: number
+) => {
   try {
     const response = await fetchWithAuth(
-      `/api/admin/aiConversationPackagesApiRoutes/getAllAIConversationPackages`,
+      `/api/admin/aiConversationPackagesApiRoutes/getAllAIConversationPackages?pageNumber=${pageNumber}&pageSize=${pageSize}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       }
     );
+
     const data = await response.json();
+
     if (!response.ok)
       throw new Error(data.message || "Get AI conversation packages failed");
+
     return data;
   } catch (error: any) {
     const message =

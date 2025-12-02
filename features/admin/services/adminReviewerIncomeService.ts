@@ -18,25 +18,33 @@ export interface AdminReviewerIncomeResponse {
     data: {
       pageNumber: number;
       pageSize: number;
-      items: Reviewer[];
+      items: ReviewerFee[];
     };
   }
-
+  export interface ReviewerFee{
+    reviewerProfileId: string;
+    fullName: string;
+    email: string;
+    totalIncome: number;
+    reviewCount: number;
+  }
   export interface AdminReviewerIncomeDetailResponse {
-    isSuccess: boolean;
+    isSucess: boolean;
     data: {
-      reviewerProfileId: string;
-      totalReviews: number;
-      totalIncome: number;
-      pricePerReview: number;
-      reviews?: Array<{
-        id: string;
-        question: string;
-        learnerName: string;
+      totalReviews: string;
+      incomePerReview: number;
+      totalEarnedFromSystem: number;
+      totalSpentOnTips: number;
+      netIncome:number
+      items?: Array<{
+        reviewId: string;
         score: number;
-        maxScore: number;
-        createdAt: string;
-        earnings: number;
+        question: string;
+        comment: string;
+        status: string;
+        createdAt: Date;
+        learner: string;
+        earnedFromThisReview: number;
       }>;
     };
     businessCode?: number;

@@ -6,7 +6,7 @@ export async function PUT(
 ) {
   const accessToken = request.cookies.get("accessToken")?.value;
   const { transactionId } = await params;
-
+  const body = await request.json();
   try {
     
     const backendResponse = await fetch(
@@ -17,7 +17,7 @@ export async function PUT(
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        
+        body: JSON.stringify(body),
         credentials: "include",
       }
     );
@@ -31,7 +31,7 @@ export async function PUT(
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Ban reviewer failed" },
+      { message: error instanceof Error ? error.message : "Từ chối yêu cầu rút tiền thất bại" },
       { status: 500 }
     );
   }

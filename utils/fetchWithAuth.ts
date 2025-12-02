@@ -90,5 +90,7 @@ class AuthFetch {
 const authFetch = new AuthFetch();
 export const fetchWithAuth = authFetch.fetchWithAuth.bind(authFetch);
 
+
+
 // Default export for convenience
 export default fetchWithAuth;

@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { reviewerReviewHistoryService, reviewerReviewPendingService, reviewerReviewSubmitService, ReviewerReviewSubmitResponse } from "../services/reviewerReviewService";
+import { reviewerReviewHistoryService, reviewerReviewPendingService, reviewerReviewSubmitService, ReviewerReviewSubmitResponse, ReviewerReviewStatisticsResponse, reviewerReviewStatisticsService, ReviewerReviewWalletResponse, reviewerReviewWalletService, reviewerTipAfterReviewService } from "../services/reviewerReviewService";
 import { ReviewerReviewHistoryResponse, ReviewerReviewPendingResponse } from "../services/reviewerReviewService";
 import { useQuery } from "@tanstack/react-query";
 export const useReviewReviewSubmit = () => {
     const queryClient = useQueryClient();
-    return useMutation<ReviewerReviewSubmitResponse, Error, { learnerAnswerId: string; recordId: string | null; reviewerProfileId: string | null; score: number; comment: string }>({
-        mutationFn: ({ learnerAnswerId, recordId, reviewerProfileId, score, comment }) => reviewerReviewSubmitService({ learnerAnswerId, recordId, reviewerProfileId, score, comment }),
+    return useMutation<ReviewerReviewSubmitResponse, Error, { learnerAnswerId: string | null; recordId: string | null; reviewerProfileId: string | null; score: number; comment: string; recordAudioUrl: string | null }>({
+        mutationFn: ({ learnerAnswerId, recordId, reviewerProfileId, score, comment ,recordAudioUrl}) => reviewerReviewSubmitService({ learnerAnswerId, recordId, reviewerProfileId, score, comment ,recordAudioUrl}),
         onSuccess: (data) => {
             const message = data.message || "Review answer submitted successfully";
             const remainingReviews = data.data?.remainingReviews;
@@ -36,5 +36,28 @@ export const useReviewReviewPending = (pageNumber: number, pageSize: number) => 
     return useQuery<ReviewerReviewPendingResponse, Error>({
         queryKey: ["reviewReviewPending", pageNumber, pageSize],
         queryFn: () => reviewerReviewPendingService(pageNumber, pageSize),
+    });
+}
+export const useReviewReviewStatistics = () => {
+    return useQuery<ReviewerReviewStatisticsResponse, Error>({
+        queryKey: ["reviewReviewStatistics"],
+        queryFn: () => reviewerReviewStatisticsService(),
+    });
+}
+export const useReviewReviewWallet = (pageNumber: number, pageSize: number) => {
+    return useQuery<ReviewerReviewWalletResponse, Error>({
+        queryKey: ["reviewReviewWallet", pageNumber, pageSize],
+        queryFn: () => reviewerReviewWalletService(pageNumber, pageSize),
+    });
+}
+export const useReviewerTipAfterReview = () => {
+    return useMutation<any, Error, { reviewId: string; amountCoin: number; message: string }>({
+        mutationFn: ({ reviewId, amountCoin, message }) => reviewerTipAfterReviewService(reviewId, amountCoin, message),
+        onSuccess: (data) => {
+            toast.success(data.message || "Tip after review successful");
+        },
+        onError: (error) => {
+            toast.error(error.message || "Tip after review failed");
+        },
     });
 }

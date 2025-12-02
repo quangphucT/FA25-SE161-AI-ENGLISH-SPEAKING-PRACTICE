@@ -11,7 +11,7 @@ export const useCreateCoinServicePackage = () => {
     onSuccess: (data) => {
       toast.success(data.message || "Tạo gói dịch vụ thành công");
       // 👇 invalidate để reload danh sách mới
-      queryClient.invalidateQueries({ queryKey: ["getCoinServicePackages"] });
+      queryClient.invalidateQueries({ queryKey: ["getServicePackages"] });
     },
     onError: (error) => {
       toast.error(error.message || "Tạo gói dịch vụ thất bại");
