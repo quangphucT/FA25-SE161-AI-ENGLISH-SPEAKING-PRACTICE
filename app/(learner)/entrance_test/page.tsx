@@ -38,6 +38,8 @@ const EntranceTest = () => {
   const [realIpaTranscripts, setRealIpaTranscripts] = useState<string[]>([]);
   const [coloredContents, setColoredContents] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recordingAttempts, setRecordingAttempts] = useState<number[]>([]); // Track recording attempts per question
+  const MAX_RECORDING_ATTEMPTS = 2;
   const router = useRouter();
   // Hooks
   const { data: userData } = useGetMeQuery();
@@ -118,6 +120,7 @@ const EntranceTest = () => {
       setIpaTranscripts(new Array(allQuestions.length).fill(""));
       setRealIpaTranscripts(new Array(allQuestions.length).fill(""));
       setColoredContents(new Array(allQuestions.length).fill(""));
+      setRecordingAttempts(new Array(allQuestions.length).fill(0));
     }
   }, [allQuestions, recorded.length]);
 
@@ -243,12 +246,23 @@ const EntranceTest = () => {
   };
 
   const handleRecord = () => {
+    // Check if max attempts reached
+    if (recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS && !isRecording) {
+      toast.error(`Bạn đã ghi âm tối đa ${MAX_RECORDING_ATTEMPTS} lần cho câu hỏi này`);
+      return;
+    }
+
     if (isRecording) {
       // Stop recording
       setIsRecording(false);
       if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
       setIsProcessingAudio(true);
       setUiBlocked(true);
+      
+      // Increment recording attempts
+      const newAttempts = [...recordingAttempts];
+      newAttempts[currentQuestionIndex] = (newAttempts[currentQuestionIndex] || 0) + 1;
+      setRecordingAttempts(newAttempts);
     } else {
       // Start recording
       if (
@@ -707,6 +721,8 @@ const EntranceTest = () => {
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
                       isRecording
                         ? "bg-red-100 text-red-700 animate-pulse"
+                        : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                        ? "bg-orange-100 text-orange-700"
                         : recorded[currentQuestionIndex]
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-200 text-gray-700"
@@ -716,6 +732,8 @@ const EntranceTest = () => {
                       className={`w-2 h-2 rounded-full ${
                         isRecording
                           ? "bg-red-500"
+                          : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                          ? "bg-orange-500"
                           : recorded[currentQuestionIndex]
                           ? "bg-green-500"
                           : "bg-gray-500"
@@ -723,9 +741,15 @@ const EntranceTest = () => {
                     ></div>
                     {isRecording
                       ? "Đang ghi âm..."
+                      : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                      ? "Đã hết lượt ghi âm"
                       : recorded[currentQuestionIndex]
                       ? "Đã hoàn thành"
                       : "Sẵn sàng ghi âm"}
+                  </div>
+                  {/* Recording attempts counter */}
+                  <div className="mt-2 text-sm text-gray-600">
+                    Số lần ghi âm: <span className={`font-bold ${recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS ? "text-orange-600" : "text-blue-600"}`}>{recordingAttempts[currentQuestionIndex] || 0}</span> / {MAX_RECORDING_ATTEMPTS}
                   </div>
                 </div>
 
@@ -744,12 +768,14 @@ const EntranceTest = () => {
                       className={`relative rounded-full w-32 h-32 flex items-center cursor-pointer justify-center transition-all duration-300 shadow-2xl ${
                         isRecording
                           ? "bg-linear-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 scale-110"
+                          : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                          ? "bg-linear-to-br from-gray-400 to-gray-500 cursor-not-allowed"
                           : recorded[currentQuestionIndex]
                           ? "bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                           : "bg-linear-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
                       }`}
                       onClick={handleRecord}
-                      disabled={uiBlocked && !isRecording}
+                      disabled={(uiBlocked && !isRecording) || (recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS && !isRecording)}
                       aria-label="Ghi âm"
                     >
                       <Mic size={64} color="white"/>
@@ -760,13 +786,17 @@ const EntranceTest = () => {
                     <p className="text-lg font-semibold text-gray-900 mb-1">
                       {isRecording
                         ? "Nhấn để dừng ghi âm"
+                        : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                        ? "Đã hết lượt ghi âm"
                         : recorded[currentQuestionIndex]
-                        ? "Bạn có thể ghi lại"
+                        ? `Ghi lại (còn ${MAX_RECORDING_ATTEMPTS - recordingAttempts[currentQuestionIndex]} lượt)`
                         : "Nhấn để bắt đầu"}
                     </p>
                     <p className="text-sm text-gray-600">
                       {isRecording
                         ? "Đọc rõ ràng vào microphone"
+                        : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                        ? "Bạn đã sử dụng hết số lần ghi âm cho câu này"
                         : "Đảm bảo microphone đã được bật"}
                     </p>
                   </div>
