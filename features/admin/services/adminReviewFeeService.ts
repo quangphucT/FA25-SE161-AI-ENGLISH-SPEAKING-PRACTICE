@@ -8,6 +8,25 @@ export interface CreateReviewFeeRequest {
   pricePerReviewFee: number;
 }
 
+export interface CreateReviewFeePackageRequest {
+   numberOfReview: number;
+  pricePerReviewFee: number;
+  percentOfSystem: number;
+  percentOfReviewer: number;
+}
+export interface CreateReviewFeePackageResponse {
+  isSucess: boolean;
+  data: {
+    packageId: string;
+    numberOfReview: number;
+    pricePerReviewFee: number;
+    percentOfSystem: number;
+    percentOfReviewer: number;
+  };
+  businessCode: string;
+  message: string;
+}
+
 export interface CreateReviewFeeResponse {
   message: string;
 }
@@ -41,19 +60,37 @@ export interface ReviewFeeDetailResponse {
     reviewFeeId: string;
     numberOfReview: number;
     status: string;
+
     currentPolicy: {
+      pricePerReviewFee: number;
+      reviewerIncome: number;
+      percentOfReviewer: number;
+      percentOfSystem?: number; 
+      appliedFrom: string;
+    };
+
+    upcomingPolicy?: {
+      pricePerReviewFee: number;
+      reviewerIncome: number;
+      percentOfReviewer: number;
+      willApplyFrom: string;
+    };
+
+    historyPolicies: {
       reviewFeeDetailId: string;
       pricePerReviewFee: number;
       reviewerIncome: number;
       percentOfReviewer: number;
       percentOfSystem: number;
-      appliedFrom: string;
-    };
-    historyPolicies: HistoryPolicies[];
+      appliedDate: string;
+      isCurrent: boolean;
+      isUpcoming: boolean;
+    }[];
   };
   businessCode: string;
   message: string;
 }
+
 export interface HistoryPolicies {
   reviewFeeDetailId: string;
   pricePerReviewFee: number;
@@ -64,6 +101,28 @@ export interface HistoryPolicies {
   isCurrent:boolean;
   isUpcoming:boolean
 }
+export const adminReviewFeePackageService = async (
+  body: CreateReviewFeePackageRequest
+): Promise<CreateReviewFeePackageResponse> => {
+  try {
+    const response = await fetchWithAuth("/api/AdminDashboard/reviewfee-package", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.message || "Create Review Fee Package failed");
+
+    return data;
+
+  } catch (error: any) {
+    throw new Error(error?.message || "Unknown error while creating Review Fee Package");
+  }
+};
 
 export const adminReviewFeeService = async (
   body: CreateReviewFeeRequest
@@ -131,5 +190,26 @@ export const getReviewFeeDetail = async (reviewFeeId: string): Promise<ReviewFee
     return data;
   } catch (error: any) {
     throw new Error(error?.message || "Đã xảy ra lỗi khi lấy chi tiết gói phí đánh giá");
+  }
+};
+
+
+export const adminReviewFeePolicyService = async (body: CreateReviewFeeRequest) => {
+  try {
+    const response = await fetchWithAuth("/api/AdminDashboard/reviewfee", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.message || "Tạo chính sách phí đánh giá thất bại");
+
+    return data;
+  } catch (error: any) {
+    throw new Error(error?.message || "Unknown error while creating review fee policy");
   }
 };

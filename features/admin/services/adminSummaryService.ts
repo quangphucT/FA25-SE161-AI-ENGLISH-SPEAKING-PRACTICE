@@ -51,6 +51,8 @@ export interface Reviewer {
   reviewerStatus: string;
   userId: string;
   certificates: Certificate[];
+    reviewCount: number;   
+  totalIncome: number;   
 }
 export interface Certificate {
   certificateId: string;
