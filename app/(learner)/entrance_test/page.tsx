@@ -106,7 +106,6 @@ const EntranceTest = () => {
       }
     } catch (err) {
       toast.error("Có lỗi xảy ra, vui lòng thử lại.");
-      console.error("Error navigating to dashboard:", err);
     }
     setLoadingToDashboardLearner(false);
   };
@@ -215,7 +214,7 @@ const EntranceTest = () => {
         numberOfQuestion: totalQuestions,
         tests,
       };
-      console.log("payload:", payload)
+     
       submitTestAssessmentMutation(payload, {
         onSuccess: (data) => {
           toast.success("Đã nộp bài thành công!");
