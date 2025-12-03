@@ -8,6 +8,11 @@ import {
   getReviewFeePackages,
   ReviewFeePackagesResponse,
     getReviewFeeDetail,   
+      CreateReviewFeePackageRequest,
+  CreateReviewFeePackageResponse,
+  adminReviewFeePackageService,
+    adminReviewFeePolicyService              
+
 
 } from "../services/adminReviewFeeService";
 import { toast } from "sonner";
@@ -40,5 +45,38 @@ export const useAdminReviewFeeDetailQuery = (reviewFeeId: string | null) => {
     queryKey: ["adminReviewFeeDetail", reviewFeeId],
     queryFn: () => getReviewFeeDetail(reviewFeeId!),
     enabled: !!reviewFeeId,
+  });
+};
+
+
+export const useAdminReviewFeePackageCreateMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<CreateReviewFeePackageResponse, Error, CreateReviewFeePackageRequest>({
+    mutationFn: adminReviewFeePackageService,
+
+    onSuccess: (data) => {
+      toast.success(data.message || "Tạo gói Review Fee thành công");
+
+      queryClient.invalidateQueries({ queryKey: ["adminReviewFeePackages"] });
+    },
+
+    onError: (error) => {
+      toast.error(error.message || "Tạo gói Review Fee thất bại");
+    },
+  });
+};
+export const useAdminReviewFeePolicyCreateMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: adminReviewFeePolicyService,
+    onSuccess: (data) => {
+      toast.success(data.message || "Tạo chính sách mới thành công");
+      queryClient.invalidateQueries({ queryKey: ["adminReviewFeePackages"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Tạo chính sách thất bại");
+    },
   });
 };
