@@ -336,7 +336,7 @@ const ExercisePage = () => {
               setUiBlocked(false);
               return;
             }
-            console.log("About to submit answer");
+         
             // Submit answer immediately after processing
             submitAnswerQuestion(
               {
@@ -348,8 +348,7 @@ const ExercisePage = () => {
               },
               {
                 onSuccess: (data) => {
-                  console.log("Answer submitted successfully");
-                  console.log("Response:", data);
+          
                   // Lưu learnerAnswerId từ response vào array theo index của câu hỏi
                   if (data.data?.learnerAnswerId) {
                     const newLearnerAnswerIds = [...learnerAnswerIds];
@@ -486,11 +485,7 @@ const ExercisePage = () => {
                   <span className="text-gray-400">/</span> {totalQuestions}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-bold">
-                  {Math.round(progressPercentage)}%
-                </span>
-              </div>
+          
             </div>
           </div>
         </div>
@@ -964,30 +959,8 @@ const ExercisePage = () => {
             </div>
             
 
-            {/* Next Button */}
-            {currentQuestionIndex === totalQuestions - 1 ? (
-              <Button
-                onClick={handleSubmit}
-                className="font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer transform hover:scale-105"
-              >
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  Hoàn thành
-                </span>
-              </Button>
-            ) : (
+            {/* Next Button - Chỉ hiển thị khi không phải câu cuối */}
+            {currentQuestionIndex < totalQuestions - 1 && (
               <Button
                 onClick={handleNextQuestion}
                 disabled={!recorded[currentQuestionIndex] && currentQuestion.status !== "Completed"}
@@ -1009,8 +982,6 @@ const ExercisePage = () => {
                 </span>
               </Button>
             )}
-
-            
           </div>
         </div>
       </div>
