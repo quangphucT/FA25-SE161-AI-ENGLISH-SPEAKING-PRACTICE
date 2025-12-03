@@ -21,14 +21,26 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useAdminReviewFeePackagesQuery, useAdminReviewFeeCreateMutation } from "@/features/admin/hooks/useAdminReviewFee";
-import { CreateReviewFeeRequest } from "@/features/admin/services/adminReviewFeeService";
+import { 
+  useAdminReviewFeePackagesQuery, 
+  useAdminReviewFeePackageCreateMutation ,
+    useAdminReviewFeePolicyCreateMutation
+
+} from "@/features/admin/hooks/useAdminReviewFee";
+import { CreateReviewFeePackageRequest, adminReviewFeePolicyService  } from "@/features/admin/services/adminReviewFeeService";
 import { Loader2, FileText, Plus, Package, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useAdminReviewFeeDetailQuery } from "@/features/admin/hooks/useAdminReviewFee";
+
+
+ const normalizePercent = (value: number) => {
+  if (value <= 10) return value * 10; // 4 → 40
+  return value; // 40 → 40
+};
+
 
 const PAGE_SIZE = 10;
 
@@ -50,20 +62,38 @@ const formatCurrency = (amount?: number) => {
 };
 
 const createReviewFeeSchema = z.object({
-  reviewFeeId: z.string().min(1, "Vui lòng nhập mã gói phí đánh giá"),
-  appliedDate: z.string().min(1, "Vui lòng chọn ngày áp dụng"),
-  percentOfSystem: z.number().min(0).max(100, "Phần trăm hệ thống phải từ 0-100"),
-  percentOfReviewer: z.number().min(0).max(100, "Phần trăm reviewer phải từ 0-100"),
-  pricePerReviewFee: z.number().min(0, "Giá mỗi đánh giá phải lớn hơn 0"),
-}).refine(
-  (data) => data.percentOfSystem + data.percentOfReviewer <= 100,
-  {
-    message: "Tổng phần trăm hệ thống và reviewer không được vượt quá 100%",
-    path: ["percentOfReviewer"],
+  appliedDate: z.string().min(1),
+  numberOfReview: z.number().min(1, "Số lượng đánh giá phải > 0"),
+  percentOfSystem: z.number().min(0).max(100),
+  percentOfReviewer: z.number().min(0).max(100),
+  pricePerReviewFee: z.number().gt(0),
+}).superRefine((data, ctx) => {
+  const system = normalizePercent(data.percentOfSystem);
+  const reviewer = normalizePercent(data.percentOfReviewer);
+  const total = system + reviewer;
+
+  if (total !== 100) {
+    ctx.addIssue({
+      path: ["percentOfReviewer"],
+      message: "Tổng % Hệ thống + Reviewer phải đúng 100%",
+      code: z.ZodIssueCode.custom,
+    });
   }
-);
+});
+
 
 type CreateReviewFeeFormData = z.infer<typeof createReviewFeeSchema>;
+
+
+type CreatePolicyForm = {
+  reviewFeeId: string;
+  appliedDate: string;
+  pricePerReviewFee: number;
+  percentOfSystem: number;
+  percentOfReviewer: number;
+};
+
+
 
 interface InfoItemProps {
   label: string;
@@ -84,7 +114,13 @@ export default function ReviewFeeManagement() {
     PAGE_SIZE
   );
 
-  const { mutate: createReviewFee, isPending: isCreating } = useAdminReviewFeeCreateMutation();
+
+ 
+const [showCreatePolicyModal, setShowCreatePolicyModal] = useState(false);
+const [selectedReviewFeeIdForPolicy, setSelectedReviewFeeIdForPolicy] = useState<string | null>(null);
+
+const { mutate: createReviewFeePackage, isPending: isCreating } = 
+  useAdminReviewFeePackageCreateMutation();
 
   const {
     data: detailData,
@@ -92,34 +128,39 @@ export default function ReviewFeeManagement() {
   } = useAdminReviewFeeDetailQuery(selectedReviewFeeId);
  
 
-  const form = useForm<CreateReviewFeeFormData>({
-    resolver: zodResolver(createReviewFeeSchema),
-    defaultValues: {
-      reviewFeeId: "",
-      appliedDate: new Date().toISOString().split("T")[0],
-      percentOfSystem: 0,
-      percentOfReviewer: 0,
-      pricePerReviewFee: 0,
+ const form = useForm<CreateReviewFeeFormData>({
+  resolver: zodResolver(createReviewFeeSchema),
+  defaultValues: {
+    appliedDate: new Date().toISOString().split("T")[0],
+        numberOfReview: 0,   // ← thêm dòng này
+
+    percentOfSystem: 0,
+    percentOfReviewer: 0,
+    pricePerReviewFee: 0,
+  },
+});
+
+
+const onSubmit = async (values: CreateReviewFeeFormData) => {
+  const system = normalizePercent(values.percentOfSystem);
+  const reviewer = normalizePercent(values.percentOfReviewer);
+
+  const requestData: CreateReviewFeePackageRequest = {
+    numberOfReview: values.numberOfReview,
+    pricePerReviewFee: values.pricePerReviewFee,
+    percentOfSystem: Number((system / 100).toFixed(2)),
+    percentOfReviewer: Number((reviewer / 100).toFixed(2)),
+  };
+
+  createReviewFeePackage(requestData, {
+    onSuccess: () => {
+      setShowCreateModal(false);
+      form.reset();
+      refetch();
     },
   });
+};
 
-  const onSubmit = async (values: CreateReviewFeeFormData) => {
-    const requestData: CreateReviewFeeRequest = {
-      reviewFeeId: values.reviewFeeId,
-      appliedDate: new Date(values.appliedDate).toISOString(),
-      percentOfSystem: values.percentOfSystem,
-      percentOfReviewer: values.percentOfReviewer,
-      pricePerReviewFee: values.pricePerReviewFee,
-    };
-
-    createReviewFee(requestData, {
-      onSuccess: () => {
-        setShowCreateModal(false);
-        form.reset();
-        refetch();
-      },
-    });
-  };
 
   const packages = data?.data?.items ?? [];
   const totalItems = data?.data?.totalItems ?? 0;
@@ -132,6 +173,24 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
     <p className={`font-semibold text-gray-900 mt-1 ${className}`}>{value}</p>
   </div>
 );
+const { mutate: createPolicy, isPending: isCreatingPolicy } =
+
+  useAdminReviewFeePolicyCreateMutation();
+
+
+
+
+const policyForm = useForm<CreatePolicyForm>({
+  defaultValues: {
+    reviewFeeId: "",
+    appliedDate: new Date().toISOString().slice(0, 16),
+    pricePerReviewFee: 0,
+    percentOfSystem: 0,
+    percentOfReviewer: 0,
+  },
+});
+
+
 
 
 
@@ -228,14 +287,35 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
       ) : (
         <>
           <Card className="shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-blue-600 rounded-lg">
-                  <FileText className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-gray-900">Danh sách gói phí đánh giá</span>
-              </CardTitle>
-            </div>
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center">
+  <CardTitle className="flex items-center gap-3 text-xl">
+    <div className="p-2 bg-blue-600 rounded-lg">
+      <FileText className="w-5 h-5 text-white" />
+    </div>
+    <span className="text-gray-900">Danh sách gói phí đánh giá</span>
+  </CardTitle>
+
+ <Button
+  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow cursor-pointer"
+  onClick={() => {
+    if (packages.length === 0) return;
+
+    const firstId = packages[0].reviewFeeId;
+
+    setSelectedReviewFeeIdForPolicy(firstId);
+
+    // ⬅️ SET GIÁ TRỊ VÀO FORM TRƯỚC KHI MỞ MODAL
+    policyForm.setValue("reviewFeeId", firstId);
+
+    setShowCreatePolicyModal(true);
+  }}
+>
+  Tạo chính sách mới
+</Button>
+
+
+</div>
+
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
@@ -296,9 +376,10 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
                           <TableCell>
                             <div className="flex items-center gap-2">
                             
-                              <span className="font-semibold text-green-700">
-                                {formatCurrency(pkg.currentPricePolicy?.pricePerReviewFee)}
-                              </span>
+                             <span className="font-semibold text-green-700">
+  {pkg.currentPricePolicy?.pricePerReviewFee} Coin
+</span>
+
                             </div>
                           </TableCell>
                           <TableCell>
@@ -317,6 +398,8 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
                               </span>
                             </div>
                           </TableCell>
+                         
+
                           <TableCell>
                             <div className="flex items-center gap-2">
                  
@@ -449,23 +532,7 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6 space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="reviewFeeId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mã gói phí đánh giá *</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="VD: 296fb9bf-d7a2-4482-8c0f-26a312397e82"
-                                {...field}
-                                className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                     
 
                       <FormField
                         control={form.control}
@@ -484,13 +551,31 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
                           </FormItem>
                         )}
                       />
+<FormField
+  control={form.control}
+  name="numberOfReview"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Số lượng đánh giá *</FormLabel>
+      <FormControl>
+        <Input
+          type="number"
+          placeholder="VD: 35"
+          {...field}
+          onChange={(e) => field.onChange(Number(e.target.value))}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
                       <FormField
                         control={form.control}
                         name="pricePerReviewFee"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Giá mỗi đánh giá (VND) *</FormLabel>
+                            <FormLabel>Giá mỗi đánh giá (Coin) *</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -513,15 +598,15 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
                             <FormItem>
                               <FormLabel>% Hệ thống *</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="VD: 30"
-                                  min="0"
-                                  max="100"
-                                  {...field}
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
-                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                />
+                              <Input
+  type="number"
+  step="1"
+  min="0"
+  max="100"
+  {...field}
+  onChange={(e) => field.onChange(Number(e.target.value))}
+/>
+
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -535,15 +620,15 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
                             <FormItem>
                               <FormLabel>% Reviewer *</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="VD: 70"
-                                  min="0"
-                                  max="100"
-                                  {...field}
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
-                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                />
+                             <Input
+  type="number"
+  step="1"
+  min="0"
+  max="100"
+  {...field}
+  onChange={(e) => field.onChange(Number(e.target.value))}
+/>
+
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -593,6 +678,152 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
    {/* ============================
     MODAL CHI TIẾT GÓI PHÍ ĐÁNH GIÁ
 ============================= */}
+{showCreatePolicyModal && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <h2 className="text-2xl font-bold mb-4 text-gray-900">Tạo chính sách mới</h2>
+
+      <Form {...policyForm}>
+        <form
+          onSubmit={policyForm.handleSubmit((values) => {
+  const sys = normalizePercent(values.percentOfSystem);
+  const rev = normalizePercent(values.percentOfReviewer);
+
+  if (sys + rev !== 100) {
+    alert("Tổng % Hệ thống + Reviewer phải đúng 100%");
+    return;
+  }
+
+  createPolicy(
+    {
+      reviewFeeId: values.reviewFeeId,
+      appliedDate: values.appliedDate,
+      pricePerReviewFee: values.pricePerReviewFee,
+      percentOfSystem: sys / 100,
+      percentOfReviewer: rev / 100,
+    },
+    {
+      onSuccess: () => {
+        setShowCreatePolicyModal(false);
+        policyForm.reset();
+        refetch();
+      },
+    }
+  );
+})}
+
+          className="space-y-4"
+        >
+          {/* REVIEW FEE ID — PHẢI ĐƯA VÀO TRONG FORM */}
+          <FormField
+            control={policyForm.control}
+            name="reviewFeeId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Chọn gói áp dụng *</FormLabel>
+                <FormControl>
+                  <select
+                    {...field}
+                    className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+                  >
+                    <option value="">-- Chọn gói --</option>
+                    {packages.map((pkg) => (
+                      <option key={pkg.reviewFeeId} value={pkg.reviewFeeId}>
+                        {pkg.reviewFeeId.slice(0, 8)}... | {pkg.numberOfReview} đánh giá
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={policyForm.control}
+            name="appliedDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ngày áp dụng</FormLabel>
+                <FormControl>
+                  <Input type="datetime-local" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={policyForm.control}
+            name="pricePerReviewFee"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Giá mỗi lần đánh giá</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={policyForm.control}
+              name="percentOfSystem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>% Hệ thống</FormLabel>
+                  <FormControl>
+<Input
+  type="number"
+  min={0}
+  max={100}
+  value={field.value}
+  onChange={(e) => field.onChange(Number(e.target.value))}
+/>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={policyForm.control}
+              name="percentOfReviewer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>% Reviewer</FormLabel>
+                  <FormControl>
+<Input
+  type="number"
+  min={0}
+  max={100}
+  value={field.value}
+  onChange={(e) => field.onChange(Number(e.target.value))}
+/>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 mt-4">
+            <Button type="button" variant="outline" onClick={() => setShowCreatePolicyModal(false)}>
+              Hủy
+            </Button>
+
+            <Button type="submit" className="bg-blue-600 text-white">
+              Tạo chính sách
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  </div>
+)}
+
+
+{/* ==========================
+    MODAL XEM CHI TIẾT GÓI PHÍ
+========================== */}
 {showDetailModal && (
   <div
     className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -628,11 +859,17 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
           <InfoItem label="Mã gói" value={detailData?.data?.reviewFeeId} />
           <InfoItem label="Số lượng đánh giá" value={detailData?.data?.numberOfReview} />
 
-          <InfoItem
-            label="Giá mỗi đánh giá"
-            value={formatCurrency(detailData?.data?.currentPolicy?.pricePerReviewFee)}
-            className="text-green-600 font-bold"
-          />
+        <InfoItem
+  label="Giá mỗi đánh giá (Coin)"
+  value={(detailData?.data?.currentPolicy?.pricePerReviewFee ?? 0) + " Coin"}
+  className="text-green-600 font-bold"
+/>
+
+ <InfoItem
+  label="Thu nhập của người đánh giá (Coin)"
+  value={(detailData?.data?.currentPolicy?.reviewerIncome ?? 0) + " Coin"}
+  className="text-green-600 font-bold"
+/>
 
           <InfoItem
             label="% Reviewer"
@@ -647,6 +884,29 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
           />
         </div>
 
+
+
+           {/* ======================================
+              📌 UPCOMING POLICY (NEW)
+        ====================================== */}
+        {detailData?.data?.upcomingPolicy && (
+          <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 shadow-sm">
+            <h3 className="font-semibold text-blue-700 text-lg mb-3">
+              Chính sách sắp áp dụng
+            </h3>
+
+<p>
+  <strong>Giá mới:</strong> {detailData.data.upcomingPolicy.pricePerReviewFee} Coin
+</p>
+            <p><strong>% Reviewer:</strong> {(detailData.data.upcomingPolicy.percentOfReviewer * 100).toFixed(0)}%</p>
+            <p><strong>% Thu nhập của người đánh giá:</strong> {(detailData.data.upcomingPolicy.reviewerIncome ).toFixed(0)}%</p>
+
+            <p><strong>% Hệ thống:</strong> {((1 - detailData.data.upcomingPolicy.percentOfReviewer) * 100).toFixed(0)}%</p>
+
+            <p><strong>Ngày áp dụng:</strong> {formatDate(detailData.data.upcomingPolicy.willApplyFrom)}</p>
+            <p className="mt-1 text-blue-600 font-semibold">Sắp áp dụng</p>
+          </div>
+        )}
         {/* LỊCH SỬ CHÍNH SÁCH */}
         <div>
           <h3 className="font-semibold text-gray-900 text-lg mb-3">
@@ -659,23 +919,38 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                 key={h.reviewFeeDetailId}
                 className="p-4 bg-gray-50 border rounded-xl shadow-sm hover:shadow-md transition"
               >
-                <p><strong>Giá:</strong> {formatCurrency(h.pricePerReviewFee)}</p>
+<p><strong>Giá:</strong> {h.pricePerReviewFee} Coin</p>
                 <p><strong>% Reviewer:</strong> {(h.percentOfReviewer * 100).toFixed(0)}%</p>
                 <p><strong>% Hệ thống:</strong> {(h.percentOfSystem * 100).toFixed(0)}%</p>
                 <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate)}</p>
 
-                <p className="mt-1">
-                  <strong>Trạng thái:</strong>{" "}
-                  <span
-                    className={
-                      h.isCurrent
-                        ? "text-green-600 font-semibold"
-                        : "text-gray-500"
-                    }
-                  >
-                    {h.isCurrent ? "Đang áp dụng" : "Cũ"}
-                  </span>
-                </p>
+              <p className="mt-1">
+  <strong>Trạng thái:</strong>{" "}
+  <span
+    className={
+      h.isCurrent
+        ? "text-green-600 font-semibold"
+        : "text-gray-500"
+    }
+  >
+    {h.isCurrent ? "Đang áp dụng" : "Hết hiệu lực"}
+  </span>
+</p>
+
+                 <p className="mt-1">
+  <strong>Sắp áp dụng:</strong>{" "}
+  <span
+    className={
+      h.isUpcoming
+        ? "text-green-600 font-semibold"
+        : "text-gray-500"
+    }
+  >
+    {h.isUpcoming ? "Sắp áp dụng" : "Đã áp dụng trước đó"}
+  </span>
+</p>
+
+
               </div>
             ))}
           </div>
@@ -685,8 +960,9 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
     </div>
   </div>
 )}
+
  
-        </>
+      </>
       )}
     </div>
   );

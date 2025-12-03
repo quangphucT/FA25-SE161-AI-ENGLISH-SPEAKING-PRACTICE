@@ -7,7 +7,7 @@ import {
   useGetCoursesBasedOnLevelLearner,
 } from "@/features/learner/hooks/coursesBasedOnLevelLearner/coursesBasedOnLevelLearner";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
-import { BookOpen, Coins, TrendingUp, ArrowRight } from "lucide-react";
+import { BookOpen, Coins, TrendingUp, ArrowRight, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useGetLevelAndLearnerCourseIdAfterEnrolling } from "@/features/learner/hooks/enrollingCourseHooks/enrollingCourses";
 import { useLearnerStore } from "@/store/useLearnerStore";
@@ -343,6 +343,10 @@ export default function EnrollingCourses() {
                   <p className="text-gray-600 text-sm line-clamp-2">
                     {course.description}
                   </p>
+    <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+  <Clock className="w-3 h-3" />
+  {course.duration} ngày
+</div>
 
                   <p className="text-xs text-gray-500">
                     {course.numberOfChapter} Chương • {totalExercises} Bài tập

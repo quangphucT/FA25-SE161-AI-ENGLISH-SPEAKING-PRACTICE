@@ -25,6 +25,7 @@ import SendingAudioToReviewer from "../sendingAudioToReviewer/page";
 import EnrollingCourses from "../enrolling-courses/page";
 import ReviewRecordPage from "../review_record/page";
 import LearnerRecordPage from "../learner_record/page";
+import ProgressPage from "../progress/page";
 
 
 function DashboardContent() {
@@ -49,7 +50,11 @@ function DashboardContent() {
     { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
     { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
+    { id: "reviewRecord", label: "Lịch sử đánh giá", icon: BookOpen, description: "Lịch sử đánh giá của tôi" },
+    { id: "progress", label: "Tiến độ học tập", icon: BarChart3, description: "Theo dõi kết quả học tập" },
+
   ];
+
 
 
 
@@ -168,8 +173,15 @@ function DashboardContent() {
         {/* Content Area */}
         <div className="p-8">
           {/* OVERVIEW PAGE */}
-          {activeMenu === "overview" && (
+        
+          
+{activeMenu === "overview" && (
               <Overview />
+          )}
+
+          
+          {activeMenu === "progress" && (
+              <ProgressPage  />
           )}
 
           {/* COURSES PAGE */}
