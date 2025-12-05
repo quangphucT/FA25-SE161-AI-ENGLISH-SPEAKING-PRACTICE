@@ -50,22 +50,37 @@ export const getServicePackages =
 
 export interface ServicePackageBuyersResponse {
   isSucess?: boolean; // Handle typo in API response
-  data: ServicePackageBuyer[]; // API returns array directly
+  data: {
+    pageNumber: number,
+    pageSize: number,
+    totalItems: number,
+    items: ServicePackageBuyer[]
+  };
   businessCode?: string;
   message?: string;
 }
 export interface ServicePackageBuyer {
   userId: string,
-  fullName: string,
-  email: string,
+  buyerName: string,
+  buyerEmail: string,
   amountMoney: number,
   amountCoin: number,
   orderCode: string,
   createdTransaction: string
 }
-export const getServicePackageBuyers = async (id: string): Promise<ServicePackageBuyersResponse> => {
+export const getServicePackageBuyers = async (id: string, pageNumber: string, pageSize: string,search: string): Promise<ServicePackageBuyersResponse> => {
   try {
-    const response = await fetchWithAuth(`/api/AdminDashboard/servicepackages/${id}`);
+    const params = new URLSearchParams();
+    if (pageNumber && pageNumber.trim()) {
+      params.set("pageNumber", pageNumber);
+    }
+    if (pageSize && pageSize.trim()) {
+      params.set("pageSize", pageSize);
+    }
+    if (search && search.trim()) {
+      params.set("search", search);
+    }
+    const response = await fetchWithAuth(`/api/AdminDashboard/servicepackages/${id}?${params.toString()}`);
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "Failed to fetch service package buyers");
     return data;

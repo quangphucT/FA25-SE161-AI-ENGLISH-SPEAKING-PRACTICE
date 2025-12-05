@@ -174,7 +174,6 @@ function LearningPathContent() {
         { learningPathExerciseId },
         {
           onSuccess: () => {
-            toast.success("Đã bắt đầu bài tập!");
             setLoadingExerciseId(null);
             refetch();
             // Navigate đến trang exercise với chapterId

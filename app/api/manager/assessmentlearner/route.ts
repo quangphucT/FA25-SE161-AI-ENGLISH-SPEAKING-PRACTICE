@@ -6,15 +6,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
   const pageNumber = searchParams.get("pageNumber");
   const pageSize = searchParams.get("pageSize");
-  const type = searchParams.get("type");
-  const keyword = searchParams.get("keyword");
+
   const backendUrl = new URL(
-    `${process.env.BE_API_URL}/Assessment`
+    `${process.env.BE_API_URL}/Assessment/get-all`
   );
   backendUrl.searchParams.set("pageNumber", pageNumber ?? "1");
   backendUrl.searchParams.set("pageSize", pageSize ?? "10");
-  backendUrl.searchParams.set("type", type ?? "");
-  backendUrl.searchParams.set("keyword", keyword ?? "");
   const response = await fetch(backendUrl.toString(), {
     method: "GET",
     headers: {

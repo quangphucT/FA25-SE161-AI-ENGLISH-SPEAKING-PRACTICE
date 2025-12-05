@@ -3,12 +3,25 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const accessToken = request.cookies.get("accessToken")?.value;
   const { id } = await params;
+  const { searchParams } = new URL(request.url);
+  const pageNumber = searchParams.get("pageNumber");
+  const pageSize = searchParams.get("pageSize");
+  const search = searchParams.get("search");
   try {
     // Build URL with query parameters
     const backendUrl = new URL(
       `${process.env.BE_API_URL}/AdminServicePackage/${id}/buyers`
     );
     
+    if (pageNumber) {
+      backendUrl.searchParams.set("pageNumber", pageNumber);
+    }
+    if (pageSize) {
+      backendUrl.searchParams.set("pageSize", pageSize);
+    }
+    if (search) {
+      backendUrl.searchParams.set("search", search);
+    }
     const backendResponse = await fetch(backendUrl.toString(), {
       method: "GET",
       headers: {

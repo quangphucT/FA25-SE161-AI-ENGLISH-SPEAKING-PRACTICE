@@ -56,6 +56,7 @@ import {
   X,
   Filter,
   Play,
+  XCircle,
 } from "lucide-react";
 import type { LearnerReviewHistory } from "@/features/learner/services/learnerReviewService";
 
@@ -272,7 +273,7 @@ const SendingAudioToReviewer = () => {
       </div>
 
       {/* Statistics Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -314,6 +315,21 @@ const SendingAudioToReviewer = () => {
               </div>
               <div className="p-3 bg-yellow-100 rounded-full">
                 <Calendar className="w-6 h-6 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1"> Bị từ chối</p>
+                <div className="text-3xl font-bold text-gray-900">
+                  {summaryStats.rejected}
+                </div>
+              </div>
+              <div className="p-3 bg-red-100 rounded-full">
+                <XCircle className="w-6 h-6 text-red-600" />
               </div>
             </div>
           </CardContent>

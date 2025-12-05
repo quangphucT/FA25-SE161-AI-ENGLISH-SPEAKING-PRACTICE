@@ -14,9 +14,15 @@ export const useGetServicePackages = (
     queryFn: () => getServicePackages(pageNumber, pageSize, search, filter),
   });
 };
-export const useGetServicePackageBuyers = (id: string) => {
+export const useGetServicePackageBuyers = (
+  id: string, 
+  pageNumber: string = "1", 
+  pageSize: string = "10", 
+  search: string = ""
+) => {
   return useQuery<ServicePackageBuyersResponse, Error>({
-    queryKey: ["getServicePackageBuyers", id],
-    queryFn: () => getServicePackageBuyers(id),
+    queryKey: ["getServicePackageBuyers", id, pageNumber, pageSize, search],
+    queryFn: () => getServicePackageBuyers(id, pageNumber, pageSize, search),
+    enabled: !!id,
   });
 };

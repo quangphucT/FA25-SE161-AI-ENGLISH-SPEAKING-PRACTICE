@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ reviewerProfileId: string , fromDate:string, toDate:string}> }
+  { params }: { params: Promise<{ reviewerProfileId: string }> }
 ) {
   const accessToken = request.cookies.get("accessToken")?.value;
   const { reviewerProfileId } = await params;

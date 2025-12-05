@@ -816,13 +816,25 @@ const PackageDetailModal = ({
   package: ServicePackage;
   onClose: () => void;
 }) => {
-  const { data: buyersData, isLoading: isLoadingBuyers, error: buyersError } = useGetServicePackageBuyers(pkg.servicePackageId);
+  const [buyerPageNumber, setBuyerPageNumber] = useState(1);
+  const [buyerPageSize] = useState(10);
+  const [buyerSearch, setBuyerSearch] = useState("");
   
-  // API returns data as array directly, not in data.items
+  const { data: buyersData, isLoading: isLoadingBuyers, error: buyersError } = useGetServicePackageBuyers(
+    pkg.servicePackageId,
+    String(buyerPageNumber),
+    String(buyerPageSize),
+    buyerSearch
+  );
+  
+  // API returns data with items array
   const isSuccess = buyersData?.isSucess;
-  const buyers = isSuccess && Array.isArray(buyersData?.data) 
-    ? buyersData.data 
+  const buyers = isSuccess && buyersData?.data?.items 
+    ? buyersData.data.items 
     : [];
+  
+  const totalBuyers = buyersData?.data?.totalItems ?? 0;
+  const totalBuyerPages = Math.ceil(totalBuyers / buyerPageSize);
 
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + " VND";
@@ -904,7 +916,18 @@ const PackageDetailModal = ({
 
           {/* Buyers Table */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Danh sách người mua</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Danh sách người mua</h3>
+              <Input
+                placeholder="Tìm kiếm theo tên, email, mã đơn hàng..."
+                value={buyerSearch}
+                onChange={(e) => {
+                  setBuyerSearch(e.target.value);
+                  setBuyerPageNumber(1);
+                }}
+                className="w-full md:w-[300px]"
+              />
+            </div>
             <div className="overflow-x-auto rounded-xl border shadow">
               <Table>
                 <TableHeader>
@@ -941,8 +964,8 @@ const PackageDetailModal = ({
                   ) : (
                     buyers.map((buyer) => (
                       <TableRow key={buyer.userId} className="hover:bg-[#f0f7e6]">
-                        <TableCell className="font-medium">{buyer.fullName}</TableCell>
-                        <TableCell className="text-gray-600">{buyer.email}</TableCell>
+                        <TableCell className="font-medium">{buyer.buyerName || "N/A"}</TableCell>
+                        <TableCell className="text-gray-600">{buyer.buyerEmail || "N/A"}</TableCell>
                         <TableCell className="font-semibold text-gray-900">
                           {formatPrice(buyer.amountMoney)}
                         </TableCell>
@@ -961,6 +984,73 @@ const PackageDetailModal = ({
                 </TableBody>
               </Table>
             </div>
+            
+            {/* Pagination for Buyers */}
+            {!isLoadingBuyers && buyers.length > 0 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-gray-600">
+                  Hiển thị{" "}
+                  <span className="font-semibold">{(buyerPageNumber - 1) * buyerPageSize + 1}</span>{" "}
+                  đến{" "}
+                  <span className="font-semibold">
+                    {Math.min(buyerPageNumber * buyerPageSize, totalBuyers)}
+                  </span>{" "}
+                  của <span className="font-semibold">{totalBuyers}</span> người mua
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBuyerPageNumber((p) => Math.max(1, p - 1))}
+                    disabled={buyerPageNumber === 1 || isLoadingBuyers}
+                    className="cursor-pointer"
+                  >
+                    Trước
+                  </Button>
+
+                  {Array.from({ length: Math.min(5, totalBuyerPages) }, (_, i) => {
+                    let page;
+
+                    if (totalBuyerPages <= 5) {
+                      page = i + 1;
+                    } else if (buyerPageNumber <= 3) {
+                      page = i + 1;
+                    } else if (buyerPageNumber >= totalBuyerPages - 2) {
+                      page = totalBuyerPages - 4 + i;
+                    } else {
+                      page = buyerPageNumber - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={page}
+                        size="sm"
+                        variant={page === buyerPageNumber ? "default" : "outline"}
+                        onClick={() => setBuyerPageNumber(page)}
+                        className={
+                          page === buyerPageNumber
+                            ? "bg-blue-600 text-white hover:bg-blue-700"
+                            : "cursor-pointer hover:bg-gray-50"
+                        }
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBuyerPageNumber((p) => Math.min(totalBuyerPages, p + 1))}
+                    disabled={buyerPageNumber === totalBuyerPages || isLoadingBuyers}
+                    className="cursor-pointer"
+                  >
+                    Sau
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
