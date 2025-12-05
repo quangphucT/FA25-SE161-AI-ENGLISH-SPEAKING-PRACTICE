@@ -36,9 +36,10 @@ export interface AdminTransactionsResponse {
 export interface AdminDashboardResponse {
   isSuccess: boolean;
   data: {
-    totalSuccessTransaction: number;
+    totalApproved: number;
     totalFailTransaction: number;
     totalPendingTransaction: number;
+    totalPaid: number;
   };
 }
 export const adminTransactionsService = async (pageNumber: number, pageSize: number, search: string, status: string, type: string): Promise<AdminTransactionsResponse> => {

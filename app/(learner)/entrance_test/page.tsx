@@ -97,7 +97,7 @@ const EntranceTest = () => {
 
       if (refreshResponse.ok) {
         // Use window.location.href for full page reload with new token
-        window.location.href = "/dashboard-learner-layout";
+        window.location.href = "/dashboard-learner-layout?menu=enrollingCourses";
       } else {
         toast.error("Phiên đã hết hạn, vui lòng đăng nhập lại.");
         router.push("/sign-in");
@@ -219,7 +219,6 @@ const EntranceTest = () => {
             return {
               questionAssessmentId: q.id,
               score: pronunciationScores[questionIndex] || 0,
-              aI_Feedback: "",
             };
           }),
         })

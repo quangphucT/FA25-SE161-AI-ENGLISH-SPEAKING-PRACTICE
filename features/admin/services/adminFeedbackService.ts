@@ -23,6 +23,10 @@ export interface Feedback {
     createdAt: string;
     reviewId: string;
     reviewerName: string;
+    reviewerScore: number;
+    reviewerComment: string;
+    reviewerType: string;
+    learnerRecordAudioUrl: string;
 }
 export interface AdminFeedbackDetailResponse {
     isSucess: boolean;

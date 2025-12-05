@@ -248,12 +248,12 @@ const ManagerManagement = () => {
                         <div className="relative">
                           <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
                           <AvatarImage
-  src={`https://ui-avatars.com/api/?background=1e293b&color=fff&name=${encodeURIComponent(
-    Manager.fullName || "User"
-  )}`}
-  alt={Manager.fullName}
-  className="object-cover"
-/>
+                            src={`https://ui-avatars.com/api/?background=1e293b&color=fff&name=${encodeURIComponent(
+                              Manager.fullName || "User"
+                            )}`}
+                            alt={Manager.fullName}
+                            className="object-cover"
+                          />
 
                             <AvatarFallback className="bg-linear-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
                               {getInitials(Manager.fullName)}

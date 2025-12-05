@@ -10,9 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
-import { useGetServicePackages } from "@/features/admin/hooks/getServicePackages";
+import { useState } from "react";
+import { useGetServicePackages, useGetServicePackageBuyers } from "@/features/admin/hooks/getServicePackages";
 import { ServicePackage } from "@/types/servicePackage/servicePackage";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +31,12 @@ import { deleteCoinServicePackageMutation } from "@/features/admin/hooks/deleteC
 import { useUpdateCoinServicePackage } from "@/features/admin/hooks/updateCoinServicePackage";
 import { CreateCoinServicePackageRequest } from "@/types/coin_servicePackage";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const ServicePackageManagement = () => {
   const [pageNumber, setPageNumber] = useState(1);
@@ -108,7 +115,8 @@ const totalPages = Math.ceil(totalItems / pageSize);
   const [packageToAction, setPackageToAction] = useState<ServicePackage | null>(
     null
   );
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
+  const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
 
   // Get packages from API (already filtered by API)
   const packages = servicePackagesData?.isSucess && servicePackagesData.data?.items
@@ -127,6 +135,11 @@ const totalPages = Math.ceil(totalItems / pageSize);
       status: pkg.status as "Active" | "Inactive",
     });
     setShowUpdateModal(true);
+  };
+
+  const handleViewDetails = (pkg: ServicePackage) => {
+    setSelectedPackage(pkg);
+    setShowDetailModal(true);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -169,70 +182,63 @@ const totalPages = Math.ceil(totalItems / pageSize);
     return price.toLocaleString("vi-VN") + " VND";
   };
 
-  // Close dropdown when clicking outside
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".dropdown-container")) {
-      setOpenDropdownId(null);
-    }
-  };
-  
-  useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
   return (
     <div className="p-6"> 
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4"> 
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 w-full">
           <Input
             placeholder="Tìm kiếm gói dịch vụ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-[300px]"
+            className="w-full md:w-[280px]"
           />
-           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
-            <TabsList className="grid grid-cols-2 w-[300px]">
+          <Tabs
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v)}
+            className="w-full md:w-auto"
+          >
+            <TabsList className="grid grid-cols-3 md:w-[420px]">
+              <TabsTrigger value="All">Tất cả</TabsTrigger>
               <TabsTrigger value="Actived">Hoạt động</TabsTrigger>
               <TabsTrigger value="InActived">Ngưng hoạt động</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-700 cursor-pointer"
-        >
-          <svg
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            className="inline mr-2"
+        <div className="flex justify-end">
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-700 cursor-pointer"
           >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v8M8 12h8" />
-          </svg>
-          Thêm gói
-        </Button>
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              className="inline mr-2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v8M8 12h8" />
+            </svg>
+            Thêm gói
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border shadow">
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f7f9fa]">
-              <TableHead>Mã gói</TableHead>
-              <TableHead>Tên gói</TableHead>
-              <TableHead>Mô tả</TableHead>
-              <TableHead>Giá</TableHead>
-              <TableHead>Số lượng xu</TableHead>
-              <TableHead>Phần trăm bonus</TableHead>
-              <TableHead>Số xu đươc nhận</TableHead>
-              <TableHead>Trạng thái</TableHead>
-
-              <TableHead className="text-center">Hành động</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Mã gói</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Tên gói</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Mô tả</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Giá</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Số lượng xu</TableHead>
+              <TableHead className="text-gray-700 font-semibold">% Bonus</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Số xu nhận</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Trạng thái</TableHead>
+              <TableHead className="text-center text-gray-700 font-semibold">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -257,120 +263,132 @@ const totalPages = Math.ceil(totalItems / pageSize);
                 </TableCell>
               </TableRow>
             ) : (
-              packages.map((pkg, idx) => (
+              packages.map((pkg) => (
                 <TableRow
                   key={pkg.servicePackageId}
-                  className="hover:bg-[#f0f7e6]"
+                  className="hover:bg-[#f0f7e6] transition-colors"
                 >
-                <TableCell className="font-medium text-blue-600 truncate max-w-[100px]">
-                  {pkg.servicePackageId}
-                </TableCell>
-                <TableCell className="font-medium">{pkg.name}</TableCell>
-                <TableCell
-                  className="text-gray-600 max-w-[200px] truncate"
-                  title={pkg.description}
-                >
-                  {pkg.description}
-                </TableCell>
-                <TableCell>
-                  <div className="font-semibold">{formatPrice(pkg.price)}</div>
-                </TableCell>
-                <TableCell>{Math.trunc(pkg.numberOfCoin)}</TableCell>
-                <TableCell>{pkg.bonusPercent}</TableCell>
-<TableCell>
-  {Math.trunc(pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100))}
-</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={pkg.status === "Active" ? "default" : "secondary"}
-                    className={
-                      pkg.status === "Active"
-                        ? "bg-green-600 text-white"
-                        : "bg-red-400 text-white"
-                    }
+                  <TableCell className="font-mono text-blue-600 font-semibold truncate max-w-[120px]">
+                    {pkg.servicePackageId}
+                  </TableCell>
+                  <TableCell className="font-semibold text-gray-900">{pkg.name}</TableCell>
+                  <TableCell
+                    className="text-gray-600 max-w-[220px] truncate"
+                    title={pkg.description}
                   >
-                    {pkg.status === "Active" ? "Hoạt động" : "Ngưng hoạt động"}
-                  </Badge>
-                </TableCell>
-
-                <TableCell className="text-center">
-                  <div className="relative dropdown-container">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setOpenDropdownId(
-                          openDropdownId === pkg.servicePackageId
-                            ? null
-                            : pkg.servicePackageId
-                        )
-                      }
-                      className="p-1 h-8 w-8 cursor-pointer"
+                    {pkg.description}
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-semibold text-gray-900">{formatPrice(pkg.price)}</span>
+                  </TableCell>
+                  <TableCell className="text-gray-800 font-medium">
+                    {Math.trunc(pkg.numberOfCoin)}
+                  </TableCell>
+                  <TableCell className="text-gray-800 font-medium">
+                    {pkg.bonusPercent}%
+                  </TableCell>
+                  <TableCell className="text-gray-800 font-medium">
+                    {Math.trunc(pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100))}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={`border ${
+                        pkg.status === "Active"
+                          ? "bg-green-50 text-green-700 border-green-200"
+                          : "bg-gray-100 text-gray-600 border-gray-200"
+                      }`}
                     >
-                      <svg
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="19" cy="12" r="1" />
-                        <circle cx="5" cy="12" r="1" />
-                      </svg>
-                    </Button>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            pkg.status === "Active" ? "bg-green-500" : "bg-gray-400"
+                          }`}
+                        />
+                        {pkg.status === "Active" ? "Hoạt động" : "Ngưng hoạt động"}
+                      </span>
+                    </Badge>
+                  </TableCell>
 
-                    {openDropdownId === pkg.servicePackageId && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              handleUpdate(pkg);
-                              setOpenDropdownId(null);
-                            }}
-                            className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100"
+                  <TableCell className="text-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 h-8 w-8 cursor-pointer"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              width="16"
-                              height="16"
-                              className="inline mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                            Cập nhật
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleAction(pkg, "delete");
-                              setOpenDropdownId(null);
-                            }}
-                            className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="19" cy="12" r="1" />
+                            <circle cx="5" cy="12" r="1" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleViewDetails(pkg)}
+                          className="cursor-pointer"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            className="inline mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              width="16"
-                              height="16"
-                              className="inline mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
-                            </svg>
-                            Xoá
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleUpdate(pkg)}
+                          className="cursor-pointer"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            className="inline mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                          Cập nhật
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAction(pkg, "delete")}
+                          className="cursor-pointer text-red-600"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            className="inline mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
+                          </svg>
+                          Xoá
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -775,6 +793,177 @@ const totalPages = Math.ceil(totalItems / pageSize);
           </div>
         </div>
       )}
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedPackage && (
+        <PackageDetailModal
+          package={selectedPackage}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedPackage(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Package Detail Modal Component
+const PackageDetailModal = ({
+  package: pkg,
+  onClose,
+}: {
+  package: ServicePackage;
+  onClose: () => void;
+}) => {
+  const { data: buyersData, isLoading: isLoadingBuyers, error: buyersError } = useGetServicePackageBuyers(pkg.servicePackageId);
+  
+  // API returns data as array directly, not in data.items
+  const isSuccess = buyersData?.isSucess;
+  const buyers = isSuccess && Array.isArray(buyersData?.data) 
+    ? buyersData.data 
+    : [];
+
+  const formatPrice = (price: number) => {
+    return price.toLocaleString("vi-VN") + " VND";
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("vi-VN");
+  };
+
+  return (
+    <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Chi tiết gói dịch vụ: {pkg.name}
+            </h2>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 cursor-pointer"
+            >
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </Button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Tổng người mua
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {pkg.totalBuyer || 0}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Tổng doanh thu (Coin)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {pkg.totalRevenueCoin?.toLocaleString("vi-VN") || 0} Coin
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Tổng doanh thu (VND)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-purple-600">
+                  {formatPrice(pkg.totalRevenueMoney || 0)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Buyers Table */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Danh sách người mua</h3>
+            <div className="overflow-x-auto rounded-xl border shadow">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#f7f9fa]">
+                    <TableHead className="text-gray-700 font-semibold">Họ tên</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Email</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Số tiền (VND)</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Số coin</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Mã đơn hàng</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Ngày mua</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingBuyers ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="text-gray-500">Đang tải...</div>
+                      </TableCell>
+                    </TableRow>
+                  ) : buyersError ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="text-red-500">
+                          Lỗi: {buyersError.message || "Không thể tải dữ liệu"}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : buyers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="text-gray-500">Chưa có người mua nào</div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    buyers.map((buyer) => (
+                      <TableRow key={buyer.userId} className="hover:bg-[#f0f7e6]">
+                        <TableCell className="font-medium">{buyer.fullName}</TableCell>
+                        <TableCell className="text-gray-600">{buyer.email}</TableCell>
+                        <TableCell className="font-semibold text-gray-900">
+                          {formatPrice(buyer.amountMoney)}
+                        </TableCell>
+                        <TableCell className="font-semibold text-green-600">
+                          {buyer.amountCoin?.toLocaleString("vi-VN") || 0} Coin
+                        </TableCell>
+                        <TableCell className="font-mono text-blue-600 text-sm">
+                          {buyer.orderCode}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {formatDate(buyer.createdTransaction)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
