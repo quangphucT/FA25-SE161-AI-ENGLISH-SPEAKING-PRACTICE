@@ -20,6 +20,21 @@ import { CircleCheck, Mic } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { uploadAudioToCloudinary } from "@/utils/upload";
+import { formatAiFeedbackHtml } from "@/utils/formatAiFeedback";
+import { toast } from "sonner";
+import { z } from "zod";
+
+const reviewFormSchema = z.object({
+  comment: z
+    .string()
+    .trim()
+    .min(1, "Feedback cannot be empty"),
+  score: z
+    .coerce.number()
+    .int("Score must be an integer")
+    .min(1, "Score must be between 1 and 10")
+    .max(10, "Score must be between 1 and 10"),
+});
 
 const StatisticsForMentor = () => {
   const [showAllFeedback, setShowAllFeedback] = useState(false);
@@ -128,7 +143,7 @@ const StatisticsForMentor = () => {
   // Track numberOfReview updates from SignalR events
   const [numberOfReviewUpdates, setNumberOfReviewUpdates] = useState<Record<string, number>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; type: string } | null>(null);
+  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; type: string; aiFeedback: string } | null>(null);
   const [comment, setComment] = useState("");
   const [score, setScore] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
@@ -136,6 +151,7 @@ const StatisticsForMentor = () => {
   const [showRewardForm, setShowRewardForm] = useState(false);
   const [rewardAmount, setRewardAmount] = useState("");
   const [rewardMessage, setRewardMessage] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   // Fetch pending reviews with pagination
   const { data: pendingReviewsData, isLoading, error } = useReviewReviewPending(pendingPageNumber, pendingPageSize);
   
@@ -157,6 +173,7 @@ const StatisticsForMentor = () => {
         audioUrl: review.audioUrl,
         submittedAt: review.submittedAt,
         type: review.type ,
+        aiFeedback: review.aiFeedback,
       });
       setIsModalOpen(true);
       setComment("");
@@ -178,6 +195,7 @@ const StatisticsForMentor = () => {
     setRewardAmount("");
     setRewardMessage("");
     setRecording(false);
+    setIsSubmittingReview(false);
     recordedAudioBlobMp3Ref.current = null;
     audioChunksRef.current = [];
     if (audioRef.current) {
@@ -189,20 +207,23 @@ const StatisticsForMentor = () => {
 
   
   const handleSaveAndFinish = useCallback(async () => {
-    if (!selectedReview) return;
+    if (!selectedReview || isSubmittingReview) return;
     
-    // Validate inputs
-    if (!comment.trim()) {
-      // You can add toast notification here if needed
+    const validationResult = reviewFormSchema.safeParse({
+      comment,
+      score,
+    });
+
+    if (!validationResult.success) {
+      const firstIssue = validationResult.error.issues[0];
+      if (firstIssue) {
+        toast.error(firstIssue.message);
+      }
       return;
     }
-    
-    const scoreValue = parseFloat(score);
-    if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 10) {
-      // You can add toast notification here if needed
-      return;
-    }
-    
+
+    const { score: scoreValue, comment: normalizedComment } = validationResult.data;
+    setIsSubmittingReview(true);
     try {
       let audioUrl: string | null = null;
       
@@ -216,6 +237,7 @@ const StatisticsForMentor = () => {
           { type: "audio/mp3" }
         );
         audioUrl = await uploadAudioToCloudinary(audioFile);
+        toast.success("Upload audio to Cloudinary successfully");
         if (!audioUrl) {
           console.error("Failed to upload audio to Cloudinary");
           // Continue without audio URL if upload fails
@@ -228,7 +250,7 @@ const StatisticsForMentor = () => {
           recordId: selectedReview.id,
           reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
           score: scoreValue,
-          comment: comment.trim(),
+          comment: normalizedComment,
           recordAudioUrl: audioUrl || null,
         });
       } else {
@@ -237,7 +259,7 @@ const StatisticsForMentor = () => {
           recordId: null,
           reviewerProfileId: userData?.reviewerProfile?.reviewerProfileId || null,
           score: scoreValue,
-          comment: comment.trim(),
+          comment: normalizedComment,
           recordAudioUrl: audioUrl || null,
         });
       }
@@ -254,8 +276,10 @@ const StatisticsForMentor = () => {
     } catch (error) {
       // Error is already handled by the mutation's onError callback
       console.error("Error submitting review:", error);
+    } finally {
+      setIsSubmittingReview(false);
     }
-  }, [selectedReview, comment, score, userData, submitReviewMutation]);
+  }, [selectedReview, comment, score, userData, submitReviewMutation, isSubmittingReview]);
 
   // Transform API data to component format
   // Merge with numberOfReview updates from SignalR events
@@ -269,6 +293,7 @@ const StatisticsForMentor = () => {
       status: "Pending",
       learnerFullName: item.learnerFullName,
       type: item.type,
+      aiFeedback: item.aiFeedback,
       // Use updated numberOfReview from SignalR if available, otherwise use from API
       numberOfReview:
         numberOfReviewUpdates[item.id] !== undefined
@@ -979,8 +1004,7 @@ const StatisticsForMentor = () => {
       {/* Review Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent 
-          className="max-w-3xl max-h-[90vh] overflow-y-auto data-[state=open]:!animate-none data-[state=closed]:!animate-none"
-          
+          className="max-w-3xl max-w-4xl min-h-[55vh] max-h-[60vh] overflow-y-auto data-[state=open]:!animate-none data-[state=closed]:!animate-none"
         >
           <DialogHeader>
             <DialogTitle>{selectedReview?.question}</DialogTitle>
@@ -1037,56 +1061,86 @@ const StatisticsForMentor = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end">
-                {/* <Button
+              <div className="flex items-center justify-between">
+                <Button
                   variant="outline"
                   onClick={() => setShowAnswer(!showAnswer)}
                   className="cursor-pointer"
+                  disabled={recording || isSubmittingReview}
                 >
                   {showAnswer ? "Hide Ai Feedback" : "> View Ai Feedback"}
-                </Button> */}
+                </Button>
+                {/* Mic button */}
+                <div
+                  id="btn-record"
+                  className="relative flex items-center justify-center mt-6 mb-4"
+                >
+                  {recording && (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="absolute inline-flex h-[6em] w-[6em] rounded-full bg-[#49d67d]/30 animate-ping"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="absolute inline-flex h-[5em] w-[5em] rounded-full border border-[#49d67d]/50 animate-pulse"
+                      />
+                    </>
+                  )}
+                  <button
+                    id="recordAudio"
+                    onClick={updateRecordingState}
+                    disabled={
+                      !mediaRecorderRef.current ||
+                      submitReviewMutation.isPending ||
+                      isSubmittingReview
+                    }
+                    className={`relative z-10 box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${
+                      recording ? "bg-[#477c5b] hover:bg-[#3a6549]" : "bg-[#49d67d] hover:bg-[#3db868]"
+                    }`}
+                    title={recording ? "Click to stop recording" : "Click to start recording"}
+                  >
+                    <Mic id="recordIcon" className={`w-10 h-10 ${recording ? "animate-pulse" : ""}`} />
+                  </button>
+                </div>
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={handleCloseModal}
                     className="cursor-pointer"
+                    disabled={recording || isSubmittingReview}
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSaveAndFinish}
-                    disabled={submitReviewMutation.isPending}
+                    disabled={
+                      recording ||
+                      isSubmittingReview ||
+                      submitReviewMutation.isPending
+                    }
                     className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50"
                   >
-                    {submitReviewMutation.isPending ? "Processing..." : "Complete"}
+                    {isSubmittingReview || submitReviewMutation.isPending
+                      ? "Processing..."
+                      : "Complete"}
                   </Button>
                 </div>
               </div>
 
-        {/* Mic button */}
-        <div
-          id="btn-record"
-          className="flex items-center justify-center mt-6 mb-4"
-        >
-          <button
-            id="recordAudio"
-            onClick={updateRecordingState}
-            disabled={!mediaRecorderRef.current || submitReviewMutation.isPending}
-            className={`box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${
-              recording ? "bg-[#477c5b] hover:bg-[#3a6549]" : "bg-[#49d67d] hover:bg-[#3db868]"
-            }`}
-            title={recording ? "Click to stop recording" : "Click to start recording"}
-          >
-            <Mic id="recordIcon" className="w-10 h-10" />
-          </button>
-        </div>
+              
               {showAnswer && (
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="text-sm font-medium text-slate-700 mb-1">
                     Ai Feedback
                   </div>
                   <p className="text-sm text-slate-700">
-                    (No text provided)
+                  <div
+                    className="text-sm leading-relaxed text-slate-700 space-y-2"
+                    dangerouslySetInnerHTML={{
+                      __html: formatAiFeedbackHtml(selectedReview?.aiFeedback || ""),
+                    }}
+                  />
                   </p>
                 </div>
               )}

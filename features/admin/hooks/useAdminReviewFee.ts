@@ -11,7 +11,10 @@ import {
       CreateReviewFeePackageRequest,
   CreateReviewFeePackageResponse,
   adminReviewFeePackageService,
-    adminReviewFeePolicyService              
+    adminReviewFeePolicyService,
+    adminReviewFeePolicyUpcomingService,
+    CreateReviewFeePolicyUpcomingRequest,
+    CreateReviewFeePolicyUpcomingResponse,
 
 
 } from "../services/adminReviewFeeService";
@@ -80,3 +83,17 @@ export const useAdminReviewFeePolicyCreateMutation = () => {
     },
   });
 };
+export const useAdminReviewFeePolicyUpcomingCreateMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<CreateReviewFeePolicyUpcomingResponse, Error, CreateReviewFeePolicyUpcomingRequest>({
+    mutationFn: adminReviewFeePolicyUpcomingService,
+    onSuccess: (data) => {
+      toast.success(data.message || "Tạo chính sách sắp áp dụng thành công");
+      queryClient.invalidateQueries({ queryKey: ["adminReviewFeePackages"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Tạo chính sách sắp áp dụng thất bại");
+    },
+  });
+};  

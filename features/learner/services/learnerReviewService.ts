@@ -10,7 +10,8 @@ export interface LearnerReviewHistory {
     reviewerFullName: string;
     // API trả về field reviewAudioUrl
     reviewAudioUrl: string | null;
-    reviewType: "Record" | "LearnerAnswer";
+    reviewType: "Record" | "LearnerAnswer" ;
+    feedbackStatus: "NotSent" | "Approved" | "Rejected" | "Pending";
 }
 export interface LearnerReviewHistoryResponse {
     isSucess: boolean;

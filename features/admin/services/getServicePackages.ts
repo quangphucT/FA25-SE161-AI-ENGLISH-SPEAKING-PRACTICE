@@ -47,3 +47,29 @@ export const getServicePackages =
       throw new Error(message);
     }
   };
+
+export interface ServicePackageBuyersResponse {
+  isSucess?: boolean; // Handle typo in API response
+  data: ServicePackageBuyer[]; // API returns array directly
+  businessCode?: string;
+  message?: string;
+}
+export interface ServicePackageBuyer {
+  userId: string,
+  fullName: string,
+  email: string,
+  amountMoney: number,
+  amountCoin: number,
+  orderCode: string,
+  createdTransaction: string
+}
+export const getServicePackageBuyers = async (id: string): Promise<ServicePackageBuyersResponse> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/servicepackages/${id}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to fetch service package buyers");
+    return data;
+  } catch (error: unknown) {
+    throw new Error(error instanceof Error ? error.message : "Failed to fetch service package buyers");
+  }
+};

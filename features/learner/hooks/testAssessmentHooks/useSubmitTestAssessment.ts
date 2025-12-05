@@ -18,7 +18,6 @@ export interface TestItem {
 export interface AssessmentDetail {
   questionAssessmentId: string;
   score: number;
-  aI_Feedback: string;
 }
 export interface SubmitTestAssessmentResponse {
   isSucess: boolean;

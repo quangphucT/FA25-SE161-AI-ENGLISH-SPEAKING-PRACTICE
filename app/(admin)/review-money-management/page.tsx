@@ -21,6 +21,26 @@ import {
 import { useAdminReviewerIncome, useAdminReviewerIncomeDetail, useAdminReviewerIncomeList } from "@/features/admin/hooks/useAdminReviewerIncome";
 import { Loader2, Search, Calendar, RefreshCw, Eye, TrendingUp, Users, DollarSign, FileText } from "lucide-react";
 import { useAdminReviewFeePackagesQuery } from "@/features/admin/hooks/useAdminReviewFee";
+import { formatDateInput } from "@/utils/formatDateInput";
+
+
+function toDisplayDate(isoDate?: string) {
+  if (!isoDate) return "";
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return "";
+  return `${day}/${month}/${year}`;
+}
+
+function toISODate(displayDate: string) {
+  const digitsOnly = displayDate.replace(/\D/g, "");
+  if (digitsOnly.length !== 8) return undefined;
+
+  const day = digitsOnly.slice(0, 2);
+  const month = digitsOnly.slice(2, 4);
+  const year = digitsOnly.slice(4);
+
+  return `${year}-${month}-${day}`;
+}
 
 // Type definitions
 interface ReviewRecord {
@@ -52,6 +72,10 @@ interface ReviewDetailItem {
 }
 
 
+const DEFAULT_FROM_DATE_ISO = "2024-01-01";
+const DEFAULT_TO_DATE_ISO = "2026-01-31";
+
+
 const ReviewMoneyManagement = () => {
   const [selectedReviewItem, setSelectedReviewItem] = useState<ReviewDetailItem | null>(null);
 const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
@@ -77,10 +101,45 @@ const pricePerReview = feePackages?.data?.items
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
-  const [fromDate, setFromDate] = useState<string>("2024-01-01");
-  const [toDate, setToDate] = useState<string>("2024-01-31");
-  const { data: adminReviewerIncomeList, isLoading: isLoadingList, isError: isErrorList } = useAdminReviewerIncomeList(pageNumber, pageSize, search, fromDate, toDate);
-  const { data: adminReviewerIncomeDetail, isLoading: isLoadingDetail } = useAdminReviewerIncomeDetail(selectedReviewerProfileId);
+  const [fromDateInput, setFromDateInput] = useState<string>(toDisplayDate(DEFAULT_FROM_DATE_ISO));
+  const [toDateInput, setToDateInput] = useState<string>(toDisplayDate(DEFAULT_TO_DATE_ISO));
+  const [fromDateISO, setFromDateISO] = useState<string>(DEFAULT_FROM_DATE_ISO);
+  const [toDateISO, setToDateISO] = useState<string>(DEFAULT_TO_DATE_ISO);
+  const { data: adminReviewerIncomeList, isLoading: isLoadingList, isError: isErrorList } = useAdminReviewerIncomeList(pageNumber, pageSize, search, fromDateISO, toDateISO);
+  const { data: adminReviewerIncomeDetail, isLoading: isLoadingDetail } = useAdminReviewerIncomeDetail(selectedReviewerProfileId, fromDateISO, toDateISO);
+  const handleFromDateChange = (rawValue: string) => {
+    const formatted = formatDateInput(rawValue);
+    setFromDateInput(formatted);
+
+    if (!formatted) {
+      setFromDateISO("");
+      return;
+    }
+
+    if (formatted.length === 10) {
+      const isoValue = toISODate(formatted);
+      if (isoValue) {
+        setFromDateISO(isoValue);
+      }
+    }
+  };
+
+  const handleToDateChange = (rawValue: string) => {
+    const formatted = formatDateInput(rawValue);
+    setToDateInput(formatted);
+
+    if (!formatted) {
+      setToDateISO("");
+      return;
+    }
+
+    if (formatted.length === 10) {
+      const isoValue = toISODate(formatted);
+      if (isoValue) {
+        setToDateISO(isoValue);
+      }
+    }
+  };
   
   // Get reviewers from API data
   const reviewers = adminReviewerIncomeList?.data?.items || [];
@@ -107,7 +166,7 @@ const pricePerReview = feePackages?.data?.items
   // Reset to page 1 when filters change
   useEffect(() => {
     setPageNumber(1);
-  }, [search, fromDate, toDate, pageSize]);
+  }, [search, fromDateISO, toDateISO, pageSize]);
 
   const getInitials = (fullName: string) => {
     return fullName
@@ -125,11 +184,10 @@ const pricePerReview = feePackages?.data?.items
     }).format(amount);
   };
 
-
   const formatCoin = (amount: number | undefined) => {
-  const value = amount ?? 0;
-  return `${value} coin`;
-};
+    const value = amount ?? 0;
+    return `${value} coin`;
+  };
 
 
   const getScoreColor = (score: number, maxScore: number) => {
@@ -264,9 +322,12 @@ const pricePerReview = feePackages?.data?.items
                   Từ ngày:
                 </label>
                 <Input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="dd/mm/yyyy"
+                  maxLength={10}
+                  value={fromDateInput}
+                  onChange={(e) => handleFromDateChange(e.target.value)}
                   className="w-40 border-gray-300 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -277,17 +338,22 @@ const pricePerReview = feePackages?.data?.items
                   Đến ngày:
                 </label>
                 <Input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="dd/mm/yyyy"
+                  maxLength={10}
+                  value={toDateInput}
+                  onChange={(e) => handleToDateChange(e.target.value)}
                   className="w-40 border-gray-300 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <Button
                 onClick={() => {
-                  setFromDate("2024-01-01");
-                  setToDate("2024-01-31");
+                  setFromDateISO(DEFAULT_FROM_DATE_ISO);
+                  setToDateISO(DEFAULT_TO_DATE_ISO);
+                  setFromDateInput(toDisplayDate(DEFAULT_FROM_DATE_ISO));
+                  setToDateInput(toDisplayDate(DEFAULT_TO_DATE_ISO));
                   setSearch("");
                 }}
                 variant="outline"
