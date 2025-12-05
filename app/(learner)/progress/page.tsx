@@ -40,6 +40,10 @@ export default function ProgressPage() {
   const speakingTime = analytics?.speakingTime ?? 0;
   const sessionsCompleted = analytics?.sessionsCompleted ?? 0;
   const pronunciationScoreAvg = analytics?.pronunciationScoreAvg ?? 0;
+  // Kiểm tra xem có dữ liệu thật hay không
+const hasSkillData =
+  speakingTime > 0 || sessionsCompleted > 0 || pronunciationScoreAvg > 0;
+
 
   // ✅ Line Chart Data
   const lineChartData = {
@@ -146,7 +150,7 @@ export default function ProgressPage() {
       {/* STATISTIC CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Speaking Time */}
-        <Card className="p-6 flex items-center gap-4 shadow-md hover:shadow-xl transition">
+<Card className="p-6 flex flex-col items-center justify-center gap-3 text-center shadow-md hover:shadow-xl transition">
           <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center">
             <Clock className="text-blue-600 w-7 h-7" />
           </div>
@@ -159,7 +163,7 @@ export default function ProgressPage() {
         </Card>
 
         {/* Sessions Completed */}
-        <Card className="p-6 flex items-center gap-4 shadow-md hover:shadow-xl transition">
+<Card className="p-6 flex flex-col items-center justify-center gap-3 text-center shadow-md hover:shadow-xl transition">
           <div className="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
             <CheckCircle className="text-green-600 w-7 h-7" />
           </div>
@@ -172,7 +176,7 @@ export default function ProgressPage() {
         </Card>
 
         {/* Pronunciation Score */}
-        <Card className="p-6 flex items-center gap-4 shadow-md hover:shadow-xl transition">
+<Card className="p-6 flex flex-col items-center justify-center gap-3 text-center shadow-md hover:shadow-xl transition">
           <div className="w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center">
             <Star className="text-purple-600 w-7 h-7" />
           </div>
@@ -232,33 +236,44 @@ export default function ProgressPage() {
 
     {/* CHART */}
     <div className="flex-1 flex items-center justify-center">
-     <div className="w-full h-[380px]">
-  <Doughnut
-  data={doughnutData}
-  options={{
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          font: {
-            size: 14,   // ✅ TO CHỮ LEGEND DOUGHNUT
-            weight: 600,
+  {hasSkillData ? (
+    // ⭐ Có dữ liệu → Hiện Doughnut Chart
+    <div className="w-full h-[380px]">
+      <Doughnut
+        data={doughnutData}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                font: {
+                  size: 14,
+                  weight: 600,
+                },
+              },
+            },
+            tooltip: {
+              titleFont: { size: 14 },
+              bodyFont: { size: 13 },
+            },
           },
-        },
-      },
-      tooltip: {
-        titleFont: { size: 14 },
-        bodyFont: { size: 13 },
-      },
-    },
-  }}
-/>
-
+        }}
+      />
+    </div>
+  ) : (
+    // ⭐ Không có dữ liệu → Hiện thông báo
+    <div className="flex flex-col items-center justify-center text-center text-gray-500 px-6">
+      <div className="text-5xl mb-3">📭</div>
+      <p className="font-semibold">Người học chưa có dữ liệu kỹ năng</p>
+      <p className="text-sm mt-1">
+        Hãy bắt đầu luyện nói để hệ thống ghi nhận tiến độ.
+      </p>
+    </div>
+  )}
 </div>
 
-    </div>
   </Card>
 </div>
 

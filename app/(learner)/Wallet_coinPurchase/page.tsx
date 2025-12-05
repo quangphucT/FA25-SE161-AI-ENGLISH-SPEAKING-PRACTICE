@@ -12,8 +12,13 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";
 import { useGetOrderCodeStatusQuery } from "@/features/learner/hooks/servicePackages/useGetStatusOfServicePackageAfterChart";
 import { useCancelBuyingCoinServicePackages } from "@/features/learner/hooks/servicePackages/useCancelBuyingServicePackageMutation";
+import { useGetDepositHistoryQuery } from "@/features/learner/hooks/coinHistoryHooks/useGetCoinDepositHistory";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 const WalletCoinPurchase = () => {
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+
   const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
   const [isPollingStatus, setIsPollingStatus] = useState(false);
@@ -57,7 +62,11 @@ const WalletCoinPurchase = () => {
     if (options?.reopenPackages) setShowCoinModal(true);
   };
 
+const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHistoryQuery();
+
+
   useEffect(() => {
+
     if (!orderCode || !showQrModal) return;
     if (!isPollingStatus) return;
 
@@ -139,13 +148,15 @@ const WalletCoinPurchase = () => {
               </div>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="text-xs font-semibold cursor-pointer hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-700 transition-colors"
-          >
-            Lịch sử
-          </Button>
+        <Button
+  variant="outline"
+  size="sm"
+  onClick={() => setShowHistoryModal(true)}
+  className="text-xs font-semibold cursor-pointer hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-700 transition-colors"
+>
+  Lịch sử
+</Button>
+
         </div>
       </Card>
 
@@ -583,11 +594,117 @@ const WalletCoinPurchase = () => {
                 </div>
               </div>
             )}
+
+            
+            
           </div>
         </DialogContent>
       </Dialog>
+
+
+             {/* =================== ✅ POPUP LỊCH SỬ =================== */}
+  <Dialog open={showHistoryModal} onOpenChange={setShowHistoryModal}>
+  <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden p-0">
+    <VisuallyHidden>
+      <DialogTitle>Lịch sử nạp Coin</DialogTitle>
+    </VisuallyHidden>
+
+    {/* ===== HEADER ===== */}
+    <div className="px-6 py-5 border-b bg-gradient-to-r from-blue-50 to-cyan-50 flex items-center justify-between">
+      <div>
+        <h3 className="text-xl font-bold text-gray-900">📜 Lịch sử nạp Coin</h3>
+        <p className="text-sm text-gray-600 mt-1">
+          Theo dõi toàn bộ giao dịch nạp Coin của bạn
+        </p>
+      </div>
+
+    
     </div>
+
+    {/* ===== BODY ===== */}
+    <div className="p-6 overflow-y-auto max-h-[65vh] bg-white">
+      {isLoadingHistory ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-3" />
+          <p className="text-gray-500 font-medium">Đang tải dữ liệu...</p>
+        </div>
+      ) : depositHistory?.length === 0 ? (
+        <div className="text-center py-16 text-gray-500">
+          Chưa có giao dịch nào
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="px-4 py-3 text-left">Mã đơn</th>
+                <th className="px-4 py-3 text-right">Số tiền</th>
+                <th className="px-4 py-3 text-right">Coin</th>
+                <th className="px-4 py-3 text-center">Trạng thái</th>
+                <th className="px-4 py-3 text-center">Thời gian</th>
+                <th className="px-4 py-3 text-left">Mô tả</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {depositHistory?.map((item, index) => (
+                <tr
+                  key={index}
+                  className="border-t hover:bg-gray-50 transition"
+                >
+                  <td className="px-4 py-3 font-medium">
+                    {item.orderCode}
+                  </td>
+
+                  <td className="px-4 py-3 text-right font-semibold">
+                    {item.amountMoney.toLocaleString()} ₫
+                  </td>
+
+                  <td className="px-4 py-3 text-right font-semibold text-orange-600">
+                    +{item.amountCoin}
+                  </td>
+
+                  <td className="px-4 py-3 text-center">
+                    <Badge
+                      className={
+                        item.status === "Paid"
+                          ? "bg-green-100 text-green-700"
+                          : item.status === "Cancelled"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }
+                    >
+                      {item.status}
+                    </Badge>
+                  </td>
+
+                  <td className="px-4 py-3 text-center text-gray-600">
+                    {format(new Date(item.createdAt), "dd/MM/yyyy HH:mm")}
+                  </td>
+
+                  <td className="px-4 py-3 max-w-[260px] truncate text-gray-600">
+                    {item.description}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </DialogContent>
+</Dialog>
+
+
+
+    </div>
+
+
+
+
   );
+
+
 };
 
 export default WalletCoinPurchase;
