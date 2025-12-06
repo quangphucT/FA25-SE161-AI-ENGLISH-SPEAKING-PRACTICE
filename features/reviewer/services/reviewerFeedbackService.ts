@@ -13,14 +13,23 @@ export interface ReviewerFeedbackHistoryResponse {
 }
 export interface ReviewerFeedbackHistory {
     feedbackId: string;
+    feedbackType: string;
+    feedbackStatus: string;
     content: string;
     rating: number;
-    createdAt: Date;
+    createdAt: Date | string;
+    learnerId: string;
     learnerName: string;
     learnerEmail: string;
     reviewId: string;
+    reviewScore: number;
+    reviewComment: string;
+    reviewStatus: string;
+    reviewCreatedAt: Date | string;
     reviewType: string;
     questionOrContent: string;
+    questionContent?: string;
+    learnerRecordAudioUrl?: string;
 }
 export const reviewerFeedbackHistoryService = async (
     pageNumber: number,

@@ -12,11 +12,12 @@ import {
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useReviewReviewPending, useReviewReviewSubmit, useReviewReviewStatistics, useReviewerTipAfterReview } from "@/features/reviewer/hooks/useReviewReview";
 import { useReviewFeedback } from "@/features/reviewer/hooks/useReviewFeedback";
+import { ReviewerFeedbackHistory } from "@/features/reviewer/services/reviewerFeedbackService";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { signalRService } from "@/lib/realtime/realtime";
 import { ReviewCompleted } from "@/lib/realtime/realtime";
 import { useRealtime } from "@/providers/RealtimeProvider";
-import { CircleCheck, Mic } from "lucide-react";
+import { CircleCheck, Mic, MessageSquare, User, FileText, Calendar, Star, CheckCircle2, XCircle, Clock, Headphones } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { uploadAudioToCloudinary } from "@/utils/upload";
@@ -144,6 +145,8 @@ const StatisticsForMentor = () => {
   const [numberOfReviewUpdates, setNumberOfReviewUpdates] = useState<Record<string, number>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; type: string; aiFeedback: string } | null>(null);
+  const [isFeedbackDetailModalOpen, setIsFeedbackDetailModalOpen] = useState(false);
+  const [selectedFeedbackDetail, setSelectedFeedbackDetail] = useState<ReviewerFeedbackHistory | null>(null);
   const [comment, setComment] = useState("");
   const [score, setScore] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
@@ -202,6 +205,20 @@ const StatisticsForMentor = () => {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+  };
+
+  const handleOpenFeedbackDetail = (feedbackId: string) => {
+    const feedback = feedbackData?.data?.items?.find((item) => item.feedbackId === feedbackId) ||
+                     allFeedbackData?.data?.items?.find((item) => item.feedbackId === feedbackId);
+    if (feedback) {
+      setSelectedFeedbackDetail(feedback);
+      setIsFeedbackDetailModalOpen(true);
+    }
+  };
+
+  const handleCloseFeedbackDetailModal = () => {
+    setIsFeedbackDetailModalOpen(false);
+    setSelectedFeedbackDetail(null);
   };
  
 
@@ -789,6 +806,19 @@ const StatisticsForMentor = () => {
                       </span>
                       <span>{feedback.date}</span>
                     </div>
+                    <div className="mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenFeedbackDetail(feedback.id);
+                        }}
+                        className="text-xs h-7"
+                      >
+                        Xem chi tiết
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )))}
@@ -934,13 +964,26 @@ const StatisticsForMentor = () => {
                         <p className="text-gray-700 mb-3 leading-relaxed">
                           &quot;{feedback.comment}&quot;
                         </p>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-2">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {feedback.sessionType}
                           </span>
                           <span className="text-sm text-gray-500">
                             {feedback.date}
                           </span>
+                        </div>
+                        <div className="mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenFeedbackDetail(feedback.id);
+                            }}
+                            className="text-xs h-7"
+                          >
+                            Xem chi tiết
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -1144,6 +1187,246 @@ const StatisticsForMentor = () => {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Feedback Detail Modal */}
+      <Dialog open={isFeedbackDetailModalOpen} onOpenChange={setIsFeedbackDetailModalOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-blue-600" />
+              Feedback Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedFeedbackDetail && (
+            <div className="space-y-6 mt-4">
+              {/* Feedback Information Card */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r  border-b">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageSquare className="w-5 h-5 text-blue-600" />
+                    Feedback Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Rating - Highlighted */}
+                    <div className="md:col-span-2">
+                      <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-4 border border-yellow-200">
+                        <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3">
+                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                          Rating
+                        </Label>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center space-x-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-6 h-6 ${
+                                  i < selectedFeedbackDetail.rating 
+                                    ? "text-yellow-500 fill-yellow-500" 
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-lg font-bold text-gray-900">
+                            {selectedFeedbackDetail.rating}/5
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="w-4 h-4 text-gray-500" />
+                        Status
+                      </Label>
+                      <div>
+                        {selectedFeedbackDetail.feedbackStatus === "Approved" ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200">
+                            <CheckCircle2 className="w-4 h-4" />
+                            {selectedFeedbackDetail.feedbackStatus}
+                          </span>
+                        ) : selectedFeedbackDetail.feedbackStatus === "Rejected" ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 border border-red-200">
+                            <XCircle className="w-4 h-4" />
+                            {selectedFeedbackDetail.feedbackStatus}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                            <Clock className="w-4 h-4" />
+                            {selectedFeedbackDetail.feedbackStatus}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Type */}
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        Feedback Type
+                      </Label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                        {selectedFeedbackDetail.feedbackType}
+                      </p>
+                    </div>
+
+                    {/* Created At */}
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        Created At
+                      </Label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                        {format(new Date(selectedFeedbackDetail.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: enUS })}
+                      </p>
+                    </div>
+
+
+                    {/* Content */}
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <MessageSquare className="w-4 h-4 text-gray-500" />
+                        Feedback Content
+                      </Label>
+                      <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-100">
+                        <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                          {selectedFeedbackDetail.content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Review Information Card */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r  border-b">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="w-5 h-5 text-green-600" />
+                    Review Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Review Score - Highlighted */}
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <Star className="w-4 h-4 text-green-600" />
+                        Review Score
+                      </Label>
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
+                        <p className="text-2xl font-bold text-green-700">
+                          {selectedFeedbackDetail.reviewScore}/10
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Review Status */}
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="w-4 h-4 text-gray-500" />
+                        Review Status
+                      </Label>
+                      <div>
+                        {selectedFeedbackDetail.reviewStatus === "Completed" ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200">
+                            <CheckCircle2 className="w-4 h-4" />
+                            {selectedFeedbackDetail.reviewStatus}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                            <Clock className="w-4 h-4" />
+                            {selectedFeedbackDetail.reviewStatus}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Review Type */}
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        Review Type
+                      </Label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                        {selectedFeedbackDetail.reviewType}
+                      </p>
+                    </div>
+
+                    {/* Review Created At */}
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        Review Created At
+                      </Label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                        {format(new Date(selectedFeedbackDetail.reviewCreatedAt), "dd/MM/yyyy HH:mm:ss", { locale: enUS })}
+                      </p>
+                    </div>
+
+
+                    {/* Review Comment */}
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <MessageSquare className="w-4 h-4 text-gray-500" />
+                        Reviewer Comment
+                      </Label>
+                      <div className="p-4 bg-green-50 rounded-lg border-2 border-green-100">
+                        <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                          {selectedFeedbackDetail.reviewComment}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Question Content */}
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        Question Content
+                      </Label>
+                      <div className="p-4 bg-indigo-50 rounded-lg border-2 border-indigo-100">
+                        <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                          {selectedFeedbackDetail.questionContent || selectedFeedbackDetail.questionOrContent}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Audio Player */}
+                    {selectedFeedbackDetail.learnerRecordAudioUrl && (
+                      <div className="md:col-span-2">
+                        <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                          <Headphones className="w-4 h-4 text-gray-500" />
+                          Learner Audio
+                        </Label>
+                        <div className="rounded-lg border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-4">
+                          <audio controls className="w-full">
+                            <source src={selectedFeedbackDetail.learnerRecordAudioUrl} type="audio/mpeg" />
+                            Your browser does not support the audio element.
+                          </audio>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Footer */}
+              <div className="flex justify-end pt-4 border-t">
+                <Button 
+                  onClick={handleCloseFeedbackDetailModal} 
+                  variant="outline"
+                  className="min-w-[100px]"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
