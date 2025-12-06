@@ -26,6 +26,7 @@ import EnrollingCourses from "../enrolling-courses/page";
 import ReviewRecordPage from "../review_record/page";
 import LearnerRecordPage from "../learner_record/page";
 import ProgressPage from "../progress/page";
+import LearnerProfilePage from "../dashboard-learner-layout/profile/page";
 
 
 function DashboardContent() {
@@ -214,22 +215,13 @@ function DashboardContent() {
           {activeMenu === "reviewRecord" && (
             <ReviewRecordPage />
           )}
+
+          
           {/* PROFILE PAGE */}
           {activeMenu === "profile" && (
-            <>
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">👤 Hồ sơ cá nhân</h3>
-                <p className="text-gray-500 mt-1">
-                  Quản lý thông tin tài khoản của bạn
-                </p>
-              </div>
-
-              <Card className="p-6">
-                <h4 className="text-lg font-bold text-gray-900 mb-4">Đang phát triển...</h4>
-                <p className="text-gray-600">Tính năng này sẽ sớm được cập nhật.</p>
-              </Card>
-            </>
+            <LearnerProfilePage />
           )}
+          
         </div>
       </main>
 

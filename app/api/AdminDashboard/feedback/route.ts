@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const pageSize = searchParams.get("pageSize");
   const status = searchParams.get("status");
   const keyword = searchParams.get("keyword");
+  const type = searchParams.get("type");
   try {
     // Build URL with query parameters
     const backendUrl = new URL(
@@ -25,7 +26,9 @@ export async function GET(request: NextRequest) {
     if (status) {
       backendUrl.searchParams.set("status", status);
     }
-    
+    if (type) {
+      backendUrl.searchParams.set("type", type);
+    }
     const backendResponse = await fetch(backendUrl.toString(), {
       method: "GET",
       headers: {
@@ -34,9 +37,8 @@ export async function GET(request: NextRequest) {
       },
       credentials: "include",
     });
-
     const data = await backendResponse.json();
-
+    
     if (!backendResponse.ok) {
       return NextResponse.json(data, { status: backendResponse.status });
     }

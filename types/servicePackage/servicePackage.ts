@@ -19,5 +19,7 @@ export interface ServicePackage {
     status: string;
     createdAt: string;
     updatedAt: string;
-
+    totalBuyer: number;
+    totalRevenueMoney: number;
+    totalRevenueCoin: number;
 }

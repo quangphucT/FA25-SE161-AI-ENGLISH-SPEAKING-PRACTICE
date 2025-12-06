@@ -127,6 +127,7 @@ const ReviewerManagement = () => {
   const totalItems = reviewersResponse?.isSucess
     ? reviewersResponse.data?.totalItems ?? mappedReviewers.length
     : mappedReviewers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const totalActive = mappedReviewers.filter(
     (reviewer) => normalizeStatus(reviewer.status) === "Actived"
   ).length;
@@ -463,13 +464,71 @@ const ReviewerManagement = () => {
       </div>
 
       {/* Pagination & Info */}
-      <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
-        <div>
-          ACTIVE REVIEWERS: {totalActive}/{totalItems}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-sm text-gray-600 mt-6 pt-4 border-t">
+        <div className="space-y-1">
+          <div>
+            REVIEWERS HOẠT ĐỘNG:{" "}
+            <span className="font-semibold text-gray-900">
+              {totalActive}/{totalItems}
+            </span>
+          </div>
+          <div>
+            Hàng mỗi trang:{" "}
+            <span className="font-semibold text-gray-900">{pageSize}</span> &nbsp;
+            {totalItems === 0
+              ? "0 trên 0"
+              : `${startItem}-${endItem} trên ${totalItems}`}
+          </div>
         </div>
-        <div>
-          Rows per page: <span className="font-semibold">{pageSize}</span> &nbsp; {startItem}-{endItem}
-          of {totalItems}
+
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
+            disabled={pageNumber === 1 || isLoading}
+            className="cursor-pointer"
+          >
+            Trước
+          </Button>
+          {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
+            let page: number;
+            if (totalPages <= 5) {
+              page = index + 1;
+            } else if (pageNumber <= 3) {
+              page = index + 1;
+            } else if (pageNumber >= totalPages - 2) {
+              page = totalPages - 4 + index;
+            } else {
+              page = pageNumber - 2 + index;
+            }
+
+            return (
+              <Button
+                key={page}
+                variant={pageNumber === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPageNumber(page)}
+                disabled={isLoading}
+                className={`min-w-[40px] ${
+                  pageNumber === page
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "cursor-pointer hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </Button>
+            );
+          })}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPageNumber((prev) => Math.min(prev + 1, totalPages))}
+            disabled={pageNumber >= totalPages || isLoading}
+            className="cursor-pointer"
+          >
+            Sau
+          </Button>
         </div>
       </div>
 

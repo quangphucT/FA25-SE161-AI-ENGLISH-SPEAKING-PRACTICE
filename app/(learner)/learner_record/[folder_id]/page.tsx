@@ -9,6 +9,7 @@ import type { Record } from "@/features/learner/services/learnerRecordService";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, BookOpen, Play, Volume2, Mic, MessageSquare, X } from "lucide-react";
 import BuyReviewModal from "@/components/BuyReviewModal";
+import { formatAiFeedbackHtml } from "@/utils/formatAiFeedback";
 
 const PracticeRecordLayout = () => {
   const params = useParams();
@@ -1380,30 +1381,8 @@ const PracticeRecordLayout = () => {
               {/* Modal Content */}
               <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
                 <div 
-                  className="text-[1.1em] text-gray-800 leading-relaxed"
-                  style={{ 
-                    whiteSpace: 'pre-wrap',
-                    wordWrap: 'break-word'
-                  }}
-                  dangerouslySetInnerHTML={{ 
-                    __html: (typeof aiFeedback === 'string' ? aiFeedback : String(aiFeedback || ''))
-                      .split('\n')
-                      .map((line: string) => {
-                        // Handle headers (###)
-                        if (line.trim().startsWith('###')) {
-                          const text = line.replace(/^###\s*/, '');
-                          return `<h3 style="font-size: 1.5em; font-weight: 700; color: #1e40af; margin-top: 1.2em; margin-bottom: 0.8em; padding-bottom: 0.5em; border-bottom: 2px solid #e0e7ff;">${text}</h3>`;
-                        }
-                        // Handle bold text (**text**)
-                        const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 700; color: #1e40af; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">$1</strong>');
-                        // Handle numbered lists
-                        if (/^\d+\.\s/.test(processedLine.trim())) {
-                          return `<div style="margin: 0.8em 0; padding: 1em 1.2em; padding-left: 1.5em; font-size: 1.05em; background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.05)); border-left: 4px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">${processedLine}</div>`;
-                        }
-                        return `<p style="margin: 0.6em 0; line-height: 1.8;">${processedLine}</p>` || '<br />';
-                      })
-                      .join('')
-                  }} 
+                  className="text-[1.1em] text-gray-800 leading-relaxed space-y-2"
+                  dangerouslySetInnerHTML={{ __html: formatAiFeedbackHtml(aiFeedback) }} 
                 />
               </div>
 

@@ -21,6 +21,10 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
+  MessageSquareText,
+  ShoppingBag,
+  Coins,
+  ReceiptText,
 } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import ReviewerManagement from "../reviewers-management/page";
@@ -212,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                     : "bg-pink-500/20 group-hover:bg-pink-500/30"
                 }`}
               >
-                <CreditCard size={20} />
+                <MessageSquareText size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Tiền đánh giá</span>
@@ -273,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               onClick={() => setActiveMenu("aiConversationPackages")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
                 activeMenu === "aiConversationPackages"
-                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg transform scale-105"
                   : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
               }`}
             >
@@ -281,10 +285,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                 className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                   activeMenu === "aiConversationPackages"
                     ? "bg-white/20"
-                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                    : "bg-indigo-500/20 group-hover:bg-indigo-500/30"
                 }`}
               >
-                <CreditCard size={20} />
+                <MessageSquareText size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Gói hội thoại AI</span>
@@ -319,7 +323,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               onClick={() => setActiveMenu("purchase")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
                 activeMenu === "purchase"
-                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  ? "bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg transform scale-105"
                   : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
               }`}
             >
@@ -327,10 +331,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                 className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                   activeMenu === "purchase"
                     ? "bg-white/20"
-                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                    : "bg-cyan-500/20 group-hover:bg-cyan-500/30"
                 }`}
               >
-                <CreditCard size={20} />
+                <ReceiptText size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Quản lí giao dịch</span>
@@ -344,7 +348,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               onClick={() => setActiveMenu("purchaseItem")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
                 activeMenu === "purchaseItem"
-                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg transform scale-105"
                   : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
               }`}
             >
@@ -352,13 +356,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                 className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                   activeMenu === "purchaseItem"
                     ? "bg-white/20"
-                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                    : "bg-amber-500/20 group-hover:bg-amber-500/30"
                 }`}
               >
-                <CreditCard size={20} />
+                <ShoppingBag size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Quản lí mua gói vật phẩm</span>
+                <span className="font-semibold text-sm">Quản lí mua vật phẩm</span>
                 <span className="text-xs opacity-70">Lịch sử mua vật phẩm</span>
               </div>
             </button>
@@ -369,7 +373,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                 onClick={() => setActiveMenu("reviewfee")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
                 activeMenu === "reviewfee"
-                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
                   : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
               }`}
             >
@@ -377,10 +381,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                 className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                   activeMenu === "reviewfee"
                     ? "bg-white/20"
-                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
                 }`}
               >
-                <CreditCard size={20} />
+                <Coins size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Quản lí gói phí đánh giá</span>

@@ -69,6 +69,8 @@ import { useGetMediaFollowingQuestionId } from "@/features/manager/hook/mediaQue
 import { useCreateMediaFollowingQuestionId } from "@/features/manager/hook/mediaQuestionHooks/useCreateMediaByQuestionId";
 import { useDeleteMedia } from "@/features/manager/hook/mediaQuestionHooks/useDeleteMedia";
 import { useUpdateMedia } from "@/features/manager/hook/mediaQuestionHooks/useUpdateMedia";
+import { useUploadImage } from "@/features/manager/hook/uploadImgHooks/useUploadImage";
+import { useUploadVideo } from "@/features/manager/hook/uploadVideoHooks/useUploadVideo";
 
 interface Course {
   courseId: string;
@@ -138,6 +140,8 @@ const LevelA1 = ({ level }: LevelProps) => {
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [showEditQuestionModal, setShowEditQuestionModal] = useState(false);
 const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+const { mutateAsync: uploadImage } = useUploadImage();
+const { mutateAsync: uploadVideo } = useUploadVideo();
 
   // State for multiple questions
   const [questionsList, setQuestionsList] = useState<Array<{text: string;type: number;orderIndex: number;
@@ -352,13 +356,28 @@ useEffect(() => {
     },
   });
 
-  const mediaSchema = z.object({
-    accent: z.string().min(1, "Accent is required"),
-    audioUrl: z.string().url("Must be valid URL").or(z.literal("")),
-    videoUrl: z.string().url("Must be valid URL").or(z.literal("")),
-    imageUrl: z.string().url("Must be valid URL").or(z.literal("")),
-    source: z.string().min(1, "Source is required"),
-  });
+  // const mediaSchema = z.object({
+  //   accent: z.string().min(1, "Accent is required"),
+  //   audioUrl: z.string().url("Must be valid URL").or(z.literal("")),
+  //   videoUrl: z.string().url("Must be valid URL").or(z.literal("")),
+  //   imageUrl: z.string().url("Must be valid URL").or(z.literal("")),
+  //   source: z.string().min(1, "Source is required"),
+  // });
+
+
+ const mediaSchema = z.object({
+  accent: z.string().min(1, "Accent is required"),
+
+  audioUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
+
+  videoFile: z.any().optional(),
+  imageFile: z.any().optional(),
+
+  source: z.string().min(1, "Source is required"),
+});
+
 
   type MediaFormValues = z.infer<typeof mediaSchema>;
 
@@ -366,12 +385,15 @@ useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(mediaSchema) as any,
     defaultValues: {
-      accent: "",
-      audioUrl: "",
-      videoUrl: "",
-      imageUrl: "",
-      source: "",
-    },
+  accent: "",
+  audioUrl: "",
+  videoUrl: "",
+  imageUrl: "",
+  videoFile: null,
+  imageFile: null,
+  source: "",
+},
+
   });
 
   // Sort courses by orderIndex
@@ -648,47 +670,95 @@ useEffect(() => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleEditMedia = (media: any) => {
-    setEditingMedia(media);
-    mediaFormMethods.reset({
-      accent: media.accent,
-      audioUrl: media.audioUrl,
-      videoUrl: media.videoUrl,
-      imageUrl: media.imageUrl,
-      source: media.source,
-    });
-    setShowMediaModal(true);
-  };
+ const handleEditMedia = (media: Media) => {
+  setEditingMedia(media);
+  mediaFormMethods.reset({
+    accent: media.accent,
+    audioUrl: media.audioUrl,
+    videoUrl: media.videoUrl,
+    imageUrl: media.imageUrl,
+    videoFile: null,
+    imageFile: null,
+    source: media.source,
+  });
+  setShowMediaModal(true);
+};
 
-  const onSubmitMedia = (values: MediaFormValues) => {
+
+ const onSubmitMedia = async (values: MediaFormValues) => {
+  console.log("✅ SUBMIT MEDIA VALUES:", values);
+
   if (!selectedQuestion) {
     toast.error("Please select a question first");
     return;
   }
 
-  if (editingMedia) {
-    updateMediaMutation({
-      id: editingMedia.questionMediaId,
-      payload: {
-        accent: values.accent,
-        audioUrl: values.audioUrl,
-        videoUrl: values.videoUrl,
-        imageUrl: values.imageUrl,
-        source: values.source,
-      },
-    });
-  } else {
-    createMediaMutation({
-      questionId: selectedQuestion.questionId, // ✅ ĐÚNG
-      accent: values.accent,
-      audioUrl: values.audioUrl,
-      videoUrl: values.videoUrl,
-      imageUrl: values.imageUrl,
-      source: values.source,
-    });
-  }
+  let finalImageUrl = values.imageUrl || "";
+  let finalVideoUrl = values.videoUrl || "";
 
-  setShowMediaModal(false);
+  try {
+    // ✅ LOG TRƯỚC KHI UPLOAD IMAGE
+    if (values.imageFile) {
+      console.log("📤 UPLOADING IMAGE:", values.imageFile);
+
+      const imgRes = await uploadImage(values.imageFile);
+
+      console.log("✅ UPLOAD IMAGE RESPONSE:", imgRes);
+
+      finalImageUrl = imgRes.url;
+
+      console.log("✅ FINAL IMAGE URL:", finalImageUrl);
+    }
+
+    // ✅ LOG TRƯỚC KHI UPLOAD VIDEO
+   if (values.videoFile) {
+  console.log("📤 UPLOADING VIDEO:", values.videoFile);
+
+  const vidRes = await uploadVideo(values.videoFile);
+
+  console.log("✅ UPLOAD VIDEO RESPONSE:", vidRes);
+
+  finalVideoUrl = vidRes.url;
+
+   mediaFormMethods.setValue("videoUrl", vidRes.url); // <-- DÒNG QUAN TRỌNG
+
+  console.log("✅ FINAL VIDEO URL:", finalVideoUrl);
+}
+
+
+    const payload = {
+      accent: values.accent,
+      audioUrl: values.audioUrl || "",
+      imageUrl: finalImageUrl || "",
+      videoUrl: finalVideoUrl || "",
+      source: values.source,
+    };
+
+    console.log("🚀 FINAL PAYLOAD SEND TO API:", payload);
+
+    if (editingMedia) {
+      console.log("✏️ UPDATE MEDIA MODE:", editingMedia.questionMediaId);
+      updateMediaMutation({
+        id: editingMedia.questionMediaId,
+        payload,
+      });
+    } else {
+      console.log("➕ CREATE MEDIA MODE:", selectedQuestion.questionId);
+      createMediaMutation({
+        questionId: selectedQuestion.questionId,
+        ...payload,
+      });
+    }
+
+    toast.success("Media saved successfully");
+    setShowMediaModal(false);
+    setEditingMedia(null);
+    mediaFormMethods.reset();
+    refetchMedia();
+  } catch (err) {
+    console.error("❌ UPLOAD MEDIA FAILED:", err);
+    toast.error("Upload media failed");
+  }
 };
 
 
@@ -1915,6 +1985,45 @@ ${
                 )}
               />
 
+              {/* IMAGE UPLOAD */}
+<FormField
+  name="imageFile"
+  control={mediaFormMethods.control}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Upload Image (Optional)</FormLabel>
+      <FormControl>
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={(e) => field.onChange(e.target.files?.[0] || null)}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+{/* VIDEO UPLOAD */}
+<FormField
+  name="videoFile"
+  control={mediaFormMethods.control}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Upload Video (Optional)</FormLabel>
+      <FormControl>
+        <Input
+          type="file"
+          accept="video/*"
+          onChange={(e) => field.onChange(e.target.files?.[0] || null)}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+
               <FormField
                 name="source"
                 control={mediaFormMethods.control}
@@ -2070,7 +2179,7 @@ ${
             </Button>
             <Button
               onClick={() => {
-                handleEditMedia(viewingMediaDetails);
+if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
                 setViewingMediaDetails(null);
               }}
               className="bg-purple-600 cursor-pointer hover:bg-purple-700 text-white"

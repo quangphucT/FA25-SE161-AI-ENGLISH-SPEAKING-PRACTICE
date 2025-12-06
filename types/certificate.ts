@@ -1,4 +1,3 @@
-import { Certificate } from "crypto";
 
 export type UploadCertificateRequest = FormData;
 

@@ -34,6 +34,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useAdminReviewFeeDetailQuery } from "@/features/admin/hooks/useAdminReviewFee";
+import { formatDateInput } from "@/utils/formatDateInput";
 
 
  const normalizePercent = (value: number) => {
@@ -131,7 +132,7 @@ const { mutate: createReviewFeePackage, isPending: isCreating } =
  const form = useForm<CreateReviewFeeFormData>({
   resolver: zodResolver(createReviewFeeSchema),
   defaultValues: {
-    appliedDate: new Date().toISOString().split("T")[0],
+    appliedDate: format(new Date(), "dd/MM/yyyy"),
         numberOfReview: 0,   // ← thêm dòng này
 
     percentOfSystem: 0,
@@ -430,18 +431,18 @@ const policyForm = useForm<CreatePolicyForm>({
                             </Badge>
                           </TableCell>
                           <TableCell>
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={() => {
-      setSelectedReviewFeeId(pkg.reviewFeeId);
-      setShowDetailModal(true);
-    }}
-    className="cursor-pointer"
-  >
-    Xem chi tiết
-  </Button>
-</TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedReviewFeeId(pkg.reviewFeeId);
+                                setShowDetailModal(true);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              Xem chi tiết
+                            </Button>
+                          </TableCell>
 
                         </TableRow>
                       ))
@@ -542,8 +543,15 @@ const policyForm = useForm<CreatePolicyForm>({
                             <FormLabel>Ngày áp dụng *</FormLabel>
                             <FormControl>
                               <Input
-                                type="date"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="dd/mm/yyyy"
+                                maxLength={10}
                                 {...field}
+                                value={field.value ?? ""}
+                                onChange={(event) =>
+                                  field.onChange(formatDateInput(event.target.value))
+                                }
                                 className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                               />
                             </FormControl>

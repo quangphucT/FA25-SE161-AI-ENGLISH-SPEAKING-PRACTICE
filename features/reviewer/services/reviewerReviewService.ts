@@ -32,6 +32,7 @@ export interface ReviewerReviewHistoryResponse {
   };
 }
 export interface ReviewerReviewPending {
+  aiFeedback: string;
   type: string;
   id: string;
   submittedAt: Date;

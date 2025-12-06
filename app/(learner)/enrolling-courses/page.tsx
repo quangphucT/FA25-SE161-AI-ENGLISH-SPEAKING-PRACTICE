@@ -15,8 +15,6 @@ import { useEnrollCourseNotFree } from "@/features/learner/hooks/enrollingCourse
 import { useRouter } from "next/navigation";
 import { upLevelForLearner } from "@/features/learner/hooks/up-level/upLevelHook";
 
-
-
 export default function EnrollingCourses() {
   const router = useRouter();
   const learnerCourseIdOnZustand = useLearnerStore(
@@ -29,16 +27,21 @@ export default function EnrollingCourses() {
   const [viewingLevel, setViewingLevel] = useState<string>(userLevel);
 
   // hook call courses based on level
-  const { data: coursesBasedOnLevel, isLoading } = useGetCoursesBasedOnLevelLearner(viewingLevel);
+  const { data: coursesBasedOnLevel, isLoading } =
+    useGetCoursesBasedOnLevelLearner(viewingLevel);
 
-  const { data: levelAndLearnerCourseIdData } = useGetLevelAndLearnerCourseIdAfterEnrolling();
+  const { data: levelAndLearnerCourseIdData } =
+    useGetLevelAndLearnerCourseIdAfterEnrolling();
   const { mutate: enrollFirstCourse } = useEnrollFirstCourse();
   const { mutate: upLevel } = upLevelForLearner();
 
   const { mutate: enrollingPaidCourse } = useEnrollCourseNotFree();
-  const currentViewingLevelData = levelAndLearnerCourseIdData?.data?.levels.find((item) => item.Level === viewingLevel);
+  const currentViewingLevelData =
+    levelAndLearnerCourseIdData?.data?.levels.find(
+      (item) => item.Level === viewingLevel
+    );
   const enrolledCoursesInLevel = currentViewingLevelData?.Courses || [];
-  
+
   useEffect(() => {
     setViewingLevel(userLevel);
   }, [userLevel]);
@@ -62,7 +65,6 @@ export default function EnrollingCourses() {
   const handleEnrollCourseFree = async (courseId: string) => {
     enrollFirstCourse(courseId, {
       onSuccess: () => {
-       
         router.push(`/dashboard-learner-layout?menu=learningPath`);
       },
     });
@@ -113,20 +115,24 @@ export default function EnrollingCourses() {
   // Check if user can access a level
   const canAccessLevel = (targetLevel: string): boolean => {
     const targetIndex = levels.indexOf(targetLevel);
-    
+
     // Level đầu tiên luôn mở
     if (targetIndex === 0) return true;
-    
+
     // Check tất cả levels trước đó đã hoàn thành chưa
     for (let i = 0; i < targetIndex; i++) {
       const levelData = levelsData.find((l) => l.Level === levels[i]);
-      
+
       // Nếu level trước chưa có course hoặc chưa hoàn thành hết
-      if (!levelData || levelData.TotalCourses !== levelData.CompletedCourses || levelData.TotalCourses === 0) {
+      if (
+        !levelData ||
+        levelData.TotalCourses !== levelData.CompletedCourses ||
+        levelData.TotalCourses === 0
+      ) {
         return false;
       }
     }
-    
+
     return true;
   };
 
@@ -134,35 +140,39 @@ export default function EnrollingCourses() {
   const isCurrentLevelCompleted = (): boolean => {
     const currentLevelData = levelsData.find((l) => l.Level === userLevel);
     if (!currentLevelData) return false;
-    return currentLevelData.TotalCourses > 0 && 
-           currentLevelData.TotalCourses === currentLevelData.CompletedCourses;
+    return (
+      currentLevelData.TotalCourses > 0 &&
+      currentLevelData.TotalCourses === currentLevelData.CompletedCourses
+    );
   };
 
   // Handle level click - cho phép click nếu level đã unlock
   const handleLevelClick = (level: string) => {
     const levelIndex = levels.indexOf(level);
     const userLevelIndex = levels.indexOf(userLevel);
-    
+
     // Nếu click vào level hiện tại hoặc level đã unlock trước đó
     if (levelIndex <= userLevelIndex) {
       setViewingLevel(level);
       return;
     }
-    
+
     // Nếu click vào level tiếp theo (userLevel + 1) và đã hoàn thành level hiện tại
     if (levelIndex === userLevelIndex + 1 && isCurrentLevelCompleted()) {
       // Call API up level
       upLevel(undefined, {
         onSuccess: () => {
           setViewingLevel(level);
-        }
+        },
       });
       return;
     }
-    
+
     // Các trường hợp khác - level bị khóa
     if (!canAccessLevel(level)) {
-      toast.info(`Hoàn thành tất cả khóa học ở Level ${userLevel} để mở khóa Level ${level}`);
+      toast.info(
+        `Hoàn thành tất cả khóa học ở Level ${userLevel} để mở khóa Level ${level}`
+      );
     }
   };
 
@@ -221,8 +231,16 @@ export default function EnrollingCourses() {
                       {/* Lock icon for locked levels */}
                       {isLocked && (
                         <span className="absolute -top-1 -right-1 w-5 h-5 bg-gray-500 rounded-full border-2 border-white flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                         </span>
                       )}
@@ -243,7 +261,11 @@ export default function EnrollingCourses() {
                             : "text-gray-500"
                         }`}
                       >
-                        {isLocked ? `🔒 ${level}` : isUserCurrentLevel ? "Level của bạn" : `Level ${level}`}
+                        {isLocked
+                          ? `🔒 ${level}`
+                          : isUserCurrentLevel
+                          ? "Level của bạn"
+                          : `Level ${level}`}
                       </p>
                     </div>
                   </div>
@@ -309,7 +331,7 @@ export default function EnrollingCourses() {
                         {/* Progress Badge - hiển thị status từ API */}
                         {isEnrolled && (
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                               isCompleted
                                 ? "bg-green-100 text-green-700"
                                 : isInProgress
@@ -318,7 +340,7 @@ export default function EnrollingCourses() {
                             }`}
                           >
                             {isCompleted
-                              ? "✓ Hoàn thành"
+                              ? "✓ "
                               : isInProgress
                               ? "Đang học"
                               : "Chưa bắt đầu"}
@@ -343,10 +365,15 @@ export default function EnrollingCourses() {
                   <p className="text-gray-600 text-sm line-clamp-2">
                     {course.description}
                   </p>
-    <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-  <Clock className="w-3 h-3" />
-  {course.duration} ngày
-</div>
+                  {course.duration > 0 ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                      <Clock className="w-3 h-3" />
+                      {course.duration} phút
+                    </div>
+                  ) : (
+                    <></>
+                  )
+                  }
 
                   <p className="text-xs text-gray-500">
                     {course.numberOfChapter} Chương • {totalExercises} Bài tập
@@ -409,5 +436,4 @@ export default function EnrollingCourses() {
       </div>
     </div>
   );
-};
-
+}

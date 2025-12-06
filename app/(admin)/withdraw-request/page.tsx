@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAdminWithdrawal, useAdminWithdrawalApprove, useAdminWithdrawalReject } from "@/features/admin/hooks/useAdminWithdrawal";
+import { useAdminWithdrawal, useAdminWithdrawalApprove, useAdminWithdrawalReject, useAdminWithdrawalSummary } from "@/features/admin/hooks/useAdminWithdrawal";
 import { Withdrawal } from "@/features/admin/services/adminWithdrawalService";
 import { toast } from "sonner";
 
@@ -54,6 +54,7 @@ const WithdrawRequest = () => {
     useAdminWithdrawalApprove();
   const { mutateAsync: rejectWithdrawal, isPending: isRejecting } =
     useAdminWithdrawalReject();
+  const { data: withdrawalSummaryData } = useAdminWithdrawalSummary();
 
   const requestItems = withdrawalData?.data?.items;
   const requests = useMemo(() => requestItems ?? [], [requestItems]);
@@ -144,9 +145,21 @@ const WithdrawRequest = () => {
     }
   };
 
-  const pendingCount = requests.filter((r) => r.status === "Pending").length;
-  const approvedCount = requests.filter((r) => r.status === "Approved").length;
-  const rejectedCount = requests.filter((r) => r.status === "Rejected").length;
+  const withdrawalSummary = useMemo(() => {
+    if (withdrawalSummaryData?.data) {
+      return {
+        pending: withdrawalSummaryData.data.pending ?? 0,
+        approved: withdrawalSummaryData.data.approved ?? 0,
+        rejected: withdrawalSummaryData.data.rejected ?? 0,
+      };
+    }
+
+    return {
+      pending: requests.filter((r) => r.status === "Pending").length,
+      approved: requests.filter((r) => r.status === "Approved").length,
+      rejected: requests.filter((r) => r.status === "Rejected").length,
+    };
+  }, [withdrawalSummaryData, requests]);
 
 
   return (
@@ -177,7 +190,7 @@ const WithdrawRequest = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {pendingCount}
+              {withdrawalSummary.pending}
             </div>
           </CardContent>
         </Card>
@@ -189,7 +202,7 @@ const WithdrawRequest = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {approvedCount}
+              {withdrawalSummary.approved}
             </div>
           </CardContent>
         </Card>
@@ -201,7 +214,7 @@ const WithdrawRequest = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {rejectedCount}
+              {withdrawalSummary.rejected}
             </div>
           </CardContent>
         </Card> 
@@ -217,12 +230,12 @@ const WithdrawRequest = () => {
             className="w-80"
           />
           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
-            <TabsList className="grid grid-cols-5 w-[400px]">
+            <TabsList className="grid grid-cols-4 w-[400px]">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
               <TabsTrigger value="Pending">Chờ xử lý</TabsTrigger>
               <TabsTrigger value="Approved">Đã duyệt</TabsTrigger>
               <TabsTrigger value="Rejected">Từ chối</TabsTrigger>
-              <TabsTrigger value="Processing">Đang xử lý</TabsTrigger>
+              
             </TabsList>
           </Tabs>
         </div>

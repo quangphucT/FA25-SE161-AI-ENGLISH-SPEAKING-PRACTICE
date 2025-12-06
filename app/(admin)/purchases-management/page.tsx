@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAdminTransactions } from "@/features/admin/hooks/useAdminTransactions";
+import { useAdminTransactions, useAdminDashboardTransaction } from "@/features/admin/hooks/useAdminTransactions";
 import { TransactionAdmin } from "@/features/admin/services/adminTransactionsService";
 import { 
   CheckCircle2, 
@@ -59,7 +59,7 @@ interface Transaction {
   Bankname: string;
   AccountNumber: string;
   Description: string;
-  Status: "Approved" | "Pending" | "Cancelled" ;
+  Status: "Approved" | "Pending" | "Cancelled" | "Paid";
   amount_coin: number;
   type: string;
   OrderCode: string;
@@ -103,6 +103,7 @@ const PurchasesManagement = () => {
     statusFilter === "All" ? "" : statusFilter,
     typeFilter === "All" ? "" : typeFilter
   );
+  const { data: dashboardData } = useAdminDashboardTransaction();
 
   // Map API data to Transaction format
   const transactions = useMemo(() => {
@@ -131,11 +132,13 @@ const PurchasesManagement = () => {
     
     return dataArray.map((item: TransactionAdmin) => {
       // Map status: "Pending" -> "Pending", "Success" -> "Success", "Cancelled" -> "Failed", etc.
-      let mappedStatus: "Approved" | "Pending" | "Cancelled"  = "Pending";
+      let mappedStatus: "Approved" | "Pending" | "Cancelled" | "Paid"  = "Pending";
       if (item.status === "Approved") {
         mappedStatus = "Approved";
       } else if (item.status === "Cancelled") {
         mappedStatus = "Cancelled";
+      } else if (item.status === "Paid") {
+        mappedStatus = "Paid";
       } else {
         mappedStatus = "Pending";
       }
@@ -177,6 +180,24 @@ const PurchasesManagement = () => {
 
   // Transactions are already filtered by the API, so we just use them directly
   const filteredTransactions = transactions;
+
+  const transactionStats = useMemo(() => {
+    if (dashboardData?.data) {
+      return {
+        paid: dashboardData.data.totalPaid ?? 0,
+        approved: dashboardData.data.totalApproved ?? 0,
+        cancelled: dashboardData.data.totalFailTransaction ?? 0,
+        pending: dashboardData.data.totalPendingTransaction ?? 0,
+      };
+    }
+
+    return {
+      paid: transactions.filter((t) => t.Status === "Paid").length,
+      approved: transactions.filter((t) => t.Status === "Approved").length,
+      cancelled: transactions.filter((t) => t.Status === "Cancelled").length,
+      pending: transactions.filter((t) => t.Status === "Pending").length,
+    };
+  }, [dashboardData, transactions]);
 
   const paginationMeta = useMemo(() => {
     if (
@@ -368,17 +389,30 @@ const exportToPDF = () => {
       </div>
 
       {/* Thống kê */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              Giao dịch thành công
+              Giao dịch rút tiền thành công
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {transactions.filter((t) => t.Status === "Approved").length}
+              {transactionStats.paid}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500" />
+              Giao dịch nạp tiền thành công
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {transactionStats.approved}
             </div>
           </CardContent>
         </Card>
@@ -391,7 +425,7 @@ const exportToPDF = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {transactions.filter((t) => t.Status === "Cancelled").length}
+              {transactionStats.cancelled}
             </div>
           </CardContent>
         </Card>
@@ -404,7 +438,7 @@ const exportToPDF = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {transactions.filter((t) => t.Status === "Pending").length}
+              {transactionStats.pending}
             </div>
           </CardContent>
         </Card>

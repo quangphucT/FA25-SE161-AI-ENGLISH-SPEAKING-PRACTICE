@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { uploadAudioToCloudinary } from "@/utils/upload";
+import YouTubeEmbed from "@/components/YouTubeEmbed";
 
 export default function ReviewRecordPage() {
     const [url, setUrl] = useState("");
@@ -48,6 +49,10 @@ export default function ReviewRecordPage() {
             <p>Uploaded URL: {url}</p>
           </div>
         )}
+
+
+
+      <YouTubeEmbed url="https://www.youtube.com/watch?v=EBl3uwug7UU&list=RDMMHVBnpC1b_5Y&index=2" height={400} width={720} />
       </div>
     );
   }

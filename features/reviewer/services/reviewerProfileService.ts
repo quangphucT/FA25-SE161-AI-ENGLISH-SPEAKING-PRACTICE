@@ -40,7 +40,7 @@ export const reviewerProfilePutService = async (
       throw new Error(message);
     }
   };
-  export const reviewerProfileGetService = async (
+export const reviewerProfileGetService = async (
     userId: string
   ): Promise<ReviewerProfileResponse> => {
     try {

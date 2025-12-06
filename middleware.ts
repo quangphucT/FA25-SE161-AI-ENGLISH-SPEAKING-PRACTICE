@@ -24,6 +24,7 @@ export function middleware(request: NextRequest) {
       const role = decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
       const isPlacementTestDone = decodedPayload["IsPlacementTestDone"];
       const isReviewerActive = decodedPayload["IsReviewerActive"];
+      const reviewerStatus = decodedPayload["ReviewerStatus"]; // "Pending" | "Active" | etc.
 
       // Nếu vào root "/" và đã có token → redirect về dashboard theo role
       if (pathName === "/") {
@@ -34,9 +35,15 @@ export function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL("/dashboard-learner-layout", request.url));
         }
         if (role === "REVIEWER") {
+          // isReviewerActive = false → chưa upload certificate → entrance_information
           if (!isReviewerActive) {
             return NextResponse.redirect(new URL("/entrance_information", request.url));
           }
+          // isReviewerActive = true, ReviewerStatus = "Pending" → đang chờ duyệt → reviewer-waiting
+          if (reviewerStatus === "Pending") {
+            return NextResponse.redirect(new URL("/reviewer-waiting", request.url));
+          }
+          // isReviewerActive = true, ReviewerStatus = "Active" → đã duyệt → dashboard
           return NextResponse.redirect(new URL("/dashboard-reviewer-layout", request.url));
         }
         if (role === "ADMIN") {
@@ -56,21 +63,43 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/entrance_test", request.url));
       }
 
-      // Nếu REVIEWER chưa hoàn tất chứng chỉ → chuyển hướng tới trang upload
+      // Nếu REVIEWER chưa upload certificate (isReviewerActive = false) → entrance_information
       if (
         role === "REVIEWER" &&
         !isReviewerActive &&
-        pathName !== "/entrance_information" &&
-        pathName !== "/reviewer-waiting"
+        pathName !== "/entrance_information"
       ) {
         return NextResponse.redirect(
           new URL("/entrance_information", request.url)
         );
       }
-      // Cho phép reviewer vào /entrance_information từ reviewer-waiting hoặc khi chưa active
-      // Không chặn reviewer vào /entrance_information vì họ có thể cần thêm/chỉnh sửa chứng chỉ
-      // Trang entrance_information sẽ tự kiểm tra và xử lý logic phù hợp
-      // Reviewer active thì KHÔNG ĐƯỢC vào trang entrance_test (dành riêng cho Learner)
+
+      // Nếu REVIEWER đã upload certificate nhưng đang chờ duyệt (Pending) → reviewer-waiting
+      if (
+        role === "REVIEWER" &&
+        isReviewerActive &&
+        reviewerStatus === "Pending" &&
+        pathName !== "/reviewer-waiting" &&
+        pathName !== "/entrance_information" // Cho phép vào để chỉnh sửa certificate
+      ) {
+        return NextResponse.redirect(
+          new URL("/reviewer-waiting", request.url)
+        );
+      }
+
+      // Nếu REVIEWER đã Active (được duyệt) mà vào entrance_information hoặc reviewer-waiting → về dashboard
+      if (
+        role === "REVIEWER" &&
+        isReviewerActive &&
+        reviewerStatus === "Active" &&
+        (pathName === "/entrance_information" || pathName === "/reviewer-waiting")
+      ) {
+        return NextResponse.redirect(
+          new URL("/dashboard-reviewer-layout", request.url)
+        );
+      }
+
+      // Reviewer thì KHÔNG ĐƯỢC vào trang entrance_test (dành riêng cho Learner)
       if (role === "REVIEWER" && pathName === "/entrance_test") {
         return NextResponse.redirect(
           new URL("/dashboard-reviewer-layout", request.url)
@@ -101,12 +130,19 @@ export function middleware(request: NextRequest) {
           );
         }
         if (role === "REVIEWER") {
-          // Nếu reviewer chưa verify → đi trang verify
+          // Chưa upload certificate → entrance_information
           if (!isReviewerActive) {
             return NextResponse.redirect(
               new URL("/entrance_information", request.url)
             );
           }
+          // Đang chờ duyệt → reviewer-waiting
+          if (reviewerStatus === "Pending") {
+            return NextResponse.redirect(
+              new URL("/reviewer-waiting", request.url)
+            );
+          }
+          // Đã được duyệt → dashboard
           return NextResponse.redirect(
             new URL(`/dashboard-${role?.toLowerCase()}-layout`, request.url)
           );
@@ -171,5 +207,6 @@ export const config = {
     "/entrance",
     "/entrance_test",
     "/entrance_information",
+    "/reviewer-waiting",
   ],
 };

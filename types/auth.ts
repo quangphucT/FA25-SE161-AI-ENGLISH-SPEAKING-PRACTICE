@@ -122,6 +122,7 @@ export interface LearnerProfile {
   createdAt: string; // nếu muốn Date → thì convert sau
   updatedAt: string | null;
   isDeleted: boolean;
+  dailyMinutes: number;
 }
 
 

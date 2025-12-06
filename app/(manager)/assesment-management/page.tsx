@@ -41,16 +41,13 @@ const getScoreVariant = (score?: number) => {
 
 export default function AssessmentManagement() {
   const [pageNumber, setPageNumber] = useState(1);
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [keyword, setKeyword] = useState("");
+
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string>();
 
   const { data, isLoading, isError, refetch, isFetching } =
     useManagerAssessmentLearner(
       pageNumber,
       PAGE_SIZE,
-      typeFilter === "all" ? undefined : typeFilter,
-      keyword || undefined
     );
 
   const assessments = data?.data.items ?? [];
@@ -86,33 +83,6 @@ export default function AssessmentManagement() {
             Theo dõi tiến độ đánh giá của học viên theo từng bài kiểm tra
           </p>
         </div>
-        <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Tìm theo learnerId..."
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value)}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Loại bài" />
-            </SelectTrigger>
-            <SelectContent>
-              {typeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button type="submit" disabled={isFetching}>
-            {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Tìm kiếm
-          </Button>
-        </form>
       </div>
 
       {isError ? (
@@ -203,7 +173,7 @@ export default function AssessmentManagement() {
                   <div key={detail.assessmentDetailId} className="rounded-lg border p-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium truncate">
-                        Câu hỏi: {detail.questionAssessmentId}
+                        Câu hỏi: {detail.questionAssessment.content}
                       </span>
                       <Badge variant={getScoreVariant(detail.score)}>Điểm: {detail.score ?? "-"}</Badge>
                     </div>
@@ -211,12 +181,12 @@ export default function AssessmentManagement() {
                       Loại: {detail.type || "Chưa có"} • Phản hồi AI:{" "}
                       {detail.aI_Feedback || "Không có"}
                     </p> */}
-                    {detail.answerAudio && (
+                    {/* {detail.answerAudio && (
                       <audio controls className="mt-2 w-full">
                         <source src={detail.answerAudio} />
                         Trình duyệt không hỗ trợ phát audio.
                       </audio>
-                    )}
+                    )} */}
                   </div>
                 ))}
               </div>
@@ -241,12 +211,12 @@ export default function AssessmentManagement() {
                   <p className="text-muted-foreground">Ngày tạo</p>
                   <p className="font-medium">{formatDate(selectedAssessment.createdAt)}</p>
                 </div>
-                <div>
+                {/* <div>
                   <p className="text-muted-foreground">Nhận xét</p>
                   <p className="font-medium">
                     {selectedAssessment.feedback || "Chưa có nhận xét từ Reviewer"}
                   </p>
-                </div>
+                </div> */}
               </div>
             )}
           </Card>
