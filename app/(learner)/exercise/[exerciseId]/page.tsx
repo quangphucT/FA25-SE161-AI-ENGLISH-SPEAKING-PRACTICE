@@ -348,14 +348,13 @@ const ExercisePage = () => {
               },
               {
                 onSuccess: (data) => {
-          
                   // Lưu learnerAnswerId từ response vào array theo index của câu hỏi
                   if (data.data?.learnerAnswerId) {
                     const newLearnerAnswerIds = [...learnerAnswerIds];
                     newLearnerAnswerIds[currentQuestionIndex] = data.data.learnerAnswerId;
                     setLearnerAnswerIds(newLearnerAnswerIds);
                   }
-                },
+                }, 
                 onError: (error) => {
                   console.error("Submit error:", error);
                 },
