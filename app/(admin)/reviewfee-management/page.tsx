@@ -24,9 +24,12 @@ import {
 import { 
   useAdminReviewFeePackagesQuery, 
   useAdminReviewFeePackageCreateMutation ,
-    useAdminReviewFeePolicyCreateMutation
+    useAdminReviewFeePolicyCreateMutation,
+    useAdminReviewFeePolicyUpcomingCreateMutation,
+    useDeleteReviewFeePackageMutation
 
 } from "@/features/admin/hooks/useAdminReviewFee";
+import { useQueryClient } from "@tanstack/react-query";
 import { CreateReviewFeePackageRequest, adminReviewFeePolicyService  } from "@/features/admin/services/adminReviewFeeService";
 import { Loader2, FileText, Plus, Package, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -34,11 +37,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useAdminReviewFeeDetailQuery } from "@/features/admin/hooks/useAdminReviewFee";
+import { formatDateInput } from "@/utils/formatDateInput";
 
 
  const normalizePercent = (value: number) => {
-  if (value <= 10) return value * 10; // 4 → 40
-  return value; // 40 → 40
+  if (value < 10) return value * 10; // 4 → 40, nhưng 10 → 10
+  return value; // 10 → 10, 40 → 40, 90 → 90
 };
 
 
@@ -68,6 +72,7 @@ const createReviewFeeSchema = z.object({
   percentOfReviewer: z.number().min(0).max(100),
   pricePerReviewFee: z.number().gt(0),
 }).superRefine((data, ctx) => {
+  // Normalize giống như trong onSubmit để đồng bộ
   const system = normalizePercent(data.percentOfSystem);
   const reviewer = normalizePercent(data.percentOfReviewer);
   const total = system + reviewer;
@@ -87,6 +92,7 @@ type CreateReviewFeeFormData = z.infer<typeof createReviewFeeSchema>;
 
 type CreatePolicyForm = {
   reviewFeeId: string;
+  reviewFeeDetailId: string;
   appliedDate: string;
   pricePerReviewFee: number;
   percentOfSystem: number;
@@ -102,11 +108,13 @@ interface InfoItemProps {
 }
 
 export default function ReviewFeeManagement() {
+  const queryClient = useQueryClient();
   const [pageNumber, setPageNumber] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [selectedReviewFeeId, setSelectedReviewFeeId] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showUpdateUpcomingModal, setShowUpdateUpcomingModal] = useState(false);
 
 
   const { data, isLoading, isError, error, refetch } = useAdminReviewFeePackagesQuery(
@@ -131,7 +139,7 @@ const { mutate: createReviewFeePackage, isPending: isCreating } =
  const form = useForm<CreateReviewFeeFormData>({
   resolver: zodResolver(createReviewFeeSchema),
   defaultValues: {
-    appliedDate: new Date().toISOString().split("T")[0],
+    appliedDate: format(new Date(), "dd/MM/yyyy"),
         numberOfReview: 0,   // ← thêm dòng này
 
     percentOfSystem: 0,
@@ -145,11 +153,28 @@ const onSubmit = async (values: CreateReviewFeeFormData) => {
   const system = normalizePercent(values.percentOfSystem);
   const reviewer = normalizePercent(values.percentOfReviewer);
 
+  // Đảm bảo tổng = 100 trước khi chia
+  if (system + reviewer !== 100) {
+    alert("Tổng % Hệ thống + Reviewer phải đúng 100%");
+    return;
+  }
+
+  // Tính toán phần trăm dạng decimal (0-1)
+  const systemDecimal = system / 100;
+  const reviewerDecimal = reviewer / 100;
+
+  // Đảm bảo tổng = 1.0 (sau khi làm tròn)
+  const totalDecimal = Number((systemDecimal + reviewerDecimal).toFixed(2));
+  if (totalDecimal !== 1.0) {
+    alert("Tổng phần trăm sau khi tính toán không đúng. Vui lòng kiểm tra lại.");
+    return;
+  }
+
   const requestData: CreateReviewFeePackageRequest = {
     numberOfReview: values.numberOfReview,
     pricePerReviewFee: values.pricePerReviewFee,
-    percentOfSystem: Number((system / 100).toFixed(2)),
-    percentOfReviewer: Number((reviewer / 100).toFixed(2)),
+    percentOfSystem: Number(systemDecimal.toFixed(2)),
+    percentOfReviewer: Number(reviewerDecimal.toFixed(2)),
   };
 
   createReviewFeePackage(requestData, {
@@ -174,8 +199,13 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
   </div>
 );
 const { mutate: createPolicy, isPending: isCreatingPolicy } =
-
   useAdminReviewFeePolicyCreateMutation();
+
+const { mutate: createUpcomingPolicy, isPending: isCreatingUpcomingPolicy } =
+  useAdminReviewFeePolicyUpcomingCreateMutation();
+
+const { mutate: deleteReviewFeePackage, isPending: isDeleting } =
+  useDeleteReviewFeePackageMutation();
 
 
 
@@ -183,6 +213,7 @@ const { mutate: createPolicy, isPending: isCreatingPolicy } =
 const policyForm = useForm<CreatePolicyForm>({
   defaultValues: {
     reviewFeeId: "",
+    reviewFeeDetailId: "",
     appliedDate: new Date().toISOString().slice(0, 16),
     pricePerReviewFee: 0,
     percentOfSystem: 0,
@@ -295,23 +326,7 @@ const policyForm = useForm<CreatePolicyForm>({
     <span className="text-gray-900">Danh sách gói phí đánh giá</span>
   </CardTitle>
 
- <Button
-  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow cursor-pointer"
-  onClick={() => {
-    if (packages.length === 0) return;
 
-    const firstId = packages[0].reviewFeeId;
-
-    setSelectedReviewFeeIdForPolicy(firstId);
-
-    // ⬅️ SET GIÁ TRỊ VÀO FORM TRƯỚC KHI MỞ MODAL
-    policyForm.setValue("reviewFeeId", firstId);
-
-    setShowCreatePolicyModal(true);
-  }}
->
-  Tạo chính sách mới
-</Button>
 
 
 </div>
@@ -430,18 +445,18 @@ const policyForm = useForm<CreatePolicyForm>({
                             </Badge>
                           </TableCell>
                           <TableCell>
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={() => {
-      setSelectedReviewFeeId(pkg.reviewFeeId);
-      setShowDetailModal(true);
-    }}
-    className="cursor-pointer"
-  >
-    Xem chi tiết
-  </Button>
-</TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedReviewFeeId(pkg.reviewFeeId);
+                                setShowDetailModal(true);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              Xem chi tiết
+                            </Button>
+                          </TableCell>
 
                         </TableRow>
                       ))
@@ -542,33 +557,40 @@ const policyForm = useForm<CreatePolicyForm>({
                             <FormLabel>Ngày áp dụng *</FormLabel>
                             <FormControl>
                               <Input
-                                type="date"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="dd/mm/yyyy"
+                                maxLength={10}
                                 {...field}
+                                value={field.value ?? ""}
+                                onChange={(event) =>
+                                  field.onChange(formatDateInput(event.target.value))
+                                }
                                 className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                               />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
+                          </FormItem> 
                         )}
                       />
-<FormField
-  control={form.control}
-  name="numberOfReview"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Số lượng đánh giá *</FormLabel>
-      <FormControl>
-        <Input
-          type="number"
-          placeholder="VD: 35"
-          {...field}
-          onChange={(e) => field.onChange(Number(e.target.value))}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+                        <FormField
+                          control={form.control}
+                          name="numberOfReview"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Số lượng đánh giá *</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="VD: 35"
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
                       <FormField
                         control={form.control}
@@ -599,13 +621,13 @@ const policyForm = useForm<CreatePolicyForm>({
                               <FormLabel>% Hệ thống *</FormLabel>
                               <FormControl>
                               <Input
-  type="number"
-  step="1"
-  min="0"
-  max="100"
-  {...field}
-  onChange={(e) => field.onChange(Number(e.target.value))}
-/>
+                                type="number"
+                                step="1"
+                                min="0"
+                                max="100"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
 
                               </FormControl>
                               <FormMessage />
@@ -679,7 +701,7 @@ const policyForm = useForm<CreatePolicyForm>({
     MODAL CHI TIẾT GÓI PHÍ ĐÁNH GIÁ
 ============================= */}
 {showCreatePolicyModal && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-1000 p-4">
     <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
       <h2 className="text-2xl font-bold mb-4 text-gray-900">Tạo chính sách mới</h2>
 
@@ -705,6 +727,8 @@ const policyForm = useForm<CreatePolicyForm>({
     {
       onSuccess: () => {
         setShowCreatePolicyModal(false);
+        queryClient.invalidateQueries({ queryKey: ["adminReviewFeePackages"] });
+        queryClient.invalidateQueries({ queryKey: ["adminReviewFeeDetail"] });
         policyForm.reset();
         refetch();
       },
@@ -714,25 +738,20 @@ const policyForm = useForm<CreatePolicyForm>({
 
           className="space-y-4"
         >
-          {/* REVIEW FEE ID — PHẢI ĐƯA VÀO TRONG FORM */}
+          {/* REVIEW FEE ID — HIỂN THỊ DẠNG READONLY */}
           <FormField
             control={policyForm.control}
             name="reviewFeeId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Chọn gói áp dụng *</FormLabel>
+                <FormLabel>Mã gói phí *</FormLabel>
                 <FormControl>
-                  <select
+                  <Input
                     {...field}
-                    className="border border-gray-300 rounded-lg px-3 py-2 w-full"
-                  >
-                    <option value="">-- Chọn gói --</option>
-                    {packages.map((pkg) => (
-                      <option key={pkg.reviewFeeId} value={pkg.reviewFeeId}>
-                        {pkg.reviewFeeId.slice(0, 8)}... | {pkg.numberOfReview} đánh giá
-                      </option>
-                    ))}
-                  </select>
+                    readOnly
+                    className="bg-gray-50 cursor-not-allowed"
+                    placeholder="Mã gói sẽ được tự động điền"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -909,9 +928,28 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
         )}
         {/* LỊCH SỬ CHÍNH SÁCH */}
         <div>
-          <h3 className="font-semibold text-gray-900 text-lg mb-3">
-            Lịch sử chính sách
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-900 text-lg">
+              Lịch sử chính sách
+            </h3>
+            <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow cursor-pointer"
+                onClick={() => {
+                  if (packages.length === 0) return;
+
+                  const firstId = packages[0].reviewFeeId;
+
+                  setSelectedReviewFeeIdForPolicy(firstId);
+
+                  // ⬅️ SET GIÁ TRỊ VÀO FORM TRƯỚC KHI MỞ MODAL
+                  policyForm.setValue("reviewFeeId", firstId);
+
+                  setShowCreatePolicyModal(true);
+                }}
+              >
+                Tạo chính sách mới
+              </Button>
+          </div>
 
           <div className="max-h-[280px] overflow-y-auto pr-2 space-y-3">
             {detailData?.data?.historyPolicies?.map((h) => (
@@ -919,44 +957,279 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                 key={h.reviewFeeDetailId}
                 className="p-4 bg-gray-50 border rounded-xl shadow-sm hover:shadow-md transition"
               >
-<p><strong>Giá:</strong> {h.pricePerReviewFee} Coin</p>
-                <p><strong>% Reviewer:</strong> {(h.percentOfReviewer * 100).toFixed(0)}%</p>
-                <p><strong>% Hệ thống:</strong> {(h.percentOfSystem * 100).toFixed(0)}%</p>
-                <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate)}</p>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p><strong>Giá:</strong> {h.pricePerReviewFee} Coin</p>
+                    <p><strong>% Reviewer:</strong> {(h.percentOfReviewer * 100).toFixed(0)}%</p>
+                    <p><strong>% Hệ thống:</strong> {(h.percentOfSystem * 100).toFixed(0)}%</p>
+                    <p><strong>Ngày áp dụng:</strong> {formatDate(h.appliedDate)}</p>
 
-              <p className="mt-1">
-  <strong>Trạng thái:</strong>{" "}
-  <span
-    className={
-      h.isCurrent
-        ? "text-green-600 font-semibold"
-        : "text-gray-500"
-    }
-  >
-    {h.isCurrent ? "Đang áp dụng" : "Hết hiệu lực"}
-  </span>
-</p>
+                    <p className="mt-1">
+                      <strong>Trạng thái:</strong>{" "}
+                      <span
+                        className={
+                          (h.isCurrent && !h.isUpcoming) || (!h.isCurrent && h.isUpcoming)
+                            ? "text-green-600 font-semibold"
+                            : "text-gray-500"
+                        }
+                      >
+                        {h.isCurrent && !h.isUpcoming
+                          ? "Đang áp dụng"
+                          : !h.isCurrent && h.isUpcoming
+                          ? "Sắp áp dụng"
+                          : "Đã áp dụng trước đó"}
+                      </span>
+                    </p>
+                  </div>
+                  {h.isUpcoming && (
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button
+                        onClick={() => {
+                          if (confirm("Bạn có chắc muốn xóa chính sách sắp áp dụng này?")) {
+                            deleteReviewFeePackage(h.reviewFeeDetailId, {
+                              onSuccess: () => {
+                                queryClient.invalidateQueries({ queryKey: ["adminReviewFeeDetail", selectedReviewFeeId] });
+                                refetch();
+                              },
+                            });
+                          }
+                        }}
+                        variant="destructive"
+                        size="sm"
+                        disabled={isDeleting}
+                        className="cursor-pointer"
+                      >
+                        {isDeleting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Đang xóa...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4 mr-2" />
+                            Xóa
+                          </>
+                        )}
+                      </Button>
 
-                 <p className="mt-1">
-  <strong>Sắp áp dụng:</strong>{" "}
-  <span
-    className={
-      h.isUpcoming
-        ? "text-green-600 font-semibold"
-        : "text-gray-500"
-    }
-  >
-    {h.isUpcoming ? "Sắp áp dụng" : "Đã áp dụng trước đó"}
-  </span>
-</p>
-
-
+                      <Button
+                        onClick={() => {
+                          if (detailData?.data?.upcomingPolicy) {
+                            // Nếu đã có upcoming policy, điền giá trị vào form
+                            const upcoming = detailData.data.upcomingPolicy;
+                            const upcomingPolicy = detailData.data.historyPolicies?.find(h => h.isUpcoming);
+                            policyForm.setValue("reviewFeeDetailId", upcomingPolicy?.reviewFeeDetailId || "");
+                            policyForm.setValue("pricePerReviewFee", upcoming.pricePerReviewFee);
+                            policyForm.setValue("percentOfSystem", (1 - upcoming.percentOfReviewer) * 100);
+                            policyForm.setValue("percentOfReviewer", upcoming.percentOfReviewer * 100);
+                            policyForm.setValue("appliedDate", new Date(upcoming.willApplyFrom).toISOString().slice(0, 16));
+                          } else {
+                            // Nếu chưa có, reset form và chọn current policy mặc định
+                            const currentPolicy = detailData?.data?.historyPolicies?.find(h => h.isCurrent);
+                            policyForm.reset({
+                              reviewFeeId: "",
+                              reviewFeeDetailId: currentPolicy?.reviewFeeDetailId || "",
+                              appliedDate: new Date().toISOString().slice(0, 16),
+                              pricePerReviewFee: 0,
+                              percentOfSystem: 0,
+                              percentOfReviewer: 0,
+                            });
+                          }
+                          setShowUpdateUpcomingModal(true);
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                        size="sm"
+                      >
+                        Cập nhật
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
+              
             ))}
           </div>
         </div>
 
       </div>
+    </div>
+  </div>
+)}
+
+{/* ============================
+    MODAL CẬP NHẬT CHÍNH SÁCH SẮP ÁP DỤNG
+============================= */}
+{showUpdateUpcomingModal && detailData?.data && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <h2 className="text-2xl font-bold mb-4 text-gray-900">
+        {detailData.data.upcomingPolicy ? "Cập nhật chính sách sắp áp dụng" : "Tạo chính sách sắp áp dụng"}
+      </h2>
+
+      <Form {...policyForm}>
+        <form
+          onSubmit={policyForm.handleSubmit((values) => {
+            const sys = normalizePercent(values.percentOfSystem);
+            const rev = normalizePercent(values.percentOfReviewer);
+
+            if (sys + rev !== 100) {
+              alert("Tổng % Hệ thống + Reviewer phải đúng 100%");
+              return;
+            }
+
+            if (!values.reviewFeeDetailId) {
+              alert("Vui lòng chọn chính sách");
+              return;
+            }
+
+            createUpcomingPolicy(
+              {
+                reviewFeeDetailId: values.reviewFeeDetailId,
+                appliedDate: values.appliedDate,
+                pricePerReviewFee: values.pricePerReviewFee,
+                percentOfSystem: sys / 100,
+                percentOfReviewer: rev / 100,
+              },
+              {
+                onSuccess: () => {
+                  setShowUpdateUpcomingModal(false);
+                  policyForm.reset();
+                  refetch();
+                  // Refetch detail để cập nhật upcoming policy
+                  if (selectedReviewFeeId) {
+                    // Invalidate query để refetch detail data
+                    queryClient.invalidateQueries({ queryKey: ["adminReviewFeeDetail", selectedReviewFeeId] });
+                  }
+                },
+              }
+            );
+          })}
+          className="space-y-4"
+        >
+          <FormField
+            control={policyForm.control}
+            name="reviewFeeDetailId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mã chính sách *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    readOnly
+                    className="w-full bg-gray-50 cursor-not-allowed"
+                    placeholder="Mã chính sách sẽ được tự động điền"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={policyForm.control}
+            name="appliedDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ngày áp dụng *</FormLabel>
+                <FormControl>
+                  <Input type="datetime-local" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={policyForm.control}
+            name="pricePerReviewFee"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Giá mỗi lần đánh giá (Coin) *</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    placeholder="VD: 10000"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={policyForm.control}
+              name="percentOfSystem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>% Hệ thống *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={policyForm.control}
+              name="percentOfReviewer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>% Reviewer *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                setShowUpdateUpcomingModal(false);
+                policyForm.reset();
+              }}
+              className="cursor-pointer"
+            >
+              Hủy
+            </Button>
+
+            <Button 
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+              disabled={isCreatingUpcomingPolicy}
+            >
+              {isCreatingUpcomingPolicy ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                detailData.data.upcomingPolicy ? "Cập nhật" : "Tạo mới"
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   </div>
 )}

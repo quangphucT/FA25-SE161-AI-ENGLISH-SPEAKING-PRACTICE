@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 import StatisticsForMentor from "../statistics-for-mentor/page";
@@ -10,6 +11,7 @@ import ReviewHistory from "../review-history/page";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import ReviewerProfile from "../reviewer-profile/page";
 import { handleLogout } from "@/utils/auth";
+import router from "next/router";
 
 const DashboardReviewerLayout = () => {
   const [activeTab, setActiveTab] = useState("statisticsForMentor");
@@ -107,19 +109,27 @@ const DashboardReviewerLayout = () => {
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="font-bold text-lg text-white">Reviewer Hub</h1>
-                  <p className="text-xs text-slate-400">{meData?.fullName}</p>
+                <div
+                  onClick={() => router.push("/dashboard-reviewer-layout")}
+                  className="flex items-center gap-3 cursor-pointer"
+                >
+                  <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg">
+                    <Image
+                      src="/images/imageLanding2.jpg"
+                      alt="AESP Logo"
+                      fill
+                      className="object-contain p-1 scale-280"
+                    />
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-2xl font-extrabold tracking-tight text-slate-900 text-white">
+                      AESP
+                    </div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                      AI Practice Speaking Platform
+                    </div>
+                  </div>
+                 
                 </div>
               </div>
             )}

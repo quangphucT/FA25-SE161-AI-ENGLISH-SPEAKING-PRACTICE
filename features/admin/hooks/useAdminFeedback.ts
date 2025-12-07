@@ -1,9 +1,9 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { adminFeedbackApproveService, AdminFeedbackDetailResponse, adminFeedbackDetailService, AdminFeedbackRejectPayload, AdminFeedbackRejectResponse, adminFeedbackRejectService, AdminFeedbackResponse, adminFeedbackService } from "../services/adminFeedbackService";
-export const useAdminFeedback = (pageNumber: number, pageSize: number, status: string, keyword: string) => {
+export const useAdminFeedback = (pageNumber: number, pageSize: number, status: string, keyword: string, type: string ) => {
     return useQuery<AdminFeedbackResponse, Error>({
-        queryKey: ["adminFeedback", pageNumber, pageSize, status, keyword],
-        queryFn: () => adminFeedbackService(pageNumber, pageSize, status, keyword),
+        queryKey: ["adminFeedback", pageNumber, pageSize, status, keyword, type],
+        queryFn: () => adminFeedbackService(pageNumber, pageSize, status, keyword, type),
         placeholderData: keepPreviousData,
     });
 };

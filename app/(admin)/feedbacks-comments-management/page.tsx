@@ -22,12 +22,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   useAdminFeedback,
-  useAdminFeedbackDetail,
   useAdminFeedbackReject,
   useAdminFeedbackApprove,
 } from "@/features/admin/hooks/useAdminFeedback";
 import {
-  Feedback as ApiFeedback,
   AdminFeedbackResponse,
 } from "@/features/admin/services/adminFeedbackService";
 import {
@@ -51,33 +49,11 @@ import {
   FileSpreadsheet,
   Filter,
   MoreVertical,
+  FileText,
 } from "lucide-react";
+import { Feedback } from "@/features/admin/services/adminFeedbackService";
 
 // Type definitions
-interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  avatar?: string;
-  userType: "learner" | "mentor";
-}
-
-interface FeedbackTarget {
-  type: "mentor" | "package";
-  id: string;
-  name: string;
-}
-
-interface Feedback {
-  feedbackId: string;
-  reviewer: User;
-  target: FeedbackTarget;
-  rating: number; // 1-5 stars
-  content: string;
-  createdAt: string;
-  status: "Active" | "Rejected" | "Pending";
-  type: "feedback" | "comment";
-}
 
 // Map API status to UI status format
 const mapApiStatusToUI = (apiStatus: string): "Active" | "Rejected" | "Pending" => {
@@ -93,36 +69,12 @@ const mapApiStatusToUI = (apiStatus: string): "Active" | "Rejected" | "Pending" 
   return "Pending";
 };
 
-// Map API feedback to UI feedback structure
-const mapApiFeedbackToUI = (apiFeedback: ApiFeedback): Feedback => {
-  // Determine target type based on reviewId presence
-  // If reviewId exists, it's a mentor feedback, otherwise it's a package feedback
-  const targetType: "mentor" | "package" = apiFeedback.reviewId ? "mentor" : "package";
-  
-  return {
-    feedbackId: apiFeedback.feedbackId,
-    reviewer: {
-      id: apiFeedback.feedbackId, // Using feedbackId as id since we don't have user id
-      fullName: apiFeedback.senderName,
-      email: apiFeedback.senderEmail,
-      userType: "learner", // Assuming all feedbacks are from learners
-    },
-    target: {
-      type: targetType,
-      id: apiFeedback.reviewId || apiFeedback.feedbackId,
-      name: apiFeedback.reviewerName || "N/A",
-    },
-    rating: apiFeedback.rating,
-    content: apiFeedback.content,
-    createdAt: apiFeedback.createdAt,
-    status: mapApiStatusToUI(apiFeedback.status),
-    type: apiFeedback.type as "feedback" | "comment",
-  };
-};
+
 
 const FeedbacksCommentsManagement = () => {
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
   const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
   const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(
     null
@@ -145,33 +97,36 @@ const FeedbacksCommentsManagement = () => {
     return statusFilter; // Fallback to original value
   }, [statusFilter]);
 
-  // Fetch feedbacks from API
+  // Convert type filter for API
+  const apiType = useMemo(() => {
+    if (typeFilter === "All") return "";
+    return typeFilter;
+  }, [typeFilter]);
+
+  // Fetch feedbacks from API (with filters)
   const feedbacksQuery = useAdminFeedback(
     pageNumber,
     pageSize,
     apiStatus,
-    search
+    search,
+    apiType
   );
   const { data, isLoading, error } = feedbacksQuery;
   const feedbacksResponse = data as AdminFeedbackResponse | undefined;
 
-  // Fetch feedback detail when selected
-  const feedbackDetailQuery = useAdminFeedbackDetail(selectedFeedbackId || "");
-  const feedbackDetail = feedbackDetailQuery.data?.data;
+  // Fetch total statistics (without filters) to show overall stats
+  const totalStatsQuery = useAdminFeedback(1, 1, "", "", "");
+  const totalStatsResponse = totalStatsQuery.data as AdminFeedbackResponse | undefined;
 
   // Reject mutation
   const rejectMutation = useAdminFeedbackReject();
   const approveMutation = useAdminFeedbackApprove();
 
-  // Map API feedbacks to UI structure
-  const apiFeedbacks = useMemo<ApiFeedback[]>(() => {
+  // Get feedbacks from API
+  const feedbacks = useMemo<Feedback[]>(() => {
     if (!feedbacksResponse?.isSucess) return [];
     return feedbacksResponse.data?.items ?? [];
   }, [feedbacksResponse]);
-
-  const mappedFeedbacks = useMemo<Feedback[]>(() => {
-    return apiFeedbacks.map(mapApiFeedbackToUI);
-  }, [apiFeedbacks]);
 
   const totalItems = feedbacksResponse?.isSucess
     ? feedbacksResponse.data?.totalItems ?? 0
@@ -179,50 +134,33 @@ const FeedbacksCommentsManagement = () => {
 
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
-  // Calculate statistics
+  // Get statistics from API response (total statistics, not filtered)
+  // Use totalStatsResponse for overall stats that don't change with filters
+  const totalFeedback = useMemo(() => {
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalFeedback ?? 0) : 0;
+  }, [totalStatsResponse]);
+
+  const totalReports = useMemo(() => {
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalReports ?? 0) : 0;
+  }, [totalStatsResponse]);
+
   const totalApproved = useMemo(() => {
-    return mappedFeedbacks.filter((f) => f.status === "Active").length;
-  }, [mappedFeedbacks]);
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalApproved ?? 0) : 0;
+  }, [totalStatsResponse]);
 
   const totalRejected = useMemo(() => {
-    return mappedFeedbacks.filter((f) => f.status === "Rejected").length;
-  }, [mappedFeedbacks]);
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalRejected ?? 0) : 0;
+  }, [totalStatsResponse]);
 
   const averageRating = useMemo(() => {
-    if (mappedFeedbacks.length === 0) return 0;
-    const sum = mappedFeedbacks.reduce((acc, f) => acc + f.rating, 0);
-    return sum / mappedFeedbacks.length;
-  }, [mappedFeedbacks]);
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.averageRating ?? 0) : 0;
+  }, [totalStatsResponse]);
 
   // Get selected feedback for display
   const selectedFeedback = useMemo<Feedback | null>(() => {
     if (!selectedFeedbackId) return null;
-    const found = mappedFeedbacks.find((f) => f.feedbackId === selectedFeedbackId);
-    if (found) return found;
-    // If not found in current page, use detail data
-    if (feedbackDetail) {
-      return {
-        feedbackId: feedbackDetail.feedbackId,
-        reviewer: {
-          id: feedbackDetail.feedbackId,
-          fullName: feedbackDetail.senderName || "",
-          email: "",
-          userType: "learner",
-        },
-        target: {
-          type: feedbackDetail.reviewId ? "mentor" : "package",
-          id: feedbackDetail.reviewId || feedbackDetail.feedbackId,
-          name: "",
-        },
-        rating: feedbackDetail.rating,
-        content: feedbackDetail.content,
-        createdAt: feedbackDetail.createdAt,
-        status: mapApiStatusToUI(feedbackDetail.status),
-        type: feedbackDetail.type as "feedback" | "comment",
-      };
-    }
-    return null;
-  }, [selectedFeedbackId, mappedFeedbacks, feedbackDetail]);
+    return feedbacks.find((f) => f.feedbackId === selectedFeedbackId) || null;
+  }, [selectedFeedbackId, feedbacks]);
 
   // const handleSelectRow = (idx: number) => {
   //   setSelectedRows(
@@ -255,7 +193,7 @@ const FeedbacksCommentsManagement = () => {
   };
   const closeActionModal = () => {
     setShowActionModal(false);
-    setSelectedFeedbackId(null);
+    //setSelectedFeedbackId(null);
     setActionType(null);
     setRejectReason("");
   };
@@ -276,6 +214,9 @@ const FeedbacksCommentsManagement = () => {
         toast.success(successMessage);
         queryClient.invalidateQueries({ queryKey: ["adminFeedback"] });
         closeActionModal();
+        // Close detail modal after successful action
+        setShowDetailsModal(false);
+        setSelectedFeedbackId(null);
       },
       onError: (error: Error) => {
         toast.error(error.message || errorMessage);
@@ -346,9 +287,17 @@ const FeedbacksCommentsManagement = () => {
       new Date(dateString).toLocaleTimeString("vi-VN")
     );
   };
-
+  const changeType = (type: string) => {
+    if (type === "ReviewerFeedback") {
+      return "Phản hồi";
+    } else if (type === "ReviewerReport") {
+      return "Báo cáo";
+    } else {
+      return "Tất cả";
+    }
+  }
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen ">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -405,16 +354,29 @@ const FeedbacksCommentsManagement = () => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Tổng số phản hồi</p>
-                  <div className="text-3xl font-bold text-gray-900">{totalItems}</div>
+                  <div className="text-3xl font-bold text-gray-900">{totalFeedback}</div>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-full">
                   <MessageSquare className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Tổng số báo cáo</p>
+                  <div className="text-3xl font-bold text-gray-900">{totalReports}</div>
+                </div>
+                <div className="p-3 bg-orange-100 rounded-full">
+                  <FileText className="w-6 h-6 text-orange-600" />
                 </div>
               </div>
             </CardContent>
@@ -472,8 +434,23 @@ const FeedbacksCommentsManagement = () => {
               <CardDescription className="mt-1">
                 {isLoading
                   ? "Đang tải..."
-                  : `Hiển thị ${mappedFeedbacks.length} trên ${totalItems} phản hồi và bình luận`}
+                  : `Hiển thị ${feedbacks.length} trên ${totalItems} phản hồi và bình luận`}
               </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Tabs 
+                value={typeFilter} 
+                onValueChange={(v) => {
+                  setTypeFilter(v);
+                  setPageNumber(1);
+                }}
+              >
+                <TabsList className="grid grid-cols-3 w-auto">
+                  <TabsTrigger value="All">Tất cả</TabsTrigger>
+                  <TabsTrigger value="ReviewerFeedback">Phản hồi</TabsTrigger>
+                  <TabsTrigger value="ReviewerReport">Báo cáo</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </CardHeader>
@@ -489,7 +466,7 @@ const FeedbacksCommentsManagement = () => {
               <p className="font-medium text-red-600 text-lg">Có lỗi xảy ra khi tải dữ liệu</p>
               <p className="text-sm text-gray-600 mt-2">Vui lòng thử lại sau.</p>
             </div>
-          ) : mappedFeedbacks.length === 0 ? (
+          ) : feedbacks.length === 0 ? (
             <div className="text-center py-16">
               <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 font-medium">Không có phản hồi nào</p>
@@ -503,13 +480,16 @@ const FeedbacksCommentsManagement = () => {
                     <TableHead className="font-semibold text-gray-700">ID</TableHead>
                     <TableHead className="font-semibold text-gray-700">Người đánh giá</TableHead>
                     <TableHead className="font-semibold text-gray-700">Điểm</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Loại</TableHead>
                     <TableHead className="font-semibold text-gray-700">Ngày tạo</TableHead>
                     <TableHead className="font-semibold text-gray-700">Trạng thái</TableHead>
                     <TableHead className="font-semibold text-gray-700 text-center">Hành động</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mappedFeedbacks.map((feedback) => (
+                  {feedbacks.map((feedback) => {
+                    const status = mapApiStatusToUI(feedback.status);
+                    return (
                     <TableRow key={feedback.feedbackId} className="hover:bg-gray-50 transition-colors">
                       <TableCell>
                         <span className="font-mono text-sm block truncate max-w-[150px] text-gray-900">
@@ -519,16 +499,11 @@ const FeedbacksCommentsManagement = () => {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium text-gray-900">
-                            {feedback.reviewer.fullName}
+                            {feedback.senderName}
                           </span>
                           <span className="text-sm text-gray-500">
-                            {feedback.reviewer.email}
+                            {feedback.senderEmail}
                           </span>
-                          <Badge variant="outline" className="w-fit text-xs mt-1">
-                            {feedback.reviewer.userType === "learner"
-                              ? "người học"
-                              : "người hướng dẫn"}
-                          </Badge>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -539,29 +514,34 @@ const FeedbacksCommentsManagement = () => {
                           </span>
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="w-fit text-xs mt-1">
+                          {changeType(feedback.type)}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-sm text-gray-600">
                         {formatDate(feedback.createdAt)}
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            feedback.status === "Active"
+                            status === "Active"
                               ? "default"
-                              : feedback.status === "Rejected"
+                              : status === "Rejected"
                               ? "destructive"
-                              : feedback.status === "Pending"
+                              : status === "Pending"
                               ? "secondary"
                               : "outline"
                           }
                           className="text-xs font-medium"
                         >
-                          {feedback.status === "Active"
+                          {status === "Active"
                             ? "Đã duyệt"
-                            : feedback.status === "Rejected"
+                            : status === "Rejected"
                             ? "Bị từ chối"
-                            : feedback.status === "Pending"
+                            : status === "Pending"
                             ? "Đang chờ"
-                            : feedback.status}
+                            : status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
@@ -584,29 +564,12 @@ const FeedbacksCommentsManagement = () => {
                               <Eye className="w-4 h-4" />
                               Xem chi tiết
                             </DropdownMenuItem>
-                            {feedback.status=== "Pending" && (
-                              <>
-                                <DropdownMenuItem
-                                  onClick={() => handleAction(feedback, "approve")}
-                                  className="cursor-pointer flex items-center gap-2 text-green-600 focus:text-green-700"
-                                >
-                                  <CheckCircle2 className="w-4 h-4" />
-                                  Phê duyệt
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleAction(feedback, "reject")}
-                                  className="cursor-pointer flex items-center gap-2 text-red-600 focus:text-red-700"
-                                >
-                                  <X className="w-4 h-4" />
-                                  Từ chối
-                                </DropdownMenuItem>
-                              </>
-                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -615,7 +578,7 @@ const FeedbacksCommentsManagement = () => {
       </Card>
 
       {/* Pagination */}
-      {!isLoading && mappedFeedbacks.length > 0 && (
+      {!isLoading && feedbacks.length > 0 && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
@@ -680,7 +643,7 @@ const FeedbacksCommentsManagement = () => {
 
       {/* Modal xác nhận từ chối */}
       {showActionModal && selectedFeedback && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeActionModal}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-1000 p-4" onClick={closeActionModal}>
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className={`p-6 border-b bg-gradient-to-r ${actionModalConfig.headerBg}`}>
               <div className="flex items-center justify-between">
@@ -715,7 +678,7 @@ const FeedbacksCommentsManagement = () => {
                 <div>
                   <span className="text-xs font-medium text-gray-500">Người dùng:</span>
                   <p className="text-sm font-medium text-gray-900 mt-1">
-                    {selectedFeedback.reviewer.fullName}
+                    {selectedFeedback.senderName}
                   </p>
                 </div>
                 <div>
@@ -805,10 +768,10 @@ const FeedbacksCommentsManagement = () => {
                     </label>
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <p className="text-sm font-medium text-gray-900">
-                        {selectedFeedback.reviewer.fullName}
+                        {selectedFeedback.senderName}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {selectedFeedback.reviewer.email}
+                        {selectedFeedback.senderEmail}
                       </p>
                     </div>
                   </div>
@@ -846,22 +809,27 @@ const FeedbacksCommentsManagement = () => {
                       Trạng thái
                     </label>
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <Badge
-                        variant={
-                          selectedFeedback.status === "Active"
-                            ? "default"
-                            : selectedFeedback.status === "Rejected"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                        className="text-xs font-medium"
-                      >
-                        {selectedFeedback.status === "Active"
-                          ? "Đã duyệt"
-                          : selectedFeedback.status === "Rejected"
-                          ? "Bị từ chối"
-                          : "Đang chờ"}
-                      </Badge>
+                      {(() => {
+                        const status = mapApiStatusToUI(selectedFeedback.status);
+                        return (
+                          <Badge
+                            variant={
+                              status === "Active"
+                                ? "default"
+                                : status === "Rejected"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                            className="text-xs font-medium"
+                          >
+                            {status === "Active"
+                              ? "Đã duyệt"
+                              : status === "Rejected"
+                              ? "Bị từ chối"
+                              : "Đang chờ"}
+                          </Badge>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -893,19 +861,116 @@ const FeedbacksCommentsManagement = () => {
                     </p>
                   </div>
                 </div>
+
+                {/* Reviewer Information */}
+                {selectedFeedback.reviewerName && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Tên reviewer
+                      </label>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-900">
+                          {selectedFeedback.reviewerName}
+                        </p>
+                      </div>
+                    </div>
+                    {(selectedFeedback.reviewScore !== undefined || selectedFeedback.reviewerScore !== undefined) && (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Điểm reviewer
+                        </label>
+                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-sm text-gray-900">
+                            {selectedFeedback.reviewScore ?? selectedFeedback.reviewerScore}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(selectedFeedback.reviewComment || selectedFeedback.reviewerComment) && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Nhận xét của reviewer
+                    </label>
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                        {selectedFeedback.reviewComment || selectedFeedback.reviewerComment}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {(selectedFeedback.reviewType || selectedFeedback.reviewerType) && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Loại reviewer
+                    </label>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-900">
+                        {selectedFeedback.reviewType || selectedFeedback.reviewerType}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedFeedback.learnerRecordAudioUrl && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Audio của learner
+                    </label>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <audio controls className="w-full">
+                        <source src={selectedFeedback.learnerRecordAudioUrl} type="audio/mpeg" />
+                        <source src={selectedFeedback.learnerRecordAudioUrl} type="audio/wav" />
+                        Trình duyệt của bạn không hỗ trợ phát audio.
+                      </audio>
+
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end mt-6 pt-6 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    setSelectedFeedbackId(null);
-                  }}
-                  className="cursor-pointer"
-                >
-                  Đóng
-                </Button>
+              <div className="flex items-center justify-between mt-6 pt-6 border-t">
+                {mapApiStatusToUI(selectedFeedback.status) === "Pending" && (
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={() => {
+                        setActionType("approve");
+                        setShowActionModal(true);
+                      }}
+                      className="bg-green-600 text-white hover:bg-green-700 cursor-pointer flex items-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Phê duyệt
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setActionType("reject");
+                        setRejectReason("");
+                        setShowActionModal(true);
+                      }}
+                      className="bg-red-600 text-white hover:bg-red-700 cursor-pointer flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Từ chối
+                    </Button>
+                  </div>
+                )}
+                <div className="flex items-center gap-3 ml-auto">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      setSelectedFeedbackId(null);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    Đóng
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
