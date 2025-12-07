@@ -113,7 +113,7 @@ export default function AssessmentManagement() {
                       onClick={() => setSelectedAssessmentId(assessment.assessmentId)}
                     >
                       <div className="flex flex-col">
-                        <span className="font-medium truncate">{assessment.assessmentId}</span>
+                        <span className="font-medium truncate">{assessment.learnerName}</span>
                         <span className="text-xs text-muted-foreground">
                           Điểm: {assessment.score ?? "-"} • Câu hỏi: {assessment.numberOfQuestion} •{" "}
                           {formatDate(assessment.createdAt)}
@@ -200,8 +200,8 @@ export default function AssessmentManagement() {
             ) : (
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Learner Profile ID</p>
-                  <p className="font-medium break-all">{selectedAssessment.learnerProfileId}</p>
+                  <p className="text-muted-foreground">Tên học viên</p>
+                  <p className="font-medium break-all">{selectedAssessment.learnerName}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Tổng số câu hỏi</p>

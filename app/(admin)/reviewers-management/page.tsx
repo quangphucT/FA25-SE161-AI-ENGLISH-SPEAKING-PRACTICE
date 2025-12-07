@@ -16,10 +16,28 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import {
   useAdminReviewer,
   useAdminReviewerDetail,
   useAdminReviewerBan,
+  useAdminReviewerLevel,
 } from "@/features/admin/hooks/useAdminReviewer";
 import {
   Reviewer,
@@ -33,6 +51,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 
 
@@ -82,6 +102,8 @@ const ReviewerManagement = () => {
   const [lastPanPos, setLastPanPos] = useState<{ x: number; y: number } | null>(
     null
   );
+  const [showUpdateLevelModal, setShowUpdateLevelModal] = useState(false);
+  const [selectedReviewer, setSelectedReviewer] = useState<Reviewer | null>(null);
 
   const reviewersQuery = useAdminReviewer(
     pageNumber,
@@ -89,7 +111,7 @@ const ReviewerManagement = () => {
     statusFilter,
     search
   );
-  const { data, isLoading, error } = reviewersQuery;
+  const { data, isLoading, error, refetch: refetchReviewers } = reviewersQuery;
   const reviewersResponse = data as AdminReviewersResponse | undefined;
 
   // Fetch reviewer detail when a user is selected
@@ -162,6 +184,44 @@ const ReviewerManagement = () => {
     setBanReason("");
     setShowConfirmDialog(true);
   };
+
+  const updateLevelSchema = z.object({
+    level: z.string().min(1, "Vui lòng nhập level"),
+  });
+  const updateLevelForm = useForm<z.infer<typeof updateLevelSchema>>({
+    resolver: zodResolver(updateLevelSchema),
+    defaultValues: {
+      level: "",
+    },
+  });
+  const handleOpenUpdateLevelModal = (reviewer: Reviewer) => {
+    setSelectedReviewer(reviewer);
+    updateLevelForm.setValue("level", reviewer.level || "");
+    setShowUpdateLevelModal(true);
+  };
+  const handleUpdateLevelSubmit = (values: z.infer<typeof updateLevelSchema>) => {
+    if (!selectedReviewer) return;
+    
+    updateLevel(
+      {
+        reviewerProfileId: selectedReviewer.reviewerProfileId,
+        level: values.level,
+      },
+      {
+        onSuccess: () => {
+          setShowUpdateLevelModal(false);
+          updateLevelForm.reset();
+          setSelectedReviewer(null);
+          setShowDetailsModal(false);
+          // Refetch data to update the list
+          refetchReviewers();
+          queryClient.invalidateQueries({ queryKey: ["adminRegisteredReviewer"] });
+        },
+      }
+    );
+  };
+
+  const { mutate: updateLevel, isPending: isUpdatingLevel } = useAdminReviewerLevel();
 
   const confirmAction = () => {
     if (!reviewerToAction) return;
@@ -327,7 +387,7 @@ const ReviewerManagement = () => {
     <span className="text-sm">{reviewer.email}</span>
   </div>
 </TableCell>
-                    <TableCell>{reviewer.level || "___"}</TableCell>
+                    <TableCell>{reviewer.level || "Chưa có"}</TableCell>
                     <TableCell>{reviewer.experience} năm</TableCell>
                     <TableCell>
                       <Badge
@@ -413,6 +473,24 @@ const ReviewerManagement = () => {
                               <circle cx="12" cy="12" r="3" />
                             </svg>
                             Xem chi tiết
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenUpdateLevelModal(reviewer)}
+                            className="cursor-pointer text-gray-700 focus:text-gray-900"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              className="inline mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Cập nhật trình độ   
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
@@ -856,79 +934,90 @@ const ReviewerManagement = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {reviewerDetail.feedbacks.map((feedback) => (
-                          <TableRow
-                            key={feedback.id}
-                            className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
-                          >
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                  {feedback.fullName
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")
-                                    .toUpperCase()
-                                    .slice(0, 2)}
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-gray-900">
-                                    {feedback.fullName}
+                        {reviewerDetail.feedbacks.map((feedback, index) => {
+                          const comment =  feedback.comment;
+                          const learnerName = feedback.learner?.learnerName || "Không có tên";
+                          const learnerEmail = feedback.learner?.learnerEmail || "";
+                          const learnerPhone = feedback.learner?.learnerPhone || "";
+                          const feedbackDate =  feedback.date;
+                          const feedbackId = feedback.feedbackId || feedback.id || `feedback-${index}`;
+                          
+                          return (
+                            <TableRow
+                              key={feedbackId}
+                              className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100"
+                            >
+                              <TableCell className="font-medium">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                    {learnerName
+                                      ? learnerName
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")
+                                          .toUpperCase()
+                                          .slice(0, 2)
+                                      : "N/A"}
                                   </div>
-                                  <div className="text-sm text-gray-500">
-                                    {feedback.email}
-                                  </div>
-                                  <div className="text-xs text-gray-400">
-                                    {feedback.phone}
+                                  <div>
+                                    <div className="font-semibold text-gray-900">
+                                      {learnerName}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {learnerEmail}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      {learnerPhone}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center">
-                                  {[...Array(5)].map((_, i) => (
-                                    <svg
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < feedback.rating
-                                          ? "text-yellow-400"
-                                          : "text-gray-300"
-                                      }`}
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                  ))}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center">
+                                    {[...Array(5)].map((_, i) => (
+                                      <svg
+                                        key={i}
+                                        className={`w-4 h-4 ${
+                                          i < feedback.rating
+                                            ? "text-yellow-400"
+                                            : "text-gray-300"
+                                        }`}
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    ))}
+                                  </div>
+                                  <Badge
+                                    className={`text-xs font-medium ${
+                                      feedback.rating >= 4
+                                        ? "bg-green-100 text-green-700 border-green-300"
+                                        : feedback.rating >= 3
+                                        ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                                        : "bg-red-100 text-red-700 border-red-300"
+                                    }`}
+                                  >
+                                    {feedback.rating}/5
+                                  </Badge>
                                 </div>
-                                <Badge
-                                  className={`text-xs font-medium ${
-                                    feedback.rating >= 4
-                                      ? "bg-green-100 text-green-700 border-green-300"
-                                      : feedback.rating >= 3
-                                      ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-                                      : "bg-red-100 text-red-700 border-red-300"
-                                  }`}
-                                >
-                                  {feedback.rating}/5
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="max-w-xs">
-                                <p className="text-sm text-gray-700 line-clamp-2">
-                                  {feedback.content}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm text-gray-600">
-                                {formatDisplayDate(feedback.createdAt)}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                              </TableCell>
+                              <TableCell>
+                                <div className="max-w-xs">
+                                  <p className="text-sm text-gray-700 line-clamp-2">
+                                    {feedback.comment}
+                                  </p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm text-gray-600">
+                                  {formatDisplayDate(feedbackDate)}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -1144,7 +1233,134 @@ const ReviewerManagement = () => {
           </div>
         </div>
       )}
+      {/* Update Level Modal */}
+      {showUpdateLevelModal && selectedReviewer && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <svg
+                      width="24"
+                      height="24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      Cập nhật Level Reviewer
+                    </h2>
+                    <p className="text-sm text-green-100 mt-0.5">
+                      {selectedReviewer.fullName}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setShowUpdateLevelModal(false);
+                    updateLevelForm.reset();
+                    setSelectedReviewer(null);
+                  }}
+                  className="text-white hover:bg-white/20 h-10 w-10 p-0 rounded-full transition-colors"
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <Form {...updateLevelForm}>
+                <form
+                  onSubmit={updateLevelForm.handleSubmit(handleUpdateLevelSubmit)}
+                  className="space-y-6"
+                >
+                  <FormField
+                    control={updateLevelForm.control}
+                    name="level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          Level *
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                              <SelectValue placeholder="Chọn level" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="A1">A1</SelectItem>
+                            <SelectItem value="A2">A2</SelectItem>
+                            <SelectItem value="B1">B1</SelectItem>
+                            <SelectItem value="B2">B2</SelectItem>
+                            <SelectItem value="C1">C1</SelectItem>
+                            <SelectItem value="C2">C2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Level hiện tại: <span className="font-medium text-gray-700">{selectedReviewer.level || "Chưa có"}</span>
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowUpdateLevelModal(false);
+                        updateLevelForm.reset();
+                        setSelectedReviewer(null);
+                      }}
+                      className="cursor-pointer border-gray-300 hover:bg-gray-50 px-6"
+                      disabled={isUpdatingLevel}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isUpdatingLevel}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer px-6 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdatingLevel ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Đang cập nhật...
+                        </>
+                      ) : (
+                        "Cập nhật Level"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 

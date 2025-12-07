@@ -49,6 +49,7 @@ import {
   FileSpreadsheet,
   Filter,
   MoreVertical,
+  FileText,
 } from "lucide-react";
 import { Feedback } from "@/features/admin/services/adminFeedbackService";
 
@@ -102,7 +103,7 @@ const FeedbacksCommentsManagement = () => {
     return typeFilter;
   }, [typeFilter]);
 
-  // Fetch feedbacks from API
+  // Fetch feedbacks from API (with filters)
   const feedbacksQuery = useAdminFeedback(
     pageNumber,
     pageSize,
@@ -112,6 +113,10 @@ const FeedbacksCommentsManagement = () => {
   );
   const { data, isLoading, error } = feedbacksQuery;
   const feedbacksResponse = data as AdminFeedbackResponse | undefined;
+
+  // Fetch total statistics (without filters) to show overall stats
+  const totalStatsQuery = useAdminFeedback(1, 1, "", "", "");
+  const totalStatsResponse = totalStatsQuery.data as AdminFeedbackResponse | undefined;
 
   // Reject mutation
   const rejectMutation = useAdminFeedbackReject();
@@ -129,20 +134,27 @@ const FeedbacksCommentsManagement = () => {
 
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
-  // Calculate statistics
+  // Get statistics from API response (total statistics, not filtered)
+  // Use totalStatsResponse for overall stats that don't change with filters
+  const totalFeedback = useMemo(() => {
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalFeedback ?? 0) : 0;
+  }, [totalStatsResponse]);
+
+  const totalReports = useMemo(() => {
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalReports ?? 0) : 0;
+  }, [totalStatsResponse]);
+
   const totalApproved = useMemo(() => {
-    return feedbacks.filter((f) => mapApiStatusToUI(f.status) === "Active").length;
-  }, [feedbacks]);
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalApproved ?? 0) : 0;
+  }, [totalStatsResponse]);
 
   const totalRejected = useMemo(() => {
-    return feedbacks.filter((f) => mapApiStatusToUI(f.status) === "Rejected").length;
-  }, [feedbacks]);
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.totalRejected ?? 0) : 0;
+  }, [totalStatsResponse]);
 
   const averageRating = useMemo(() => {
-    if (feedbacks.length === 0) return 0;
-    const sum = feedbacks.reduce((acc, f) => acc + f.rating, 0);
-    return sum / feedbacks.length;
-  }, [feedbacks]);
+    return totalStatsResponse?.isSucess ? (totalStatsResponse.data?.averageRating ?? 0) : 0;
+  }, [totalStatsResponse]);
 
   // Get selected feedback for display
   const selectedFeedback = useMemo<Feedback | null>(() => {
@@ -275,9 +287,17 @@ const FeedbacksCommentsManagement = () => {
       new Date(dateString).toLocaleTimeString("vi-VN")
     );
   };
-
+  const changeType = (type: string) => {
+    if (type === "ReviewerFeedback") {
+      return "Phản hồi";
+    } else if (type === "ReviewerReport") {
+      return "Báo cáo";
+    } else {
+      return "Tất cả";
+    }
+  }
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen ">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -334,16 +354,29 @@ const FeedbacksCommentsManagement = () => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Tổng số phản hồi</p>
-                  <div className="text-3xl font-bold text-gray-900">{totalItems}</div>
+                  <div className="text-3xl font-bold text-gray-900">{totalFeedback}</div>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-full">
                   <MessageSquare className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Tổng số báo cáo</p>
+                  <div className="text-3xl font-bold text-gray-900">{totalReports}</div>
+                </div>
+                <div className="p-3 bg-orange-100 rounded-full">
+                  <FileText className="w-6 h-6 text-orange-600" />
                 </div>
               </div>
             </CardContent>
@@ -483,7 +516,7 @@ const FeedbacksCommentsManagement = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="w-fit text-xs mt-1">
-                          {feedback.type}
+                          {changeType(feedback.type)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">

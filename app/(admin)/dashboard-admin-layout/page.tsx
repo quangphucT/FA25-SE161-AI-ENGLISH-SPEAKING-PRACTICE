@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { useState } from "react";
+import Image from "next/image";
 import {
   Chart,
   CategoryScale,
@@ -25,6 +26,7 @@ import {
   ShoppingBag,
   Coins,
   ReceiptText,
+  Router,
 } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import ReviewerManagement from "../reviewers-management/page";
@@ -39,6 +41,7 @@ import PurchasesItemManagement from "../purchases-item-management/page";
 import AiConversationPackageManagement from "../ai-conversation-package-service/page";
 import ReviewFeeManagement from "../reviewfee-management/page"; 
 import { handleLogout } from "@/utils/auth";
+import router from "next/router";
 
 Chart.register(
   CategoryScale,
@@ -64,15 +67,28 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
   <aside className="hidden md:flex flex-col w-72 h-screen bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl fixed left-0 top-0 z-10 no-scrollbar">
     {/* Header Logo - Fixed at top */}
     <div className="sticky top-0 z-20 bg-gradient-to-b from-slate-900 to-slate-800 flex items-center gap-3 font-bold text-xl px-6 pt-8 pb-4 border-b border-slate-700/50">
-      <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-        <span className="text-white text-lg font-extrabold">S</span>
-      </div>
-      <div className="flex flex-col">
-        <span className="text-white text-2xl font-extrabold">SpeakAI</span>
-        <span className="text-slate-400 text-xs font-medium">
-          Bảng quản trị
-        </span>
-      </div>
+          <div
+            onClick={() => router.push("/dashboard-admin-layout")}
+            className="flex items-center gap-3 cursor-pointer"
+          >
+          <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg">
+                  <Image
+            src="/images/imageLanding2.jpg"
+            alt="AESP Logo"
+            fill
+            className="object-contain p-1 scale-280"
+          />
+
+            </div>
+            <div className="leading-tight">
+              <div className="text-2xl font-extrabold tracking-tight text-slate-900 text-white">
+                AESP
+              </div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                Nền tảng Luyện Nói AI
+              </div>
+            </div>
+          </div>
     </div>
     {/* Navigation - Scrollable */}
     <nav className="flex-1 px-6 py-4 flex flex-col overflow-y-auto no-scrollbar">

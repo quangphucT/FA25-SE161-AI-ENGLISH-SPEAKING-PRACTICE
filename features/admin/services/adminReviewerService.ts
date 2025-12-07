@@ -29,6 +29,7 @@ export interface Reviewer {
 }
 export interface ReviewerDetail {
     reviewerProfileId: string;
+    userId: string;
     fullName: string;
     level: string;
     email: string;
@@ -49,14 +50,19 @@ export interface ReviewerDetailResponse {
   message: string;
 }
 export interface Feedback {
-    id: string;
-    fullName: string;
-    email: string;
-    phone: string;
-    content: string;
+    feedbackId?: string;
+    id?: string;
+    learner: LearnerFeedback;
+
+    comment: string;
     rating: number;
-    createdAt: Date;
+    date: Date | string;
   }
+export interface LearnerFeedback {
+  learnerName: string;
+  learnerEmail: string;
+  learnerPhone: string;
+}
 export const adminReviewersService = async (
   pageNumber: number,
   pageSize: number,

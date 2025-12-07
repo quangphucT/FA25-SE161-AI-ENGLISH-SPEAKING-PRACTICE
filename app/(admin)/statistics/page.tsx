@@ -356,7 +356,7 @@ const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0)
       </div>
 
       <Card className="shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-violet-50 to-purple-50">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -470,7 +470,7 @@ onChange={(e) => setSelectedPackageYear(Number(e.target.value))}
 
       {/* Biểu đồ doanh thu theo tháng */}
       <Card className="shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -629,7 +629,7 @@ return context[0].label + " " + selectedRevenueYear;
 
       {/* Danh sách Reviewer đăng ký tham gia */}
       <Card className="shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r ">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">

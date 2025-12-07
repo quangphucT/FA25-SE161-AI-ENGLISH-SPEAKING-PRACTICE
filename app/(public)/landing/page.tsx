@@ -56,13 +56,13 @@ export default function Page() {
             onClick={() => router.push("/")}
             className="flex items-center gap-3 cursor-pointer"
           >
-<div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg">
-        <Image
-  src="/images/imageLanding2.jpg"
-  alt="AESP Logo"
-  fill
-  className="object-contain p-1 scale-280"
-/>
+          <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg">
+                  <Image
+            src="/images/imageLanding2.jpg"
+            alt="AESP Logo"
+            fill
+            className="object-contain p-1 scale-280"
+          />
 
             </div>
             <div className="leading-tight">

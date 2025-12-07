@@ -249,3 +249,31 @@ export const adminReviewFeePolicyUpcomingService = async (body: CreateReviewFeeP
     throw new Error(error?.message || "Unknown error while updating review fee policy upcoming");
   }
 };
+
+export interface DeleteReviewFeePackageResponse {
+  isSucess: boolean;
+  data: {
+    reviewFeeDetailId: string;
+    reviewFeeId: string;
+    pricePerReviewFee: number;
+    appliedDate: string;
+  },
+  businessCode: string;
+  message: string;
+}
+export const deleteReviewFeePackage = async (id: string): Promise<DeleteReviewFeePackageResponse> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/reviewfee/review-fee-detail/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Delete review fee package failed");
+    return data;
+  } catch (error: any) {
+    throw new Error(error?.message || "Unknown error while deleting review fee package");
+  }
+};

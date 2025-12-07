@@ -19,6 +19,7 @@ export interface AssessmentLearner {
     feedback: string;
     numberOfQuestion: number;
     learnerProfileId: string;
+    learnerName: string;
     assessmentDetails: AssessmentDetail[];
 }
 export interface AssessmentDetail {

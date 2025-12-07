@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetServicePackages, useGetServicePackageBuyers } from "@/features/admin/hooks/getServicePackages";
 import { ServicePackage } from "@/types/servicePackage/servicePackage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,6 +87,22 @@ const totalPages = Math.ceil(totalItems / pageSize);
     },
   });
 
+  // Watch numberOfCoin and bonusPercent to auto-calculate price and total coins
+  const numberOfCoin = form.watch("numberOfCoin");
+  const bonusPercent = form.watch("bonusPercent");
+
+  // Auto-calculate price when numberOfCoin changes: price = numberOfCoin * 1000
+  useEffect(() => {
+    if (numberOfCoin > 0) {
+      form.setValue("price", numberOfCoin * 1000);
+    }
+  }, [numberOfCoin, form]);
+
+  // Calculate total coins received (must be integer)
+  const totalCoinsReceivedRaw = numberOfCoin + (numberOfCoin * bonusPercent) / 100;
+  const totalCoinsReceived = Math.floor(totalCoinsReceivedRaw);
+  const isTotalCoinsInteger = Number.isInteger(totalCoinsReceivedRaw);
+
   const onSubmit = async (values: z.infer<typeof createPackageSchema>) => {
     try {
       await createServicePackage(values);
@@ -111,6 +127,12 @@ const totalPages = Math.ceil(totalItems / pageSize);
     bonusPercent: 0,
     status: "Active",
   });
+
+  // Calculate for update form
+  const updateTotalCoinsReceivedRaw = updateForm.numberOfCoin + (updateForm.numberOfCoin * updateForm.bonusPercent) / 100;
+  const updateTotalCoinsReceived = Math.floor(updateTotalCoinsReceivedRaw);
+  const isUpdateTotalCoinsInteger = Number.isInteger(updateTotalCoinsReceivedRaw);
+
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [packageToAction, setPackageToAction] = useState<ServicePackage | null>(
     null
@@ -199,8 +221,8 @@ const totalPages = Math.ceil(totalItems / pageSize);
           >
             <TabsList className="grid grid-cols-3 md:w-[420px]">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
-              <TabsTrigger value="Actived">Hoạt động</TabsTrigger>
-              <TabsTrigger value="InActived">Ngưng hoạt động</TabsTrigger>
+              <TabsTrigger value="Active">Hoạt động</TabsTrigger>
+              <TabsTrigger value="Inactive">Ngưng hoạt động</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -230,13 +252,14 @@ const totalPages = Math.ceil(totalItems / pageSize);
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f7f9fa]">
-              <TableHead className="text-gray-700 font-semibold">Mã gói</TableHead>
+             
               <TableHead className="text-gray-700 font-semibold">Tên gói</TableHead>
               <TableHead className="text-gray-700 font-semibold">Mô tả</TableHead>
               <TableHead className="text-gray-700 font-semibold">Giá</TableHead>
               <TableHead className="text-gray-700 font-semibold">Số lượng xu</TableHead>
               <TableHead className="text-gray-700 font-semibold">% Bonus</TableHead>
               <TableHead className="text-gray-700 font-semibold">Số xu nhận</TableHead>
+              <TableHead className="text-gray-700 font-semibold">Số lượt mua</TableHead>
               <TableHead className="text-gray-700 font-semibold">Trạng thái</TableHead>
               <TableHead className="text-center text-gray-700 font-semibold">Hành động</TableHead>
             </TableRow>
@@ -268,9 +291,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                   key={pkg.servicePackageId}
                   className="hover:bg-[#f0f7e6] transition-colors"
                 >
-                  <TableCell className="font-mono text-blue-600 font-semibold truncate max-w-[120px]">
-                    {pkg.servicePackageId}
-                  </TableCell>
+               
                   <TableCell className="font-semibold text-gray-900">{pkg.name}</TableCell>
                   <TableCell
                     className="text-gray-600 max-w-[220px] truncate"
@@ -289,6 +310,9 @@ const totalPages = Math.ceil(totalItems / pageSize);
                   </TableCell>
                   <TableCell className="text-gray-800 font-medium">
                     {Math.trunc(pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100))}
+                  </TableCell>
+                  <TableCell className="text-gray-800 font-medium">
+                    {pkg.totalBuyer}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -575,41 +599,61 @@ const totalPages = Math.ceil(totalItems / pageSize);
                     <h3 className="text-lg font-semibold mb-4">
                       Giá & Số lượng xu
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <FormField
                         control={form.control}
-                        name="price"
+                        name="numberOfCoin"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Giá (VND)</FormLabel>
+                          <FormItem className="flex flex-col h-full">
+                            <FormLabel>Số lượng xu *</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
-                                placeholder="VD: 1000000"
+                                placeholder="VD: 30"
                                 {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                onChange={(e) => {
+                                  const value = Number(e.target.value);
+                                  field.onChange(value);
+                                  // Auto-calculate price: numberOfCoin * 1000
+                                  if (value > 0) {
+                                    form.setValue("price", value * 1000);
+                                  }
+                                }}
+                                className="h-10"
                               />
                             </FormControl>
                             <FormMessage />
+                            <div className="min-h-[20px] mt-1">
+                              <p className="text-xs text-gray-500">
+                                Giá tự động: {numberOfCoin > 0 ? (numberOfCoin * 1000).toLocaleString("vi-VN") : 0} VND
+                              </p>
+                            </div>
                           </FormItem>
                         )}
                       />
 
                       <FormField
                         control={form.control}
-                        name="numberOfCoin"
+                        name="price"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Số lượng xu</FormLabel>
+                          <FormItem className="flex flex-col h-full">
+                            <FormLabel>Giá (VND)</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
-                                placeholder="VD: 30"
+                                placeholder="Tự động tính"
                                 {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                value={field.value || 0}
+                                readOnly
+                                className="bg-gray-50 cursor-not-allowed h-10"
                               />
                             </FormControl>
                             <FormMessage />
+                            <div className="min-h-[20px] mt-1">
+                              <p className="text-xs text-gray-500">
+                                = Số lượng xu × 1,000
+                              </p>
+                            </div>
                           </FormItem>
                         )}
                       />
@@ -618,7 +662,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                         control={form.control}
                         name="bonusPercent"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="flex flex-col h-full">
                             <FormLabel>Phần trăm bonus (%)</FormLabel>
                             <FormControl>
                               <Input
@@ -626,12 +670,51 @@ const totalPages = Math.ceil(totalItems / pageSize);
                                 placeholder="VD: 10"
                                 {...field}
                                 onChange={(e) => field.onChange(Number(e.target.value))}
+                                className="h-10"
                               />
                             </FormControl>
                             <FormMessage />
+                            <div className="min-h-[20px] mt-1">
+                              <p className="text-xs text-gray-500">
+                                &nbsp;
+                              </p>
+                            </div>
                           </FormItem>
                         )}
                       />
+
+                      <FormItem className="flex flex-col h-full">
+                        <FormLabel>Số xu nhận</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            value={totalCoinsReceived}
+                            readOnly
+                            className={`bg-gray-50 cursor-not-allowed font-semibold h-10 ${
+                              !isTotalCoinsInteger && totalCoinsReceivedRaw > 0
+                                ? "border-yellow-500 border-2"
+                                : ""
+                            }`}
+                          />
+                        </FormControl>
+                        <div className="min-h-[20px] mt-1">
+                          {!isTotalCoinsInteger && totalCoinsReceivedRaw > 0 && (
+                            <p className="text-xs text-yellow-600 font-medium">
+                              ⚠️ Cảnh báo: Kết quả tính toán ({totalCoinsReceivedRaw.toFixed(2)}) không phải số nguyên. Đã làm tròn xuống: {totalCoinsReceived}
+                            </p>
+                          )}
+                          {isTotalCoinsInteger && totalCoinsReceivedRaw > 0 && (
+                            <p className="text-xs text-green-600 font-medium">
+                              ✓ Kết quả là số nguyên
+                            </p>
+                          )}
+                          {totalCoinsReceivedRaw === 0 && (
+                            <p className="text-xs text-gray-500">
+                              = Số lượng xu + (Số lượng xu × % Bonus)
+                            </p>
+                          )}
+                        </div>
+                      </FormItem>
                     </div>
                   </div>
 
@@ -685,64 +768,147 @@ const totalPages = Math.ceil(totalItems / pageSize);
             </div>
 
             <div className="p-6">
-              <form className="space-y-4" onSubmit={handleUpdateSubmit}>
+              <form className="space-y-6" onSubmit={handleUpdateSubmit}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên gói
-                  </label>
-                  <input
-                    type="text"
-                    value={updateForm.name}
-                    onChange={(e) => setUpdateForm({ ...updateForm, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập tên gói"
-                  />
-                </div>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Thông tin gói
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tên gói
+                      </label>
+                      <input
+                        type="text"
+                        value={updateForm.name}
+                        onChange={(e) => setUpdateForm({ ...updateForm, name: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10"
+                        placeholder="Nhập tên gói"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phần trăm bonus (%)
-                    </label>
-                    <input
-                      type="number"
-                      value={updateForm.bonusPercent}
-                      onChange={(e) => setUpdateForm({ ...updateForm, bonusPercent: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="VD: 8"
-                      min="0"
-                    />
-                  </div>
-
-                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Số lượng xu
-                    </label>
-                    <input
-                      type="number"
-                      value={updateForm.numberOfCoin}
-                      onChange={(e) => setUpdateForm({ ...updateForm, numberOfCoin: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="VD: 8"
-                      min="0"
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Mô tả
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={updateForm.description}
+                        onChange={(e) => setUpdateForm({ ...updateForm, description: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Mô tả nội dung và mục tiêu của gói..."
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Giá
-                    </label>
-                    <input
-                      type="number"
-                      value={updateForm.price}
-                      onChange={(e) => setUpdateForm({ ...updateForm, price: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="VD: 500000"
-                    />
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Giá & Số lượng xu
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="flex flex-col h-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Số lượng xu *
+                      </label>
+                      <input
+                        type="number"
+                        value={updateForm.numberOfCoin}
+                        onChange={(e) => {
+                          const value = Number(e.target.value);
+                          setUpdateForm({ 
+                            ...updateForm, 
+                            numberOfCoin: value,
+                            price: value > 0 ? value * 1000 : updateForm.price
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10"
+                        placeholder="VD: 30"
+                        min="0"
+                      />
+                      <div className="min-h-[20px] mt-1">
+                        <p className="text-xs text-gray-500">
+                          Giá tự động: {updateForm.numberOfCoin > 0 ? (updateForm.numberOfCoin * 1000).toLocaleString("vi-VN") : 0} VND
+                        </p>
+                      </div>
+                    </div>
 
+                    <div className="flex flex-col h-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Giá (VND)
+                      </label>
+                      <input
+                        type="number"
+                        value={updateForm.price}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed h-10"
+                        placeholder="Tự động tính"
+                      />
+                      <div className="min-h-[20px] mt-1">
+                        <p className="text-xs text-gray-500">
+                          = Số lượng xu × 1,000
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col h-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phần trăm bonus (%)
+                      </label>
+                      <input
+                        type="number"
+                        value={updateForm.bonusPercent}
+                        onChange={(e) => setUpdateForm({ ...updateForm, bonusPercent: Number(e.target.value) })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10"
+                        placeholder="VD: 10"
+                        min="0"
+                      />
+                      <div className="min-h-[20px] mt-1">
+                        <p className="text-xs text-gray-500">
+                          &nbsp;
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col h-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Số xu nhận
+                      </label>
+                      <input
+                        type="number"
+                        value={updateTotalCoinsReceived}
+                        readOnly
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed font-semibold h-10 ${
+                          !isUpdateTotalCoinsInteger && updateTotalCoinsReceivedRaw > 0
+                            ? "border-yellow-500 border-2"
+                            : ""
+                        }`}
+                      />
+                      <div className="min-h-[20px] mt-1">
+                        {!isUpdateTotalCoinsInteger && updateTotalCoinsReceivedRaw > 0 && (
+                          <p className="text-xs text-yellow-600 font-medium">
+                            ⚠️ Cảnh báo: Kết quả tính toán ({updateTotalCoinsReceivedRaw.toFixed(2)}) không phải số nguyên. Đã làm tròn xuống: {updateTotalCoinsReceived}
+                          </p>
+                        )}
+                        {isUpdateTotalCoinsInteger && updateTotalCoinsReceivedRaw > 0 && (
+                          <p className="text-xs text-green-600 font-medium">
+                            ✓ Kết quả là số nguyên
+                          </p>
+                        )}
+                        {updateTotalCoinsReceivedRaw === 0 && (
+                          <p className="text-xs text-gray-500">
+                            = Số lượng xu + (Số lượng xu × % Bonus)
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Trạng thái
+                  </h3>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Trạng thái
@@ -750,27 +916,12 @@ const totalPages = Math.ceil(totalItems / pageSize);
                     <select
                       value={updateForm.status}
                       onChange={(e) => setUpdateForm({ ...updateForm, status: e.target.value as "Active" | "Inactive" })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10"
                     >
                       <option value="Active">Hoạt động</option>
                       <option value="Inactive">Ngưng hoạt động</option>
                     </select>
                   </div>
-                </div>
-
-                <div></div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mô tả
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={updateForm.description}
-                    onChange={(e) => setUpdateForm({ ...updateForm, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập mô tả gói"
-                  />
                 </div>
 
                 <div className="flex  justify-end space-x-3 pt-4 border-t">

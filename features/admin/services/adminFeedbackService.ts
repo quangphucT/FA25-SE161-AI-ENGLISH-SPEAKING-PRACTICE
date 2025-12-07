@@ -3,6 +3,11 @@ import fetchWithAuth from "@/utils/fetchWithAuth";
 export interface AdminFeedbackResponse {
     isSucess: boolean;
     data: {
+        totalFeedback: number;
+        totalApproved: number;
+        totalRejected: number;
+        averageRating: number;
+        totalReports: number;
         pageNumber: number;
         pageSize: number;
         totalItems: number;
