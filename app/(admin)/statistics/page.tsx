@@ -128,10 +128,14 @@ const packageData =
   // Dữ liệu doanh thu từ API theo tháng (đơn vị: K)
   const revenueData =
     adminRevenue?.data?.reduce((acc, item) => {
-      if (!acc[selectedPackageYear]) {
-        acc[selectedPackageYear] = new Array(12).fill(0);
+      if (!acc[selectedRevenueYear]) {
+        acc[selectedRevenueYear] = new Array(12).fill(0);
       }
-      acc[selectedPackageYear][item.month - 1] = Math.round(item.revenue / 1000); // Convert to K
+      // Convert to K, use decimal precision for small values
+      const revenueInK = item.revenue / 1000;
+      acc[selectedRevenueYear][item.month - 1] = revenueInK > 0 
+        ? Math.round(revenueInK * 10) / 10 // Round to 1 decimal place
+        : 0;
       return acc;
     }, {} as { [key: number]: number[] }) || {};
 
@@ -141,9 +145,14 @@ const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0)
   const maxPackages = Math.max(...currentPackages);
   const maxRevenue = Math.max(...currentRevenue);
   const packagesYMax = Math.max(10, Math.ceil((maxPackages || 0) * 1.2));
-  const revenueYMax = Math.max(10, Math.ceil((maxRevenue || 0) * 1.2));
+  // Adjust scale for small revenue values (< 1K)
+  const revenueYMax = maxRevenue > 0 && maxRevenue < 1
+    ? Math.max(1, Math.ceil(maxRevenue * 1.5 * 10) / 10) // For values < 1K, use smaller scale
+    : Math.max(10, Math.ceil((maxRevenue || 0) * 1.2)); // For larger values, use normal scale
   const packagesStep = Math.max(1, Math.ceil(packagesYMax / 5));
-  const revenueStep = Math.max(1, Math.ceil(revenueYMax / 5));
+  const revenueStep = maxRevenue > 0 && maxRevenue < 1
+    ? Math.max(0.1, Math.ceil(revenueYMax * 10 / 5) / 10) // Smaller step for small values
+    : Math.max(1, Math.ceil(revenueYMax / 5));
 
   // Reviewers awaiting participation approval - now using API data
 
@@ -347,7 +356,7 @@ const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0)
       </div>
 
       <Card className="shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-violet-50 to-purple-50">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -461,7 +470,7 @@ onChange={(e) => setSelectedPackageYear(Number(e.target.value))}
 
       {/* Biểu đồ doanh thu theo tháng */}
       <Card className="shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -571,6 +580,14 @@ return context[0].label + " " + selectedRevenueYear;
                   ticks: {
                     stepSize: revenueStep,
                     display: true,
+                    callback: function(value) {
+                      // Show decimal places for small values
+                      const numValue = typeof value === 'number' ? value : Number(value);
+                      if (maxRevenue > 0 && maxRevenue < 1) {
+                        return numValue.toFixed(1) + 'K';
+                      }
+                      return numValue + 'K';
+                    },
                   },
                 },
                 x: {
@@ -612,7 +629,7 @@ return context[0].label + " " + selectedRevenueYear;
 
       {/* Danh sách Reviewer đăng ký tham gia */}
       <Card className="shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r ">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">

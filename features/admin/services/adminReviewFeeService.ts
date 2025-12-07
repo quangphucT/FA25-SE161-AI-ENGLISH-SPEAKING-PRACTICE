@@ -7,7 +7,13 @@ export interface CreateReviewFeeRequest {
   percentOfReviewer: number;
   pricePerReviewFee: number;
 }
-
+export interface CreateReviewFeePolicyUpcomingRequest {
+  reviewFeeDetailId: string;
+  pricePerReviewFee: number;
+  appliedDate: string;
+  percentOfSystem: number;
+  percentOfReviewer: number;
+}
 export interface CreateReviewFeePackageRequest {
    numberOfReview: number;
   pricePerReviewFee: number;
@@ -211,5 +217,63 @@ export const adminReviewFeePolicyService = async (body: CreateReviewFeeRequest) 
     return data;
   } catch (error: any) {
     throw new Error(error?.message || "Unknown error while creating review fee policy");
+  }
+};
+
+export interface CreateReviewFeePolicyUpcomingResponse {
+  isSucess: boolean;
+  data: {
+    reviewFeeDetailId: string;
+    reviewFeeId: string;
+    pricePerReviewFee: number;
+    percentOfReviewer: number;
+    appliedDate: string;
+  },
+  businessCode: string;
+  message: string;
+}
+export const adminReviewFeePolicyUpcomingService = async (body: CreateReviewFeePolicyUpcomingRequest): Promise<CreateReviewFeePolicyUpcomingResponse> => {
+  try {
+    const response = await fetchWithAuth("/api/AdminDashboard/reviewfee", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Update review fee policy upcoming failed");
+    return data;
+  } catch (error: any) {
+    throw new Error(error?.message || "Unknown error while updating review fee policy upcoming");
+  }
+};
+
+export interface DeleteReviewFeePackageResponse {
+  isSucess: boolean;
+  data: {
+    reviewFeeDetailId: string;
+    reviewFeeId: string;
+    pricePerReviewFee: number;
+    appliedDate: string;
+  },
+  businessCode: string;
+  message: string;
+}
+export const deleteReviewFeePackage = async (id: string): Promise<DeleteReviewFeePackageResponse> => {
+  try {
+    const response = await fetchWithAuth(`/api/AdminDashboard/reviewfee/review-fee-detail/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Delete review fee package failed");
+    return data;
+  } catch (error: any) {
+    throw new Error(error?.message || "Unknown error while deleting review fee package");
   }
 };

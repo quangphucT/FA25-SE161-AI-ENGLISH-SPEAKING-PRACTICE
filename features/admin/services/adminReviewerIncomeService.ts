@@ -32,10 +32,15 @@ export interface AdminReviewerIncomeResponse {
     isSucess: boolean;
     data: {
       totalReviews: string;
+      pricePerReview: number;
       incomePerReview: number;
+      totalPenalty: number;
       totalEarnedFromSystem: number;
       totalSpentOnTips: number;
       netIncome:number
+      completed: number;
+      reported: number;
+      rejected: number;
       items?: Array<{
         reviewId: string;
         score: number;

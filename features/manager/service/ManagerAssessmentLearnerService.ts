@@ -4,6 +4,9 @@ export interface AssessmentLearnerResponse {
   isSucess: boolean;
   data: {
     items: AssessmentLearner[];
+    pageNumber: number;
+    pageSize: number;
+    totalItems: number;
     totalPages: number;
   };
   businessCode: string;
@@ -13,10 +16,10 @@ export interface AssessmentLearner {
     assessmentId: string;
     createdAt: string;
     score: number;
-    type: string;
     feedback: string;
     numberOfQuestion: number;
     learnerProfileId: string;
+    learnerName: string;
     assessmentDetails: AssessmentDetail[];
 }
 export interface AssessmentDetail {
@@ -25,15 +28,16 @@ export interface AssessmentDetail {
     type: string;
     aI_Feedback: string;
     answerAudio: string;
-    questionAssessmentId: string;
+    questionAssessment: QuestionAssessment;
 }
-export const getManagerAssessmentLearnerService = async (pageNumber: number, pageSize: number, type?: string, keyword?: string): Promise<AssessmentLearnerResponse> => {
+export interface QuestionAssessment {
+    content: string;
+}
+export const getManagerAssessmentLearnerService = async (pageNumber: number, pageSize: number): Promise<AssessmentLearnerResponse> => {
   try{
     const query = new URLSearchParams({
       pageNumber: pageNumber.toString(),
       pageSize: pageSize.toString(),
-      type: type ?? "",
-      keyword: keyword ?? "",
     }).toString();
     const response = await fetchWithAuth(`/api/manager/assessmentlearner?${query}`, {
       method: "GET",

@@ -26,6 +26,8 @@ import EnrollingCourses from "../enrolling-courses/page";
 import ReviewRecordPage from "../review_record/page";
 import LearnerRecordPage from "../learner_record/page";
 import ProgressPage from "../progress/page";
+import LearnerProfilePage from "../dashboard-learner-layout/profile/page";
+import Image from "next/image";
 
 
 function DashboardContent() {
@@ -65,19 +67,28 @@ function DashboardContent() {
         {/* Logo Section */}
         <div className="p-8 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-linear-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
-                SEWAI
-              </h1>
-              <p className="text-[10px] text-gray-400 font-medium tracking-wide uppercase">
-                English Platform
-              </p>
-            </div>
+          <div
+                  onClick={() => router.push("/dashboard-learner-layout")}
+                  className="flex items-center gap-3 cursor-pointer"
+                >
+                  <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg">
+                    <Image
+                      src="/images/imageLanding2.jpg"
+                      alt="AESP Logo"
+                      fill
+                      className="object-contain p-1 scale-280"
+                    />
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-2xl font-extrabold tracking-tight text-slate-900 text-black">
+                      AESP
+                    </div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                      Nền tảng Luyện Nói AI
+                    </div>
+                  </div>
+                 
+                </div>
           </div>
         </div>
 
@@ -214,22 +225,13 @@ function DashboardContent() {
           {activeMenu === "reviewRecord" && (
             <ReviewRecordPage />
           )}
+
+          
           {/* PROFILE PAGE */}
           {activeMenu === "profile" && (
-            <>
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">👤 Hồ sơ cá nhân</h3>
-                <p className="text-gray-500 mt-1">
-                  Quản lý thông tin tài khoản của bạn
-                </p>
-              </div>
-
-              <Card className="p-6">
-                <h4 className="text-lg font-bold text-gray-900 mb-4">Đang phát triển...</h4>
-                <p className="text-gray-600">Tính năng này sẽ sớm được cập nhật.</p>
-              </Card>
-            </>
+            <LearnerProfilePage />
           )}
+          
         </div>
       </main>
 

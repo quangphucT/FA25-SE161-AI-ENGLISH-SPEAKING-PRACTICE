@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import AssesmentManagement from "../assesment-management/page";
 import StatisticsForManagers from "../statistics-for-managers/page";
@@ -8,6 +9,7 @@ import QuestionForAssessmentPage from "../question-for-assessment/page";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import LevelA1 from "../levels/levelA1";
 import { handleLogout } from "@/utils/auth";
+import router from "next/router";
 
 const DashboardManagerLayout = () => {
   const [activeTab, setActiveTab] = useState("assesmentManagement");
@@ -19,7 +21,7 @@ const DashboardManagerLayout = () => {
     
     {
       id: "assesmentManagement",
-      label: "Assessment Management",
+      label: "Quản lý đánh giá",
       icon: (
         <svg
           width="20"
@@ -38,7 +40,7 @@ const DashboardManagerLayout = () => {
 
     {
       id: "questionForAssessment",
-      label: "Question For Assessment",
+      label: "Câu hỏi đánh giá",
       icon: (
         <svg
           width="20"
@@ -78,7 +80,7 @@ const DashboardManagerLayout = () => {
 
     {
       id: "levels",
-      label: "Levels",
+      label: "Cấp độ",
       icon: (
         <svg
           width="20"
@@ -95,37 +97,37 @@ const DashboardManagerLayout = () => {
       children: [
         {
           id: "level-a1",
-          label: "A1 - Beginner",
+          label: "A1 - Sơ cấp",
           level: "A1",
           path: "/levels/a1",
         },
         {
           id: "level-a2",
-          label: "A2 - Elementary",
+          label: "A2 - Sơ cấp",
           level: "A2",
           path: "/levels/a2",
         },
         {
           id: "level-b1",
-          label: "B1 - Intermediate",
+          label: "B1 - Trung cấp",
           level: "B1",
           path: "/levels/b1",
         },
         {
           id: "level-b2",
-          label: "B2 - Upper Intermediate",
+          label: "B2 - Trung cấp trên",
           level: "B2",
           path: "/levels/b2",
         },
         {
           id: "level-c1",
-          label: "C1 - Advanced",
+          label: "C1 - Nâng cao",
           level: "C1",
           path: "/levels/c1",
         },
         {
           id: "level-c2",
-          label: "C2 - Mastery",
+          label: "C2 - Thành thạo",
           level: "C2",
           path: "/levels/c2",
         },
@@ -146,19 +148,27 @@ const DashboardManagerLayout = () => {
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="font-bold text-lg text-gray-800">Manager Hub</h1>
-                  <p className="text-xs text-gray-500">{getMe?.email}</p>
+                <div
+                  onClick={() => router.push("/dashboard-manager-layout")}
+                  className="flex items-center gap-3 cursor-pointer"
+                >
+                  <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg">
+                    <Image
+                      src="/images/imageLanding2.jpg"
+                      alt="AESP Logo"
+                      fill
+                      className="object-contain p-1 scale-280"
+                    />
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-2xl font-extrabold tracking-tight text-slate-900 text-black">
+                      AESP
+                    </div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                      Nền tảng Luyện Nói AI
+                    </div>
+                  </div>
+                 
                 </div>
               </div>
             )}
@@ -191,7 +201,7 @@ const DashboardManagerLayout = () => {
             <div>
               {sidebarOpen && (
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">
-                  Main Menu
+                  Menu chính
                 </h3>
               )}
               <div className="space-y-2">
@@ -346,15 +356,15 @@ const DashboardManagerLayout = () => {
                   <div className="flex items-center space-x-2">
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                       {navigationItems.find((item) => item.id === activeTab)
-                        ?.label || "Dashboard"}
+                        ?.label || "Bảng điều khiển"}
                     </h1>
                     <div className="h-6 w-px bg-gradient-to-b from-gray-200 to-transparent"></div>
                     <span className="text-sm text-gray-500 font-medium">
-                      Manager Hub
+                      Trung tâm Quản lý
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    Welcome back! Here&apos;s what&apos;s happening today.
+                    Chào mừng trở lại! Đây là những gì đang diễn ra hôm nay.
                   </p>
                 </div>
               </div>
