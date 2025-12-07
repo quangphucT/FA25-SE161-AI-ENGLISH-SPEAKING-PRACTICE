@@ -193,220 +193,268 @@ function LearningPathContent() {
   };
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-6">
-      {/* Course Header */}
-      <Card className="p-6 bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">
+      {/* Course Header - Compact */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
+              <BookOpen className="w-7 h-7 text-blue-600" />
+            </div>
+            <div className="max-w-xl">
+              <h1 className="text-xl font-bold text-gray-900 line-clamp-1" title={course.title}>
                 {course.title}
               </h1>
-            </div>
-            <p className="text-gray-700 mb-4">{course.description}</p>
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-blue-600" />
-                <span className="font-medium">Level: {course.level}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-blue-600" />
-                <span className="font-medium">{numberOfChapter} Chương</span>
-              </div>
-              <div
-                className={`px-3 py-1 rounded-full border ${getStatusColor(
-                  status
-                )}`}
-              >
-                {getStatusText(status)}
+              <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                <span>Level {course.level}</span>
+                <span>•</span>
+                <span>{numberOfChapter} chương</span>
+                <span>•</span>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                  {getStatusText(status)}
+                </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Trophy className="w-8 h-8 text-yellow-500" />
-            <div className="text-right">
-              <div className="text-2xl font-bold text-gray-900">
-                {Math.round(progress)}%
+          <div className="flex items-center gap-6">
+            <div className="w-48">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-500">Tiến độ</span>
+                <span className="font-semibold text-gray-900">{Math.round(progress)}%</span>
               </div>
-              <div className="text-sm text-gray-600">Tiến độ</div>
+              <Progress value={progress} className="h-2" />
+            </div>
+            <div className="flex items-center gap-2 pl-6 border-l border-gray-200">
+              <Trophy className="w-6 h-6 text-yellow-500" />
+              <span className="text-2xl font-bold text-gray-900">{Math.round(progress)}%</span>
             </div>
           </div>
         </div>
-        <div>
-          <Progress value={progress} className="h-3" />
-        </div>
-      </Card>
+      </div>
 
-      {/* Chapters List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <BookOpen className="w-6 h-6 text-blue-600" />
-          Danh sách chương
-        </h2>
-
-        {chapters && chapters.length > 0 ? (
-          chapters.map((chapter) => (
-            <Card
-              key={chapter.learningPathChapterId}
-              id={`chapter-${chapter.learningPathChapterId}`}
-              className={`p-6 border-2 transition-all hover:shadow-md ${
-                chapter.status.toLowerCase() === "locked"
-                  ? "opacity-60 cursor-not-allowed"
-                  : "hover:border-blue-300"
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                {/* Chapter Number */}
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg font-bold text-blue-600">
-                    {chapter.orderIndex}
-                  </span>
-                </div>
-
-                <div className="flex-1 space-y-3">
-                  {/* Chapter Header */}
-                  <div 
-                    className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
+      {/* Main Content - 2 Column Layout */}
+      <div className="flex gap-6">
+        {/* Left Sidebar - Chapters Navigation */}
+        <div className="w-80 flex-shrink-0">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-6">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+              <h2 className="font-semibold text-gray-900">Nội dung khóa học</h2>
+            </div>
+            <div className="max-h-[calc(100vh-250px)] overflow-y-auto">
+              {chapters && chapters.length > 0 ? (
+                chapters.map((chapter, index) => (
+                  <div
+                    key={chapter.learningPathChapterId}
+                    id={`chapter-${chapter.learningPathChapterId}`}
+                    onClick={() => {
                       if (chapter.status.toLowerCase() !== "locked") {
-                        setExpandedChapterId(
-                          expandedChapterId === chapter.learningPathChapterId 
-                            ? null 
-                            : chapter.learningPathChapterId
-                        );
+                        setExpandedChapterId(chapter.learningPathChapterId);
                       }
                     }}
+                    className={`px-4 py-3 border-b border-gray-100 cursor-pointer transition-all ${
+                      chapter.status.toLowerCase() === "locked"
+                        ? "opacity-50 cursor-not-allowed bg-gray-50"
+                        : expandedChapterId === chapter.learningPathChapterId
+                        ? "bg-blue-50 border-l-4 border-l-blue-500"
+                        : "hover:bg-gray-50"
+                    }`}
                   >
-                    <div className=" rounded-lg bg-white ">
-                      <div className="flex flex-col mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Chương {chapter.orderIndex}
-                        </h3>
-                        <h3 className="text-lg font-semibold text-blue-600">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${
+                        chapter.status.toLowerCase() === "completed"
+                          ? "bg-green-100 text-green-600"
+                          : chapter.status.toLowerCase() === "locked"
+                          ? "bg-gray-200 text-gray-400"
+                          : expandedChapterId === chapter.learningPathChapterId
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600"
+                      }`}>
+                        {chapter.status.toLowerCase() === "locked" ? (
+                          <Lock className="w-4 h-4" />
+                        ) : chapter.status.toLowerCase() === "completed" ? (
+                          <Trophy className="w-4 h-4" />
+                        ) : (
+                          index + 1
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p 
+                          className="text-sm font-medium text-gray-900 line-clamp-1" 
+                          title={chapter.chapterTitle}
+                        >
                           {chapter.chapterTitle}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {chapter.chapterDescription}
                         </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 bg-gray-200 rounded-full h-1">
+                            <div 
+                              className="bg-blue-500 h-1 rounded-full transition-all"
+                              style={{ width: `${chapter.progress}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500">{Math.round(chapter.progress)}%</span>
+                        </div>
                       </div>
                     </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-gray-500 text-sm">
+                  Chưa có chương nào
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-                    <div className="flex items-center gap-2">
+        {/* Right Content - Exercises */}
+        <div className="flex-1">
+          {expandedChapterId ? (
+            (() => {
+              const selectedChapter = chapters?.find(
+                (ch) => ch.learningPathChapterId === expandedChapterId
+              );
+              if (!selectedChapter) return null;
+
+              return (
+                <div className="space-y-4">
+                  {/* Chapter Header */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0 pr-4">
+                        <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">
+                          Chương {selectedChapter.orderIndex}
+                        </span>
+                        <h2 
+                          className="text-xl font-bold text-gray-900 mt-1 line-clamp-2" 
+                          title={selectedChapter.chapterTitle}
+                        >
+                          {selectedChapter.chapterTitle}
+                        </h2>
+                        <p 
+                          className="text-gray-500 text-sm mt-1 line-clamp-2" 
+                          title={selectedChapter.chapterDescription}
+                        >
+                          {selectedChapter.chapterDescription}
+                        </p>
+                      </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900">
-                          {Math.round(chapter.progress)}%
+                        <div className="text-2xl font-bold text-gray-900">
+                          {Math.round(selectedChapter.progress)}%
                         </div>
                         <div className="text-xs text-gray-500">Hoàn thành</div>
                       </div>
-                      <ChevronRight 
-                        className={`w-5 h-5 text-gray-400 transition-transform ${
-                          expandedChapterId === chapter.learningPathChapterId 
-                            ? "rotate-90" 
-                            : ""
-                        }`} 
-                      />
                     </div>
+                    <Progress value={selectedChapter.progress} className="h-2 mt-4" />
                   </div>
 
-                  {/* Progress Bar */}
-                  <Progress value={chapter.progress} className="h-2" />
-
-                  {/* Chapter Info */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span>{chapter.exercises?.length || 0} Bài tập</span>
-                  </div>
-
-                  {/* Exercises */}
-                  {expandedChapterId === chapter.learningPathChapterId && 
-                    chapter.exercises && 
-                    chapter.exercises.length > 0 && (
-                    <div className="mt-4 space-y-2 pl-4 border-l-2 border-gray-200">
-                      {chapter.exercises.map((exercise) => (
+                  {/* Exercises Grid */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedChapter.exercises && selectedChapter.exercises.length > 0 ? (
+                      selectedChapter.exercises.map((exercise, exIndex) => (
                         <div
                           key={exercise.learningPathExerciseId}
-                          className={`flex items-center justify-between p-3 rounded-lg border ${
+                          className={`bg-white rounded-xl border p-5 transition-all ${
                             exercise.status.toLowerCase() === "locked"
-                              ? "bg-gray-50 border-gray-200 opacity-60"
-                              : "bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                          } transition-all`}
-                        
+                              ? "border-gray-200 opacity-50"
+                              : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                          }`}
                         >
-                          <div className="w-full rounded-xl p-3 bg-white border shadow-sm hover:shadow-md duration-200">
-                            {/* Header */}
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-500">
-                                Bài tập {exercise.orderIndex}
-                              </span>
-
-                              {exercise.scoreAchieved > 0 && (
-                                <span className="text-green-600 font-semibold text-sm bg-green-50 px-2 py-1 rounded">
-                                  Điểm: {exercise.scoreAchieved}
-                                </span>
+                          <div className="flex items-start gap-4">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              exercise.status.toLowerCase() === "completed"
+                                ? "bg-green-100 text-green-600"
+                                : exercise.status.toLowerCase() === "locked"
+                                ? "bg-gray-100 text-gray-400"
+                                : exercise.status === "InProgress"
+                                ? "bg-amber-100 text-amber-600"
+                                : "bg-blue-100 text-blue-600"
+                            }`}>
+                              {exercise.status.toLowerCase() === "locked" ? (
+                                <Lock className="w-5 h-5" />
+                              ) : exercise.status.toLowerCase() === "completed" ? (
+                                <Trophy className="w-5 h-5" />
+                              ) : (
+                                <span className="font-bold">{exIndex + 1}</span>
                               )}
                             </div>
-
-                            {/* Title */}
-                            <h4 className="text-lg font-semibold text-gray-900 ">
-                              {exercise.exerciseTitle}
-                            </h4>
-
-                            {/* Description */}
-                            <p className="text-sm text-gray-600 mb line-clamp-2">
-                              {exercise.exerciseDescription}
-                            </p>
-                            {/* Question count */}
-                            <div className="text-xs text-gray-500">
-                              {exercise.numberOfQuestion} câu hỏi
-                            </div>
-                            {/* Button → căn phải */}
-                            <div className="flex justify-end">
-                              <Button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleButtonClick(
-                                    exercise.status, 
-                                    exercise.learningPathExerciseId,
-                                    exercise.exerciseId,
-                                    chapter.learningPathChapterId
-                          
-                                  );
-                                }}
-                                disabled={loadingExerciseId === exercise.learningPathExerciseId}
-                                className={
-                                  `font-medium cursor-pointer px-4 rounded-lg duration-200 ` +
-                                  (exercise.status === "NotStarted"
-                                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                                    : exercise.status === "InProgress"
-                                    ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                                    : "bg-gray-700 text-white hover:bg-gray-800")
-                                }
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 
+                                  className="font-semibold text-gray-900 line-clamp-1" 
+                                  title={exercise.exerciseTitle}
+                                >
+                                  {exercise.exerciseTitle}
+                                </h4>
+                                {exercise.scoreAchieved > 0 && (
+                                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                                    {exercise.scoreAchieved}đ
+                                  </span>
+                                )}
+                              </div>
+                              <p 
+                                className="text-sm text-gray-500 line-clamp-2 mt-1" 
+                                title={exercise.exerciseDescription}
                               >
-                                {loadingExerciseId === exercise.learningPathExerciseId
-                                  ? "Đang xử lý..."
-                                  : exercise.status === "NotStarted"
-                                  ? "Bắt đầu luyện tập"
-                                  : exercise.status === "InProgress"
-                                  ? "Tiếp tục học"
-                                  : "Xem lại"}
-                              </Button>
+                                {exercise.exerciseDescription}
+                              </p>
+                              <div className="flex items-center justify-between mt-3">
+                                <span className="text-xs text-gray-400">
+                                  {exercise.numberOfQuestion} câu hỏi
+                                </span>
+                                <Button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleButtonClick(
+                                      exercise.status, 
+                                      exercise.learningPathExerciseId,
+                                      exercise.exerciseId,
+                                      selectedChapter.learningPathChapterId
+                                    );
+                                  }}
+                                  disabled={loadingExerciseId === exercise.learningPathExerciseId || exercise.status.toLowerCase() === "locked"}
+                                  size="sm"
+                                  className={`rounded-lg cursor-pointer text-xs font-medium ${
+                                    exercise.status.toLowerCase() === "locked"
+                                      ? "bg-gray-100 text-gray-400"
+                                      : exercise.status === "NotStarted"
+                                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                                      : exercise.status === "InProgress"
+                                      ? "bg-amber-500 text-white hover:bg-amber-600"
+                                      : "bg-green-600 text-white hover:bg-green-700"
+                                  }`}
+                                >
+                                  {loadingExerciseId === exercise.learningPathExerciseId
+                                    ? "..."
+                                    : exercise.status === "NotStarted"
+                                    ? "Bắt đầu"
+                                    : exercise.status === "InProgress"
+                                    ? "Tiếp tục"
+                                    : "Ôn tập"}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      ))
+                    ) : (
+                      <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-8 text-center">
+                        <BookOpen className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500">Chưa có bài tập trong chương này</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              );
+            })()
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ArrowRight className="w-8 h-8 text-blue-600" />
               </div>
-            </Card>
-          ))
-        ) : (
-          <Card className="p-6 text-center">
-            <p className="text-gray-600">
-              Chưa có chương nào trong khóa học này
-            </p>
-          </Card>
-        )}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Chọn chương để bắt đầu</h3>
+              <p className="text-gray-500">Chọn một chương từ danh sách bên trái để xem các bài tập</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

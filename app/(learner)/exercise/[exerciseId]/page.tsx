@@ -344,7 +344,7 @@ const ExercisePage = () => {
                 audioRecordingUrl: audioUrl,
                 transcribedText: newIpa[currentQuestionIndex] || "",
                 scoreForVoice: acc || 0,
-                explainTheWrongForVoiceAI: AIExplainTheWrongForVoiceAI[currentQuestionIndex] || "",
+                explainTheWrongForVoiceAI: AIExplainTheWrongForVoiceAI[currentQuestionIndex] || "abc",
               },
               {
                 onSuccess: (data) => {

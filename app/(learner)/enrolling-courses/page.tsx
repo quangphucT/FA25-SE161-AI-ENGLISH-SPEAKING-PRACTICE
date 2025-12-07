@@ -295,9 +295,18 @@ export default function EnrollingCourses() {
         </p>
       </div>
 
-      {/* Courses Grid */}
-      <div className="max-w-[1400px] mx-auto">
-        <div className="grid grid-cols-3 gap-4">
+      {/* Courses Table */}
+      <div className="max-w-[1200px] mx-auto">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-4 px-8 py-4 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200">
+            <div className="col-span-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Khóa học</div>
+            <div className="col-span-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-center"></div>
+            <div className="col-span-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-center"></div>
+            <div className="col-span-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center"></div>
+          </div>
+          
+          {/* Table Body */}
           {courses.map((course, index) => {
             const isFirstCourse = index === 0;
             const totalExercises =
@@ -306,7 +315,6 @@ export default function EnrollingCourses() {
                 0
               ) || 0;
 
-            // Get enrollment info from levelAndLearnerCourseIdData
             const enrolledCourse = enrolledCoursesInLevel.find(
               (item) => item.courseId === course.courseId
             );
@@ -316,69 +324,84 @@ export default function EnrollingCourses() {
             const isInProgress = status === "InProgress";
 
             return (
-              <Card
+              <div
                 key={course.courseId}
-                className="p-4 border-2 border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300"
+                className={`group grid grid-cols-12 gap-4 px-8 py-6 items-center border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-indigo-50/50 transition-all duration-200 ${
+                  index === courses.length - 1 ? "border-b-0" : ""
+                }`}
               >
-                {/* Course Header */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h5 className="font-bold text-gray-900 text-base">
-                          {course.title}
-                        </h5>
-                        {/* Progress Badge - hiển thị status từ API */}
-                        {isEnrolled && (
-                          <span
-                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                              isCompleted
-                                ? "bg-green-100 text-green-700"
-                                : isInProgress
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {isCompleted
-                              ? "✓ "
-                              : isInProgress
-                              ? "Đang học"
-                              : "Chưa bắt đầu"}
-                          </span>
-                        )}
-                      </div>
+                {/* Course Info */}
+                <div className="col-span-5">
+                  <div className="flex items-center gap-4">
+                    {/* Course Number Badge */}
+                    <div className="relative w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-100 border border-slate-200">
+                      <span className="text-slate-600 font-bold text-lg">{index + 1}</span>
                     </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-gray-900 text-base mb-1 line-clamp-1 group-hover:text-blue-700 transition-colors">
+                        {course.title}
+                      </h4>
+                      <p className="text-gray-500 text-sm line-clamp-1 mb-1">
+                        {course.description}
+                      </p>
+                      {isEnrolled && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            isCompleted ? "bg-green-500" : isInProgress ? "bg-blue-500 animate-pulse" : "bg-gray-300"
+                          }`} />
+                          <span className={`text-xs font-semibold ${
+                            isCompleted ? "text-green-600" : isInProgress ? "text-blue-600" : "text-gray-500"
+                          }`}>
+                            {isCompleted ? "Đã hoàn thành" : isInProgress ? "Đang học" : "Chưa bắt đầu"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-                    {/* Badge */}
-                    {course.isFree || isFirstCourse ? (
-                      <span className="bg-linear-to-r from-blue-400 to-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md">
-                        Miễn phí
-                      </span>
-                    ) : (
-                      <span className="bg-linear-to-r from-yellow-400 to-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
-                        <Coins className="w-3 h-3" />
-                        {course.price}
-                      </span>
+                {/* Content Stats */}
+                <div className="col-span-2 text-center">
+                  <div className="inline-flex flex-col items-center gap-1 px-4 py-2 bg-slate-50 rounded-xl">
+                    <div className="flex items-center gap-1.5">
+                      <BookOpen className="w-4 h-4 text-slate-500" />
+                      <span className="text-sm font-semibold text-gray-800">{course.numberOfChapter}</span>
+                    </div>
+                    <span className="text-xs text-gray-500">chương</span>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    {totalExercises} bài tập
+                    {course.duration > 0 && (
+                      <span className="ml-1">• {course.duration}p</span>
                     )}
                   </div>
+                </div>
 
-                  <p className="text-gray-600 text-sm line-clamp-2">
-                    {course.description}
-                  </p>
-                  {course.duration > 0 ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                      <Clock className="w-3 h-3" />
-                      {course.duration} phút
+                {/* Price */}
+                <div className="col-span-2 text-center">
+                  {course.isFree || isFirstCourse ? (
+                    <div className="inline-flex flex-col items-center">
+                      <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-700 text-sm font-bold rounded-xl border border-green-200">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zm-2.207 6.207a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clipRule="evenodd" />
+                        </svg>
+                        Miễn phí
+                      </span>
+                      <span className="text-xs text-green-600 mt-1">Không mất phí</span>
                     </div>
                   ) : (
-                    <></>
-                  )
-                  }
+                    <div className="inline-flex flex-col items-center">
+                      <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-50 text-amber-700 text-sm font-bold rounded-xl border border-amber-200">
+                        <Coins className="w-4 h-4" />
+                        {course.price} Coin
+                      </span>
+                      <span className="text-xs text-amber-600 mt-1">Trả bằng coin</span>
+                    </div>
+                  )}
+                </div>
 
-                  <p className="text-xs text-gray-500">
-                    {course.numberOfChapter} Chương • {totalExercises} Bài tập
-                  </p>
-                  {/* Action Button */}
+                {/* Action */}
+                <div className="col-span-3 text-center">
                   {isEnrolled ? (
                     <Button
                       onClick={() =>
@@ -389,14 +412,14 @@ export default function EnrollingCourses() {
                           enrolledCourse.status
                         )
                       }
-                      className={`w-[200px] rounded-4xl font-bold cursor-pointer ${
+                      className={`rounded-xl cursor-pointer px-6 py-2.5 font-semibold shadow-md hover:shadow-lg transition-all duration-200 ${
                         isCompleted
-                          ? "bg-green-600 hover:bg-green-700 text-white"
-                          : "bg-blue-600 hover:bg-blue-700 text-white"
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                          : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
                       }`}
                     >
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      {isCompleted ? "Xem lại khóa học" : "Tiếp tục học"}
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                      {isCompleted ? "Ôn tập" : "Tiếp tục học"}
                     </Button>
                   ) : (
                     <Button
@@ -405,33 +428,39 @@ export default function EnrollingCourses() {
                         if (isFirstCourse) {
                           handleEnrollCourseFree(course.courseId);
                         } else {
-                          // BE đã handle điều kiện, không cần check ở FE
                           handleEnrollCourseNotFree(course.courseId);
                         }
                       }}
-                      className={`w-[200px]  rounded-4xl  font-bold cursor-pointer ${
+                      className={`rounded-xl cursor-pointer px-6 py-2.5 font-semibold shadow-md hover:shadow-lg transition-all duration-200 ${
                         isFirstCourse
-                          ? "bg-green-600 hover:bg-green-700 text-white"
-                          : "bg-orange-600 hover:bg-orange-700 text-white"
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                          : "bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white"
                       }`}
                     >
                       {isFirstCourse ? (
                         <>
                           <BookOpen className="w-4 h-4 mr-2" />
-                          Tham gia miễn phí
+                          Bắt đầu học
                         </>
                       ) : (
                         <>
                           <Coins className="w-4 h-4 mr-2" />
-                          Mở khóa - {course.price} Coin
+                          Mở khóa ngay
                         </>
                       )}
                     </Button>
                   )}
                 </div>
-              </Card>
+              </div>
             );
           })}
+        </div>
+
+        {/* Footer Note */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-500">
+             <span className="font-medium">Mẹo:</span> Hoàn thành khóa đầu tiên miễn phí để mở khóa các khóa học nâng cao
+          </p>
         </div>
       </div>
     </div>
