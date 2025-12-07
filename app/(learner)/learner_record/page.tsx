@@ -47,6 +47,7 @@ import {
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { formatAiFeedbackHtml } from "@/utils/formatAiFeedback";
 
 export default function LearnerRecordPage() {
   const router = useRouter();
@@ -60,6 +61,7 @@ export default function LearnerRecordPage() {
   const [renamingFolderName, setRenamingFolderName] = useState("");
   const [isFoldersCollapsed, setIsFoldersCollapsed] = useState(false);
   const [isRecordsCollapsed, setIsRecordsCollapsed] = useState(false);
+  const [feedbackRecord, setFeedbackRecord] = useState<Record | null>(null);
 
   // Queries
   const { data: foldersData, isLoading: isLoadingFolders } = useLearnerRecordFolders();
@@ -242,18 +244,7 @@ export default function LearnerRecordPage() {
                 Thư mục
               </CardTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsFoldersCollapsed(!isFoldersCollapsed)}
-              className="h-8 w-8 p-0"
-            >
-              {isFoldersCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <ChevronLeft className="w-4 h-4" />
-              )}
-            </Button>
+            
           </CardHeader>
           {!isFoldersCollapsed && (
             <>
@@ -337,18 +328,7 @@ export default function LearnerRecordPage() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsRecordsCollapsed(!isRecordsCollapsed)}
-                  className="h-8 w-8 p-0"
-                >
-                  {isRecordsCollapsed ? (
-                    <ChevronLeft className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </Button>
+               
                 {selectedFolderId && !isRecordsCollapsed && (
                   <Dialog open={showCreateRecordDialog} onOpenChange={setShowCreateRecordDialog}>
                     <DialogTrigger asChild>
@@ -445,82 +425,92 @@ export default function LearnerRecordPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {selectedRecords.map((record: Record) => (
-                  <Card key={record.recordId} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-lg">{record.content}</h3>
-                            <Badge
-                              variant={
-                                record.status === "Completed"
-                                  ? "default"
-                                  : record.status === "Pending"
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                            >
-                              {record.status}
-                            </Badge>
+                <div className="space-y-4">
+                  {selectedRecords.map((record: Record) => {
+                    const hasAiFeedback = Boolean(record.aiFeedback && record.aiFeedback.trim());
+                    return (
+                      <Card key={record.recordId} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 space-y-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="font-semibold text-lg">{record.content}</h3>
+                                <Badge
+                                  variant={
+                                    record.status === "Completed"
+                                      ? "default"
+                                      : record.status === "Pending"
+                                      ? "secondary"
+                                      : "outline"
+                                  }
+                                >
+                                  {record.status}
+                                </Badge>
+                                {hasAiFeedback && (
+                                  <Badge variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50">
+                                    Có phản hồi AI
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {record.audioRecordingURL && (
+                                <div className="flex items-center gap-2">
+                                  <audio controls className="w-full max-w-md">
+                                    <source src={record.audioRecordingURL} type="audio/mpeg" />
+                                    Your browser does not support the audio element.
+                                  </audio>
+                                </div>
+                              )}
+
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <Star className="w-4 h-4 text-yellow-500" />
+                                  <span className="text-gray-600">Điểm số:</span>
+                                  <span className="font-semibold">{record.score || "N/A"}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MessageSquare className="w-4 h-4 text-blue-500" />
+                                  <span className="text-gray-600">Trạng thái:</span>
+                                  <span className="font-semibold">{record.status || 0}</span>
+                                </div>
+                              </div>
+
+                              <div className="text-xs text-gray-500">
+                                Tạo lúc: {formatDate(record.createdAt)}
+                              </div>
+                            </div>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                {hasAiFeedback && (
+                                  <DropdownMenuItem
+                                    onClick={() => setFeedbackRecord(record)}
+                                    className="flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <MessageSquare className="w-4 h-4 text-blue-500" />
+                                    Xem phản hồi AI
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteRecord(record.recordId)}
+                                  className="text-red-600 cursor-pointer"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Xóa
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-
-                          {record.audioRecordingURL && (
-                            <div className="flex items-center gap-2">
-                              <audio controls className="w-full max-w-md">
-                                <source src={record.audioRecordingURL} type="audio/mpeg" />
-                                Your browser does not support the audio element.
-                              </audio>
-                            </div>
-                          )}
-
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div className="flex items-center gap-2">
-                              <Star className="w-4 h-4 text-yellow-500" />
-                              <span className="text-gray-600">Điểm số:</span>
-                              <span className="font-semibold">{record.score || "N/A"}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="w-4 h-4 text-blue-500" />
-                              <span className="text-gray-600">Trạng thái:</span>
-                              <span className="font-semibold">{record.status || 0}</span>
-                            </div>
-                          </div>
-
-                          {record.aiFeedback && (
-                            <div className="bg-gray-50 rounded-lg p-3">
-                              <p className="text-sm text-gray-600 mb-1">Phản hồi AI:</p>
-                              <p className="text-sm">{record.aiFeedback}</p>
-                            </div>
-                          )}
-
-                          <div className="text-xs text-gray-500">
-                            Tạo lúc: {formatDate(record.createdAt)}
-                          </div>
-                        </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteRecord(record.recordId)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Xóa
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
             )}
             </CardContent>
           )}
@@ -561,6 +551,37 @@ export default function LearnerRecordPage() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Feedback Dialog */}
+      <Dialog open={!!feedbackRecord} onOpenChange={(open) => !open && setFeedbackRecord(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Phản hồi AI</DialogTitle>
+            <DialogDescription>
+              {feedbackRecord?.content
+                ? `Nội dung: "${feedbackRecord.content}"`
+                : "AI Feedback chi tiết cho record này"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pr-2">
+            {feedbackRecord?.aiFeedback ? (
+              <div
+                className="text-sm leading-relaxed text-slate-700 space-y-2"
+                dangerouslySetInnerHTML={{
+                  __html: formatAiFeedbackHtml(feedbackRecord.aiFeedback),
+                }}
+              />
+            ) : (
+              <p className="text-sm text-slate-500">Chưa có phản hồi AI.</p>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setFeedbackRecord(null)}>
+              Đóng
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -65,6 +65,8 @@ const ManagerManagement = () => {
   const managers = managerList?.data?.items || [];
   const totalItems = managerList?.data?.totalItems || 0;
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const startItem = totalItems === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
+  const endItem = totalItems === 0 ? 0 : Math.min(pageNumber * pageSize, totalItems);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -100,23 +102,9 @@ const ManagerManagement = () => {
     return matchesStatus;
   });
 
+  const totalActive = managers.filter((m) => (m.status || "Active") === "Active").length;
 
-  // Handle pagination
-  const handlePreviousPage = () => {
-    if (pageNumber > 1) {
-      setPageNumber(pageNumber - 1);
-    }
-  };
 
-  const handleNextPage = () => {
-    if (pageNumber < totalPages) {
-      setPageNumber(pageNumber + 1);
-    }
-  };
-
-  const handlePageChange = (newPage: number) => {
-    setPageNumber(newPage);
-  };
 
   // Reset to page 1 when search changes
   useEffect(() => {
@@ -248,12 +236,12 @@ const ManagerManagement = () => {
                         <div className="relative">
                           <Avatar className="size-12 ring-2 ring-blue-100 hover:ring-blue-200 transition-all duration-200 shadow-sm">
                           <AvatarImage
-  src={`https://ui-avatars.com/api/?background=1e293b&color=fff&name=${encodeURIComponent(
-    Manager.fullName || "User"
-  )}`}
-  alt={Manager.fullName}
-  className="object-cover"
-/>
+                            src={`https://ui-avatars.com/api/?background=1e293b&color=fff&name=${encodeURIComponent(
+                              Manager.fullName || "User"
+                            )}`}
+                            alt={Manager.fullName}
+                            className="object-cover"
+                          />
 
                             <AvatarFallback className="bg-linear-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold shadow-sm">
                               {getInitials(Manager.fullName)}
@@ -273,7 +261,7 @@ const ManagerManagement = () => {
                 <TableCell className="font-medium">
                   <div className="flex flex-col">
                     <span className="font-semibold text-gray-900">
-                      {Manager.fullName}AvatarImage
+                      {Manager.fullName}
                     </span>
                   </div>
                 </TableCell>
@@ -422,64 +410,72 @@ const ManagerManagement = () => {
         </Table>
       </div>
 
-      {/* Pagination & Info */}
-      <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
-        <div>
-          ACTIVE ManagerS:{" "}
-          {filteredManagers.filter((l) => l.status === "Active").length}/
-          {totalItems}
-        </div>
-        <div className="flex items-center gap-4">
+      {/* Phân trang & Thông tin */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-sm text-gray-600 mt-6 pt-4 border-t">
+        <div className="space-y-1">
           <div>
-            Rows per page: <span className="font-semibold">{pageSize}</span> &nbsp; 
-            {totalItems > 0 ? `${(pageNumber - 1) * pageSize + 1}-${Math.min(pageNumber * pageSize, totalItems)}` : "0-0"}
-            {" "}of {totalItems}
+            NGƯỜI QUẢN LÝ HOẠT ĐỘNG:{" "}
+            <span className="font-semibold text-gray-900">
+              {totalActive}/{totalItems}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePreviousPage}
-              disabled={pageNumber === 1}
-              className="cursor-pointer"
-            >
-              Previous
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (pageNumber <= 3) {
-                  pageNum = i + 1;
-                } else if (pageNumber >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = pageNumber - 2 + i;
-                }
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={pageNumber === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handlePageChange(pageNum)}
-                    className="cursor-pointer"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNextPage}
-              disabled={pageNumber >= totalPages}
-              className="cursor-pointer"
-            >
-              Next
-            </Button>
+          <div>
+            Hàng mỗi trang:{" "}
+            <span className="font-semibold text-gray-900">{pageSize}</span> &nbsp;
+            {totalItems === 0
+              ? "0 trên 0"
+              : `${startItem}-${endItem} trên ${totalItems}`}
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
+            disabled={pageNumber === 1 || isLoading}
+            className="cursor-pointer"
+          >
+            Trước
+          </Button>
+          {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
+            let page: number;
+            if (totalPages <= 5) {
+              page = index + 1;
+            } else if (pageNumber <= 3) {
+              page = index + 1;
+            } else if (pageNumber >= totalPages - 2) {
+              page = totalPages - 4 + index;
+            } else {
+              page = pageNumber - 2 + index;
+            }
+
+            return (
+              <Button
+                key={page}
+                variant={pageNumber === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPageNumber(page)}
+                disabled={isLoading}
+                className={`min-w-[40px] ${
+                  pageNumber === page
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "cursor-pointer hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </Button>
+            );
+          })}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPageNumber((prev) => Math.min(prev + 1, totalPages))}
+            disabled={pageNumber >= totalPages || isLoading}
+            className="cursor-pointer"
+          >
+            Sau
+          </Button>
         </div>
       </div>
 

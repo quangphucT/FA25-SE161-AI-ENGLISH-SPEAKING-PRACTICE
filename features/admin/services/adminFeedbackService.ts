@@ -3,6 +3,11 @@ import fetchWithAuth from "@/utils/fetchWithAuth";
 export interface AdminFeedbackResponse {
     isSucess: boolean;
     data: {
+        totalFeedback: number;
+        totalApproved: number;
+        totalRejected: number;
+        averageRating: number;
+        totalReports: number;
         pageNumber: number;
         pageSize: number;
         totalItems: number;
@@ -23,6 +28,13 @@ export interface Feedback {
     createdAt: string;
     reviewId: string;
     reviewerName: string;
+    reviewScore?: number;
+    reviewerScore?: number; // Keep for backward compatibility
+    reviewerComment?: string;
+    reviewComment?: string; // Keep for backward compatibility
+    reviewerType?: string;
+    reviewType?: string; // Keep for backward compatibility
+    learnerRecordAudioUrl?: string;
 }
 export interface AdminFeedbackDetailResponse {
     isSucess: boolean;
@@ -48,9 +60,15 @@ export interface AdminFeedbackRejectPayload {
     feedbackId: string;
     reason?: string;
 }
-export const adminFeedbackService = async (pageNumber: number, pageSize: number, status: string, keyword: string): Promise<AdminFeedbackResponse> => {
+export const adminFeedbackService = async (pageNumber: number, pageSize: number, status: string, keyword: string, type: string ): Promise<AdminFeedbackResponse> => {
     try {
-        const response = await fetchWithAuth(`/api/AdminDashboard/feedback?pageNumber=${pageNumber}&pageSize=${pageSize}&status=${status}&keyword=${keyword}`);
+        const params = new URLSearchParams();
+        params.set("pageNumber", pageNumber.toString());
+        params.set("pageSize", pageSize.toString());
+        if (status) params.set("status", status);
+        if (keyword) params.set("keyword", keyword);
+        if (type) params.set("type", type);
+        const response = await fetchWithAuth(`/api/AdminDashboard/feedback?${params.toString()}`);
         const data = await response.json();
         return data;
     } catch (error: unknown) {

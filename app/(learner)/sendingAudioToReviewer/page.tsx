@@ -28,6 +28,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -36,7 +42,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useLearnerReviewHistory } from "@/features/learner/hooks/useLearnerReview";
-import { useLearnerFeedback } from "@/features/learner/hooks/useLearnerFeedback";
+import { useLearnerFeedback, useLearnerReportReview } from "@/features/learner/hooks/useLearnerFeedback";
 import {
   Loader2,
   ChevronLeft,
@@ -50,6 +56,7 @@ import {
   X,
   Filter,
   Play,
+  XCircle,
 } from "lucide-react";
 import type { LearnerReviewHistory } from "@/features/learner/services/learnerReviewService";
 
@@ -60,10 +67,12 @@ const SendingAudioToReviewer = () => {
   const [status, setStatus] = useState<string>("all"); // Use "all" instead of empty string
   const [keyword, setKeyword] = useState<string>("");
   const [searchKeyword, setSearchKeyword] = useState<string>(""); // Debounced keyword
-  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<LearnerReviewHistory | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("feedback");
   const [feedbackRating, setFeedbackRating] = useState<number>(5);
   const [feedbackContent, setFeedbackContent] = useState("");
+  const [reportReason, setReportReason] = useState("");
   
   // Convert "all" to empty string for API call
   const apiStatus = status === "all" ? "" : status;
@@ -91,10 +100,21 @@ const SendingAudioToReviewer = () => {
     setPageNumber(1);
   }, [status]);
   const { mutate: submitFeedback, isPending: isSubmittingFeedback } = useLearnerFeedback();
+  const { mutate: submitReport, isPending: isSubmittingReport } = useLearnerReportReview();
 
   const reviews = useMemo(() => data?.data?.items ?? [], [data]);
   const totalItems = data?.data?.totalItems ?? 0;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+
+  const summaryStats = useMemo(() => {
+    const completed = data?.data?.completed ?? reviews.filter((r) => r.status === "Completed").length;
+    const pending =
+      data?.data?.pending ??
+      reviews.filter((r) => r.status === "Pending" || r.status === "InProgress").length;
+    const rejected = data?.data?.rejected ?? reviews.filter((r) => r.status === "Rejected").length;
+    const total = data?.data?.totalItems ?? totalItems;
+    return { completed, pending, rejected, total };
+  }, [data, reviews, totalItems]);
 
   const handlePreviousPage = () => {
     if (pageNumber > 1) {
@@ -123,11 +143,13 @@ const SendingAudioToReviewer = () => {
     setPageNumber(1); // Reset to first page when filter changes
   };
 
-  const handleOpenFeedback = (review: LearnerReviewHistory) => {
+  const handleOpenRequest = (review: LearnerReviewHistory) => {
     setSelectedReview(review);
+    setActiveTab("feedback");
     setFeedbackRating(5);
     setFeedbackContent("");
-    setIsFeedbackDialogOpen(true);
+    setReportReason("");
+    setIsRequestDialogOpen(true);
   };
 
   const handleSubmitFeedback = () => {
@@ -156,7 +178,7 @@ const SendingAudioToReviewer = () => {
       },
       {
         onSuccess: () => {
-          setIsFeedbackDialogOpen(false);
+          setIsRequestDialogOpen(false);
           setFeedbackContent("");
           setFeedbackRating(5);
           setSelectedReview(null);
@@ -164,6 +186,39 @@ const SendingAudioToReviewer = () => {
         onError: (error) => {
           // Error is already handled by the hook's onError callback
           console.error("Feedback submission error:", error);
+        },
+      }
+    );
+  };
+
+  const handleSubmitReport = () => {
+    if (!selectedReview) {
+      return;
+    }
+    
+    // Validate inputs
+    if (!reportReason.trim()) {
+      return;
+    }
+    
+    if (!selectedReview.reviewId) {
+      return;
+    }
+    
+    submitReport(
+      {
+        reviewId: selectedReview.reviewId,
+        reason: reportReason.trim(),
+      },
+      {
+        onSuccess: () => {
+          setIsRequestDialogOpen(false);
+          setReportReason("");
+          setSelectedReview(null);
+        },
+        onError: (error) => {
+          // Error is already handled by the hook's onError callback
+          console.error("Report submission error:", error);
         },
       }
     );
@@ -180,15 +235,15 @@ const SendingAudioToReviewer = () => {
     });
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (feedbackStatus: string) => {
     const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-      "Completed": { label: "Hoàn thành", variant: "default" },
+      "Approved": { label: "Hoàn thành", variant: "default" },
       "Pending": { label: "Đang chờ", variant: "secondary" },
       "Rejected": { label: "Từ chối", variant: "destructive" },
-      "InProgress": { label: "Đang xử lý", variant: "outline" },
+      "NotSent": { label: "Chưa Gửi", variant: "outline" },
     };
     
-    const statusInfo = statusMap[status] || { label: status, variant: "outline" as const };
+    const statusInfo = statusMap[feedbackStatus] || { label: feedbackStatus, variant: "outline" as const };
     return (
       <Badge variant={statusInfo.variant} className="font-medium">
         {statusInfo.label}
@@ -218,13 +273,13 @@ const SendingAudioToReviewer = () => {
       </div>
 
       {/* Statistics Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Tổng số review</p>
-                <div className="text-3xl font-bold text-gray-900">{totalItems}</div>
+                <div className="text-3xl font-bold text-gray-900">{summaryStats.total}</div>
               </div>
               <div className="p-3 bg-blue-100 rounded-full">
                 <MessageSquare className="w-6 h-6 text-blue-600" />
@@ -239,7 +294,7 @@ const SendingAudioToReviewer = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Đã hoàn thành</p>
                 <div className="text-3xl font-bold text-gray-900">
-                  {reviews.filter((r) => r.status === "Completed").length}
+                  {summaryStats.completed}
                 </div>
               </div>
               <div className="p-3 bg-green-100 rounded-full">
@@ -255,11 +310,26 @@ const SendingAudioToReviewer = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Đang chờ</p>
                 <div className="text-3xl font-bold text-gray-900">
-                  {reviews.filter((r) => r.status === "Pending" || r.status === "InProgress").length}
+                  {summaryStats.pending}
                 </div>
               </div>
               <div className="p-3 bg-yellow-100 rounded-full">
                 <Calendar className="w-6 h-6 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1"> Bị từ chối</p>
+                <div className="text-3xl font-bold text-gray-900">
+                  {summaryStats.rejected}
+                </div>
+              </div>
+              <div className="p-3 bg-red-100 rounded-full">
+                <XCircle className="w-6 h-6 text-red-600" />
               </div>
             </div>
           </CardContent>
@@ -286,9 +356,9 @@ const SendingAudioToReviewer = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="Completed">Hoàn thành</SelectItem>
+                    <SelectItem value="Approved">Hoàn thành</SelectItem>
+                    <SelectItem value="NotSent">Chưa Gửi</SelectItem>
                     <SelectItem value="Pending">Đang chờ</SelectItem>
-                    <SelectItem value="InProgress">Đang xử lý</SelectItem>
                     <SelectItem value="Rejected">Từ chối</SelectItem>
                   </SelectContent>
                 </Select>
@@ -388,7 +458,7 @@ const SendingAudioToReviewer = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {getStatusBadge(review.status)}
+                        {getStatusBadge(review.feedbackStatus)}
                       </TableCell>
                       <TableCell>
                         <div className="max-w-md">
@@ -426,16 +496,18 @@ const SendingAudioToReviewer = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
+                        {review.feedbackStatus === "NotSent" && (
                         <Button
                           size="sm"
                           variant="outline"
                           className="cursor-pointer"
                           disabled={review.status == "Completed" || review.status == "Rejected"}
-                          onClick={() => handleOpenFeedback(review)}
+                          onClick={() => handleOpenRequest(review)}
                         >
                           <Send className="w-4 h-4 mr-2" />
-                          Gửi feedback
+                          Gửi đơn
                         </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -503,74 +575,117 @@ const SendingAudioToReviewer = () => {
         </div>
       )}
 
-      <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
+      {/* Dialog gửi đơn với tabs */}
+      <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Gửi feedback cho reviewer</DialogTitle>
+            <DialogTitle>Gửi đơn</DialogTitle>
             <DialogDescription>
-              Đánh giá chất lượng review để giúp hệ thống cải thiện trải nghiệm.
+              Chọn loại đơn bạn muốn gửi cho review này.
             </DialogDescription>
           </DialogHeader>
 
           {selectedReview && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                <p className="text-sm text-gray-500">Question</p>
-                <p className="text-sm font-medium text-gray-800 line-clamp-2">
-                  {selectedReview.questionContent || "N/A"}
-                </p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-                  <User className="w-4 h-4" />
-                  <span>{selectedReview.reviewerFullName || "Reviewer ẩn danh"}</span>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="feedback" className="flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  Gửi feedback
+                </TabsTrigger>
+                <TabsTrigger value="report" className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Gửi report
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="mt-4 space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                  <p className="text-sm text-gray-500">Câu hỏi:</p>
+                  <p className="text-sm font-medium text-gray-800 line-clamp-2">
+                    {selectedReview.questionContent || "N/A"}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
+                    <User className="w-4 h-4" />
+                    <span>{selectedReview.reviewerFullName || "Reviewer ẩn danh"}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700">Đánh giá (1-5)</p>
-                <Input
-                  type="number"
-                  min={1}
-                  max={5}
-                  value={feedbackRating}
-                  onChange={(e) => setFeedbackRating(Math.max(1, Math.min(5, Number(e.target.value))))}
-                />
-              </div>
+                <TabsContent value="feedback" className="space-y-4 mt-0">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Đánh giá (1-5)</p>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={5}
+                      value={feedbackRating}
+                      onChange={(e) => setFeedbackRating(Math.max(1, Math.min(5, Number(e.target.value))))}
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700">Nhận xét của bạn</p>
-                <Textarea
-                  rows={4}
-                  placeholder="Chia sẻ cảm nhận của bạn về chất lượng review..."
-                  value={feedbackContent}
-                  onChange={(e) => setFeedbackContent(e.target.value)}
-                />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Nhận xét của bạn</p>
+                    <Textarea
+                      rows={4}
+                      placeholder="Chia sẻ cảm nhận của bạn về chất lượng review..."
+                      value={feedbackContent}
+                      onChange={(e) => setFeedbackContent(e.target.value)}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="report" className="space-y-4 mt-0">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Lý do báo cáo *</p>
+                    <Textarea
+                      rows={4}
+                      placeholder="Mô tả chi tiết vấn đề bạn gặp phải với review này..."
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                    />
+                  </div>
+                </TabsContent>
               </div>
-            </div>
+            </Tabs>
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              onClick={() => setIsFeedbackDialogOpen(false)}
+              onClick={() => setIsRequestDialogOpen(false)}
               className="cursor-pointer"
-              disabled={isSubmittingFeedback}
+              disabled={isSubmittingFeedback || isSubmittingReport}
             >
               Hủy
             </Button>
-            <Button
-              onClick={handleSubmitFeedback}
-              disabled={
-                !selectedReview ||
-                !feedbackContent.trim() ||
-                feedbackRating < 1 ||
-                feedbackRating > 5 ||
-                isSubmittingFeedback
-              }
-              className="cursor-pointer"
-            >
-              {isSubmittingFeedback && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Gửi feedback
-            </Button>
+            {activeTab === "feedback" ? (
+              <Button
+                onClick={handleSubmitFeedback}
+                disabled={
+                  !selectedReview ||
+                  !feedbackContent.trim() ||
+                  feedbackRating < 1 ||
+                  feedbackRating > 5 ||
+                  isSubmittingFeedback
+                }
+                className="cursor-pointer"
+              >
+                {isSubmittingFeedback && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Gửi feedback
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmitReport}
+                disabled={
+                  !selectedReview ||
+                  !reportReason.trim() ||
+                  isSubmittingReport
+                }
+                className="cursor-pointer"
+              >
+                {isSubmittingReport && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Gửi report
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
