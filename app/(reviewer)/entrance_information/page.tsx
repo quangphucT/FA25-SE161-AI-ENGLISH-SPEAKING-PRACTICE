@@ -104,7 +104,6 @@ const EntranceInformation = () => {
             {
               onSuccess: () => {
                 resolve();
-                
               },
               onError: (error) => {
                 reject(error);
