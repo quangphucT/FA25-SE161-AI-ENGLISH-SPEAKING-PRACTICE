@@ -25,18 +25,26 @@ function LearningPathContent() {
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
   const learnerData = getAllLearnerData();
 
-  const { data: apiResponse, isLoading, refetch } = useLearningPathCourseFull(
+  const {
+    data: apiResponse,
+    isLoading,
+    refetch,
+  } = useLearningPathCourseFull(
     {
       learningPathCourseId: learnerData?.learningPathCourseId || "",
-      courseId: learnerData?.courseId || ""
+      courseId: learnerData?.courseId || "",
     },
     Boolean(learnerData)
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { mutate: startExercise, isPending: isStarting } = useStartExercise();
-  const [loadingExerciseId, setLoadingExerciseId] = useState<string | null>(null);
-  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
+  const [loadingExerciseId, setLoadingExerciseId] = useState<string | null>(
+    null
+  );
+  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(
+    null
+  );
   const [isMounted, setIsMounted] = useState(false);
 
   // Set mounted state
@@ -47,15 +55,15 @@ function LearningPathContent() {
   // Tự động mở chapter từ URL params - only on client
   useEffect(() => {
     if (!isMounted) return;
-    
-    const chapterId = searchParams.get('chapterId');
+
+    const chapterId = searchParams.get("chapterId");
     if (chapterId) {
       setExpandedChapterId(chapterId);
       // Scroll to chapter after a short delay to ensure rendering
       setTimeout(() => {
         const element = document.getElementById(`chapter-${chapterId}`);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }, 300);
     }
@@ -68,7 +76,6 @@ function LearningPathContent() {
   const handleNavigateToEnrollingCourses = () => {
     router.push("/enrolling-courses");
   };
-
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -158,9 +165,9 @@ function LearningPathContent() {
 
   const { course, chapters, progress, status, numberOfChapter } =
     learningPathData;
-    
+
   const handleButtonClick = (
-    exerciseStatus: string, 
+    exerciseStatus: string,
     learningPathExerciseId: string,
     exerciseId: string,
     chapterId: string
@@ -168,7 +175,7 @@ function LearningPathContent() {
     if (exerciseStatus === "NotStarted") {
       // Set loading state cho exercise này
       setLoadingExerciseId(learningPathExerciseId);
-      
+
       // Gọi API để bắt đầu exercise
       startExercise(
         { learningPathExerciseId },
@@ -182,8 +189,7 @@ function LearningPathContent() {
           onError: (data) => {
             toast.error(data?.message || "Có lỗi xảy ra khi bắt đầu bài tập.");
             setLoadingExerciseId(null);
-          
-          }
+          },
         }
       );
     } else {
@@ -201,7 +207,10 @@ function LearningPathContent() {
               <BookOpen className="w-7 h-7 text-blue-600" />
             </div>
             <div className="max-w-xl">
-              <h1 className="text-xl font-bold text-gray-900 line-clamp-1" title={course.title}>
+              <h1
+                className="text-xl font-bold text-gray-900 line-clamp-1"
+                title={course.title}
+              >
                 {course.title}
               </h1>
               <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
@@ -209,7 +218,11 @@ function LearningPathContent() {
                 <span>•</span>
                 <span>{numberOfChapter} chương</span>
                 <span>•</span>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                <span
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(
+                    status
+                  )}`}
+                >
                   {getStatusText(status)}
                 </span>
               </div>
@@ -219,13 +232,17 @@ function LearningPathContent() {
             <div className="w-48">
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-gray-500">Tiến độ</span>
-                <span className="font-semibold text-gray-900">{Math.round(progress)}%</span>
+                <span className="font-semibold text-gray-900">
+                  {Math.round(progress)}%
+                </span>
               </div>
               <Progress value={progress} className="h-2" />
             </div>
             <div className="flex items-center gap-2 pl-6 border-l border-gray-200">
               <Trophy className="w-6 h-6 text-yellow-500" />
-              <span className="text-2xl font-bold text-gray-900">{Math.round(progress)}%</span>
+              <span className="text-2xl font-bold text-gray-900">
+                {Math.round(progress)}%
+              </span>
             </div>
           </div>
         </div>
@@ -239,7 +256,7 @@ function LearningPathContent() {
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <h2 className="font-semibold text-gray-900">Nội dung khóa học</h2>
             </div>
-            <div className="max-h-[calc(100vh-250px)] overflow-y-auto">
+            <div className=" overflow-y-auto">
               {chapters && chapters.length > 0 ? (
                 chapters.map((chapter, index) => (
                   <div
@@ -259,15 +276,18 @@ function LearningPathContent() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${
-                        chapter.status.toLowerCase() === "completed"
-                          ? "bg-green-100 text-green-600"
-                          : chapter.status.toLowerCase() === "locked"
-                          ? "bg-gray-200 text-gray-400"
-                          : expandedChapterId === chapter.learningPathChapterId
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-100 text-gray-600"
-                      }`}>
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold ${
+                          chapter.status.toLowerCase() === "completed"
+                            ? "bg-green-100 text-green-600"
+                            : chapter.status.toLowerCase() === "locked"
+                            ? "bg-gray-200 text-gray-400"
+                            : expandedChapterId ===
+                              chapter.learningPathChapterId
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
                         {chapter.status.toLowerCase() === "locked" ? (
                           <Lock className="w-4 h-4" />
                         ) : chapter.status.toLowerCase() === "completed" ? (
@@ -277,20 +297,22 @@ function LearningPathContent() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p 
-                          className="text-sm font-medium text-gray-900 line-clamp-1" 
+                        <p
+                          className="text-sm font-medium text-gray-900 line-clamp-1"
                           title={chapter.chapterTitle}
                         >
                           {chapter.chapterTitle}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <div className="flex-1 bg-gray-200 rounded-full h-1">
-                            <div 
+                            <div
                               className="bg-blue-500 h-1 rounded-full transition-all"
                               style={{ width: `${chapter.progress}%` }}
                             />
                           </div>
-                          <span className="text-xs text-gray-500">{Math.round(chapter.progress)}%</span>
+                          <span className="text-xs text-gray-500">
+                            {Math.round(chapter.progress)}%
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -323,32 +345,40 @@ function LearningPathContent() {
                         <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">
                           Chương {selectedChapter.orderIndex}
                         </span>
-                        <h2 
-                          className="text-xl font-bold text-gray-900 mt-1 line-clamp-2" 
+                        <h2
+                          className="text-xl font-bold text-gray-900 mt-1 line-clamp-2"
                           title={selectedChapter.chapterTitle}
                         >
                           {selectedChapter.chapterTitle}
                         </h2>
-                        <p 
-                          className="text-gray-500 text-sm mt-1 line-clamp-2" 
+                        <p
+                          className="text-gray-500 text-sm mt-1 line-clamp-2"
                           title={selectedChapter.chapterDescription}
                         >
                           {selectedChapter.chapterDescription}
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-900">
+                        {/* <div className="text-2xl font-bold text-gray-900">
                           {Math.round(selectedChapter.progress)}%
+                        </div> */}
+                        <div className="text-2xl font-bold text-gray-900">
+                          {selectedChapter.progress.toFixed(2)}%
                         </div>
+
                         <div className="text-xs text-gray-500">Hoàn thành</div>
                       </div>
                     </div>
-                    <Progress value={selectedChapter.progress} className="h-2 mt-4" />
+                    <Progress
+                      value={selectedChapter.progress}
+                      className="h-2 mt-4"
+                    />
                   </div>
 
                   {/* Exercises Grid */}
                   <div className="grid grid-cols-2 gap-4">
-                    {selectedChapter.exercises && selectedChapter.exercises.length > 0 ? (
+                    {selectedChapter.exercises &&
+                    selectedChapter.exercises.length > 0 ? (
                       selectedChapter.exercises.map((exercise, exIndex) => (
                         <div
                           key={exercise.learningPathExerciseId}
@@ -359,18 +389,21 @@ function LearningPathContent() {
                           }`}
                         >
                           <div className="flex items-start gap-4">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                              exercise.status.toLowerCase() === "completed"
-                                ? "bg-green-100 text-green-600"
-                                : exercise.status.toLowerCase() === "locked"
-                                ? "bg-gray-100 text-gray-400"
-                                : exercise.status === "InProgress"
-                                ? "bg-amber-100 text-amber-600"
-                                : "bg-blue-100 text-blue-600"
-                            }`}>
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                exercise.status.toLowerCase() === "completed"
+                                  ? "bg-green-100 text-green-600"
+                                  : exercise.status.toLowerCase() === "locked"
+                                  ? "bg-gray-100 text-gray-400"
+                                  : exercise.status === "InProgress"
+                                  ? "bg-amber-100 text-amber-600"
+                                  : "bg-blue-100 text-blue-600"
+                              }`}
+                            >
                               {exercise.status.toLowerCase() === "locked" ? (
                                 <Lock className="w-5 h-5" />
-                              ) : exercise.status.toLowerCase() === "completed" ? (
+                              ) : exercise.status.toLowerCase() ===
+                                "completed" ? (
                                 <Trophy className="w-5 h-5" />
                               ) : (
                                 <span className="font-bold">{exIndex + 1}</span>
@@ -378,8 +411,8 @@ function LearningPathContent() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <h4 
-                                  className="font-semibold text-gray-900 line-clamp-1" 
+                                <h4
+                                  className="font-semibold text-gray-900 line-clamp-1"
                                   title={exercise.exerciseTitle}
                                 >
                                   {exercise.exerciseTitle}
@@ -390,8 +423,8 @@ function LearningPathContent() {
                                   </span>
                                 )}
                               </div>
-                              <p 
-                                className="text-sm text-gray-500 line-clamp-2 mt-1" 
+                              <p
+                                className="text-sm text-gray-500 line-clamp-2 mt-1"
                                 title={exercise.exerciseDescription}
                               >
                                 {exercise.exerciseDescription}
@@ -400,17 +433,21 @@ function LearningPathContent() {
                                 <span className="text-xs text-gray-400">
                                   {exercise.numberOfQuestion} câu hỏi
                                 </span>
-                                <Button 
+                                <Button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleButtonClick(
-                                      exercise.status, 
+                                      exercise.status,
                                       exercise.learningPathExerciseId,
                                       exercise.exerciseId,
                                       selectedChapter.learningPathChapterId
                                     );
                                   }}
-                                  disabled={loadingExerciseId === exercise.learningPathExerciseId || exercise.status.toLowerCase() === "locked"}
+                                  disabled={
+                                    loadingExerciseId ===
+                                      exercise.learningPathExerciseId ||
+                                    exercise.status.toLowerCase() === "locked"
+                                  }
                                   size="sm"
                                   className={`rounded-lg cursor-pointer text-xs font-medium ${
                                     exercise.status.toLowerCase() === "locked"
@@ -422,7 +459,8 @@ function LearningPathContent() {
                                       : "bg-green-600 text-white hover:bg-green-700"
                                   }`}
                                 >
-                                  {loadingExerciseId === exercise.learningPathExerciseId
+                                  {loadingExerciseId ===
+                                  exercise.learningPathExerciseId
                                     ? "..."
                                     : exercise.status === "NotStarted"
                                     ? "Bắt đầu"
@@ -438,7 +476,9 @@ function LearningPathContent() {
                     ) : (
                       <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-8 text-center">
                         <BookOpen className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500">Chưa có bài tập trong chương này</p>
+                        <p className="text-gray-500">
+                          Chưa có bài tập trong chương này
+                        </p>
                       </div>
                     )}
                   </div>
@@ -450,8 +490,12 @@ function LearningPathContent() {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ArrowRight className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Chọn chương để bắt đầu</h3>
-              <p className="text-gray-500">Chọn một chương từ danh sách bên trái để xem các bài tập</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Chọn chương để bắt đầu
+              </h3>
+              <p className="text-gray-500">
+                Chọn một chương từ danh sách bên trái để xem các bài tập
+              </p>
             </div>
           )}
         </div>
@@ -462,15 +506,17 @@ function LearningPathContent() {
 
 export default function LearningPath() {
   return (
-    <Suspense fallback={
-      <div className="max-w-[1400px] mx-auto p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-gray-200 rounded-lg"></div>
-          <div className="h-48 bg-gray-200 rounded-lg"></div>
-          <div className="h-48 bg-gray-200 rounded-lg"></div>
+    <Suspense
+      fallback={
+        <div className="max-w-[1400px] mx-auto p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-32 bg-gray-200 rounded-lg"></div>
+            <div className="h-48 bg-gray-200 rounded-lg"></div>
+            <div className="h-48 bg-gray-200 rounded-lg"></div>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LearningPathContent />
     </Suspense>
   );

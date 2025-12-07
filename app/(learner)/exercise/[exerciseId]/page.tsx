@@ -10,7 +10,7 @@ import { useLearningPathCourseFull } from "@/features/learner/hooks/learningPath
 import { useSubmitAnswerQuestion } from "@/features/learner/hooks/submitAnswerQuestionHooks/submitAnswerQuestion";
 import BuyReviewModal from "@/components/BuyReviewModal";
 import { uploadAudioToCloudinary } from "@/utils/upload";
-
+import YouTubeEmbed from "@/components/YouTubeEmbed";
 const ExercisePage = () => {
   const params = useParams();
   const router = useRouter();
@@ -341,14 +341,13 @@ const ExercisePage = () => {
             submitAnswerQuestion(
               {
                 learningPathQuestionId: currentQuestion?.learningPathQuestionId || "",
-                audioRecordingUrl: audioUrl,
+                audioRecordingUrl:  audioUrl,
                 transcribedText: newIpa[currentQuestionIndex] || "",
-                scoreForVoice: acc || 0,
-                explainTheWrongForVoiceAI: AIExplainTheWrongForVoiceAI[currentQuestionIndex] || "abc",
+                scoreForVoice: Math.round(acc) || 0,
+                explainTheWrongForVoiceAI: data.explain_the_wrong || data.AIFeedback || "",
               },
               {
                 onSuccess: (data) => {
-          
                   // Lưu learnerAnswerId từ response vào array theo index của câu hỏi
                   if (data.data?.learnerAnswerId) {
                     const newLearnerAnswerIds = [...learnerAnswerIds];
@@ -362,7 +361,6 @@ const ExercisePage = () => {
               }
             );
           } catch (error) {
-            console.error("Error processing audio:", error);
             setIsProcessingAudio(false);
           } finally {
             setUiBlocked(false);
@@ -670,7 +668,8 @@ const ExercisePage = () => {
                               </div>
                             </div>
                             <div className="rounded-xl overflow-hidden border-2 border-white shadow-lg">
-                              <video
+                              <YouTubeEmbed url={mediaItem.videoUrl || ""} />
+                              {/* <video
                                 src={mediaItem.videoUrl}
                                 controls
                                 loop
@@ -678,7 +677,8 @@ const ExercisePage = () => {
                                 controlsList="nodownload"
                               >
                                 Trình duyệt của bạn không hỗ trợ video.
-                              </video>
+                              </video> */}
+
                             </div>
                             <p className="text-xs text-blue-600 mt-2 text-center font-medium">
                               💡 Tip: Xem video nhiều lần và thực hành theo từng

@@ -290,7 +290,7 @@ export default function EnrollingCourses() {
           Khám phá khóa học Level {viewingLevel}
         </h3>
         <p className="text-gray-500 mt-1">
-          {courses.length} khóa học chuyên sâu về phát âm và giao tiếp - Khóa
+          {courses.length} khóa học chuyên sâu về phát âm - Khóa
           đầu miễn phí
         </p>
       </div>
