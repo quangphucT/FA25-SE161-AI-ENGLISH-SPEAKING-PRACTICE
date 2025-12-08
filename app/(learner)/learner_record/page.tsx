@@ -42,8 +42,6 @@ import {
   Music,
   Star,
   MessageSquare,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -64,8 +62,8 @@ export default function LearnerRecordPage() {
   const [newRecordContent, setNewRecordContent] = useState("");
   const [renamingFolderName, setRenamingFolderName] = useState("");
   const [editingContent, setEditingContent] = useState("");
-  const [isFoldersCollapsed, setIsFoldersCollapsed] = useState(false);
-  const [isRecordsCollapsed, setIsRecordsCollapsed] = useState(false);
+  const isFoldersCollapsed = false;
+  const isRecordsCollapsed = false;
   const [feedbackRecord, setFeedbackRecord] = useState<Record | null>(null);
 
   // Queries
@@ -74,10 +72,10 @@ export default function LearnerRecordPage() {
 
   // Mutations
   const { mutateAsync: createFolder, isPending: isCreatingFolder } = useLearnerRecordFolderCreate();
-  const { mutateAsync: deleteFolder, isPending: isDeletingFolder } = useLearnerRecordFolderDelete();
+  const { mutateAsync: deleteFolder } = useLearnerRecordFolderDelete();
   const { mutateAsync: renameFolder, isPending: isRenamingFolder } = useLearnerRecordFolderRename();
   const { mutateAsync: createRecord, isPending: isCreatingRecord } = useLearnerRecordCreate();
-  const { mutateAsync: deleteRecord, isPending: isDeletingRecord } = useLearnerRecordDelete();
+  const { mutateAsync: deleteRecord } = useLearnerRecordDelete();
   const { mutateAsync: updateRecordContent, isPending: isUpdatingRecordContent } = useLearnerRecordUpdateContent();
   // Handle response structure - data can be array directly or nested in data property
   const folders = (() => {
@@ -114,7 +112,7 @@ export default function LearnerRecordPage() {
       await createFolder(newFolderName.trim());
       setNewFolderName("");
       setShowCreateFolderDialog(false);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -126,7 +124,7 @@ export default function LearnerRecordPage() {
       if (selectedFolderId === folderId) {
         setSelectedFolderId(null);
       }
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -141,7 +139,7 @@ export default function LearnerRecordPage() {
       setRenamingFolderName("");
       setFolderToRename(null);
       setShowRenameDialog(false);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -159,7 +157,7 @@ export default function LearnerRecordPage() {
       // The practice page will handle recording and updating the record
       setNewRecordContent("");
       setShowCreateRecordDialog(false);
-    } catch (error) {
+    } catch {
       // Error handled by hook (toast notification)
     }
   };
@@ -167,7 +165,7 @@ export default function LearnerRecordPage() {
   const handleDeleteRecord = async (recordId: string) => {
     try {
       await deleteRecord(recordId);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -182,9 +180,12 @@ export default function LearnerRecordPage() {
       setRecordToEdit(null);
       setShowEditContentDialog(false);
       toast.success("Cập nhật nội dung thành công");
-    } catch (error: any) {
-      // Error handled by hook
-      toast.error(error.message || "Cập nhật nội dung record thất bại");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Cập nhật nội dung record thất bại";
+      toast.error(message);
       console.error(error);
     }
   };
