@@ -120,148 +120,95 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
   };
 
   return (
-    <div>
-      {/* Header Section */}
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">💰 Ví & Nạp Coin</h3>
-          <p className="text-sm text-gray-600">
-            Quản lý số dư và mua coin để mở khoá các khoá học Premium
-          </p>
-        </div>
-      </div>
-
-      {/* Current Balance Card - Compact */}
-      <Card className="mb-6 p-5 bg-white border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-linear-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
-              <Coins className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-600 mb-0.5">Số dư hiện tại</p>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                  {userData?.coinBalance || 0}
-                </h3>
-                <span className="text-sm text-gray-600 font-semibold">Coin</span>
+    <div className="max-w-5xl mx-auto">
+      {/* Hero Balance Section */}
+      <div className="relative mb-10 p-8 bg-slate-900 rounded-3xl overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
+        
+        <div className="relative flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-14 h-14 bg-yellow-500 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/30">
+                <Coins className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <p className="text-slate-400 text-sm">Số dư của bạn</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-black text-white">{userData?.coinBalance || 0}</span>
+                  <span className="text-yellow-500 font-semibold">COIN</span>
+                </div>
               </div>
             </div>
+            <p className="text-slate-500 text-sm">Nạp thêm coin để mở khóa các khóa học Premium!</p>
           </div>
-        <Button
-  variant="outline"
-  size="sm"
-  onClick={() => setShowHistoryModal(true)}
-  className="text-xs font-semibold cursor-pointer hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-700 transition-colors"
->
-  Lịch sử
-</Button>
-
+          <Button
+            variant="outline"
+            onClick={() => setShowHistoryModal(true)}
+            className="bg-slate-800 rounded-3xl  text-white border-slate-700 cursor-pointer"
+          >
+             Lịch sử
+          </Button>
         </div>
-      </Card>
-
-      {/* Section Title */}
-      <div className="mb-5">
-        <h4 className="text-lg font-bold text-gray-900 mb-1">
-          Chọn gói Coin
-        </h4>
-        <p className="text-xs text-gray-600">
-          Gói càng lớn, bonus càng nhiều 🎁
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {coinPackages?.data?.map((pkg, index) => {
-          const hasBonus = pkg.bonusPercent > 0;
-          const isPopular = index === 1; // Middle package
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">🔥 Gói Coin</h2>
+          <p className="text-gray-500 mt-1">Chọn gói phù hợp với bạn</p>
+        </div>
+      </div>
+
+      {/* Coin Packages - Premium Design */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {coinPackages?.data?.map((pkg) => {
           const isLoading = loadingPackageId === pkg.servicePackageId;
-
+          
           return (
-            <div key={pkg.servicePackageId} className="relative">
-              <Card className={`relative overflow-hidden transition-all duration-300 h-full bg-white
-                ${isPopular 
-                  ? 'border border-blue-500 shadow-lg hover:shadow-xl' 
-                  : 'border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md'
-                }
-              `}>
-                {/* Popular Badge - Top Left */}
-                {isPopular && (
-                  <div className="absolute top-3 left-3 z-10">
-                    <div className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md">
-                      PHỔ BIẾN
-                    </div>
-                  </div>
-                )}
-
-                {/* Bonus Badge - Top Right */}
-                {hasBonus && (
-                  <div className="absolute top-3 right-3 z-10">
-                    <div className="bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md">
-                      +{pkg.bonusPercent}%
-                    </div>
-                  </div>
-                )}
-
-                <div className="p-5">
-                  {/* Package Header */}
-                  <div className="mb-4">
-                    <h4 className="text-lg font-bold text-gray-900 mb-1">
-                      {pkg.name}
-                    </h4>
-                    <p className="text-xs text-gray-500 line-clamp-2">
-                      {pkg.description}
-                    </p>
-                  </div>
-
-                  {/* Coin Display - Compact */}
-                  <div className="mb-4 text-center py-4 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <Coins className="w-6 h-6 text-yellow-500" />
-                      <span className="text-3xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                        {pkg.numberOfCoin.toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 font-medium">Coin</p>
-                  </div>
-
-                  {/* Price Section - Compact */}
-                  <div className="mb-4 text-center">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-2xl font-black text-gray-900">
-                        {pkg.price.toLocaleString()}
-                      </span>
-                      <span className="text-base text-gray-500 font-semibold">₫</span>
-                    </div>
-                    {hasBonus && (
-                      <p className="text-[10px] text-green-600 font-semibold mt-1">
-                        Tiết kiệm {pkg.bonusPercent}%
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Buy Button - Clean */}
-                  <Button
-                    onClick={() => handleBuyCoin(pkg.servicePackageId)}
-                    disabled={isLoading}
-                    className="w-full h-10 cursor-pointer font-semibold text-sm transition-all duration-300 bg-blue-50 hover:bg-blue-200 text-black rounded-full shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Đang xử lý...
-                      </>
-                    ) : (
-                      <>
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Mua ngay
-                      </>
-                    )}
-                  </Button>
+            <div
+              key={pkg.servicePackageId}
+              className="group bg-white rounded-2xl border border-gray-200 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-violet-300"
+            >
+              {/* Coin Display - Highlighted */}
+              <div className="text-center mb-5">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-2xl mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md shadow-amber-200/50">
+                  <Coins className="w-8 h-8 text-amber-600" />
                 </div>
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl py-3 px-4">
+                  <p className="text-4xl font-black text-amber-600 mb-0.5">
+                    {pkg.numberOfCoin.toLocaleString()}
+                  </p>
+                  <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide">Coin</p>
+                </div>
+              </div>
 
-                {/* Subtle hover effect */}
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-50/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-lg" />
-              </Card>
+              {/* Package Info */}
+              <div className="text-center mb-4">
+                <h3 className="font-semibold text-gray-900 mb-1">{pkg.name}</h3>
+                <p className="text-xs text-gray-400 line-clamp-2">{pkg.description}</p>
+              </div>
+
+              {/* Price - Highlighted */}
+              <div className="text-center mb-5 py-3  rounded-xl">
+                <span className="text-2xl font-black text-amber-600">{pkg.price.toLocaleString()}</span>
+                <span className="text-amber-600 font-semibold ml-1">₫</span>
+              </div>
+
+              {/* Buy Button */}
+              <Button
+                onClick={() => handleBuyCoin(pkg.servicePackageId)}
+                disabled={isLoading}
+                variant="outline"
+                className="w-full h-11 cursor-pointer font-semibold rounded-2xl border-2 border-gray-300 bg-transparent hover:bg-gray-50 text-gray-900 transition-all duration-200 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Mua ngay"
+                )}
+              </Button>
             </div>
           );
         })}
@@ -282,112 +229,46 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
 
       {/* Coin Purchase Modal */}
       <Dialog open={showCoinModal} onOpenChange={setShowCoinModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <VisuallyHidden>
             <DialogTitle>Nạp Coin</DialogTitle>
           </VisuallyHidden>
 
-          {/* Simple Header */}
-          <div className="border-b pb-4 mb-6">
-            <h3 className="text-2xl font-bold text-gray-900">💰 Nạp Coin</h3>
-            <p className="text-gray-500 text-sm mt-1">
-              Chọn gói coin phù hợp để mở khoá các khoá học Premium
-            </p>
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900">🔥 Chọn gói Coin</h3>
+            <p className="text-gray-500 mt-1">Mở khoá các khoá học Premium ngay!</p>
           </div>
 
-          {/* Packages Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {coinPackages?.data?.map((pkg, index) => {
-              const hasBonus = pkg.bonusPercent > 0;
-              const isPopular = index === 1;
+          <div className="grid grid-cols-2 gap-4">
+            {coinPackages?.data?.map((pkg) => {
               const isLoading = loadingPackageId === pkg.servicePackageId;
 
               return (
-                <div key={pkg.servicePackageId} className="relative">
-                  <Card className={`relative overflow-hidden transition-all duration-300 h-full  bg-white
-                    ${isPopular 
-                      ? 'border border-blue-500 shadow-lg hover:shadow-xl' 
-                      : 'border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md'
-                    }
-                  `}>
-                    {/* Popular Badge */}
-                    {isPopular && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <div className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md">
-                          PHỔ BIẾN
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Bonus Badge */}
-                    {hasBonus && (
-                      <div className="absolute top-3 right-3 z-10">
-                        <div className="bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md">
-                          +{pkg.bonusPercent}%
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="p-5">
-                      {/* Package Name */}
-                      <div className="mb-4">
-                        <h4 className="text-lg font-bold text-gray-900 mb-1">
-                          {pkg.name}
-                        </h4>
-                        <p className="text-xs text-gray-500 line-clamp-2">
-                          {pkg.description}
-                        </p>
-                      </div>
-
-                      {/* Coin Display */}
-                      <div className="mb-4 text-center py-4 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <Coins className="w-6 h-6 text-yellow-500" />
-                          <span className="text-3xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                            {pkg.numberOfCoin.toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 font-medium">Coin</p>
-                      </div>
-
-                      {/* Price Section */}
-                      <div className="mb-4 text-center">
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-2xl font-black text-gray-900">
-                            {pkg.price.toLocaleString()}
-                          </span>
-                          <span className="text-base text-gray-500 font-semibold">₫</span>
-                        </div>
-                        {hasBonus && (
-                          <p className="text-[10px] text-green-600 font-semibold mt-1">
-                            Tiết kiệm {pkg.bonusPercent}%
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Buy Button */}
-                      <Button
-                        onClick={() => handleBuyCoin(pkg.servicePackageId)}
-                        disabled={isLoading}
-                        className="w-full h-10 cursor-pointer font-semibold text-sm transition-all duration-300 bg-blue-100 hover:bg-blue-200 text-black rounded-full shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Đang xử lý...
-                          </>
-                        ) : (
-                          <>
-                            <Wallet className="w-4 h-4 mr-2" />
-                            Mua ngay
-                          </>
-                        )}
-                      </Button>
+                <div
+                  key={pkg.servicePackageId}
+                  className="bg-white rounded-xl border border-gray-200 p-5 transition-all duration-300 hover:shadow-lg hover:border-violet-200"
+                >
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-100 rounded-xl mb-3 shadow-sm">
+                      <Coins className="w-6 h-6 text-amber-600" />
                     </div>
-
-                    {/* Hover effect */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-50/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-lg" />
-                  </Card>
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg py-2 px-3">
+                      <p className="text-2xl font-black text-amber-600">{pkg.numberOfCoin.toLocaleString()}</p>
+                      <p className="text-[10px] font-semibold text-amber-500 uppercase">Coin</p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 text-center mb-3">{pkg.name}</p>
+                  <div className="text-center mb-4 py-2 bg-violet-50 border border-violet-200 rounded-lg">
+                    <span className="text-lg font-bold text-violet-600">{pkg.price.toLocaleString()}</span>
+                    <span className="text-violet-500 ml-1">₫</span>
+                  </div>
+                  <Button
+                    onClick={() => handleBuyCoin(pkg.servicePackageId)}
+                    disabled={isLoading}
+                    className="w-full cursor-pointer font-semibold rounded-lg bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50"
+                  >
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Mua ngay"}
+                  </Button>
                 </div>
               );
             })}

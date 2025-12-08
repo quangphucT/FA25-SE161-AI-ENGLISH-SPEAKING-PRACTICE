@@ -59,7 +59,7 @@ const PracticeRecordLayout = () => {
   const [recording, setRecording] = useState<boolean>(false);
   const [uiBlocked, setUiBlocked] = useState<boolean>(false);
   const [mainTitle, setMainTitle] = useState<string>(
-    "AI Pronunciation Trainer"
+    "AESP- An English Speaking Practice with AI"
   );
   const [pronunciationAccuracy, setPronunciationAccuracy] =
     useState<string>("");
@@ -352,7 +352,7 @@ const PracticeRecordLayout = () => {
         setMainTitle(`Lỗi: ${errorMessage}`);
         // Show error for 3 seconds before allowing retry
         setTimeout(() => {
-          setMainTitle("AI Pronunciation Trainer");
+          setMainTitle("An English Practice Speaking with AI ");
         }, 3000);
       } finally {
         setUiBlocked(false);
@@ -449,7 +449,7 @@ const PracticeRecordLayout = () => {
       //   setIpaScript("/ ˈsæmpl̩ ˈsentəns fər prəˌnʌnsiˈeɪʃən ˈpræktɪs /");
       //   setTranslatedScript("This is a demo translation.");
       //   setCurrentSample((s) => s + 1);
-      //   setMainTitle("AI Pronunciation Trainer");
+      //   setMainTitle("An English Practice Speaking with AI ");
       //   setCurrentSoundRecorded(false);
       //   setUiBlocked(false);
       //   return;
@@ -473,7 +473,7 @@ const PracticeRecordLayout = () => {
       setPronunciationAccuracy("");
       setSingleWordPair("Reference | Spoken");
  
-      setMainTitle("AI Pronunciation Trainer");
+      setMainTitle("An English Practice Speaking with AI ");
       setTranslatedScript(data.transcript_translation || "");
       setCurrentSoundRecorded(false);
     } catch {
@@ -974,7 +974,7 @@ const PracticeRecordLayout = () => {
             //   setMainTitle("API not configured - demo mode");
             //   setRecordedIpaScript("/ demo ˈrekɔrdɪŋ /");
             //   setPronunciationAccuracy("85%");
-            //   setMainTitle("AI Pronunciation Trainer");
+            //   setMainTitle("An English Practice Speaking with AI ");
             //   setCurrentSoundRecorded(true);
             //   setUiBlocked(false);
             //   return;
@@ -1020,7 +1020,7 @@ const PracticeRecordLayout = () => {
             const acc = parseFloat(pronunciationAccuracyValue);
             if (!Number.isNaN(acc)) playSoundForAnswerAccuracy(acc);
             setRecordedIpaScript(`/ ${data?.ipa_transcript || ""} /`); 
-            setMainTitle("AI Pronunciation Trainer");
+            setMainTitle("An English Practice Speaking with AI ");
             setPronunciationAccuracy(`${pronunciationAccuracyValue}%`);
             const feedbackValue = data?.AIFeedback || data?.aiFeedback || data?.feedback || "";
             console.log("data?.AIFeedback", data?.AIFeedback);
@@ -1132,7 +1132,7 @@ const PracticeRecordLayout = () => {
   return (
     <>
       <Head>
-        <title>AI pronunciation trainer</title>
+        <title>An English Practice Speaking with AI </title>
         <link
           href="https://fonts.googleapis.com/icon?family=Material+Icons"
           rel="stylesheet"

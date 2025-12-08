@@ -17,7 +17,7 @@ import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { signalRService } from "@/lib/realtime/realtime";
 import { ReviewCompleted } from "@/lib/realtime/realtime";
 import { useRealtime } from "@/providers/RealtimeProvider";
-import { CircleCheck, Mic, MessageSquare, User, FileText, Calendar, Star, CheckCircle2, XCircle, Clock, Headphones } from "lucide-react";
+import { CircleCheck, Mic, MessageSquare, User, FileText, Calendar, Star, CheckCircle2, XCircle, Clock, Headphones, Play } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { uploadAudioToCloudinary } from "@/utils/upload";
@@ -151,6 +151,8 @@ const StatisticsForMentor = () => {
   const [score, setScore] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recordedAudioPreviewRef = useRef<HTMLAudioElement | null>(null);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [showRewardForm, setShowRewardForm] = useState(false);
   const [rewardAmount, setRewardAmount] = useState("");
   const [rewardMessage, setRewardMessage] = useState("");
@@ -205,6 +207,11 @@ const StatisticsForMentor = () => {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+    if (recordedAudioPreviewRef.current) {
+      recordedAudioPreviewRef.current.pause();
+      recordedAudioPreviewRef.current.currentTime = 0;
+    }
+    setRecordedAudioUrl(null);
   };
 
   const handleOpenFeedbackDetail = (feedbackId: string) => {
@@ -220,6 +227,19 @@ const StatisticsForMentor = () => {
     setIsFeedbackDetailModalOpen(false);
     setSelectedFeedbackDetail(null);
   };
+
+  const handlePlayRecordedAudio = useCallback(() => {
+    if (!recordedAudioUrl || !recordedAudioPreviewRef.current) {
+      return;
+    }
+
+    recordedAudioPreviewRef.current.currentTime = 0;
+    recordedAudioPreviewRef.current
+      .play()
+      .catch(() => {
+        toast.error("Không thể phát bản ghi. Vui lòng thử lại.");
+      });
+  }, [recordedAudioUrl]);
  
 
   
@@ -416,6 +436,7 @@ const StatisticsForMentor = () => {
         mediaRecorderRef.current.state !== "recording"
       ) {
         audioChunksRef.current = [];
+        setRecordedAudioUrl(null);
         setRecording(true);
         mediaRecorderRef.current.start();
       }
@@ -443,9 +464,10 @@ const StatisticsForMentor = () => {
         };
         
         mr.onstop = async () => {
-          const blob = new Blob(audioChunksRef.current, { type: "audio/ogg" });
           const blobMp3 = new Blob(audioChunksRef.current, { type: "audio/mp3" });
           recordedAudioBlobMp3Ref.current = blobMp3; // Store blob for later upload
+          const previewUrl = URL.createObjectURL(blobMp3);
+          setRecordedAudioUrl(previewUrl);
           console.log("Recording stopped, blob stored:", blobMp3.size, "bytes");
         };
       })
@@ -461,6 +483,20 @@ const StatisticsForMentor = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (recordedAudioPreviewRef.current && recordedAudioUrl) {
+      recordedAudioPreviewRef.current.load();
+    }
+
+    if (!recordedAudioUrl) {
+      return;
+    }
+
+    return () => {
+      URL.revokeObjectURL(recordedAudioUrl);
+    };
+  }, [recordedAudioUrl]);
 
   return (
     <div className="space-y-6">
@@ -1116,35 +1152,62 @@ const StatisticsForMentor = () => {
                 {/* Mic button */}
                 <div
                   id="btn-record"
-                  className="relative flex items-center justify-center mt-6 mb-4"
+                  className="flex flex-col items-center justify-center mt-6 mb-4 gap-3"
                 >
-                  {recording && (
+                  <div className="relative flex items-center justify-center">
+                    {recording && (
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className="absolute inline-flex h-[6em] w-[6em] rounded-full bg-[#49d67d]/30 animate-ping"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="absolute inline-flex h-[5em] w-[5em] rounded-full border border-[#49d67d]/50 animate-pulse"
+                        />
+                      </>
+                    )}
+                    <button
+                      id="recordAudio"
+                      onClick={updateRecordingState}
+                      disabled={
+                        !mediaRecorderRef.current ||
+                        submitReviewMutation.isPending ||
+                        isSubmittingReview
+                      }
+                      className={`relative z-10 box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${
+                        recording ? "bg-[#477c5b] hover:bg-[#3a6549]" : "bg-[#49d67d] hover:bg-[#3db868]"
+                      }`}
+                      title={recording ? "Click to stop recording" : "Click to start recording"}
+                      type="button"
+                    >
+                      <Mic id="recordIcon" className={`w-10 h-10 ${recording ? "animate-pulse" : ""}`} />
+                    </button>
+                  </div>
+                  {recordedAudioUrl && (
                     <>
-                      <span
-                        aria-hidden="true"
-                        className="absolute inline-flex h-[6em] w-[6em] rounded-full bg-[#49d67d]/30 animate-ping"
+                      <audio
+                        ref={recordedAudioPreviewRef}
+                        src={recordedAudioUrl}
+                        className="hidden"
                       />
-                      <span
-                        aria-hidden="true"
-                        className="absolute inline-flex h-[5em] w-[5em] rounded-full border border-[#49d67d]/50 animate-pulse"
-                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePlayRecordedAudio}
+                        disabled={
+                          recording ||
+                          isSubmittingReview ||
+                          submitReviewMutation.isPending
+                        }
+                        className="cursor-pointer flex items-center gap-2"
+                      >
+                        <Play className="w-4 h-4" />
+                        Play recording
+                      </Button>
                     </>
                   )}
-                  <button
-                    id="recordAudio"
-                    onClick={updateRecordingState}
-                    disabled={
-                      !mediaRecorderRef.current ||
-                      submitReviewMutation.isPending ||
-                      isSubmittingReview
-                    }
-                    className={`relative z-10 box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${
-                      recording ? "bg-[#477c5b] hover:bg-[#3a6549]" : "bg-[#49d67d] hover:bg-[#3db868]"
-                    }`}
-                    title={recording ? "Click to stop recording" : "Click to start recording"}
-                  >
-                    <Mic id="recordIcon" className={`w-10 h-10 ${recording ? "animate-pulse" : ""}`} />
-                  </button>
                 </div>
                 <div className="flex gap-3">
                   <Button

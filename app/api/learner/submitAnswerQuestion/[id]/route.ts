@@ -39,7 +39,6 @@ export async function POST(
     return NextResponse.json(data);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-    console.error("Submit answer question error:", error);
     return NextResponse.json(
       { message: errorMessage },
       { status: 500 }
