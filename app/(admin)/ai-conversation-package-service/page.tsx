@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { 
+import {
   useDeleteAIConversationPackage, 
   getAIConversationPackages, 
   useCreateAIConversationPackages,
   useUpdateAIConversationPackage
 } from "@/features/admin/hooks/aiConversationPackagesHooks/packages";
+import { useAiBuyers } from "@/features/admin/hooks/useAdminPurchase";
+import type { AiBuyersResponse, Buyer } from "@/features/admin/services/adminPurchaseService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -34,7 +36,9 @@ import {
   Loader2,
   MessageCircle,
   AlertCircle,
-  Edit
+  Edit,
+  Eye,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -49,24 +53,47 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const PACKAGE_PAGE_SIZE = 5;
+const BUYERS_PAGE_SIZE = 5;
+type AiConversationBuyerGroup = AiBuyersResponse["data"];
+
+const normalizeBuyerGroups = (
+  data: AiConversationBuyerGroup | AiConversationBuyerGroup[] | undefined
+): AiConversationBuyerGroup[] => {
+  if (!data) {
+    return [];
+  }
+  return Array.isArray(data) ? data : [data];
+};
+
 const AiConversationPackageManagement = () => {
   const { mutate: createPackage, isPending: isCreating } = useCreateAIConversationPackages();
   const { mutate: deletePackage } = useDeleteAIConversationPackage();
   const { mutate: updatePackage, isPending: isUpdating } = useUpdateAIConversationPackage();
   // Pagination
 const [pageNumber, setPageNumber] = useState(1);
-const [pageSize, setPageSize] = useState(5); // hoặc 10 tùy ý
+const pageSize = PACKAGE_PAGE_SIZE; // hoặc 10 tùy ý
 
 const { data: packagesData, isPending: isLoading } =
   getAIConversationPackages(pageNumber, pageSize);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [isBuyersDialogOpen, setIsBuyersDialogOpen] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  const [buyersPageNumber, setBuyersPageNumber] = useState(1);
+  const buyersPageSize = BUYERS_PAGE_SIZE; // Giảm xuống 5 để dễ test pagination
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingPackage, setEditingPackage] = useState<{
     aiConversationChargeId: string;
     amountCoin: number;
     allowedMinutes: number;
   } | null>(null);
+  
+  // Fetch buyers data when a package is selected
+  const { data: buyersData, isPending: isLoadingBuyers } = useAiBuyers(
+    buyersPageNumber,
+    buyersPageSize
+  );
   
   // Form state
   const [amountCoin, setAmountCoin] = useState<number>(0);
@@ -114,6 +141,12 @@ const { data: packagesData, isPending: isLoading } =
     setAmountCoin(pkg.amountCoin);
     setAllowedMinutes(pkg.allowedMinutes);
     setIsUpdateDialogOpen(true);
+  };
+
+  const handleViewBuyers = (packageId: string) => {
+    setSelectedPackageId(packageId);
+    setBuyersPageNumber(1); // Reset to first page when opening modal
+    setIsBuyersDialogOpen(true);
   };
 
   const handleUpdate = () => {
@@ -259,7 +292,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="p-4 border-l-4 border-l-blue-500">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -283,20 +316,6 @@ const totalPages = Math.ceil(totalItems / pageSize);
               <p className="text-sm text-gray-600">Gói hoạt động</p>
               <p className="text-2xl font-bold text-gray-900">
                 {packages.filter(p => p.status === "Active").length}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 border-l-4 border-l-orange-500">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Tổng phút</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {packages.reduce((sum, p) => sum + p.allowedMinutes, 0)}
               </p>
             </div>
           </div>
@@ -381,8 +400,18 @@ const totalPages = Math.ceil(totalItems / pageSize);
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleViewBuyers(pkg.aiConversationChargeId)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 cursor-pointer"
+                            title="Xem chi tiết người mua"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleEdit(pkg)}
                             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
+                            title="Chỉnh sửa"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -391,6 +420,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                             size="sm"
                             onClick={() => setDeleteId(pkg.aiConversationChargeId)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                            title="Xóa"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -538,6 +568,211 @@ const totalPages = Math.ceil(totalItems / pageSize);
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Buyers Detail Dialog */}
+      <Dialog open={isBuyersDialogOpen} onOpenChange={(open) => {
+        setIsBuyersDialogOpen(open);
+        if (!open) {
+          setSelectedPackageId(null);
+          setBuyersPageNumber(1); // Reset pagination when closing
+        }
+      }}>
+        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              Chi tiết người mua gói AI Conversation
+            </DialogTitle>
+          </DialogHeader>
+          
+          {isLoadingBuyers ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+          ) : buyersData?.data ? (
+            (() => {
+              const filteredData =
+                selectedPackageId
+                  ? normalizeBuyerGroups(buyersData.data).find(
+                      (item) => item.aiConversationChargeId === selectedPackageId
+                    ) ?? null
+                  : null;
+
+              // If no matching package found, show empty state
+              if (!filteredData) {
+                return (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p>Chưa có người mua gói này</p>
+                  </div>
+                );
+              }
+
+              const buyers: Buyer[] = filteredData.buyers ?? [];
+              const totalPurchase = filteredData.totalPurchase || 0;
+              const totalAmountCoin = filteredData.totalAmountCoin || 0;
+              const allowedMinutes = filteredData.allowedMinutes || 0;
+              
+              // Calculate pagination info
+              const totalBuyers = buyers.length;
+              const totalPages = Math.ceil(totalBuyers / buyersPageSize);
+              const startIndex = (buyersPageNumber - 1) * buyersPageSize;
+              const endIndex = startIndex + buyersPageSize;
+              const paginatedBuyers = buyers.slice(startIndex, endIndex);
+
+              return (
+                <div className="space-y-6">
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="p-4 border-l-4 border-l-blue-500">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Tổng người mua</p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {totalPurchase}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                    
+                    <Card className="p-4 border-l-4 border-l-yellow-500">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                          <Coins className="w-5 h-5 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Tổng coin</p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {totalAmountCoin}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                    
+                    <Card className="p-4 border-l-4 border-l-green-500">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Phút cho phép</p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {allowedMinutes}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Buyers Table */}
+                  {buyers.length > 0 ? (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        Danh sách người mua ({totalBuyers})
+                      </h3>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>STT</TableHead>
+                              <TableHead>Họ tên</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Số coin</TableHead>
+                              <TableHead>Ngày mua</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {paginatedBuyers.map((buyer: Buyer, index: number) => (
+                              <TableRow key={buyer.userId}>
+                                <TableCell className="font-medium">
+                                  {startIndex + index + 1}
+                                </TableCell>
+                                <TableCell className="font-medium">{buyer.fullName}</TableCell>
+                                <TableCell className="text-gray-600">{buyer.email}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Coins className="w-4 h-4 text-yellow-600" />
+                                    <span className="font-semibold text-yellow-700">
+                                      {buyer.amountCoin}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-600">
+                                  {dayjs(buyer.createdAt).format("DD/MM/YYYY HH:mm")}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      
+                      {/* Pagination - Always show if there are buyers */}
+                      {totalBuyers > 0 && (
+                        <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
+                          {/* Left: Rows per page */}
+                          <div className="flex items-center gap-2">
+                            <span>Rows per page:</span>
+                            <span className="font-medium">{buyersPageSize}</span>
+                          </div>
+
+                          {/* Middle: 1–5 of 10 */}
+                          <div>
+                            {totalBuyers === 0
+                              ? "0–0 of 0"
+                              : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} of ${totalBuyers}`}
+                          </div>
+
+                          {/* Right: Previous / Page number / Next */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={buyersPageNumber === 1}
+                              onClick={() => setBuyersPageNumber(buyersPageNumber - 1)}
+                              className="cursor-pointer"
+                            >
+                              Previous
+                            </Button>
+
+                            <span className="px-3 py-1 border rounded-md bg-gray-50">
+                              {buyersPageNumber} / {totalPages}
+                            </span>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={buyersPageNumber >= totalPages}
+                              onClick={() => setBuyersPageNumber(buyersPageNumber + 1)}
+                              className="cursor-pointer"
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p>Chưa có người mua gói này</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <p>Không thể tải thông tin người mua</p>
+            </div>
+          )}
+          
+          
         </DialogContent>
       </Dialog>
 

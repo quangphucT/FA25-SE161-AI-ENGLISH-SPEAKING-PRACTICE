@@ -88,6 +88,52 @@ export interface AIConversationPurchaseDetail {
     allowedMinutes: number;
     status: string;
 }
+
+export interface AiBuyersResponse {
+  isSucess: boolean;
+  data: {
+    aiConversationChargeId: string;
+    allowedMinutes: number;
+    totalPurchase: number;
+    totalAmountCoin: number;
+    buyers: Buyer[];
+  };
+  businessCode: number;
+  message: string;
+}
+export interface Buyer {
+  userId: string;
+  fullName: string;
+  email: string;
+  createdAt: string;
+  amountCoin: number;
+}
+export interface ReviewFeeBuyersResponse {
+  isSucess: boolean;
+  data: {
+    reviewFeeId: string;
+    numberOfReview: number;
+    totalPurchase: number;
+    totalAmountCoin: number;
+    buyers: Buyer[];
+  }[];
+  businessCode: string;
+  message?: string;
+}
+export interface EnrolledCourseResponse {
+  isSucess: boolean;
+  data: {
+    courseId: string;
+    title: string;
+    level: string;
+    totalPurchase: number;
+    totalAmountCoin: number;
+    price: number;
+    buyers: Buyer[];
+  };
+  businessCode: number;
+  message: string;
+}
 export const getPurchaseDetails = async (purchaseId: string): Promise<PurchaseDetailsResponse> => {
   try {
     const response = await fetchWithAuth(`/api/AdminDashboard/purchase/detail/${purchaseId}`, {
@@ -119,6 +165,7 @@ export const getPurchaseDetails = async (purchaseId: string): Promise<PurchaseDe
   }
   
 };
+
 export interface AdminPurchaseDashboardResponse {
   isSucess: boolean;
   data: {
@@ -156,5 +203,72 @@ export const adminDashboardPurchaseService = async (): Promise<AdminPurchaseDash
       (error instanceof Error ? error.message : null) ||
       "An unknown error occurred";
     throw new Error(message);
+  }
+};
+
+export const getAiBuyers = async (pageNumber: number, pageSize: number): Promise<AiBuyersResponse> => {
+  try {
+    const queryParams = new URLSearchParams({
+      pageNumber: pageNumber.toString(),
+      pageSize: pageSize.toString(),
+    });
+    const response = await fetchWithAuth(`/api/AdminDashboard/purchase/ai-buyers?${queryParams.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
+    return data;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("An unknown error occurred");
+  }
+};
+export const getReviewFeeBuyers = async (pageNumber: number, pageSize: number): Promise<ReviewFeeBuyersResponse> => {
+  try {
+    const queryParams = new URLSearchParams({
+      pageNumber: pageNumber.toString(),
+      pageSize: pageSize.toString(),
+    });
+    const response = await fetchWithAuth(`/api/AdminDashboard/purchase/reviewfee-buyers?${queryParams.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
+    return data;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("An unknown error occurred");
+  }
+};
+export const getEnrolledCourseBuyers = async (pageNumber: number, pageSize: number): Promise<EnrolledCourseResponse> => {
+  try {
+    const queryParams = new URLSearchParams({
+      pageNumber: pageNumber.toString(),
+      pageSize: pageSize.toString(),
+    });
+    const response = await fetchWithAuth(`/api/AdminDashboard/purchase/course-enroll?${queryParams.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    const data = await response.json();
+    return data;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("An unknown error occurred");
   }
 };

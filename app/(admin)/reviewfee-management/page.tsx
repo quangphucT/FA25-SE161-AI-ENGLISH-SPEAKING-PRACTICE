@@ -30,14 +30,17 @@ import {
 
 } from "@/features/admin/hooks/useAdminReviewFee";
 import { useQueryClient } from "@tanstack/react-query";
-import { CreateReviewFeePackageRequest, adminReviewFeePolicyService  } from "@/features/admin/services/adminReviewFeeService";
-import { Loader2, FileText, Plus, Package, CheckCircle2, XCircle } from "lucide-react";
+import { CreateReviewFeePackageRequest } from "@/features/admin/services/adminReviewFeeService";
+import { Loader2, FileText, Plus, Package, CheckCircle2, XCircle, Users, Coins, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useAdminReviewFeeDetailQuery } from "@/features/admin/hooks/useAdminReviewFee";
 import { formatDateInput } from "@/utils/formatDateInput";
+import { useReviewFeeBuyers } from "@/features/admin/hooks/useAdminPurchase";
+import type { Buyer } from "@/features/admin/services/adminPurchaseService";
+import dayjs from "dayjs";
 
 
  const normalizePercent = (value: number) => {
@@ -47,6 +50,7 @@ import { formatDateInput } from "@/utils/formatDateInput";
 
 
 const PAGE_SIZE = 10;
+const BUYERS_PAGE_SIZE = 5;
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return "-";
@@ -55,14 +59,6 @@ const formatDate = (dateString?: string) => {
   } catch {
     return dateString;
   }
-};
-
-const formatCurrency = (amount?: number) => {
-  if (amount === undefined || amount === null) return "-";
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
 };
 
 const createReviewFeeSchema = z.object({
@@ -115,6 +111,9 @@ export default function ReviewFeeManagement() {
   const [selectedReviewFeeId, setSelectedReviewFeeId] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUpdateUpcomingModal, setShowUpdateUpcomingModal] = useState(false);
+  const [showBuyersModal, setShowBuyersModal] = useState(false);
+  const [buyersPageNumber, setBuyersPageNumber] = useState(1);
+  const buyersPageSize = BUYERS_PAGE_SIZE;
 
 
   const { data, isLoading, isError, error, refetch } = useAdminReviewFeePackagesQuery(
@@ -125,15 +124,17 @@ export default function ReviewFeeManagement() {
 
  
 const [showCreatePolicyModal, setShowCreatePolicyModal] = useState(false);
-const [selectedReviewFeeIdForPolicy, setSelectedReviewFeeIdForPolicy] = useState<string | null>(null);
 
 const { mutate: createReviewFeePackage, isPending: isCreating } = 
   useAdminReviewFeePackageCreateMutation();
 
-  const {
-    data: detailData,
-    isLoading: isDetailLoading,
-  } = useAdminReviewFeeDetailQuery(selectedReviewFeeId);
+  const { data: detailData } = useAdminReviewFeeDetailQuery(selectedReviewFeeId);
+
+  // Fetch buyers data
+  const { data: buyersData, isPending: isLoadingBuyers } = useReviewFeeBuyers(
+    buyersPageNumber,
+    buyersPageSize
+  );
  
 
  const form = useForm<CreateReviewFeeFormData>({
@@ -198,7 +199,7 @@ const InfoItem = ({ label, value, className = "" }: InfoItemProps) => (
     <p className={`font-semibold text-gray-900 mt-1 ${className}`}>{value}</p>
   </div>
 );
-const { mutate: createPolicy, isPending: isCreatingPolicy } =
+const { mutate: createPolicy } =
   useAdminReviewFeePolicyCreateMutation();
 
 const { mutate: createUpcomingPolicy, isPending: isCreatingUpcomingPolicy } =
@@ -861,13 +862,27 @@ const policyForm = useForm<CreatePolicyForm>({
         <h2 className="text-2xl font-bold text-gray-900">
           Chi tiết gói phí đánh giá
         </h2>
-        <Button
-          variant="ghost"
-          className="h-10 w-10 rounded-full hover:bg-gray-100"
-          onClick={() => setShowDetailModal(false)}
-        >
-          ✕
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setShowBuyersModal(true);
+              setBuyersPageNumber(1);
+            }}
+            className="cursor-pointer flex items-center gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            Xem chi tiết người mua
+          </Button>
+          <Button
+            variant="ghost"
+            className="h-10 w-10 rounded-full hover:bg-gray-100"
+            onClick={() => setShowDetailModal(false)}
+          >
+            ✕
+          </Button>
+        </div>
       </div>
 
       {/* BODY – scroll only content */}
@@ -938,8 +953,6 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                   if (packages.length === 0) return;
 
                   const firstId = packages[0].reviewFeeId;
-
-                  setSelectedReviewFeeIdForPolicy(firstId);
 
                   // ⬅️ SET GIÁ TRỊ VÀO FORM TRƯỚC KHI MỞ MODAL
                   policyForm.setValue("reviewFeeId", firstId);
@@ -1230,6 +1243,222 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
           </div>
         </form>
       </Form>
+    </div>
+  </div>
+)}
+
+{/* ============================
+    MODAL CHI TIẾT NGƯỜI MUA GÓI PHÍ ĐÁNH GIÁ
+============================= */}
+{showBuyersModal && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl 
+                 max-h-[90vh] flex flex-col overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* HEADER */}
+      <div className="p-6 border-b bg-white flex items-center justify-between sticky top-0 z-20">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <Users className="w-6 h-6 text-blue-600" />
+          Chi tiết người mua gói phí đánh giá
+        </h2>
+        <Button
+          variant="ghost"
+          className="h-10 w-10 rounded-full hover:bg-gray-100"
+          onClick={() => {
+            setShowBuyersModal(false);
+            setBuyersPageNumber(1);
+          }}
+        >
+          ✕
+        </Button>
+      </div>
+
+      {/* BODY */}
+      <div className="p-6 overflow-y-auto space-y-6">
+        {isLoadingBuyers ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          </div>
+        ) : buyersData?.data ? (
+          (() => {
+            // Filter buyers data by selectedReviewFeeId
+            const filteredData = buyersData.data.find(
+              (item) => item.reviewFeeId === selectedReviewFeeId
+            );
+
+            if (!filteredData) {
+              return (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p>Chưa có người mua gói này</p>
+                </div>
+              );
+            }
+
+            const buyers: Buyer[] = filteredData.buyers ?? [];
+            const totalPurchase = filteredData.totalPurchase || 0;
+            const totalAmountCoin = filteredData.totalAmountCoin || 0;
+            const numberOfReview = filteredData.numberOfReview || 0;
+            
+            // Calculate pagination info
+            const totalBuyers = buyers.length;
+            const totalPages = Math.ceil(totalBuyers / buyersPageSize);
+            const startIndex = (buyersPageNumber - 1) * buyersPageSize;
+            const endIndex = startIndex + buyersPageSize;
+            const paginatedBuyers = buyers.slice(startIndex, endIndex);
+
+            return (
+              <div className="space-y-6">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="p-4 border-l-4 border-l-blue-500">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Users className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Tổng người mua</p>
+                        <p className="text-xl font-bold text-gray-900">
+                          {totalPurchase}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                  
+                  <Card className="p-4 border-l-4 border-l-yellow-500">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <Coins className="w-5 h-5 text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Tổng coin</p>
+                        <p className="text-xl font-bold text-gray-900">
+                          {totalAmountCoin}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                  
+                  <Card className="p-4 border-l-4 border-l-green-500">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Số lượng đánh giá</p>
+                        <p className="text-xl font-bold text-gray-900">
+                          {numberOfReview}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Buyers Table */}
+                {buyers.length > 0 ? (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Danh sách người mua ({totalBuyers})
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>STT</TableHead>
+                            <TableHead>Họ tên</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Số coin</TableHead>
+                            <TableHead>Ngày mua</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedBuyers.map((buyer: Buyer, index: number) => (
+                            <TableRow key={buyer.userId}>
+                              <TableCell className="font-medium">
+                                {startIndex + index + 1}
+                              </TableCell>
+                              <TableCell className="font-medium">{buyer.fullName}</TableCell>
+                              <TableCell className="text-gray-600">{buyer.email}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Coins className="w-4 h-4 text-yellow-600" />
+                                  <span className="font-semibold text-yellow-700">
+                                    {buyer.amountCoin}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm text-gray-600">
+                                {dayjs(buyer.createdAt).format("DD/MM/YYYY HH:mm")}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    
+                    {/* Pagination */}
+                    {totalBuyers > 0 && (
+                      <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
+                        {/* Left: Rows per page */}
+                        <div className="flex items-center gap-2">
+                          <span>Rows per page:</span>
+                          <span className="font-medium">{buyersPageSize}</span>
+                        </div>
+
+                        {/* Middle: 1–5 of 10 */}
+                        <div>
+                          {totalBuyers === 0
+                            ? "0–0 of 0"
+                            : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} of ${totalBuyers}`}
+                        </div>
+
+                        {/* Right: Previous / Page number / Next */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={buyersPageNumber === 1}
+                            onClick={() => setBuyersPageNumber(buyersPageNumber - 1)}
+                            className="cursor-pointer"
+                          >
+                            Previous
+                          </Button>
+
+                          <span className="px-3 py-1 border rounded-md bg-gray-50">
+                            {buyersPageNumber} / {totalPages}
+                          </span>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={buyersPageNumber >= totalPages}
+                            onClick={() => setBuyersPageNumber(buyersPageNumber + 1)}
+                            className="cursor-pointer"
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p>Chưa có người mua gói này</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <XCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <p>Không thể tải thông tin người mua</p>
+          </div>
+        )}
+      </div>
     </div>
   </div>
 )}

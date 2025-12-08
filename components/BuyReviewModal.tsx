@@ -195,7 +195,7 @@ const BuyReviewModal = ({ open, onClose, learnerAnswerId, recordId }: BuyReviewM
                             )}
                           </div>
                           <CardDescription>
-                            {pricePerReview.toLocaleString("vi-VN")} VND / đánh giá
+                            {pricePerReview.toLocaleString("vi-VN")} Coin / đánh giá
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -205,7 +205,7 @@ const BuyReviewModal = ({ open, onClose, learnerAnswerId, recordId }: BuyReviewM
                               <span className="text-sm">Tổng giá:</span>
                             </div>
                             <div className="text-xl font-bold text-green-600">
-                              {formatCurrency(totalPrice)}
+                              {totalPrice} Coin
                             </div>
                           </div>
                         </CardContent>
