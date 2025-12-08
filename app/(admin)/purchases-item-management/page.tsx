@@ -201,7 +201,7 @@ const PurchasesItemManagement = () => {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý giao dịch</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lí mua gói vật phẩm</h1>
           <p className="text-gray-500 mt-1">Theo dõi và quản lý tất cả giao dịch trong hệ thống</p>
         </div>
       </div>

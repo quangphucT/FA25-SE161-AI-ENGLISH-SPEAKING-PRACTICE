@@ -453,7 +453,7 @@ const SendingAudioToReviewer = () => {
                         <div className="flex items-center justify-center gap-1">
                           <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                           <span className={`text-lg ${getScoreColor(review.score)}`}>
-                            {review.score}/100
+                            {review.score}/10
                           </span>
                         </div>
                       </TableCell>

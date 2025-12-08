@@ -44,7 +44,7 @@ function DashboardContent() {
     }
   }, [menuParam]);
   const sidebarMenu = [
-    { id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
+    //{ id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
     { id: "learningPath", label: "Lộ trình học", icon: BookOpen, description: "Xem và học theo lộ trình" },
     { id: "enrollingCourses", label: "Khoá học", icon: BookMarked, description: "Tham gia các khoá học" },
     { id: "wallet", label: "Ví Coin", icon: Wallet, description: "Quản lý và nạp Coin" },
@@ -52,7 +52,7 @@ function DashboardContent() {
     { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
     { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
-    { id: "reviewRecord", label: "Lịch sử đánh giá", icon: BookOpen, description: "Lịch sử đánh giá của tôi" },
+    //{ id: "reviewRecord", label: "Lịch sử đánh giá", icon: BookOpen, description: "Lịch sử đánh giá của tôi" },
     { id: "progress", label: "Tiến độ học tập", icon: BarChart3, description: "Theo dõi kết quả học tập" },
 
   ];
@@ -68,7 +68,7 @@ function DashboardContent() {
         <div className="p-8 border-b border-gray-100">
           <div className="flex items-center gap-3">
           <div
-                  onClick={() => router.push("/dashboard-learner-layout")}
+                  onClick={() => router.push("/dashboard-learner-layout?menu=learningPath")}
                   className="flex items-center gap-3 cursor-pointer"
                 >
                   <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg">
