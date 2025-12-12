@@ -40,33 +40,27 @@ const EntranceTest = () => {
   const [audioUrls, setAudioUrls] = useState<string[]>([]);
   const [aiFeedbacks, setAiFeedbacks] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [recordingAttempts, setRecordingAttempts] = useState<number[]>([]); // Track recording attempts per question
+  const [recordingAttempts, setRecordingAttempts] = useState<number[]>([]);
   const MAX_RECORDING_ATTEMPTS = 2;
   const router = useRouter();
-  // Hooks
   const { data: userData } = useGetMeQuery();
   const { mutate: submitTestAssessmentMutation } = useSubmitTestAssessment();
-
   // API config from environment variables
   const apiMainPathSTS = process.env.NEXT_PUBLIC_AI_STS_API_URL;
   const STScoreAPIKey = process.env.NEXT_PUBLIC_AI_STS_API_KEY || "";
   const AILanguage = process.env.NEXT_PUBLIC_AI_STS_LANGUAGE || "en";
 
   const { data: testAssessmentData, isLoading } = useGetTestAssessment();
+
   const allQuestions = useMemo(() => {
     if (!testAssessmentData?.data?.sections) return [];
-
     const questions: Array<{
       id: string;
       content: string;
       type: string;
       sectionType: string;
     }> = [];
-
-    // Define the order of question types
-    const typeOrder = ["word", "sentence", "paragraph"];
-
-    // Sort sections by type order
+    const typeOrder = ["word", "sentence", "phrase"];
     const sortedSections = [...testAssessmentData.data.sections].sort(
       (a, b) => {
         const indexA = typeOrder.indexOf(a.type);
@@ -74,8 +68,6 @@ const EntranceTest = () => {
         return indexA - indexB;
       }
     );
-
-    // Add questions in the sorted order
     sortedSections.forEach((section) => {
       section.questions.forEach((question) => {
         questions.push({
@@ -86,11 +78,9 @@ const EntranceTest = () => {
         });
       });
     });
-
     return questions;
   }, [testAssessmentData]);
 
-  // Navigate to dashboard after refreshing token
   const handleNavigateDashboardLearnerLayout = async () => {
     setLoadingToDashboardLearner(true);
     try {
@@ -98,10 +88,9 @@ const EntranceTest = () => {
         method: "POST",
         credentials: "include",
       });
-
       if (refreshResponse.ok) {
-        // Use window.location.href for full page reload with new token
-        window.location.href = "/dashboard-learner-layout?menu=enrollingCourses";
+        window.location.href =
+          "/dashboard-learner-layout?menu=enrollingCourses";
       } else {
         toast.error("Phiên đã hết hạn, vui lòng đăng nhập lại.");
         router.push("/sign-in");
@@ -112,7 +101,6 @@ const EntranceTest = () => {
     setLoadingToDashboardLearner(false);
   };
 
-  // Initialize recorded array when questions are loaded
   useMemo(() => {
     if (allQuestions.length > 0 && recorded.length === 0) {
       setRecorded(new Array(allQuestions.length).fill(false));
@@ -137,8 +125,6 @@ const EntranceTest = () => {
       reader.onerror = (error) => reject(error);
     });
   }, []);
-
-
 
   const playRecording = useCallback(() => {
     const audio = audioRecordedRef.current;
@@ -214,7 +200,7 @@ const EntranceTest = () => {
         numberOfQuestion: totalQuestions,
         tests,
       };
-     
+
       submitTestAssessmentMutation(payload, {
         onSuccess: (data) => {
           toast.success("Đã nộp bài thành công!");
@@ -246,8 +232,13 @@ const EntranceTest = () => {
 
   const handleRecord = () => {
     // Check if max attempts reached
-    if (recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS && !isRecording) {
-      toast.error(`Bạn đã ghi âm tối đa ${MAX_RECORDING_ATTEMPTS} lần cho câu hỏi này`);
+    if (
+      recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS &&
+      !isRecording
+    ) {
+      toast.error(
+        `Bạn đã ghi âm tối đa ${MAX_RECORDING_ATTEMPTS} lần cho câu hỏi này`
+      );
       return;
     }
 
@@ -257,10 +248,11 @@ const EntranceTest = () => {
       if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
       setIsProcessingAudio(true);
       setUiBlocked(true);
-      
+
       // Increment recording attempts
       const newAttempts = [...recordingAttempts];
-      newAttempts[currentQuestionIndex] = (newAttempts[currentQuestionIndex] || 0) + 1;
+      newAttempts[currentQuestionIndex] =
+        (newAttempts[currentQuestionIndex] || 0) + 1;
       setRecordingAttempts(newAttempts);
     } else {
       // Start recording
@@ -276,20 +268,48 @@ const EntranceTest = () => {
   };
 
   // Initialize audio context and speech synthesis
+  // useEffect(() => {
+  //   audioContextRef.current = new AudioContext();
+  //   synthRef.current = typeof window !== "undefined" ? window.speechSynthesis : null;
+  //   if (synthRef.current) {
+  //     const loadVoices = () => {
+  //       const voiceList = synthRef.current!.getVoices();
+  //       const enVoice = voiceList.find((v) => v.lang.startsWith("en"));
+  //       if (enVoice) voiceRef.current = enVoice;
+  //     };
+  //     loadVoices();
+  //     synthRef.current.addEventListener("voiceschanged", loadVoices);
+  //     return () =>
+  //       synthRef.current?.removeEventListener("voiceschanged", loadVoices);
+  //   }
+  // }, []);
   useEffect(() => {
     audioContextRef.current = new AudioContext();
-    synthRef.current =
-      typeof window !== "undefined" ? window.speechSynthesis : null;
+    synthRef.current = typeof window !== "undefined" ? window.speechSynthesis : null;
 
     if (synthRef.current) {
       const loadVoices = () => {
         const voiceList = synthRef.current!.getVoices();
-        // Try to find English voice
-        const enVoice = voiceList.find((v) => v.lang.startsWith("en"));
-        if (enVoice) voiceRef.current = enVoice;
+
+        // Lọc tất cả giọng thuộc Anh-Mỹ
+        const usVoices = voiceList.filter(
+          (v) => v.lang === "en-US" || v.lang === "en_US"
+        );
+
+        // Ưu tiên Google trước → Microsoft → random
+        const preferredVoice =
+          usVoices.find((v) => v.name.includes("Google")) ||
+          usVoices.find((v) => v.name.includes("Microsoft")) ||
+          usVoices[0];
+
+        if (preferredVoice) {
+          voiceRef.current = preferredVoice;
+        }
       };
+
       loadVoices();
       synthRef.current.addEventListener("voiceschanged", loadVoices);
+
       return () =>
         synthRef.current?.removeEventListener("voiceschanged", loadVoices);
     }
@@ -370,15 +390,11 @@ const EntranceTest = () => {
             const newIpa = [...ipaTranscripts];
             newIpa[currentQuestionIndex] = `/ ${data.ipa_transcript} /`;
             setIpaTranscripts(newIpa);
-
-            // Store real IPA transcript
             const newRealIpa = [...realIpaTranscripts];
             newRealIpa[currentQuestionIndex] = data.real_transcripts_ipa
               ? `/ ${data.real_transcripts_ipa} /`
               : "";
             setRealIpaTranscripts(newRealIpa);
-
-            // Color code the words: 1 = green, 0 = red
             const isLetterCorrectAll: string[] = String(
               data.is_letter_correct_all_words || ""
             ).split(" ");
@@ -409,7 +425,6 @@ const EntranceTest = () => {
 
             setIsProcessingAudio(false);
           } catch (error) {
-            console.error("Error processing audio:", error);
             setIsProcessingAudio(false);
           } finally {
             setUiBlocked(false);
@@ -720,7 +735,8 @@ const EntranceTest = () => {
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
                       isRecording
                         ? "bg-red-100 text-red-700 animate-pulse"
-                        : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                        : recordingAttempts[currentQuestionIndex] >=
+                          MAX_RECORDING_ATTEMPTS
                         ? "bg-orange-100 text-orange-700"
                         : recorded[currentQuestionIndex]
                         ? "bg-green-100 text-green-700"
@@ -731,7 +747,8 @@ const EntranceTest = () => {
                       className={`w-2 h-2 rounded-full ${
                         isRecording
                           ? "bg-red-500"
-                          : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                          : recordingAttempts[currentQuestionIndex] >=
+                            MAX_RECORDING_ATTEMPTS
                           ? "bg-orange-500"
                           : recorded[currentQuestionIndex]
                           ? "bg-green-500"
@@ -740,7 +757,8 @@ const EntranceTest = () => {
                     ></div>
                     {isRecording
                       ? "Đang ghi âm..."
-                      : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                      : recordingAttempts[currentQuestionIndex] >=
+                        MAX_RECORDING_ATTEMPTS
                       ? "Đã hết lượt ghi âm"
                       : recorded[currentQuestionIndex]
                       ? "Đã hoàn thành"
@@ -748,7 +766,18 @@ const EntranceTest = () => {
                   </div>
                   {/* Recording attempts counter */}
                   <div className="mt-2 text-sm text-gray-600">
-                    Số lần ghi âm: <span className={`font-bold ${recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS ? "text-orange-600" : "text-blue-600"}`}>{recordingAttempts[currentQuestionIndex] || 0}</span> / {MAX_RECORDING_ATTEMPTS}
+                    Số lần ghi âm:{" "}
+                    <span
+                      className={`font-bold ${
+                        recordingAttempts[currentQuestionIndex] >=
+                        MAX_RECORDING_ATTEMPTS
+                          ? "text-orange-600"
+                          : "text-blue-600"
+                      }`}
+                    >
+                      {recordingAttempts[currentQuestionIndex] || 0}
+                    </span>{" "}
+                    / {MAX_RECORDING_ATTEMPTS}
                   </div>
                 </div>
 
@@ -767,17 +796,23 @@ const EntranceTest = () => {
                       className={`relative rounded-full w-32 h-32 flex items-center cursor-pointer justify-center transition-all duration-300 shadow-2xl ${
                         isRecording
                           ? "bg-linear-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 scale-110"
-                          : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                          : recordingAttempts[currentQuestionIndex] >=
+                            MAX_RECORDING_ATTEMPTS
                           ? "bg-linear-to-br from-gray-400 to-gray-500 cursor-not-allowed"
                           : recorded[currentQuestionIndex]
                           ? "bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                           : "bg-linear-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
                       }`}
                       onClick={handleRecord}
-                      disabled={(uiBlocked && !isRecording) || (recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS && !isRecording)}
+                      disabled={
+                        (uiBlocked && !isRecording) ||
+                        (recordingAttempts[currentQuestionIndex] >=
+                          MAX_RECORDING_ATTEMPTS &&
+                          !isRecording)
+                      }
                       aria-label="Ghi âm"
                     >
-                      <Mic size={64} color="white"/>
+                      <Mic size={64} color="white" />
                     </Button>
                   </div>
 
@@ -785,16 +820,21 @@ const EntranceTest = () => {
                     <p className="text-lg font-semibold text-gray-900 mb-1">
                       {isRecording
                         ? "Nhấn để dừng ghi âm"
-                        : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                        : recordingAttempts[currentQuestionIndex] >=
+                          MAX_RECORDING_ATTEMPTS
                         ? "Đã hết lượt ghi âm"
                         : recorded[currentQuestionIndex]
-                        ? `Ghi lại (còn ${MAX_RECORDING_ATTEMPTS - recordingAttempts[currentQuestionIndex]} lượt)`
+                        ? `Ghi lại (còn ${
+                            MAX_RECORDING_ATTEMPTS -
+                            recordingAttempts[currentQuestionIndex]
+                          } lượt)`
                         : "Nhấn để bắt đầu"}
                     </p>
                     <p className="text-sm text-gray-600">
                       {isRecording
                         ? "Đọc rõ ràng vào microphone"
-                        : recordingAttempts[currentQuestionIndex] >= MAX_RECORDING_ATTEMPTS
+                        : recordingAttempts[currentQuestionIndex] >=
+                          MAX_RECORDING_ATTEMPTS
                         ? "Bạn đã sử dụng hết số lần ghi âm cho câu này"
                         : "Đảm bảo microphone đã được bật"}
                     </p>
@@ -893,24 +933,23 @@ const EntranceTest = () => {
                         <span>{resultsAfterTest.assignedLevel}</span>
                       </div>
                       <p className="text-gray-700 mb-8 text-base">
-                  Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng cao
-                  kỹ năng của bạn! 💪
-                </p>
+                        Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng
+                        cao kỹ năng của bạn! 💪
+                      </p>
 
-                {loadingToDashboardLearner ? (
-                  <Loader2 className="mx-auto animate-spin" />
-                ) : (
-                  <Button
-                    className="bg-gradient-to-r cursor-pointer from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-10 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg text-[15px]"
-                    onClick={() => handleNavigateDashboardLearnerLayout()}>
-                    Bắt đầu học ngay
-                  </Button>
-                )}
+                      {loadingToDashboardLearner ? (
+                        <Loader2 className="mx-auto animate-spin" />
+                      ) : (
+                        <Button
+                          className="bg-gradient-to-r cursor-pointer from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-10 py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg text-[15px]"
+                          onClick={() => handleNavigateDashboardLearnerLayout()}
+                        >
+                          Bắt đầu học ngay
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
-
-                
               </>
             )}
           </div>

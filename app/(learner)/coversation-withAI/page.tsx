@@ -41,8 +41,6 @@ const ConversationWithAI = () => {
   const router = useRouter();
   const { data: userData, refetch: refetchUserData } = useGetMeQuery();
   const {data: aiPackagesData} = useGetAIPackages();
-  
-  const [name, setName] = useState("");
   const [duration, setDuration] = useState<string>("");
   const [showLiveKit, setShowLiveKit] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -51,8 +49,6 @@ const ConversationWithAI = () => {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const { mutate: chartCoinForConversationMutation } = useChartCoinForConversation();
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Use API data for duration options - data is directly in aiPackagesData, not aiPackagesData.data
   const durationOptions = Array.isArray(aiPackagesData) 
     ? aiPackagesData.map((pkg: AIPackage) => ({
         value: pkg.allowedMinutes.toString(),

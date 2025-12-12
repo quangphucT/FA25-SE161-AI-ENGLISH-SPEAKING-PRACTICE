@@ -25,28 +25,16 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function LoginForm() {
   const { mutate, isPending } = useLoginMutation();
-  const {
-    mutate: mutateGoogleLoginForLearner,
-    isPending: isPendingGoogleLoginForLearner,
-  } = useLoginWithGoogle();
-  const {
-    mutate: mutateGoogleLoginForReviewer,
-    isPending: isPendingGoogleLoginForReviewer,
-  } = useLoginWithGoogle();
+  const { mutate: mutateGoogleLoginForLearner,isPending: isPendingGoogleLoginForLearner} = useLoginWithGoogle();
+  const {mutate: mutateGoogleLoginForReviewer,isPending: isPendingGoogleLoginForReviewer} = useLoginWithGoogle();
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<"LEARNER" | "REVIEWER">(
-    "LEARNER"
-  );
-  // Move showPassword state to top-level to satisfy hooks rules
+  const [selectedRole, setSelectedRole] = useState<"LEARNER" | "REVIEWER">("LEARNER");
   const [showPasswordLearner, setShowPasswordLearner] = useState(false);
   const [showPasswordReviewer, setShowPasswordReviewer] = useState(false);
-
   const formSchema = z.object({
     email: z.string().min(2).max(100).email(),
     password: z.string().min(6).max(100),
   });
-
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -79,8 +67,6 @@ export default function LoginForm() {
     }
     router.push("/dashboard-reviewer-layout");
   };
-
-  // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     const payload = {
       ...values,
@@ -132,7 +118,7 @@ export default function LoginForm() {
             toast.error(error.message);
           },
         }
-      ); // 🔑 gửi idToken qua hook
+      ); 
     } else {
       mutateGoogleLoginForReviewer(
         { idToken, role: selectedRole },
@@ -161,11 +147,7 @@ export default function LoginForm() {
         ×
       </button>
       <div className="w-full max-w-md bg-[#18232a] rounded-xl shadow-lg p-8 flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-white mb-8 text-center">
-          Đăng nhập
-        </h1>
-
-        {/* Tabs chọn vai trò */}
+        <h1 className="text-3xl font-bold text-white mb-8 text-center">Đăng nhập</h1>
         <Tabs
           value={selectedRole}
           onValueChange={(v) => setSelectedRole(v as typeof selectedRole)}
@@ -200,7 +182,7 @@ export default function LoginForm() {
                     <FormItem>
                       <FormControl>
                         <Input
-                          placeholder="Email hoặc tên đăng nhập"
+                          placeholder="Email"
                           {...field}
                           className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg"
                         />
@@ -295,7 +277,7 @@ export default function LoginForm() {
                     <FormItem>
                       <FormControl>
                         <Input
-                          placeholder="Email hoặc tên đăng nhập"
+                          placeholder="Email"
                           {...field}
                           className="bg-[#22313c] text-white border border-[#2c3e50] rounded-xl px-4 py-[23px] focus:outline-none focus:ring-2 focus:ring-[#2ed7ff] placeholder:text-gray-400 text-lg"
                         />
