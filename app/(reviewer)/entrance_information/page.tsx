@@ -153,8 +153,16 @@ const EntranceInformation = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-[#18232a] px-4">
-      <Card className="w-full max-w-2xl bg-[#18232a] border-none text-white rounded-2xl shadow-xl p-2">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#18232a] px-4 py-10 text-center gap-8">
+      <div className="bg-gradient-to-r from-[#2ed7ff]/20 to-transparent border border-[#2ed7ff]/30 rounded-3xl px-6 py-5 shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur">
+        <h1 className="text-white text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
+          Chào mừng bạn đến với hệ thống đánh giá AESP
+        </h1>
+        <p className="text-gray-300 text-base md:text-lg mt-2">
+          Hoàn tất thông tin để bắt đầu hành trình reviewer chuyên nghiệp.
+        </p>
+      </div>
+      <Card className="flex flex-col gap-4 w-full max-w-2xl bg-[#18232a] border-none text-white rounded-2xl shadow-xl p-2">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-extrabold tracking-wide">
             Upload bằng cấp
