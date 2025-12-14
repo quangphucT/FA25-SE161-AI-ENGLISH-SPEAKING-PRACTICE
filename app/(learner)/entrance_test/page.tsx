@@ -45,6 +45,9 @@ const EntranceTest = () => {
   const router = useRouter();
   const { data: userData } = useGetMeQuery();
   const { mutate: submitTestAssessmentMutation } = useSubmitTestAssessment();
+
+  const STORAGE_KEY = "entrance_test_progress";
+
   // API config from environment variables
   const apiMainPathSTS = process.env.NEXT_PUBLIC_AI_STS_API_URL;
   const STScoreAPIKey = process.env.NEXT_PUBLIC_AI_STS_API_KEY || "";
@@ -60,7 +63,7 @@ const EntranceTest = () => {
       type: string;
       sectionType: string;
     }> = [];
-    const typeOrder = ["word", "sentence", "phrase"];
+    const typeOrder = ["WORD", "SENTENCE", "PHRASE"];
     const sortedSections = [...testAssessmentData.data.sections].sort(
       (a, b) => {
         const indexA = typeOrder.indexOf(a.type);
@@ -103,15 +106,85 @@ const EntranceTest = () => {
 
   useMemo(() => {
     if (allQuestions.length > 0 && recorded.length === 0) {
-      setRecorded(new Array(allQuestions.length).fill(false));
-      setPronunciationAccuracy(new Array(allQuestions.length).fill(""));
-      setPronunciationScores(new Array(allQuestions.length).fill(0));
-      setIpaTranscripts(new Array(allQuestions.length).fill(""));
-      setRealIpaTranscripts(new Array(allQuestions.length).fill(""));
-      setColoredContents(new Array(allQuestions.length).fill(""));
-      setRecordingAttempts(new Array(allQuestions.length).fill(0));
+      // Khôi phục từ localStorage nếu có
+      const savedProgress = localStorage.getItem(STORAGE_KEY);
+
+      if (savedProgress) {
+        try {
+          const parsed = JSON.parse(savedProgress);
+          setRecorded(
+            parsed.recorded || new Array(allQuestions.length).fill(false)
+          );
+          setPronunciationAccuracy(
+            parsed.pronunciationAccuracy ||
+              new Array(allQuestions.length).fill("")
+          );
+          setPronunciationScores(
+            parsed.pronunciationScores || new Array(allQuestions.length).fill(0)
+          );
+          setIpaTranscripts(
+            parsed.ipaTranscripts || new Array(allQuestions.length).fill("")
+          );
+          setRealIpaTranscripts(
+            parsed.realIpaTranscripts || new Array(allQuestions.length).fill("")
+          );
+          setColoredContents(
+            parsed.coloredContents || new Array(allQuestions.length).fill("")
+          );
+          setRecordingAttempts(
+            parsed.recordingAttempts || new Array(allQuestions.length).fill(0)
+          );
+          setCurrentQuestionIndex(parsed.currentQuestionIndex || 0);
+        } catch (error) {
+          console.error("Error loading saved progress:", error);
+          // Nếu lỗi thì khởi tạo mới
+          setRecorded(new Array(allQuestions.length).fill(false));
+          setPronunciationAccuracy(new Array(allQuestions.length).fill(""));
+          setPronunciationScores(new Array(allQuestions.length).fill(0));
+          setIpaTranscripts(new Array(allQuestions.length).fill(""));
+          setRealIpaTranscripts(new Array(allQuestions.length).fill(""));
+          setColoredContents(new Array(allQuestions.length).fill(""));
+          setRecordingAttempts(new Array(allQuestions.length).fill(0));
+        }
+      } else {
+        // Khởi tạo mới nếu chưa có dữ liệu
+        setRecorded(new Array(allQuestions.length).fill(false));
+        setPronunciationAccuracy(new Array(allQuestions.length).fill(""));
+        setPronunciationScores(new Array(allQuestions.length).fill(0));
+        setIpaTranscripts(new Array(allQuestions.length).fill(""));
+        setRealIpaTranscripts(new Array(allQuestions.length).fill(""));
+        setColoredContents(new Array(allQuestions.length).fill(""));
+        setRecordingAttempts(new Array(allQuestions.length).fill(0));
+      }
     }
-  }, [allQuestions, recorded.length]);
+  }, [allQuestions, recorded.length, STORAGE_KEY]);
+
+  // Lưu progress vào localStorage mỗi khi có thay đổi
+  useEffect(() => {
+    if (recorded.length > 0) {
+      const progressData = {
+        recorded,
+        pronunciationAccuracy,
+        pronunciationScores,
+        ipaTranscripts,
+        realIpaTranscripts,
+        coloredContents,
+        recordingAttempts,
+        currentQuestionIndex,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(progressData));
+    }
+  }, [
+    recorded,
+    pronunciationAccuracy,
+    pronunciationScores,
+    ipaTranscripts,
+    realIpaTranscripts,
+    coloredContents,
+    recordingAttempts,
+    currentQuestionIndex,
+    STORAGE_KEY,
+  ]);
 
   const currentQuestion = allQuestions[currentQuestionIndex];
   const totalQuestions = allQuestions.length;
@@ -146,12 +219,12 @@ const EntranceTest = () => {
 
   const getQuestionDescription = (type: string) => {
     switch (type) {
-      case "word":
+      case "WORD":
         return "Hãy đọc to từ sau:";
-      case "sentence":
+      case "SENTENCE":
         return "Hãy đọc to câu sau:";
-      case "paragraph":
-        return "Hãy đọc to đoạn văn sau:";
+      case "PHRASE":
+        return "Hãy đọc to cụm từ sau:";
       default:
         return "Hãy đọc to:";
     }
@@ -205,6 +278,8 @@ const EntranceTest = () => {
         onSuccess: (data) => {
           toast.success("Đã nộp bài thành công!");
           setResultsAfterTest(data.data);
+          // Xóa localStorage khi đã submit thành công
+          localStorage.removeItem(STORAGE_KEY);
         },
       });
 
@@ -285,7 +360,8 @@ const EntranceTest = () => {
   // }, []);
   useEffect(() => {
     audioContextRef.current = new AudioContext();
-    synthRef.current = typeof window !== "undefined" ? window.speechSynthesis : null;
+    synthRef.current =
+      typeof window !== "undefined" ? window.speechSynthesis : null;
 
     if (synthRef.current) {
       const loadVoices = () => {
@@ -507,9 +583,6 @@ const EntranceTest = () => {
         <div className="max-w-7xl mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white text-xl font-bold">🎯</span>
-              </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
                   Entrance Test
@@ -525,7 +598,7 @@ const EntranceTest = () => {
                   <span className="text-gray-400">/</span> {totalQuestions}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              {/* <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-bold">
                   {Math.round(
                     ((currentQuestionIndex + (done ? 1 : 0)) / totalQuestions) *
@@ -533,7 +606,7 @@ const EntranceTest = () => {
                   )}
                   %
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -542,7 +615,7 @@ const EntranceTest = () => {
       {/* Enhanced Progress bar */}
       <div className="bg-white border-b border-gray-100 sticky top-[73px] z-10">
         <div className="max-w-7xl mx-auto px-6 py-3">
-          <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+          {/* <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
               style={{
@@ -554,7 +627,7 @@ const EntranceTest = () => {
             >
               <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
             </div>
-          </div>
+          </div> */}
           {/* Mini progress indicators */}
           <div className="flex justify-between mt-2">
             {Array.from({ length: totalQuestions }).map((_, index) => (
@@ -577,15 +650,18 @@ const EntranceTest = () => {
         <div className="max-w-7xl mx-auto px-6 pb-32">
           {/* Question type badge with gradient */}
           <div className="text-center mb-8">
-            <span className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold rounded-full shadow-lg uppercase tracking-wide">
-              <span className="text-lg">📝</span>
+            <span
+              className="inline-flex items-center px-4 py-1.5 
+  bg-blue-50 text-blue-600 text-sm font-semibold 
+  rounded-full tracking-wide"
+            >
               {currentQuestion?.sectionType || "Question"}
             </span>
           </div>
 
           {/* Processing status - floating notification */}
           {isProcessingAudio && !isRecording && (
-            <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-4 shadow-sm">
+            <div className="mb-6">
               <div className="flex items-center gap-3">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 <div>
@@ -604,34 +680,22 @@ const EntranceTest = () => {
           <div className="grid lg:grid-cols-2 gap-8 items-start">
             {/* Left Column - Question & Results */}
             <div className="space-y-6">
-              {/* Question instruction with icon */}
-              <div className="bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xl">💬</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      Hướng dẫn
-                    </h3>
-                    <p className="text-gray-700">
+              {/* Question content - enhanced card */}
+              <div className="bg-white rounded-3xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="text-center">
+                  {/* Hướng dẫn đọc */}
+                  <div className="mb-6">
+                    <p className="text-lg font-semibold text-gray-700">
                       {currentQuestion &&
                         getQuestionDescription(currentQuestion.sectionType)}
                     </p>
                   </div>
-                </div>
-              </div>
 
-              {/* Question content - enhanced card */}
-              <div className="bg-white rounded-3xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="text-center">
-                  <div className="mb-3">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Nội dung cần đọc
-                    </span>
-                  </div>
-                  <div className="text-4xl font-bold text-gray-900 leading-relaxed">
-                    {coloredContents[currentQuestionIndex] ? (
+                  {/* Nội dung cần đọc */}
+                  <div className="text-4xl font-bold text-gray-900 leading-relaxed mb-6">
+                    {/* Chỉ hiện màu khi đã ghi âm */}
+                    {recorded[currentQuestionIndex] &&
+                    coloredContents[currentQuestionIndex] ? (
                       <div
                         dangerouslySetInnerHTML={{
                           __html: coloredContents[currentQuestionIndex],
@@ -641,6 +705,28 @@ const EntranceTest = () => {
                       currentQuestion?.content || "Loading..."
                     )}
                   </div>
+
+                  {/* Kết quả phát âm - chỉ hiện khi đã ghi âm */}
+                  {recorded[currentQuestionIndex] &&
+                    coloredContents[currentQuestionIndex] && (
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <h4 className="text-sm font-bold text-gray-800 mb-3">
+                          Phân tích âm vị chữ cái
+                        </h4>
+                        <div className="flex items-center justify-center gap-6 text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                            <span className="text-gray-700">Âm vị đúng</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                            <span className="text-gray-700">
+                              Âm vị chưa chính xác
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -669,7 +755,6 @@ const EntranceTest = () => {
                     {ipaTranscripts[currentQuestionIndex] && (
                       <div className="bg-white/70 rounded-xl p-3">
                         <p className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
-                          <span>🎤</span>
                           Phát âm của bạn
                         </p>
                         <p className="text-sm font-mono text-gray-800 break-words">
@@ -682,7 +767,6 @@ const EntranceTest = () => {
                     {realIpaTranscripts[currentQuestionIndex] && (
                       <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
                         <p className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1">
-                          <span>🎯</span>
                           Phát âm chuẩn
                         </p>
                         <p className="text-sm font-mono text-blue-900 break-words">
@@ -695,35 +779,31 @@ const EntranceTest = () => {
               )}
 
               {/* Play recording button - enhanced */}
-              {recorded[currentQuestionIndex] && (
+              {/* {recorded[currentQuestionIndex] && (
                 <div className="flex justify-center">
-                  <Button
-                    onClick={playRecording}
-                    disabled={isPlayingAudio}
-                    className="bg-gradient-to-r cursor-pointer from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl text-base font-semibold disabled:opacity-50 transition-all flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105"
-                    aria-label="Play recording"
-                  >
-                    {isPlayingAudio ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Đang phát bản ghi âm...
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <polygon points="5 3 19 12 5 21 5 3" />
-                        </svg>
-                        Nghe lại bản ghi âm
-                      </>
-                    )}
-                  </Button>
+               <Button
+  onClick={playRecording}
+  disabled={isPlayingAudio}
+  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-3xl  text-[13px] cursor-pointer font-semibold disabled:opacity-50 transition-all flex items-center gap-3 shadow-md hover:shadow-xl"
+  aria-label="Play recording"
+>
+  {isPlayingAudio ? (
+    <>
+      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+      Đang phát bản ghi âm...
+    </>
+  ) : (
+    <>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+      Nghe lại bản ghi âm
+    </>
+  )}
+</Button>
+
                 </div>
-              )}
+              )} */}
             </div>
 
             {/* Right Column - Recording Controls */}
@@ -844,7 +924,6 @@ const EntranceTest = () => {
                 {/* Tips section */}
                 <div className="bg-white rounded-2xl p-6 border border-gray-200">
                   <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <span>💡</span>
                     Mẹo để đạt điểm cao
                   </h4>
                   <ul className="space-y-2 text-sm text-gray-700">
@@ -934,7 +1013,7 @@ const EntranceTest = () => {
                       </div>
                       <p className="text-gray-700 mb-8 text-base">
                         Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng
-                        cao kỹ năng của bạn! 💪
+                        cao kỹ năng của bạn!
                       </p>
 
                       {loadingToDashboardLearner ? (

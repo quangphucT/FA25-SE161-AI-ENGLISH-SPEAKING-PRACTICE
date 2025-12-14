@@ -61,9 +61,12 @@ function ResetPasswordInner() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#18232a] p-4">
       <div className="w-full max-w-md bg-[#18232a] rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-white mb-6 text-center">
+        <h1 className="text-3xl font-bold text-white mb-2 text-center">
           Đặt lại mật khẩu
         </h1>
+        <p className="text-gray-400 text-sm mb-6 text-center">
+          Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt
+        </p>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField

@@ -4,24 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Mic, Volume2, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
+import {
+  Loader2,
+  Mic,
+  Volume2,
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+} from "lucide-react";
 import { useLearnerStore } from "@/store/useLearnerStore";
 import { useLearningPathCourseFull } from "@/features/learner/hooks/learningPathCourseFullHooks/learningPathCourseFull";
 import { useSubmitAnswerQuestion } from "@/features/learner/hooks/submitAnswerQuestionHooks/submitAnswerQuestion";
 import BuyReviewModal from "@/components/BuyReviewModal";
 import { uploadAudioToCloudinary } from "@/utils/upload";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
+import Image from "next/image";
+
 const ExercisePage = () => {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const exerciseId = params?.exerciseId as string;
-  const chapterId = searchParams.get('chapterId');
+  const chapterId = searchParams.get("chapterId");
 
   const getAllLearnerData = useLearnerStore((state) => state.getAllLearnerData);
   const setAllLearnerData = useLearnerStore((state) => state.setAllLearnerData);
   const learnerData = getAllLearnerData();
-  
+
   // Get full learning path data
   const { data: apiResponse, isLoading } = useLearningPathCourseFull(
     {
@@ -40,9 +49,12 @@ const ExercisePage = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [openBuyReviewModal, setOpenBuyReviewModal] = useState(false);
   const [learnerAnswerIds, setLearnerAnswerIds] = useState<string[]>([]); // Lưu learnerAnswerId theo từng câu hỏi
-  
+  const [mediaViewMode, setMediaViewMode] = useState<"video" | "image">(
+    "video"
+  ); // Toggle between video and image
+
   const { mutate: submitAnswerQuestion } = useSubmitAnswerQuestion();
-  
+
   // Log khi mutation được gọi
   // console.log("submitAnswerQuestion function:", submitAnswerQuestion);
   const recordedAudioBlobMp3Ref = useRef<Blob | null>(null); // Store recorded audio blob
@@ -60,7 +72,8 @@ const ExercisePage = () => {
   const [ipaTranscripts, setIpaTranscripts] = useState<string[]>([]);
   const [realIpaTranscripts, setRealIpaTranscripts] = useState<string[]>([]);
   const [coloredContents, setColoredContents] = useState<string[]>([]);
-  const [AIExplainTheWrongForVoiceAI, setAIExplainTheWrongForVoiceAI] = useState<string[]>([]);
+  const [AIExplainTheWrongForVoiceAI, setAIExplainTheWrongForVoiceAI] =
+    useState<string[]>([]);
   // API config
   const apiMainPathSTS = process.env.NEXT_PUBLIC_AI_STS_API_URL;
   const STScoreAPIKey = process.env.NEXT_PUBLIC_AI_STS_API_KEY || "";
@@ -93,9 +106,14 @@ const ExercisePage = () => {
 
   // Update store when apiResponse changes
   useEffect(() => {
-    if (apiResponse?.data?.status && learnerData?.learnerCourseId && learnerData?.courseId && learnerData?.learningPathCourseId) {
+    if (
+      apiResponse?.data?.status &&
+      learnerData?.learnerCourseId &&
+      learnerData?.courseId &&
+      learnerData?.learningPathCourseId
+    ) {
       const newStatus = apiResponse.data.status as "InProgress" | "Completed";
-     
+
       // Chỉ update nếu status thực sự thay đổi
       if (newStatus !== learnerData.status) {
         setAllLearnerData({
@@ -104,8 +122,8 @@ const ExercisePage = () => {
           learningPathCourseId: learnerData.learningPathCourseId,
           status: newStatus,
         });
-      } 
-    } 
+      }
+    }
   }, [apiResponse?.data?.status, apiResponse]);
 
   // Initialize recorded state
@@ -168,8 +186,6 @@ const ExercisePage = () => {
     synthRef.current.speak(utterance);
   }, [currentQuestion]);
 
-
-
   // Recording functions
   const handleRecord = () => {
     if (isRecording) {
@@ -212,8 +228,10 @@ const ExercisePage = () => {
           setUiBlocked(true);
           const blob = new Blob(audioChunksRef.current, { type: "audio/ogg;" });
           // Store the blob in the ref for later upload
-          const blobMp3 = new Blob(audioChunksRef.current, { type: "audio/mp3;" });
-          recordedAudioBlobMp3Ref.current = blobMp3; 
+          const blobMp3 = new Blob(audioChunksRef.current, {
+            type: "audio/mp3;",
+          });
+          recordedAudioBlobMp3Ref.current = blobMp3;
           const audioUrl = URL.createObjectURL(blob);
           audioRecordedRef.current = new Audio(audioUrl);
 
@@ -276,10 +294,13 @@ const ExercisePage = () => {
               ? `/ ${data.real_transcripts_ipa} /`
               : "";
             setRealIpaTranscripts(newRealIpa);
-            
+
             // Store AI explain the wrong for voice AI
-            const newAIExplainTheWrongForVoiceAI = [...AIExplainTheWrongForVoiceAI];
-            newAIExplainTheWrongForVoiceAI[currentQuestionIndex] = data.AIFeedback;
+            const newAIExplainTheWrongForVoiceAI = [
+              ...AIExplainTheWrongForVoiceAI,
+            ];
+            newAIExplainTheWrongForVoiceAI[currentQuestionIndex] =
+              data.AIFeedback;
             setAIExplainTheWrongForVoiceAI(newAIExplainTheWrongForVoiceAI);
 
             // Color code the words: 1 = green, 0 = red
@@ -312,10 +333,9 @@ const ExercisePage = () => {
             setRecorded(newRecorded);
 
             setIsProcessingAudio(false);
-            
+
             const recordedMp3Blob = recordedAudioBlobMp3Ref.current;
             if (!recordedMp3Blob) {
-            
               setUiBlocked(false);
               return;
             }
@@ -329,32 +349,35 @@ const ExercisePage = () => {
             console.log("audioFile", audioFile);
             // Upload to Cloudinary
             const audioUrl = await uploadAudioToCloudinary(audioFile);
-        
+
             // Only submit if audio upload was successful
             if (!audioUrl) {
               console.error("Audio upload failed, cannot submit answer");
               setUiBlocked(false);
               return;
             }
-         
+
             // Submit answer immediately after processing
             submitAnswerQuestion(
               {
-                learningPathQuestionId: currentQuestion?.learningPathQuestionId || "",
-                audioRecordingUrl:  audioUrl,
+                learningPathQuestionId:
+                  currentQuestion?.learningPathQuestionId || "",
+                audioRecordingUrl: audioUrl,
                 transcribedText: newIpa[currentQuestionIndex] || "",
                 scoreForVoice: Math.round(acc) || 0,
-                explainTheWrongForVoiceAI: data.explain_the_wrong || data.AIFeedback || "",
+                explainTheWrongForVoiceAI:
+                  data.explain_the_wrong || data.AIFeedback || "",
               },
               {
                 onSuccess: (data) => {
                   // Lưu learnerAnswerId từ response vào array theo index của câu hỏi
                   if (data.data?.learnerAnswerId) {
                     const newLearnerAnswerIds = [...learnerAnswerIds];
-                    newLearnerAnswerIds[currentQuestionIndex] = data.data.learnerAnswerId;
+                    newLearnerAnswerIds[currentQuestionIndex] =
+                      data.data.learnerAnswerId;
                     setLearnerAnswerIds(newLearnerAnswerIds);
                   }
-                }, 
+                },
                 onError: (error) => {
                   console.error("Submit error:", error);
                 },
@@ -417,13 +440,13 @@ const ExercisePage = () => {
   const handleSubmit = () => {
     // Tất cả câu trả lời đã được submit khi dừng ghi âm
     toast.success("Đã hoàn thành bài tập!");
+
     // Navigate về learning path với chapterId
-    const url = chapterId 
+    const url = chapterId
       ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
       : "/dashboard-learner-layout?menu=learningPath";
     router.push(url);
   };
-
 
   if (isLoading || !isMounted) {
     return (
@@ -466,7 +489,7 @@ const ExercisePage = () => {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  const url = chapterId 
+                  const url = chapterId
                     ? `/dashboard-learner-layout?menu=learningPath&chapterId=${chapterId}`
                     : "/dashboard-learner-layout?menu=learningPath";
                   router.push(url);
@@ -483,7 +506,6 @@ const ExercisePage = () => {
                   <span className="text-gray-400">/</span> {totalQuestions}
                 </p>
               </div>
-          
             </div>
           </div>
         </div>
@@ -492,14 +514,14 @@ const ExercisePage = () => {
       {/* Enhanced Progress bar */}
       <div className="bg-white border-b border-gray-100 sticky top-[73px] z-10">
         <div className="max-w-7xl mx-auto px-6 py-3">
-          <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+          {/* <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progressPercentage}%` }}
             >
               <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
             </div>
-          </div>
+          </div> */}
           {/* Mini progress indicators */}
           <div className="flex justify-between mt-2">
             {questions.map((_, index) => (
@@ -520,30 +542,28 @@ const ExercisePage = () => {
 
       <div className="max-w-7xl mx-auto px-6 pb-32">
         {/* Question type badge */}
-        <div className="text-center mb-8 mt-8">
-          <span className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold rounded-full shadow-lg uppercase tracking-wide">
-            <span className="text-lg">
-              {currentQuestion.type === "Word"
-                ? "📝"
-                : currentQuestion.type === "Sentence"
-                ? "💬"
-                : "📄"}
-            </span>
-            {currentQuestion.type === "Word"
-              ? "Từ vựng"
-              : currentQuestion.type === "Sentence"
-              ? "Câu"
-              : "Đoạn văn"}
+        <div className="text-center mt-8">
+          <span
+            className="inline-flex items-center px-4 py-1.5 
+  bg-blue-50 text-blue-600 text-sm font-semibold 
+  rounded-full tracking-wide"
+          >
+            {currentQuestion.type === "word"
+              ? "Word"
+              : currentQuestion.type === "sentence"
+              ? "Sentence"
+              : "Phrase"}
           </span>
         </div>
 
-        {/* Processing status */}
-        {isProcessingAudio && !isRecording && (
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-3">
+        {/* Question Text & Listen Button - Same Row */}
+        <div className="flex items-center justify-center mb-8 gap-4">
+          {/* Processing status */}
+          {isProcessingAudio && !isRecording && (
+            <div className="flex items-center gap-3 px-6 py-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               <div>
-                <span className="text-blue-900 font-semibold block">
+                <span className="text-blue-900 font-semibold block text-sm">
                   Đang phân tích âm thanh...
                 </span>
                 <span className="text-blue-700 text-xs">
@@ -551,68 +571,87 @@ const ExercisePage = () => {
                 </span>
               </div>
             </div>
+          )}
+          
+          <div className="bg-white rounded-2xl px-8 py-6  ">
+            <p className={`font-bold text-gray-900 tracking-wide ${
+              currentQuestion.type === "word" 
+                ? "text-5xl" 
+                : currentQuestion.type === "sentence"
+                ? "text-3xl"
+                : "text-4xl"
+            }`}>
+              {currentQuestion.text}
+            </p>
           </div>
-        )}
+          <Button
+            onClick={handleSpeakQuestion}
+            disabled={uiBlocked}
+            className="bg-white hover:bg-gray-50 text-gray-700 p-5 rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transform hover:scale-105 transition-all border-2 border-gray-200"
+          >
+            <Volume2
+              className={`w-14 h-14 ${uiBlocked ? "animate-pulse" : ""}`}
+            />
+          </Button>
+        </div>
 
-      
-
-
-
-
-        <div className="flex items-center justify-center space-x-4 mb-8">
-          <div className="text-4xl font-bold text-gray-900 leading-relaxed">
-            {currentQuestion.text}
-          </div>
-          <div>
-            <Button
-              onClick={handleSpeakQuestion}
-              disabled={uiBlocked}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl cursor-pointer"
-            >
-              <Volume2
-                className={`w-5 h-5 mr-2 ${uiBlocked ? "animate-pulse" : ""}`}
-              />
-              Nghe phát âm
-            </Button>
-          </div>
-
-            {/* Question stats - Previous result and retake count */}
-        <div className="flex justify-center gap-4 mb-6">
-          {(currentQuestion.score > 0 || currentQuestion.numberOfRetake > 0) && (
+        {/* Question Stats - Previous result and retake count */}
+        <div className="flex justify-center gap-8 mb-8">
+          {(currentQuestion.score > 0 ||
+            currentQuestion.numberOfRetake > 0) && (
             <>
               {currentQuestion.score >= 0 && (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-4 py-2 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <div>
-                      <p className="text-xs text-blue-700 font-medium">Điểm gần nhất</p>
-                      <p className="text-lg font-bold text-blue-900">{currentQuestion.score}/100</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium">
+                      Điểm gần nhất
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {currentQuestion.score}/100
+                    </p>
                   </div>
                 </div>
               )}
               {currentQuestion.numberOfRetake > 0 && (
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg px-4 py-2 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <div>
-                      <p className="text-xs text-orange-700 font-medium">Số lần làm lại</p>
-                      <p className="text-lg font-bold text-orange-900">{currentQuestion.numberOfRetake}</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <svg
+                    className="w-6 h-6 text-orange-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium">
+                      Số lần làm lại
+                    </p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {currentQuestion.numberOfRetake}
+                    </p>
                   </div>
                 </div>
               )}
             </>
-          )}
-          {/* Nút Đánh giá phát âm - hiển thị khi đã có learnerAnswerId (đã submit) */}
+            )}
+         <div className="flex flex-col gap-2">
+           {/* Nút Đánh giá phát âm - hiển thị khi đã có learnerAnswerId (đã submit) */}
           {learnerAnswerIds[currentQuestionIndex] && (
-            <Button 
-              variant="outline" 
-              className="px-6 py-3 rounded-xl font-semibold cursor-pointer" 
+            <Button
+              variant="outline"
+              className="px-6 py-3 rounded-xl font-semibold cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-all"
               onClick={() => {
                 setOpenBuyReviewModal(true);
               }}
@@ -621,8 +660,37 @@ const ExercisePage = () => {
               Đánh giá phát âm
             </Button>
           )}
+          
+          {/* Nút Nghe lại bản ghi - hiển thị khi đã ghi âm */}
+          {recorded[currentQuestionIndex] && (
+            <Button
+              onClick={playRecording}
+              disabled={isPlayingAudio}
+                variant="outline"
+              className="px-6 py-3 rounded-xl font-semibold cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+            >
+              {isPlayingAudio ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Đang phát...
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  Nghe lại bản ghi
+                </>
+              )}
+            </Button>
+          )}
+         </div>
         </div>
-        </div>
+
         {/* Main content area - 2 column layout */}
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Left Column - Question & Results */}
@@ -630,21 +698,28 @@ const ExercisePage = () => {
             {/* Question content - enhanced card */}
             <div className="bg-white rounded-3xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
               <div className="text-center">
-                {/* Media Section - Video and Image */}
+                {/* Media Section - Tabs for Video and Image */}
                 {currentQuestion.media && currentQuestion.media.length > 0 && (
-                  <div className="mb-6 space-y-4">
-                    {currentQuestion.media.map((mediaItem, idx) => (
-                      <div
-                        key={mediaItem.questionMediaId || idx}
-                        className="space-y-4"
-                      >
-                        {/* Video - Mouth shape demonstration */}
-                        {mediaItem.videoUrl && (
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border-2 border-blue-200 shadow-md">
-                            <div className="flex items-center gap-2 mb-3">
-                              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <div className="mb-6">
+                    {currentQuestion.media.map((mediaItem, idx) => {
+                      const hasVideo = !!mediaItem.videoUrl;
+                      const hasImage = !!mediaItem.imageUrl;
+
+                      return (
+                        <div key={mediaItem.questionMediaId || idx}>
+                          {/* Tabs Navigation - Always show both tabs */}
+                          <div className="border-b border-gray-200 mb-4">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => setMediaViewMode("video")}
+                                className={`flex-1 cursor-pointer px-6 py-3 font-semibold transition-all flex items-center justify-center gap-2 border-b-2 ${
+                                  mediaViewMode === "video"
+                                    ? "border-indigo-600 text-indigo-600 bg-indigo-50"
+                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                }`}
+                              >
                                 <svg
-                                  className="w-5 h-5 text-white"
+                                  className="w-5 h-5"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                   stroke="currentColor"
@@ -656,38 +731,196 @@ const ExercisePage = () => {
                                     d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
                                   />
                                 </svg>
-                              </div>
-                              <div>
-                                <p className="text-sm font-semibold text-blue-900">
-                                  Video hướng dẫn khẩu hình
-                                </p>
-                                <p className="text-xs text-blue-700">
-                                  Quan sát và bắt chước cách đặt miệng khi phát
-                                  âm
-                                </p>
-                              </div>
-                            </div>
-                            <div className="rounded-xl overflow-hidden border-2 border-white shadow-lg">
-                              <YouTubeEmbed url={mediaItem.videoUrl || ""} />
-                              {/* <video
-                                src={mediaItem.videoUrl}
-                                controls
-                                loop
-                                className="w-full max-h-[400px] object-contain bg-black"
-                                controlsList="nodownload"
+                                Video Hướng Dẫn
+                              </button>
+                              <button
+                                onClick={() => setMediaViewMode("image")}
+                                className={`flex-1 cursor-pointer px-6 py-3 font-semibold transition-all flex items-center justify-center gap-2 border-b-2 ${
+                                  mediaViewMode === "image"
+                                    ? "border-indigo-600 text-indigo-600 bg-indigo-50"
+                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                }`}
                               >
-                                Trình duyệt của bạn không hỗ trợ video.
-                              </video> */}
-
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                                Hình Ảnh Minh Họa
+                              </button>
                             </div>
-                            <p className="text-xs text-blue-600 mt-2 text-center font-medium">
-                              💡 Tip: Xem video nhiều lần và thực hành theo từng
-                              chuyển động của môi
-                            </p>
                           </div>
-                        )}
-                      </div>
-                    ))}
+
+                          {/* Tab Content */}
+                          <div className="mt-4">
+                            {/* Video Tab Content */}
+                            {mediaViewMode === "video" && (
+                              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200 shadow-md">
+                                {hasVideo ? (
+                                  <>
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <svg
+                                          className="w-6 h-6 text-white"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                                          />
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                          />
+                                        </svg>
+                                      </div>
+                                      <div>
+                                        <p className="text-base font-bold text-blue-900">
+                                          Video Hướng Dẫn Khẩu Hình
+                                        </p>
+                                        <p className="text-sm  text-blue-700">
+                                          Quan sát và bắt chước cách đặt miệng
+                                          khi phát âm
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="rounded-xl overflow-hidden border-2 border-white shadow-lg">
+                                      <video
+                                        src={mediaItem.videoUrl || ""}
+                                        controls
+                                        loop
+                                        className="w-full max-h-[450px] object-contain bg-black"
+                                        controlsList="nodownload"
+                                      >
+                                        Trình duyệt của bạn không hỗ trợ video.
+                                      </video>
+                                    </div>
+                                    <div className="mt-4 bg-blue-100 rounded-lg p-3">
+                                      <p className="text-sm text-blue-800 font-medium">
+                                        💡 <strong>Mẹo học tập:</strong> Xem
+                                        video nhiều lần, tạm dừng để quan sát
+                                        chi tiết chuyển động của môi và lưỡi
+                                      </p>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                                      <svg
+                                        className="w-8 h-8 text-blue-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                        />
+                                      </svg>
+                                    </div>
+                                    <p className="text-gray-500 font-medium">
+                                      Video chưa có sẵn
+                                    </p>
+                                    <p className="text-sm text-gray-400 mt-1">
+                                      Vui lòng xem tab Hình Ảnh để tham khảo
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Image Tab Content */}
+                            {mediaViewMode === "image" && (
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-200 shadow-md">
+                                {hasImage ? (
+                                  <>
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                                        <svg
+                                          className="w-6 h-6 text-white"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                          />
+                                        </svg>
+                                      </div>
+                                      <div>
+                                        <p className="text-base font-bold text-green-900">
+                                          Hình Ảnh Minh Họa Khẩu Hình
+                                        </p>
+                                        <p className="text-sm text-green-700">
+                                          Tham khảo vị trí khẩu hình chuẩn
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white">
+                                      <Image
+                                        src={mediaItem.imageUrl || ""}
+                                        alt="Pronunciation guide"
+                                        className="w-full max-h-[450px] object-contain"
+                                      />
+                                    </div>
+                                    <div className="mt-4 bg-green-100 rounded-lg p-3">
+                                      <p className="text-sm text-green-800 font-medium">
+                                        💡 <strong>Mẹo học tập:</strong> Quan
+                                        sát kỹ vị trí lưỡi, răng và môi trong
+                                        hình để phát âm chuẩn
+                                      </p>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                                      <svg
+                                        className="w-8 h-8 text-green-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                      </svg>
+                                    </div>
+                                    <p className="text-gray-500 font-medium">
+                                      Hình ảnh chưa có sẵn
+                                    </p>
+                                    <p className="text-sm text-gray-400 mt-1">
+                                      Vui lòng xem tab Video để học
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -718,15 +951,30 @@ const ExercisePage = () => {
                 {/* Colored text result */}
                 {coloredContents[currentQuestionIndex] && (
                   <div className="mt-4 p-4 bg-white rounded-lg border border-green-200">
-                    <p className="text-xs text-gray-600 mb-2 font-medium">
-                      Phân tích chi tiết:
+                    <p className="text-xs text-gray-600 mb-3 font-medium">
+                      Phân tích âm vị chữ cái:
                     </p>
                     <div
-                      className="text-2xl font-semibold leading-relaxed"
+                      className="text-2xl font-semibold leading-relaxed mb-4"
                       dangerouslySetInnerHTML={{
                         __html: coloredContents[currentQuestionIndex],
                       }}
                     />
+                    {/* Legend - Chú thích màu sắc */}
+                    <div className="flex items-center justify-center gap-6 pt-3 border-t border-green-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600 font-medium">
+                          Âm vị đúng
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600 font-medium">
+                          Âm vị chưa chính xác
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -752,34 +1000,6 @@ const ExercisePage = () => {
               </div>
             )}
 
-            {/* Play recording button */}
-            {recorded[currentQuestionIndex] && (
-              <div className="flex justify-center">
-                <Button
-                  onClick={playRecording}
-                  disabled={isPlayingAudio}
-                  className="bg-gradient-to-r cursor-pointer from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl text-base font-semibold disabled:opacity-50 transition-all flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  {isPlayingAudio ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Đang phát...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                      Nghe lại bản ghi
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Right Column - Recording Controls */}
@@ -815,12 +1035,12 @@ const ExercisePage = () => {
                   <button
                     onClick={handleRecord}
                     disabled={isProcessingAudio || uiBlocked}
-                    className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl ${
+                    className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl cursor-pointer ${
                       isRecording
-                        ? "bg-gradient-to-br from-red-500 to-red-600"
+                        ? "bg-red-600 hover:bg-red-700"
                         : recorded[currentQuestionIndex]
-                        ? "bg-gradient-to-br from-green-500 to-green-600"
-                        : "bg-gradient-to-br from-blue-500 to-indigo-600"
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-indigo-600 hover:bg-indigo-700"
                     }`}
                   >
                     {isProcessingAudio ? (
@@ -852,40 +1072,48 @@ const ExercisePage = () => {
               </div>
             </div>
             {/* Accuracy Result - Enhanced */}
-            {recorded[currentQuestionIndex] && AIExplainTheWrongForVoiceAI[currentQuestionIndex] && (
-              <div className="mt-9 p-5 ml-2 bg-white rounded-lg border border-green-200 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                  Phân tích chi tiết:
-                </h3>
-                <div className="space-y-4">
-                  {parseFeedbackText(AIExplainTheWrongForVoiceAI[currentQuestionIndex]).map((section, idx) => (
-                    <div key={idx} className="space-y-2">
-                      {section.title && (
-                        <h4 className="text-sm font-semibold text-gray-900 flex items-start">
-                          <span className="text-green-600 mr-2">•</span>
-                          {section.title}
-                        </h4>
-                      )}
-                      {section.description && (
-                        <p className="text-sm text-gray-700 ml-5 leading-relaxed">
-                          {section.description}
-                        </p>
-                      )}
-                      {section.items && section.items.length > 0 && (
-                        <ul className="ml-5 space-y-1.5">
-                          {section.items.map((item, itemIdx) => (
-                            <li key={itemIdx} className="text-sm text-gray-700 flex items-start">
-                              <span className="text-green-500 mr-2 mt-1.5">-</span>
-                              <span className="leading-relaxed">{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
+            {recorded[currentQuestionIndex] &&
+              AIExplainTheWrongForVoiceAI[currentQuestionIndex] && (
+                <div className="mt-9 p-5 ml-2 bg-white rounded-lg border border-green-200 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                    Phân tích chi tiết:
+                  </h3>
+                  <div className="space-y-4">
+                    {parseFeedbackText(
+                      AIExplainTheWrongForVoiceAI[currentQuestionIndex]
+                    ).map((section, idx) => (
+                      <div key={idx} className="space-y-2">
+                        {section.title && (
+                          <h4 className="text-sm font-semibold text-gray-900 flex items-start">
+                            <span className="text-green-600 mr-2">•</span>
+                            {section.title}
+                          </h4>
+                        )}
+                        {section.description && (
+                          <p className="text-sm text-gray-700 ml-5 leading-relaxed">
+                            {section.description}
+                          </p>
+                        )}
+                        {section.items && section.items.length > 0 && (
+                          <ul className="ml-5 space-y-1.5">
+                            {section.items.map((item, itemIdx) => (
+                              <li
+                                key={itemIdx}
+                                className="text-sm text-gray-700 flex items-start"
+                              >
+                                <span className="text-green-500 mr-2 mt-1.5">
+                                  -
+                                </span>
+                                <span className="leading-relaxed">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
       </div>
@@ -895,15 +1123,16 @@ const ExercisePage = () => {
         <div className="max-w-7xl mx-auto px-6 py-5">
           <div className="flex items-center justify-between gap-4">
             {/* Navigation Buttons */}
-            <Button
-              onClick={handlePreviousQuestion}
-              disabled={currentQuestionIndex === 0}
-              variant="outline"
-              className="px-6 py-3 rounded-xl font-semibold"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Câu trước
-            </Button>
+            {currentQuestionIndex > 0 && (
+              <Button
+                onClick={handlePreviousQuestion}
+                variant="outline"
+                className="px-6 py-3 cursor-pointer rounded-xl font-semibold"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Câu trước
+              </Button>
+            )}
             <div className="flex items-center gap-1 flex-col">
               {/* Progress Info */}
               <div className="hidden md:flex items-center gap-3">
@@ -927,51 +1156,59 @@ const ExercisePage = () => {
                   {currentQuestionIndex + 1}/{totalQuestions}
                 </span>
               </div>
-            {/* Quick Stats */}
-            <div className="hidden md:flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-1.5 text-green-600">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-semibold">
-                  {recorded.filter((r) => r).length} hoàn thành
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 text-gray-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-semibold">
-                  {totalQuestions - recorded.filter((r) => r).length} còn lại
-                </span>
+              {/* Quick Stats */}
+              <div className="hidden md:flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1.5 text-green-600">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">
+                    {recorded.filter((r) => r).length} hoàn thành
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-gray-500">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">
+                    {totalQuestions - recorded.filter((r) => r).length} còn lại
+                  </span>
+                </div>
               </div>
             </div>
-            </div>
-            
 
             {/* Next Button - Chỉ hiển thị khi không phải câu cuối */}
             {currentQuestionIndex < totalQuestions - 1 && (
               <Button
                 onClick={handleNextQuestion}
-                disabled={!recorded[currentQuestionIndex] && currentQuestion.status !== "Completed"}
+                disabled={
+                  isProcessingAudio ||
+                  uiBlocked ||
+                  (!recorded[currentQuestionIndex] &&
+                    currentQuestion.status !== "Completed")
+                }
                 className={`font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg ${
-                  recorded[currentQuestionIndex] || currentQuestion.status === "Completed"
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer transform hover:scale-105"
+                  (recorded[currentQuestionIndex] ||
+                    currentQuestion.status === "Completed") &&
+                  !isProcessingAudio &&
+                  !uiBlocked
+                    ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer transform hover:scale-105"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  {recorded[currentQuestionIndex] || currentQuestion.status === "Completed" ? (
+                  {recorded[currentQuestionIndex] ||
+                  currentQuestion.status === "Completed" ? (
                     <>
                       Câu tiếp theo
                       <ArrowRight className="w-4 h-4" />
@@ -999,14 +1236,29 @@ const ExercisePage = () => {
 };
 
 // Helper function to parse feedback text into structured sections
-const parseFeedbackText = (text: string): Array<{ title: string; description: string; items: string[] }> => {
+const parseFeedbackText = (
+  text: string
+): Array<{ title: string; description: string; items: string[] }> => {
   if (!text) return [];
 
-  const sections: Array<{ title: string; description: string; items: string[] }> = [];
-  let currentSection: { title: string; description: string; items: string[] } | null = null;
+  const sections: Array<{
+    title: string;
+    description: string;
+    items: string[];
+  }> = [];
+  let currentSection: {
+    title: string;
+    description: string;
+    items: string[];
+  } | null = null;
 
   const pushCurrentSection = () => {
-    if (currentSection && (currentSection.title || currentSection.description || currentSection.items.length > 0)) {
+    if (
+      currentSection &&
+      (currentSection.title ||
+        currentSection.description ||
+        currentSection.items.length > 0)
+    ) {
       sections.push({
         title: currentSection.title,
         description: currentSection.description.trim(),
@@ -1015,12 +1267,15 @@ const parseFeedbackText = (text: string): Array<{ title: string; description: st
     }
   };
 
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line);
 
   lines.forEach((line) => {
     // Match bold headings like **Overall Impression**: or **Specific Feedback**:
     const sectionMatch = line.match(/^\*\*(.+?)\*\*:?\s*(.+)?$/);
-    
+
     if (sectionMatch) {
       pushCurrentSection();
       currentSection = {
@@ -1067,4 +1322,3 @@ const parseFeedbackText = (text: string): Array<{ title: string; description: st
 };
 
 export default ExercisePage;
-  

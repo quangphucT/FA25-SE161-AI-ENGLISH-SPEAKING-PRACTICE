@@ -259,7 +259,7 @@ const ConversationWithAI = () => {
 
                 <div>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    AI Voice Assistant
+                  Speaking with AI
                     <span className="text-sm font-normal bg-white/20 px-3 py-1 rounded-full">
                       Live
                     </span>
@@ -335,7 +335,7 @@ const ConversationWithAI = () => {
                     }
                     token={token}
                     connect={!isDisconnecting}
-                    video={false}
+                    video={true}
                     audio={true}
                     onDisconnected={handleDisconnect}
                     onError={(error) => {

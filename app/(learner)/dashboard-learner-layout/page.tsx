@@ -46,9 +46,9 @@ function DashboardContent() {
   const sidebarMenu = [
     //{ id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
     { id: "learningPath", label: "Lộ trình học", icon: BookOpen, description: "Xem và học theo lộ trình" },
-    { id: "enrollingCourses", label: "Khoá học", icon: BookMarked, description: "Tham gia các khoá học" },
+    { id: "enrollingCourses", label: "Khoá học", icon: BookMarked, description: "Học theo các khoá học" },
     { id: "wallet", label: "Ví Coin", icon: Wallet, description: "Quản lý và nạp Coin" },
-    { id: "conversationWithAI", label: "Trò chuyện với AI", icon: PlayCircle, description: "Giao tiếp và luyện tập" },
+    { id: "conversationWithAI", label: "Trò chuyện với AI", icon: PlayCircle, description: "Học qua giao tiếp với AI" },
     { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
     { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
