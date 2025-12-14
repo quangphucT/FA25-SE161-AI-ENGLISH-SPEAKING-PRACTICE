@@ -184,11 +184,13 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
                   <p className="text-4xl font-black text-amber-600 mb-0.5">
                     {pkg.numberOfCoin.toLocaleString()}
                   </p>
-                  {pkg.bonusPercent > 0 && (
-                    <p className="text-xs font-medium text-green-600 mb-1">
-                      + {Math.floor(pkg.numberOfCoin * pkg.bonusPercent / 100).toLocaleString()} coin bonus
-                    </p>
-                  )}
+                  <div className="h-5">
+                    {pkg.bonusPercent > 0 && (
+                      <p className="text-xs font-medium text-green-600">
+                        + {Math.floor(pkg.numberOfCoin * pkg.bonusPercent / 100).toLocaleString()} coin bonus
+                      </p>
+                    )}
+                  </div>
                   <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide">Coin</p>
                 </div>
               </div>
@@ -268,11 +270,13 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
                         </div>
                       )}
                       <p className="text-2xl font-black text-amber-600">{pkg.numberOfCoin.toLocaleString()}</p>
-                      {pkg.bonusPercent > 0 && (
-                        <p className="text-[10px] font-medium text-green-600">
-                          + {Math.floor(pkg.numberOfCoin * pkg.bonusPercent / 100).toLocaleString()} bonus
-                        </p>
-                      )}
+                      <div className="h-4">
+                        {pkg.bonusPercent > 0 && (
+                          <p className="text-[10px] font-medium text-green-600">
+                            + {Math.floor(pkg.numberOfCoin * pkg.bonusPercent / 100).toLocaleString()} bonus
+                          </p>
+                        )}
+                      </div>
                       <p className="text-[10px] font-semibold text-amber-500 uppercase">Coin</p>
                     </div>
                   </div>
