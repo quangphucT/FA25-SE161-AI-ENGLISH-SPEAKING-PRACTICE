@@ -142,15 +142,22 @@ export default function EnrollingCourses() {
   // Check if user can access a level
   const canAccessLevel = (targetLevel: string): boolean => {
     const targetIndex = levels.indexOf(targetLevel);
+    const userLevelIndex = levels.indexOf(userLevel);
 
-    // Level đầu tiên luôn mở
-    if (targetIndex === 0) return true;
+    // Level hiện tại của user → luôn mở
+    if (targetIndex === userLevelIndex) return true;
 
-    // Check tất cả levels trước đó đã hoàn thành chưa
-    for (let i = 0; i < targetIndex; i++) {
+    // Level thấp hơn userLevel
+    if (targetIndex < userLevelIndex) {
+      const levelData = levelsData.find((l) => l.Level === targetLevel);
+      // Chỉ mở nếu đã có courses (đã từng học qua level này)
+      // Khóa nếu không có courses (skip từ entrance test)
+      return !!(levelData?.Courses && levelData.Courses.length > 0);
+    }
+
+    // Level cao hơn userLevel → cần hoàn thành từ userLevel trở đi
+    for (let i = userLevelIndex; i < targetIndex; i++) {
       const levelData = levelsData.find((l) => l.Level === levels[i]);
-
-      // Nếu level trước chưa có course hoặc chưa hoàn thành hết
       if (
         !levelData ||
         levelData.TotalCourses !== levelData.CompletedCourses ||
@@ -175,6 +182,12 @@ export default function EnrollingCourses() {
 
   // Handle level click - cho phép click nếu level đã unlock
   const handleLevelClick = (level: string) => {
+    // Kiểm tra xem có được phép access level này không
+    if (!canAccessLevel(level)) {
+      // Không làm gì cả - level bị khóa
+      return;
+    }
+
     const levelIndex = levels.indexOf(level);
     const userLevelIndex = levels.indexOf(userLevel);
 
@@ -193,13 +206,6 @@ export default function EnrollingCourses() {
         },
       });
       return;
-    }
-
-    // Các trường hợp khác - level bị khóa
-    if (!canAccessLevel(level)) {
-      toast.info(
-        `Hoàn thành tất cả khóa học ở Level ${userLevel} để mở khóa Level ${level}`
-      );
     }
   };
 
