@@ -372,7 +372,7 @@ function LearningPathContent() {
                           {Math.round(selectedChapter.progress)}%
                         </div> */}
                         <div className="text-2xl font-bold text-gray-900">
-                          {selectedChapter.progress.toFixed(2)}%
+                          {selectedChapter.progress}%
                         </div>
 
                         <div className="text-xs text-gray-500">Hoàn thành</div>

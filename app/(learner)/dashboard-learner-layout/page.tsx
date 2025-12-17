@@ -34,7 +34,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const menuParam = searchParams?.get("menu");
-  const [activeMenu, setActiveMenu] = useState(menuParam || "overview");
+  const [activeMenu, setActiveMenu] = useState(menuParam || "learningPath");
   const { data: userData } = useGetMeQuery();
   
   // Update active menu when URL param changes
