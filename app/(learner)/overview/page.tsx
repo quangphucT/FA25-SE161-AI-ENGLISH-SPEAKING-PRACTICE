@@ -138,40 +138,7 @@ const Overview = () => {
         </Card>
       </div>
 
-      {/* Recent Activity */}
-      <Card className="p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">
-          Hoạt động gần đây
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <PlayCircle className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Everyday Conversation Practice
-              </p>
-              <p className="text-sm text-gray-500">
-                Chapter 6 hoàn thành - 2 giờ trước
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <Award className="w-5 h-5 text-green-600" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                Đạt điểm phát âm 88/100
-              </p>
-              <p className="text-sm text-gray-500">
-                Bài luyện At the Restaurant - 1 ngày trước
-              </p>
-            </div>
-          </div>
-        </div>
-      </Card>
+    
     </div>
   );
 };

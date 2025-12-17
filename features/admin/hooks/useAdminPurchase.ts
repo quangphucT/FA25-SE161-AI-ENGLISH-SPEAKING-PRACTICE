@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { adminDashboardPurchaseService, AdminPurchaseDashboardResponse, getPurchaseDetails, getPurchases, PurchaseDetailsResponse, PurchasesResponse } from "../services/adminPurchaseService";
+import { adminDashboardPurchaseService, AdminPurchaseDashboardResponse, AiBuyersResponse, EnrolledCourseResponse, getAiBuyers, getEnrolledCourseBuyers, getPurchaseDetails, getPurchases, getReviewFeeBuyers, PurchaseDetailsResponse, PurchasesResponse, ReviewFeeBuyersResponse } from "../services/adminPurchaseService";
 
 export const useAdminPurchase = (pageNumber: number, pageSize: number, keyword: string, type: string) => {
     return useQuery<PurchasesResponse, Error>({
@@ -19,5 +19,24 @@ export const useAdminPurchaseDashboard = () => {
     return useQuery<AdminPurchaseDashboardResponse, Error>({
         queryKey: ["adminPurchaseDashboard"],
         queryFn: () => adminDashboardPurchaseService(),
+    });
+};
+
+export const useAiBuyers = (pageNumber: number, pageSize: number) => {
+    return useQuery<AiBuyersResponse, Error>({
+        queryKey: ["aiBuyers", pageNumber, pageSize],
+        queryFn: () => getAiBuyers(pageNumber, pageSize),
+    });
+};
+export const useReviewFeeBuyers = (pageNumber: number, pageSize: number) => {
+    return useQuery<ReviewFeeBuyersResponse, Error>({
+        queryKey: ["reviewFeeBuyers", pageNumber, pageSize],
+        queryFn: () => getReviewFeeBuyers(pageNumber, pageSize),
+    });
+};
+export const useEnrolledCourseBuyers = (pageNumber: number, pageSize: number) => {
+    return useQuery<EnrolledCourseResponse, Error>({
+        queryKey: ["enrolledCourseBuyers", pageNumber, pageSize],
+        queryFn: () => getEnrolledCourseBuyers(pageNumber, pageSize),
     });
 };

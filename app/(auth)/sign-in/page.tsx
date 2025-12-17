@@ -94,7 +94,7 @@ export default function LoginForm() {
           if (!data.isPlacementTestDone) {
             router.push("/entrance_test");
           } else {
-            router.push("/dashboard-learner-layout");
+            router.push("/dashboard-learner-layout?menu=learningPath");
           }
         } else if (data.role === "REVIEWER") {
           handleReviewerNavigation(
@@ -125,7 +125,7 @@ export default function LoginForm() {
             if (!data?.isPlacementTestDone) {
               router.push("/entrance_test");
             } else {
-              router.push("/dashboard-learner-layout");
+              router.push("/dashboard-learner-layout?menu=learningPath");
             }
           },
           onError: (error) => {

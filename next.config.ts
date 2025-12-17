@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable Turbopack for production builds on Vercel
-  experimental: {
-    turbo: undefined,
-  },
   images: {
     remotePatterns: [
       // {

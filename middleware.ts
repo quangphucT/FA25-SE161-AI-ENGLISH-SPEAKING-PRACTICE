@@ -32,7 +32,7 @@ export function middleware(request: NextRequest) {
           if (!isPlacementTestDone) {
             return NextResponse.redirect(new URL("/entrance_test", request.url));
           }
-          return NextResponse.redirect(new URL("/dashboard-learner-layout", request.url));
+          return NextResponse.redirect(new URL("/dashboard-learner-layout?menu=learningPath", request.url));
         }
         if (role === "REVIEWER") {
           // isReviewerActive = false → chưa upload certificate → entrance_information
@@ -113,7 +113,7 @@ export function middleware(request: NextRequest) {
         pathName === "/entrance_test"
       ) {
         return NextResponse.redirect(
-          new URL("/dashboard-learner-layout", request.url)
+          new URL("/dashboard-learner-layout?menu=learningPath", request.url)
         );
       }
 
@@ -179,7 +179,7 @@ export function middleware(request: NextRequest) {
       }
 
       if (
-        pathName.startsWith("/dashboard-learner-layout") &&
+        pathName.startsWith("/dashboard-learner-layout?menu=learningPath") &&
         role !== "LEARNER"
       ) {
         return NextResponse.redirect(

@@ -27,6 +27,7 @@ import {
   useLearnerRecords,
   useLearnerRecordCreate,
   useLearnerRecordDelete,
+  useLearnerRecordUpdateContent,
 } from "@/features/learner/hooks/useLearnerRecord";
 import { RecordCategory, Record } from "@/features/learner/services/learnerRecordService";
 import {
@@ -41,13 +42,12 @@ import {
   Music,
   Star,
   MessageSquare,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { formatAiFeedbackHtml } from "@/utils/formatAiFeedback";
+import { toast } from "sonner";
 
 export default function LearnerRecordPage() {
   const router = useRouter();
@@ -55,12 +55,15 @@ export default function LearnerRecordPage() {
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false);
   const [showCreateRecordDialog, setShowCreateRecordDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [showEditContentDialog, setShowEditContentDialog] = useState(false);
   const [folderToRename, setFolderToRename] = useState<RecordCategory | null>(null);
+  const [recordToEdit, setRecordToEdit] = useState<Record | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [newRecordContent, setNewRecordContent] = useState("");
   const [renamingFolderName, setRenamingFolderName] = useState("");
-  const [isFoldersCollapsed, setIsFoldersCollapsed] = useState(false);
-  const [isRecordsCollapsed, setIsRecordsCollapsed] = useState(false);
+  const [editingContent, setEditingContent] = useState("");
+  const isFoldersCollapsed = false;
+  const isRecordsCollapsed = false;
   const [feedbackRecord, setFeedbackRecord] = useState<Record | null>(null);
 
   // Queries
@@ -69,11 +72,11 @@ export default function LearnerRecordPage() {
 
   // Mutations
   const { mutateAsync: createFolder, isPending: isCreatingFolder } = useLearnerRecordFolderCreate();
-  const { mutateAsync: deleteFolder, isPending: isDeletingFolder } = useLearnerRecordFolderDelete();
+  const { mutateAsync: deleteFolder } = useLearnerRecordFolderDelete();
   const { mutateAsync: renameFolder, isPending: isRenamingFolder } = useLearnerRecordFolderRename();
   const { mutateAsync: createRecord, isPending: isCreatingRecord } = useLearnerRecordCreate();
-  const { mutateAsync: deleteRecord, isPending: isDeletingRecord } = useLearnerRecordDelete();
-
+  const { mutateAsync: deleteRecord } = useLearnerRecordDelete();
+  const { mutateAsync: updateRecordContent, isPending: isUpdatingRecordContent } = useLearnerRecordUpdateContent();
   // Handle response structure - data can be array directly or nested in data property
   const folders = (() => {
     if (!foldersData) return [];
@@ -109,7 +112,7 @@ export default function LearnerRecordPage() {
       await createFolder(newFolderName.trim());
       setNewFolderName("");
       setShowCreateFolderDialog(false);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -121,7 +124,7 @@ export default function LearnerRecordPage() {
       if (selectedFolderId === folderId) {
         setSelectedFolderId(null);
       }
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -136,7 +139,7 @@ export default function LearnerRecordPage() {
       setRenamingFolderName("");
       setFolderToRename(null);
       setShowRenameDialog(false);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -154,7 +157,7 @@ export default function LearnerRecordPage() {
       // The practice page will handle recording and updating the record
       setNewRecordContent("");
       setShowCreateRecordDialog(false);
-    } catch (error) {
+    } catch {
       // Error handled by hook (toast notification)
     }
   };
@@ -162,9 +165,35 @@ export default function LearnerRecordPage() {
   const handleDeleteRecord = async (recordId: string) => {
     try {
       await deleteRecord(recordId);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
+  };
+  const handleUpdateRecordContent = async () => {
+    if (!recordToEdit || !editingContent.trim()) return;
+    try {
+      await updateRecordContent({ 
+        recordId: recordToEdit.recordId, 
+        content: editingContent.trim() 
+      });
+      setEditingContent("");
+      setRecordToEdit(null);
+      setShowEditContentDialog(false);
+      toast.success("Cập nhật nội dung thành công");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Cập nhật nội dung record thất bại";
+      toast.error(message);
+      console.error(error);
+    }
+  };
+
+  const openEditContentDialog = (record: Record) => {
+    setRecordToEdit(record);
+    setEditingContent(record.content || "");
+    setShowEditContentDialog(true);
   };
 
   const openRenameDialog = (folder: RecordCategory) => {
@@ -497,6 +526,13 @@ export default function LearnerRecordPage() {
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
+                                  onClick={() => openEditContentDialog(record)}
+                                  className="text-blue-600 cursor-pointer"
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Sửa nội dung
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => handleDeleteRecord(record.recordId)}
                                   className="text-red-600 cursor-pointer"
                                 >
@@ -542,6 +578,61 @@ export default function LearnerRecordPage() {
                 disabled={!renamingFolderName.trim() || isRenamingFolder}
               >
                 {isRenamingFolder ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  "Lưu"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Content Dialog */}
+      <Dialog open={showEditContentDialog} onOpenChange={setShowEditContentDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Sửa nội dung record</DialogTitle>
+            <DialogDescription>
+              Cập nhật nội dung cho record của bạn
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Nội dung</label>
+              <Input
+                placeholder="Nhập nội dung mới"
+                value={editingContent}
+                onChange={(e) => setEditingContent(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.ctrlKey) {
+                    handleUpdateRecordContent();
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Nhấn Ctrl + Enter để lưu nhanh
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowEditContentDialog(false);
+                  setEditingContent("");
+                  setRecordToEdit(null);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleUpdateRecordContent}
+                disabled={!editingContent.trim() || isUpdatingRecordContent}
+              >
+                {isUpdatingRecordContent ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Đang lưu...

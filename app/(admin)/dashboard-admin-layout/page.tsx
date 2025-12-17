@@ -26,7 +26,7 @@ import {
   ShoppingBag,
   Coins,
   ReceiptText,
-  Router,
+  BookOpen,
 } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import ReviewerManagement from "../reviewers-management/page";
@@ -42,6 +42,7 @@ import AiConversationPackageManagement from "../ai-conversation-package-service/
 import ReviewFeeManagement from "../reviewfee-management/page"; 
 import { handleLogout } from "@/utils/auth";
 import router from "next/router";
+import EnrollCourseManagement from "../enrollCourse-management/page";
 
 Chart.register(
   CategoryScale,
@@ -411,6 +412,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
           <li>
             <button
               type="button"
+                onClick={() => setActiveMenu("enrollCourse")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "enrollCourse"
+                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "enrollCourse"
+                    ? "bg-white/20"
+                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
+                }`}
+              >
+                <BookOpen size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Quản lí khóa học đã đăng ký</span>
+                <span className="text-xs opacity-70">Quản lí khóa học đã đăng ký</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
               onClick={() => setActiveMenu("feedback")}
               className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
                 activeMenu === "feedback"
@@ -544,6 +570,10 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
         reviewfee:{
           title: "Quản lí gói phí đánh giá",
           subtitle: "Quản lí gói phí đánh giá.",
+        },
+        enrollCourse: {
+          title: "Quản lí khóa học đã đăng ký",
+          subtitle: "Quản lí khóa học đã đăng ký.",
         }
       //soldpackages: { title: "Gói đã bán", subtitle: "Quản lí gói đã bán và hoạt động." },
     };
@@ -606,7 +636,9 @@ const DashboardAdmin = () => {
         return <AiConversationPackageManagement />;
       case "reviewfee":
         return <ReviewFeeManagement />;
-      default:
+      case "enrollCourse":
+        return <EnrollCourseManagement />;
+        default:
         return null;
     }
   };
