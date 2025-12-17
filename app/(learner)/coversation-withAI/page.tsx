@@ -41,18 +41,15 @@ const ConversationWithAI = () => {
   const router = useRouter();
   const { data: userData, refetch: refetchUserData } = useGetMeQuery();
   const {data: aiPackagesData} = useGetAIPackages();
-  
-  const [name, setName] = useState("");
   const [duration, setDuration] = useState<string>("");
   const [showLiveKit, setShowLiveKit] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(0); // in seconds
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const { mutate: chartCoinForConversationMutation } = useChartCoinForConversation();
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Use API data for duration options - data is directly in aiPackagesData, not aiPackagesData.data
   const durationOptions = Array.isArray(aiPackagesData) 
     ? aiPackagesData.map((pkg: AIPackage) => ({
         value: pkg.allowedMinutes.toString(),
@@ -204,6 +201,7 @@ const ConversationWithAI = () => {
     }
 
     // Gọi getToken trước để đảm bảo kết nối thành công
+    setIsStarting(true);
     try {
       const name = userData?.fullName || "";
       const tokenSuccess = await getToken(name);
@@ -219,6 +217,7 @@ const ConversationWithAI = () => {
               setShowLiveKit(true);
               toast.success("Bắt đầu trò chuyện với AI!");
               refetchUserData();
+              setIsStarting(false);
             },
             onError: (error) => {
               // Nếu mutation thất bại, reset token và serverUrl
@@ -226,14 +225,18 @@ const ConversationWithAI = () => {
               setServerUrl(null);
               setShowLiveKit(false);
               toast.error(error.message || "Không thể khấu trừ coin. Vui lòng thử lại!");
+              setIsStarting(false);
             },
           }
         );
+      } else {
+        setIsStarting(false);
       }
     } catch (error) {
       // getToken đã thất bại, không gọi mutation
       // Error đã được xử lý trong getToken (toast.error)
       console.error("Failed to get token:", error);
+      setIsStarting(false);
     }
   };
 
@@ -263,7 +266,7 @@ const ConversationWithAI = () => {
 
                 <div>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    AI Voice Assistant
+                  Speaking with AI
                     <span className="text-sm font-normal bg-white/20 px-3 py-1 rounded-full">
                       Live
                     </span>
@@ -339,7 +342,7 @@ const ConversationWithAI = () => {
                     }
                     token={token}
                     connect={!isDisconnecting}
-                    video={false}
+                    video={true}
                     audio={true}
                     onDisconnected={handleDisconnect}
                     onError={(error) => {
@@ -428,7 +431,7 @@ const ConversationWithAI = () => {
                 Trò chuyện với AI
               </h1>
               <p className="text-gray-500 text-sm">
-                Luyện tập giao tiếp tiếng Anh với trợ lý AI
+                Luyện tập giao tiếp tiếng Anh với AI
               </p>
             </div>
           </div>
@@ -502,6 +505,36 @@ const ConversationWithAI = () => {
                     </span>
                   </p>
                 </div>
+              </div>
+
+              {/* Start Button */}
+              <div className="mt-2">
+                <Button
+                  onClick={handleStart}
+                  disabled={!duration || isStarting}
+                  className={`w-full h-12 text-base font-bold rounded-lg transition-all duration-300 ${
+                    hasEnoughCoins  && duration && !isStarting
+                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl cursor-pointer rounded-4xl"
+                      : "bg-gray-300 hover:bg-gray-300 text-black-500 cursor-not-allowed rounded-4xl"
+                  }`}
+                >
+                  {isStarting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Đang kết nối...
+                    </>
+                  ) : !hasEnoughCoins && duration ? (
+                    <>
+                      <Coins className="w-5 h-5 mr-2" />
+                      Nạp thêm Coin
+                    </>
+                  ) : (
+                    <>
+                      Bắt đầu trò chuyện
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
@@ -592,31 +625,6 @@ const ConversationWithAI = () => {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Start Button */}
-          <div className="mt-4">
-            <Button
-              onClick={handleStart}
-              disabled={ !duration}
-              className={`w-full h-12 text-base font-bold rounded-lg transition-all duration-300 ${
-                hasEnoughCoins  && duration
-                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl cursor-pointer rounded-4xl"
-                  : "bg-gray-300 hover:bg-gray-300 text-black-500 cursor-not-allowed rounded-4xl"
-              }`}
-            >
-              {!hasEnoughCoins && duration ? (
-                <>
-                  <Coins className="w-5 h-5 mr-2" />
-                  Nạp thêm Coin
-                </>
-              ) : (
-                <>
-                  Bắt đầu trò chuyện
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </>
-              )}
-            </Button>
           </div>
         </div>
       </Card>
