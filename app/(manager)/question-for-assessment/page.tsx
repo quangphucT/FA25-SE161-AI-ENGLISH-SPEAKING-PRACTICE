@@ -38,6 +38,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useChooseQuestionForTestAssessment } from "@/features/manager/hook/useChooseQuestionForTest";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal , Pencil, XCircle } from "lucide-react";
+
 
 export default function QuestionForAssessmentPage() {
   const [typeFilter, setTypeFilter] = useState<"all" | QuestionType>("all");
@@ -60,6 +68,47 @@ export default function QuestionForAssessmentPage() {
     typeFilter === "all" ? "" : typeFilter
   );
 
+
+type QuestionTypeInput = number | string | null | undefined;
+
+const normalizeQuestionType = (type: QuestionTypeInput): QuestionType => {
+  if (typeof type === "number") {
+    switch (type) {
+      case 0:
+        return "word";
+      case 1:
+        return "phrase";
+      case 2:
+        return "sentence";
+      default:
+        return "word";
+    }
+  }
+
+  if (typeof type === "string") {
+    const normalized = type.toLowerCase();
+    if (
+      normalized === "word" ||
+      normalized === "phrase" ||
+      normalized === "sentence"
+    ) {
+      return normalized;
+    }
+  }
+
+  return "word";
+};
+
+
+
+const QUESTION_TYPE_LABEL: Record<QuestionType, string> = {
+  word: "Từ đơn",
+  phrase: "Cụm từ",
+  sentence: "Câu",
+};
+
+
+  
   // gọi hook API tạo câu hỏi mới
   const { mutate: createQuestionTest, isPending } = useCreateQuestionTest();
   // gọi hook API cập nhật câu hỏi
@@ -116,10 +165,13 @@ export default function QuestionForAssessmentPage() {
   }
 
   // Lọc theo loại
-  const filteredQuestions =
-    typeFilter === "all"
-      ? questionTests?.data?.items ?? []
-      : questionTests?.data?.items?.filter((q) => q.type === typeFilter) ?? [];
+const filteredQuestions =
+  typeFilter === "all"
+    ? questionTests?.data?.items ?? []
+    : questionTests?.data?.items?.filter(
+        (q) => normalizeQuestionType(q.type) === typeFilter
+      ) ?? [];
+
 
   if (isLoading) return <div className="p-4">Đang tải dữ liệu...</div>;
 
@@ -167,9 +219,10 @@ export default function QuestionForAssessmentPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="word">Word</SelectItem>
-              <SelectItem value="sentence">Sentence</SelectItem>
-              <SelectItem value="paragraph">Paragraph</SelectItem>
+             <SelectItem value="word">Từ đơn</SelectItem>
+<SelectItem value="phrase">Cụm từ</SelectItem>
+<SelectItem value="sentence">Câu</SelectItem>
+
             </SelectContent>
           </Select>
           <Button className="cursor-pointer" onClick={openAddModal}>
@@ -186,73 +239,82 @@ export default function QuestionForAssessmentPage() {
               <TableHead>Loại</TableHead>
               <TableHead>Nội dung</TableHead>
               <TableHead>Câu hỏi được chọn</TableHead>
-              <TableHead></TableHead>
-              <TableHead></TableHead>
+              <TableHead className="text-center">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredQuestions.map((q) => (
               <TableRow key={q.questionAssessmentId}>
                 <TableCell>{q.questionAssessmentId}</TableCell>
-                <TableCell className="capitalize">{q.type}</TableCell>
+<TableCell>
+  {QUESTION_TYPE_LABEL[normalizeQuestionType(q.type)]}
+</TableCell>
+
                 <TableCell className="max-w-[480px] truncate">
                   {q.content}
                 </TableCell>
                 <TableCell className="max-w-[480px] truncate">
-                 {q.status ? (
-  <FaCheckCircle style={{ color: "green" }} />
+               {q.status ? (
+  <FaCheckCircle className="text-green-600" title="Đã chọn" />
 ) : (
-  <FaTimesCircle style={{ color: "red" }} />
+  <FaTimesCircle className="text-red-500" title="Chưa chọn" />
 )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditModal(q)}
-                  >
-                    Sửa
-                  </Button>
+
                 </TableCell>
 
-                <TableCell className="text-right">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        {q.status
-                          ? "Bỏ chọn câu hỏi"
-                          : "Chọn làm câu hỏi đầu vào"}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          {q.status
-                            ? "Xác nhận bỏ chọn"
-                            : "Xác nhận chọn câu hỏi"}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {q.status
-                            ? "Bạn có chắc muốn bỏ chọn câu hỏi này làm câu hỏi đầu vào không?"
-                            : "Bạn có chắc muốn chọn câu hỏi này làm câu hỏi đầu vào không?"}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() =>
-                            handleSelectAsQuestion(
-                              q.questionAssessmentId,
-                              q.status
-                            )
-                          }
-                        >
-                          Xác nhận
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
+                
+
+
+             <TableCell className="text-center">
+  <div className="flex flex-col items-center gap-1">
+   
+
+    {/* NÚT 3 CHẤM */}
+   <DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="ghost" size="icon" className="h-8 w-8">
+      <MoreHorizontal className="h-4 w-4" />
+    </Button>
+  </DropdownMenuTrigger>
+
+  <DropdownMenuContent align="end" className="w-48">
+    {/* SỬA */}
+    <DropdownMenuItem
+      onClick={() => openEditModal(q)}
+      className="gap-2 cursor-pointer"
+    >
+      <Pencil className="h-4 w-4" />
+      <span>Sửa</span>
+    </DropdownMenuItem>
+
+    {/* CHỌN / BỎ CHỌN */}
+    {q.status ? (
+      <DropdownMenuItem
+        onClick={() =>
+          handleSelectAsQuestion(q.questionAssessmentId, q.status)
+        }
+        className="gap-2 cursor-pointer text-red-600 focus:text-red-600"
+      >
+        <XCircle className="h-4 w-4 text-red-600" />
+        <span>Bỏ chọn câu hỏi</span>
+      </DropdownMenuItem>
+    ) : (
+      <DropdownMenuItem
+        onClick={() =>
+          handleSelectAsQuestion(q.questionAssessmentId, q.status)
+        }
+        className="gap-2 cursor-pointer text-green-600 focus:text-green-600"
+      >
+        <FaCheckCircle className="h-4 w-4 text-green-600" />
+        <span>Chọn làm câu hỏi</span>
+      </DropdownMenuItem>
+    )}
+  </DropdownMenuContent>
+</DropdownMenu>
+
+  </div>
+</TableCell>
+
               </TableRow>
             ))}
           </TableBody>
@@ -307,9 +369,10 @@ export default function QuestionForAssessmentPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="word">Word</SelectItem>
-                    <SelectItem value="sentence">Sentence</SelectItem>
-                    <SelectItem value="paragraph">Paragraph</SelectItem>
+                    <SelectItem value="word">Từ đơn</SelectItem>
+<SelectItem value="phrase">Cụm từ</SelectItem>
+<SelectItem value="sentence">Câu</SelectItem>
+
                   </SelectContent>
                 </Select>
               </div>
