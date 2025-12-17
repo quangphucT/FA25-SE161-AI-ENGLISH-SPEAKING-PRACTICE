@@ -17,7 +17,6 @@ import { useLearningPathCourseFull } from "@/features/learner/hooks/learningPath
 import { useSubmitAnswerQuestion } from "@/features/learner/hooks/submitAnswerQuestionHooks/submitAnswerQuestion";
 import BuyReviewModal from "@/components/BuyReviewModal";
 import { uploadAudioToCloudinary } from "@/utils/upload";
-import YouTubeEmbed from "@/components/YouTubeEmbed";
 import Image from "next/image";
 
 const ExercisePage = () => {
@@ -46,12 +45,11 @@ const ExercisePage = () => {
   const [uiBlocked, setUiBlocked] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isPlayingPreviousAudio, setIsPlayingPreviousAudio] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [openBuyReviewModal, setOpenBuyReviewModal] = useState(false);
   const [learnerAnswerIds, setLearnerAnswerIds] = useState<string[]>([]); // Lưu learnerAnswerId theo từng câu hỏi
-  const [mediaViewMode, setMediaViewMode] = useState<"video" | "image">(
-    "video"
-  ); // Toggle between video and image
+  const [mediaViewMode, setMediaViewMode] = useState<"video" | "image">("video"); 
 
   const { mutate: submitAnswerQuestion } = useSubmitAnswerQuestion();
 
@@ -74,6 +72,7 @@ const ExercisePage = () => {
   const [coloredContents, setColoredContents] = useState<string[]>([]);
   const [AIExplainTheWrongForVoiceAI, setAIExplainTheWrongForVoiceAI] =
     useState<string[]>([]);
+  const [uploadedAudioUrls, setUploadedAudioUrls] = useState<string[]>([]); // Track latest audio URLs after recording
   // API config
   const apiMainPathSTS = process.env.NEXT_PUBLIC_AI_STS_API_URL;
   const STScoreAPIKey = process.env.NEXT_PUBLIC_AI_STS_API_KEY || "";
@@ -101,9 +100,6 @@ const ExercisePage = () => {
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
-  const progressPercentage =
-    ((currentQuestionIndex + 1) / totalQuestions) * 100;
-
   // Update store when apiResponse changes
   useEffect(() => {
     if (
@@ -138,10 +134,10 @@ const ExercisePage = () => {
       setColoredContents(new Array(questions.length).fill(""));
       setLearnerAnswerIds(new Array(questions.length).fill("")); // Initialize learnerAnswerIds array
       setAIExplainTheWrongForVoiceAI(new Array(questions.length).fill("")); // Initialize AIExplainTheWrongForVoiceAI array
+      setUploadedAudioUrls(new Array(questions.length).fill("")); // Initialize uploadedAudioUrls array
     }
   }, [questions, recorded.length]);
 
-  // Utility function to convert blob to base64
   const convertBlobToBase64 = useCallback(async (blob: Blob) => {
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -167,6 +163,25 @@ const ExercisePage = () => {
       })
       .catch(() => {
         setIsPlayingAudio(false);
+      });
+  }, []);
+
+  // Play previous audio recording from API
+  const playPreviousRecording = useCallback((audioUrl: string) => {
+    if (!audioUrl) return;
+    setIsPlayingPreviousAudio(true);
+    const audio = new Audio(audioUrl);
+    audio
+      .play()
+      .then(() => {
+        audio.addEventListener("ended", function handler() {
+          setIsPlayingPreviousAudio(false);
+          audio.removeEventListener("ended", handler);
+        });
+      })
+      .catch(() => {
+        setIsPlayingPreviousAudio(false);
+        toast.error("Không thể phát bản ghi trước đó");
       });
   }, []);
 
@@ -357,6 +372,11 @@ const ExercisePage = () => {
               return;
             }
 
+            // Store the uploaded audio URL for this question
+            const newUploadedAudioUrls = [...uploadedAudioUrls];
+            newUploadedAudioUrls[currentQuestionIndex] = audioUrl;
+            setUploadedAudioUrls(newUploadedAudioUrls);
+
             // Submit answer immediately after processing
             submitAnswerQuestion(
               {
@@ -422,6 +442,7 @@ const ExercisePage = () => {
     AILanguage,
     AIExplainTheWrongForVoiceAI,
     submitAnswerQuestion,
+    uploadedAudioUrls,
   ]);
 
   const handleNextQuestion = () => {
@@ -646,6 +667,37 @@ const ExercisePage = () => {
               )}
             </>
             )}
+          
+          {/* Audio player bản ghi - ưu tiên URL mới upload, fallback về API */}
+          {(uploadedAudioUrls[currentQuestionIndex] || currentQuestion.audioRecordingUrl) && (
+            <div className="flex items-center gap-3 bg-purple-50 px-4 py-3 rounded-xl border border-purple-200">
+              <svg
+                className="w-6 h-6 text-purple-600 shrink-0"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
+              </svg>
+              <div className="flex flex-col">
+                <p className="text-xs text-purple-700 font-medium mb-1">
+                  {uploadedAudioUrls[currentQuestionIndex] ? "Bản ghi vừa thực hiện" : "Bản ghi lần trước"}
+                </p>
+                <audio
+                  key={uploadedAudioUrls[currentQuestionIndex] || currentQuestion.audioRecordingUrl}
+                  controls
+                  controlsList="nodownload noplaybackrate nofullscreen"
+                  preload="metadata"
+                  className="h-8 [&::-webkit-media-controls-volume-slider]:hidden [&::-webkit-media-controls-volume-control-container]:hidden [&::-webkit-media-controls-mute-button]:hidden"
+                  style={{ minWidth: '200px' }}
+                >
+                  <source src={uploadedAudioUrls[currentQuestionIndex] || currentQuestion.audioRecordingUrl} type="audio/mpeg" />
+                  <source src={uploadedAudioUrls[currentQuestionIndex] || currentQuestion.audioRecordingUrl} type="audio/mp3" />
+                  Trình duyệt không hỗ trợ audio.
+                </audio>
+              </div>
+            </div>
+          )}
+          
          <div className="flex flex-col gap-2">
            {/* Nút Đánh giá phát âm - hiển thị khi đã có learnerAnswerId (đã submit) */}
           {learnerAnswerIds[currentQuestionIndex] && (
@@ -662,7 +714,7 @@ const ExercisePage = () => {
           )}
           
           {/* Nút Nghe lại bản ghi - hiển thị khi đã ghi âm */}
-          {recorded[currentQuestionIndex] && (
+          {/* {recorded[currentQuestionIndex] && (
             <Button
               onClick={playRecording}
               disabled={isPlayingAudio}
@@ -687,7 +739,7 @@ const ExercisePage = () => {
                 </>
               )}
             </Button>
-          )}
+          )} */}
          </div>
         </div>
 
@@ -1000,81 +1052,152 @@ const ExercisePage = () => {
               </div>
             )}
 
+            {/* Hiển thị phân tích AI từ lần làm trước (từ API) - khi chưa ghi âm lần này nhưng đã có dữ liệu từ API */}
+            {!recorded[currentQuestionIndex] && currentQuestion.explainTheWrongForVoiceAI && (
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border-2 border-purple-200 shadow-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-700 font-medium">
+                      Phân tích AI từ lần trước
+                    </p>
+                    <p className="text-xs text-purple-600">
+                      Ghi âm lại để cải thiện phát âm của bạn
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-purple-200">
+                  <div className="space-y-4">
+                    {parseFeedbackText(currentQuestion.explainTheWrongForVoiceAI).map((section, idx) => (
+                      <div key={idx} className="space-y-2">
+                        {section.title && (
+                          <h4 className="text-sm font-semibold text-gray-900 flex items-start">
+                            <span className="text-purple-600 mr-2">•</span>
+                            {section.title}
+                          </h4>
+                        )}
+                        {section.description && (
+                          <p className="text-sm text-gray-700 ml-5 leading-relaxed">
+                            {section.description}
+                          </p>
+                        )}
+                        {section.items && section.items.length > 0 && (
+                          <ul className="ml-5 space-y-1.5">
+                            {section.items.map((item, itemIdx) => (
+                              <li
+                                key={itemIdx}
+                                className="text-sm text-gray-700 flex items-start"
+                              >
+                                <span className="text-purple-500 mr-2 mt-1.5">-</span>
+                                <span className="leading-relaxed">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Right Column - Recording Controls */}
           <div className="lg:sticky lg:top-32">
-            <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-3xl p-8 border-2 border-gray-200 shadow-xl">
+            {/* Recording Controls - Compact */}
+            <div className="flex flex-col items-center gap-4">
               {/* Recording status indicator */}
-              <div className="text-center mb-6">
-                <div
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
+              <div
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
+                  isRecording
+                    ? "bg-red-100 text-red-700 animate-pulse"
+                    : recorded[currentQuestionIndex]
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-current"></span>
+                {isRecording
+                  ? "Đang ghi âm..."
+                  : recorded[currentQuestionIndex]
+                  ? "Đã ghi âm"
+                  : "Chưa ghi âm"}
+              </div>
+
+              {/* Recording Button */}
+              <div className="relative">
+                {isRecording && (
+                  <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75"></div>
+                )}
+
+                <button
+                  onClick={handleRecord}
+                  disabled={isProcessingAudio || uiBlocked}
+                  className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl cursor-pointer ${
                     isRecording
-                      ? "bg-red-100 text-red-700 animate-pulse"
+                      ? "bg-red-600 hover:bg-red-700"
                       : recorded[currentQuestionIndex]
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-200 text-gray-700"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-indigo-600 hover:bg-indigo-700"
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-current"></span>
-                  {isRecording
-                    ? "Đang ghi âm..."
-                    : recorded[currentQuestionIndex]
-                    ? "Đã ghi âm"
-                    : "Chưa ghi âm"}
-                </div>
-              </div>
-
-              {/* Large Recording Button */}
-              <div className="flex flex-col items-center gap-6 mb-8">
-                <div className="relative">
-                  {isRecording && (
-                    <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75"></div>
+                  {isProcessingAudio ? (
+                    <Loader2 className="w-10 h-10 text-white animate-spin" />
+                  ) : isRecording ? (
+                    <div className="w-7 h-7 bg-white rounded"></div>
+                  ) : (
+                    <Mic className="w-10 h-10 text-white" />
                   )}
-
-                  <button
-                    onClick={handleRecord}
-                    disabled={isProcessingAudio || uiBlocked}
-                    className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl cursor-pointer ${
-                      isRecording
-                        ? "bg-red-600 hover:bg-red-700"
-                        : recorded[currentQuestionIndex]
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "bg-indigo-600 hover:bg-indigo-700"
-                    }`}
-                  >
-                    {isProcessingAudio ? (
-                      <Loader2 className="w-12 h-12 text-white animate-spin" />
-                    ) : isRecording ? (
-                      <div className="w-8 h-8 bg-white rounded"></div>
-                    ) : (
-                      <Mic className="w-12 cursor-pointer h-12 text-white" />
-                    )}
-                  </button>
-                </div>
-
-                <div className="text-center">
-                  <p className="text-lg font-bold text-gray-900 mb-1">
-                    {isProcessingAudio
-                      ? "Đang xử lý..."
-                      : isRecording
-                      ? "Click để dừng"
-                      : recorded[currentQuestionIndex]
-                      ? "Ghi lại"
-                      : "Bắt đầu ghi âm"}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {!recorded[currentQuestionIndex] &&
-                      !isRecording &&
-                      "Click vào micro để bắt đầu"}
-                  </p>
-                </div>
+                </button>
               </div>
+
+              {/* Label */}
+              <p className="text-base font-semibold text-gray-800">
+                {isProcessingAudio
+                  ? "Đang xử lý..."
+                  : isRecording
+                  ? "Click để dừng"
+                  : recorded[currentQuestionIndex]
+                  ? "Ghi lại"
+                  : "Bắt đầu ghi âm"}
+              </p>
             </div>
+
+            {/* Tips for better recording */}
+            <div className="mt-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+              <div className="flex items-center gap-2 mb-3">
+             
+                <h4 className="text-sm font-semibold text-amber-800">Mẹo ghi âm chất lượng</h4>
+              </div>
+              <ul className="space-y-2 text-xs text-amber-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-500 mt-0.5">•</span>
+                  <span>Nói rõ ràng, tốc độ vừa phải, không quá nhanh</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-500 mt-0.5">•</span>
+                  <span>Đặt micro cách miệng 15-20cm để âm thanh rõ</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-500 mt-0.5">•</span>
+                  <span>Ghi âm ở nơi yên tĩnh, tránh tiếng ồn xung quanh</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-500 mt-0.5">•</span>
+                  <span>Nghe mẫu trước khi ghi âm để phát âm đúng</span>
+                </li>
+              </ul>
+            </div>
+            
             {/* Accuracy Result - Enhanced */}
             {recorded[currentQuestionIndex] &&
               AIExplainTheWrongForVoiceAI[currentQuestionIndex] && (
-                <div className="mt-9 p-5 ml-2 bg-white rounded-lg border border-green-200 shadow-sm">
+                <div className="mt-6 p-5 bg-white rounded-lg border border-green-200 shadow-sm">
                   <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
                     Phân tích chi tiết:
                   </h3>

@@ -7,7 +7,7 @@ import {
   useGetCoursesBasedOnLevelLearner,
 } from "@/features/learner/hooks/coursesBasedOnLevelLearner/coursesBasedOnLevelLearner";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
-import { BookOpen, Coins, TrendingUp, ArrowRight, Clock } from "lucide-react";
+import { BookOpen, Coins, TrendingUp, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useGetLevelAndLearnerCourseIdAfterEnrolling } from "@/features/learner/hooks/enrollingCourseHooks/enrollingCourses";
 import { useLearnerStore } from "@/store/useLearnerStore";
@@ -21,7 +21,7 @@ export default function EnrollingCourses() {
     (state) => state.getAllLearnerData().learnerCourseId
   );
 
-  const { data: userData } = useGetMeQuery();
+  const { data: userData, refetch: refetchUserData } = useGetMeQuery();
   const userLevel = userData?.learnerProfile?.level || "A1";
 
   const [viewingLevel, setViewingLevel] = useState<string>(userLevel);
@@ -73,9 +73,34 @@ export default function EnrollingCourses() {
   const setAllLearnerData = useLearnerStore((state) => state.setAllLearnerData);
 
   const handleEnrollCourseNotFree = async (courseId: string) => {
+    // Lấy learnerCourseId từ Zustand, nếu không có thì lấy từ API data
+    let learnerCourseId: string | null = learnerCourseIdOnZustand;
+
+    // Nếu không có trong Zustand (sau khi logout), lấy từ levelAndLearnerCourseIdData
+    if (!learnerCourseId) {
+      const userLevelData = levelAndLearnerCourseIdData?.data?.levels.find(
+        (item) => item.Level === userLevel
+      );
+
+      // Bắt buộc phải lấy learnerCourseId từ course đang InProgress
+      if (userLevelData?.Courses && userLevelData.Courses.length > 0) {
+        const inProgressCourse = userLevelData.Courses.find(
+          (c) => c.status === "InProgress"
+        );
+        learnerCourseId = inProgressCourse?.learnerCourseId || null;
+      }
+    }
+
+    if (!learnerCourseId) {
+      toast.error(
+        "Bạn cần hoàn thành bước đăng ký khoá học miễn phí trước khi có thể mua khoá học trả phí."
+      );
+      return;
+    }
+
     enrollingPaidCourse(
       {
-        learnerCourseId: learnerCourseIdOnZustand || "",
+        learnerCourseId: learnerCourseId,
         courseId: courseId,
       },
       {
@@ -86,6 +111,8 @@ export default function EnrollingCourses() {
             learningPathCourseId: data.data.learningPathCourseId,
             status: data.data.status,
           });
+
+          refetchUserData();
           router.push(`/dashboard-learner-layout?menu=learningPath`);
         },
         onError: (error) => {
