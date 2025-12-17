@@ -30,6 +30,7 @@ type ReviewedAnswer = {
   reviewedAt: string; // DD/MM/YYYY
   questionType: "Word" | "Phrase" | "Sentence" | "Conversation";
   learnerAnswerId?: string;
+  reviewerEarnCoin?: number;
 };
 
 const formatDate = (date: Date | string): string => {
@@ -51,6 +52,7 @@ const mapReviewToReviewedAnswer = (review: ReviewerReviewHistory): ReviewedAnswe
     reviewedAt: formatDate(review.createdAt),
     questionType: (review.reviewType as "Word" | "Phrase" | "Sentence" | "Conversation") || "Word",
     learnerAnswerId: review.learnerAnswerId,
+    reviewerEarnCoin: review.reviewerEarnCoin,
   };
 };
 
@@ -235,7 +237,7 @@ const ReviewHistory = () => {
                   <TableHead className="font-bold text-slate-900">Question</TableHead>
                   <TableHead className="font-bold text-slate-900">Comment</TableHead>
                   <TableHead className="font-bold text-slate-900 text-center">Score</TableHead>
-                  
+                  <TableHead className="font-bold text-slate-900 text-center">Reviewer Earned Coins</TableHead>
                   <TableHead className="font-bold text-slate-900">Reviewed At</TableHead>
                   <TableHead className="font-bold text-slate-900">Audio</TableHead>
                   <TableHead className="font-bold text-slate-900 text-center">Actions</TableHead>
@@ -257,7 +259,7 @@ const ReviewHistory = () => {
                             ? "secondary"
                             : "outline"
                         }
-                        className="text-xs"
+                        className="text-center"
                       >
                         {item.questionType}
                       </Badge>
@@ -275,6 +277,11 @@ const ReviewHistory = () => {
                     <TableCell className="text-center">
                       <div className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 inline-block">
                         {item.score}/10
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="text-sm text-slate-700 line-clamp-3">
+                        {item.reviewerEarnCoin} 
                       </div>
                     </TableCell>
                     

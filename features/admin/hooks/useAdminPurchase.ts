@@ -22,10 +22,10 @@ export const useAdminPurchaseDashboard = () => {
     });
 };
 
-export const useAiBuyers = (pageNumber: number, pageSize: number) => {
+export const useAiBuyers = (pageNumber: number, pageSize: number, buyerPageNumber: number, buyerPageSize: number) => {
     return useQuery<AiBuyersResponse, Error>({
-        queryKey: ["aiBuyers", pageNumber, pageSize],
-        queryFn: () => getAiBuyers(pageNumber, pageSize),
+        queryKey: ["aiBuyers", pageNumber, pageSize, buyerPageNumber, buyerPageSize],
+        queryFn: () => getAiBuyers(pageNumber, pageSize, buyerPageNumber, buyerPageSize),
     });
 };
 export const useReviewFeeBuyers = (pageNumber: number, pageSize: number) => {

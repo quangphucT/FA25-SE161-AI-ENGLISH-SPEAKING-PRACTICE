@@ -92,13 +92,21 @@ export interface AIConversationPurchaseDetail {
 export interface AiBuyersResponse {
   isSucess: boolean;
   data: {
-    aiConversationChargeId: string;
-    allowedMinutes: number;
-    totalPurchase: number;
-    totalAmountCoin: number;
-    buyers: Buyer[];
+    pageNumber: number;
+    pageSize: number;
+    totalPackages: number;
+    items: {
+      aiConversationChargeId: string;
+      allowedMinutes: number;
+      totalPurchase: number;
+      totalAmountCoin: number;
+      totalBuyers: number;
+      buyerPageNumber: number;
+      buyerPageSize: number;
+      buyers: Buyer[];
+    }[];
   };
-  businessCode: number;
+  businessCode: string | number;
   message: string;
 }
 export interface Buyer {
@@ -206,11 +214,13 @@ export const adminDashboardPurchaseService = async (): Promise<AdminPurchaseDash
   }
 };
 
-export const getAiBuyers = async (pageNumber: number, pageSize: number): Promise<AiBuyersResponse> => {
+export const getAiBuyers = async (pageNumber: number, pageSize: number, buyerPageNumber: number, buyerPageSize: number): Promise<AiBuyersResponse> => {
   try {
     const queryParams = new URLSearchParams({
       pageNumber: pageNumber.toString(),
       pageSize: pageSize.toString(),
+      buyerPageNumber: buyerPageNumber.toString(),
+      buyerPageSize: buyerPageSize.toString(),
     });
     const response = await fetchWithAuth(`/api/AdminDashboard/purchase/ai-buyers?${queryParams.toString()}`, {
       method: "GET",

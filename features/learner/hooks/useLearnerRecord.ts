@@ -18,6 +18,7 @@ import {
   ReviewRecordResponse,
   LearnerRecordUpdateContentService,
   LearnerRecordUpdateService,
+  LearnerBuyRecordChargeService,
 } from "../services/learnerRecordService";
 import { toast } from "sonner";
 
@@ -141,6 +142,20 @@ export const useLearnerRecordUpdate= () => {
     },
     onError: (error) => {
       toast.error(error.message || "Cập nhật nội dung record thất bại");
+    },
+  });
+};
+export const useLearnerBuyRecordCharge = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { folderId: string; recordChargeId: string }>({
+    mutationFn: ({ folderId, recordChargeId }) => LearnerBuyRecordChargeService(folderId, recordChargeId),
+    onSuccess: (data) => {
+      toast.success(data.message || "Mua đánh giá record thành công");
+      queryClient.invalidateQueries({ queryKey: ["learnerRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["learnerRecordFolders"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Mua đánh giá record thất bại");
     },
   });
 };

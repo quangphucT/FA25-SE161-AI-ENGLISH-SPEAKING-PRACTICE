@@ -366,11 +366,13 @@ const exportToPDF = () => {
             onValueChange={(v) => setStatusFilter(v)}
             className="w-full lg:w-auto"
           >
-            <TabsList className="grid grid-cols-3 md:grid-cols-4 gap-2 w-full">
+            <TabsList className="grid grid-cols-5 md:grid-cols-5 gap-2 w-full">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
-              <TabsTrigger value="Approved">Thành công</TabsTrigger>
-              <TabsTrigger value="Cancelled">Thất bại</TabsTrigger>
+              <TabsTrigger value="Approved" >Thành công</TabsTrigger>
+              <TabsTrigger value="Paid">Đã thanh toán</TabsTrigger>
               <TabsTrigger value="Pending">Đang xử lý</TabsTrigger>
+              <TabsTrigger value="Cancelled">Thất bại</TabsTrigger>
+              
             </TabsList>
           </Tabs>
         </div>

@@ -125,3 +125,28 @@ export const updateAIConversationPackageService = async (body: {
     throw new Error(message);
   }
 };
+
+export const updateAIConversationPackageStatusService = async (id: string) => {
+  try {
+    const response = await fetchWithAuth(
+      `/api/admin/aiConversationPackagesApiRoutes/updateAIConversationPackage/${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.message || "Update AI conversation package status failed");
+    return data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message ||
+      error.message ||
+      "Update AI conversation package status failed";
+    throw new Error(message);
+  }
+};

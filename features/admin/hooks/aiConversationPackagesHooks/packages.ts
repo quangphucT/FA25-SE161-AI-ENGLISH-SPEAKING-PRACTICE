@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { createAIConversationPackagesService, deleteAIConversationPackageService, getAllAIConversationPackagesService, updateAIConversationPackageService } from "../../services/aiConversationPackagesServices/packages";
+import { createAIConversationPackagesService, deleteAIConversationPackageService, getAllAIConversationPackagesService, updateAIConversationPackageService, updateAIConversationPackageStatusService } from "../../services/aiConversationPackagesServices/packages";
 
 
 export interface CreateAIConversationPackagesRequest {
@@ -37,6 +37,8 @@ export interface PaginationData<T> {
   pageNumber: number;
   pageSize: number;
   totalItems: number;
+  totalActivePackages: number;
+  totalActiveItems: number;
   items: T[];
 }
 export interface GetAiConversationChargeResponse {
@@ -89,6 +91,22 @@ export const useUpdateAIConversationPackage = () => {
     },
     onError: (error) => {
       toast.error(error.message || "Cập nhật gói hội thoại AI thất bại");
+    },
+  });
+};
+export interface UpdateAIConversationPackageStatusResponse {
+  message: string;
+}
+export const useUpdateAIConversationPackageStatus = (id: string) => {
+  const queryClient = useQueryClient();
+  return useMutation<UpdateAIConversationPackageStatusResponse, Error, string>({
+    mutationFn: (id) => updateAIConversationPackageStatusService(id),
+    onSuccess: (data) => {
+      toast.success(data.message || "Cập nhật trạng thái gói hội thoại AI thành công");
+      queryClient.invalidateQueries({ queryKey: ["getAIConversationPackages"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Cập nhật trạng thái gói hội thoại AI thất bại");
     },
   });
 };

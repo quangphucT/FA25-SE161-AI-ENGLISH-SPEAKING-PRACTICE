@@ -19,6 +19,7 @@ export interface ReviewerReviewHistory {
   learnerFullName: string;
   reviewType: string;
   learnerAudioUrl: string;
+  reviewerEarnCoin: number;
 }
 export interface ReviewerReviewHistoryResponse {
   isSucess: boolean;
