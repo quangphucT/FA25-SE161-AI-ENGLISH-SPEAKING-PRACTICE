@@ -779,7 +779,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                           </TableHeader>
                           <TableBody>
                             {paginatedBuyers.map((buyer: Buyer, index: number) => (
-                              <TableRow key={buyer.userId}>
+                                <TableRow key={`${buyer.userId}-${buyer.createdAt}-${index}`}>
                                 <TableCell className="font-medium">
                                   {startIndex + index + 1}
                                 </TableCell>

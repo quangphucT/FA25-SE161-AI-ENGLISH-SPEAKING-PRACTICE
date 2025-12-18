@@ -132,8 +132,8 @@ const { mutate: createReviewFeePackage, isPending: isCreating } =
 
   // Fetch buyers data - pageNumber=1, pageSize=large to get all packages, then paginate buyers
   const { data: buyersData, isPending: isLoadingBuyers } = useReviewFeeBuyers(
-    1, // pageNumber for packages (fetch all)
-    1000, // pageSize for packages (large number to get all)
+    pageNumber, // pageNumber for packages (fetch all)
+    PAGE_SIZE, // pageSize for packages (large number to get all)
     buyersPageNumber, // buyerPageNumber for buyers pagination
     buyersPageSize // buyerPageSize for buyers pagination
   );
@@ -1395,7 +1395,7 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                         </TableHeader>
                         <TableBody>
                           {paginatedBuyers.map((buyer: Buyer, index: number) => (
-                            <TableRow key={buyer.userId}>
+                            <TableRow key={`${buyer.userId}-${buyer.createdAt}-${index}`}>
                               <TableCell className="font-medium">
                                 {startIndex + index + 1}
                               </TableCell>
