@@ -852,18 +852,19 @@ const ExercisePage = () => {
                                     </div>
                                     <div className="rounded-xl overflow-hidden border-2 border-white shadow-lg">
                                       <video
-                                        src={mediaItem.videoUrl || ""}
                                         controls
                                         loop
                                         className="w-full max-h-[450px] object-contain bg-black"
-                                        controlsList="nodownload"
+                                        controlsList="nodownload noplaybackrate"
                                       >
+                                        <source src={mediaItem.videoUrl || ""} type="video/mp4" />
+                                        <source src={mediaItem.videoUrl || ""} type="video/webm" />
                                         Trình duyệt của bạn không hỗ trợ video.
                                       </video>
                                     </div>
                                     <div className="mt-4 bg-blue-100 rounded-lg p-3">
                                       <p className="text-sm text-blue-800 font-medium">
-                                        💡 <strong>Mẹo học tập:</strong> Xem
+                                         <strong>Mẹo học tập:</strong> Xem
                                         video nhiều lần, tạm dừng để quan sát
                                         chi tiết chuyển động của môi và lưỡi
                                       </p>
