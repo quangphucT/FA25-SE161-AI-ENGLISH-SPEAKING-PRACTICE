@@ -93,7 +93,7 @@ function DashboardContent() {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 p-6 space-y-2">
+        <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
   
           {sidebarMenu.map((item) => {
             const isActive = activeMenu === item.id;
@@ -132,18 +132,18 @@ function DashboardContent() {
               </button>
             );
           })}
-
-          {/* Logout Button */}
-          <div className="pt-4 mt-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="w-full rounded-xl flex items-center gap-3 px-4 py-3.5 transition-all duration-200 group cursor-pointer text-gray-600 hover:bg-red-50 hover:text-red-600"
-            >
-              <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-600 transition-all duration-200" />
-              <span className="font-medium text-sm">Đăng xuất</span>
-            </button>
-          </div>
         </nav>
+
+        {/* Logout Button - Fixed at bottom */}
+        <div className="p-6 pt-0 border-t border-gray-200 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="w-full rounded-xl flex items-center gap-3 px-4 py-3.5 transition-all duration-200 group cursor-pointer text-gray-600 hover:bg-red-50 hover:text-red-600"
+          >
+            <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-600 transition-all duration-200" />
+            <span className="font-medium text-sm">Đăng xuất</span>
+          </button>
+        </div>
 
   
       </aside>
