@@ -338,6 +338,56 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
+          <li>
+            <button
+              type="button"
+                onClick={() => setActiveMenu("reviewfee")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "reviewfee"
+                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "reviewfee"
+                    ? "bg-white/20"
+                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
+                }`}
+              >
+                <Coins size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Quản lí gói phí đánh giá</span>
+                <span className="text-xs opacity-70">Quản lí gói phí đánh giá.</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+                onClick={() => setActiveMenu("enrollCourse")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "enrollCourse"
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "enrollCourse"
+                    ? "bg-white/20"
+                    : "bg-blue-500/20 group-hover:bg-blue-500/30"
+                }`}
+              >
+                <BookOpen size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center ">
+                <span className="font-semibold text-sm">Khóa học được đăng ký</span>
+                <span className="text-xs opacity-70">Quản lí khóa học được đăng ký</span>
+              </div>
+            </button>
+          </li>
         </ul>
         )}
       </div>
@@ -409,56 +459,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
-          <li>
-            <button
-              type="button"
-                onClick={() => setActiveMenu("reviewfee")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "reviewfee"
-                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span
-                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "reviewfee"
-                    ? "bg-white/20"
-                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
-                }`}
-              >
-                <Coins size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Quản lí gói phí đánh giá</span>
-                <span className="text-xs opacity-70">Quản lí gói phí đánh giá.</span>
-              </div>
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-                onClick={() => setActiveMenu("enrollCourse")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "enrollCourse"
-                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span
-                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "enrollCourse"
-                    ? "bg-white/20"
-                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
-                }`}
-              >
-                <BookOpen size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Quản lí khóa học đã đăng ký</span>
-                <span className="text-xs opacity-70">Quản lí khóa học đã đăng ký</span>
-              </div>
-            </button>
-          </li>
+
           <li>
             <button
               type="button"

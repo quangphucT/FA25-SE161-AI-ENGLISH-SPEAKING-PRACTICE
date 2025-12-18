@@ -130,10 +130,12 @@ const { mutate: createReviewFeePackage, isPending: isCreating } =
 
   const { data: detailData } = useAdminReviewFeeDetailQuery(selectedReviewFeeId);
 
-  // Fetch buyers data
+  // Fetch buyers data - pageNumber=1, pageSize=large to get all packages, then paginate buyers
   const { data: buyersData, isPending: isLoadingBuyers } = useReviewFeeBuyers(
-    buyersPageNumber,
-    buyersPageSize
+    1, // pageNumber for packages (fetch all)
+    1000, // pageSize for packages (large number to get all)
+    buyersPageNumber, // buyerPageNumber for buyers pagination
+    buyersPageSize // buyerPageSize for buyers pagination
   );
  
 
@@ -1283,8 +1285,26 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
           </div>
         ) : buyersData?.data ? (
           (() => {
+            // Process buyers data - handle both array and object with items
+            let items: Array<{
+              reviewFeeId: string;
+              numberOfReview: number;
+              totalPurchase: number;
+              totalAmountCoin: number;
+              totalBuyers?: number;
+              buyerPageNumber?: number;
+              buyerPageSize?: number;
+              buyers: Buyer[];
+            }> = [];
+            
+            if (Array.isArray(buyersData.data)) {
+              items = buyersData.data;
+            } else if ('items' in buyersData.data && Array.isArray(buyersData.data.items)) {
+              items = buyersData.data.items;
+            }
+            
             // Filter buyers data by selectedReviewFeeId
-            const filteredData = buyersData.data.find(
+            const filteredData = items.find(
               (item) => item.reviewFeeId === selectedReviewFeeId
             );
 
@@ -1302,8 +1322,8 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
             const totalAmountCoin = filteredData.totalAmountCoin || 0;
             const numberOfReview = filteredData.numberOfReview || 0;
             
-            // Calculate pagination info
-            const totalBuyers = buyers.length;
+            // Calculate pagination info for buyers
+            const totalBuyers = filteredData.totalBuyers ?? buyers.length;
             const totalPages = Math.ceil(totalBuyers / buyersPageSize);
             const startIndex = (buyersPageNumber - 1) * buyersPageSize;
             const endIndex = startIndex + buyersPageSize;

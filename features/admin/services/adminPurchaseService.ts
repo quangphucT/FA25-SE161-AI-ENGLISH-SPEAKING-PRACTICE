@@ -119,6 +119,20 @@ export interface Buyer {
 export interface ReviewFeeBuyersResponse {
   isSucess: boolean;
   data: {
+    pageNumber: number;
+    pageSize: number;
+    totalPackages: number;
+    items: {
+      reviewFeeId: string;
+      numberOfReview: number;
+      totalPurchase: number;
+      totalAmountCoin: number;
+      totalBuyers: number;
+      buyerPageNumber: number;
+      buyerPageSize: number;
+      buyers: Buyer[];
+    }[];
+  } | {
     reviewFeeId: string;
     numberOfReview: number;
     totalPurchase: number;
@@ -131,16 +145,24 @@ export interface ReviewFeeBuyersResponse {
 export interface EnrolledCourseResponse {
   isSucess: boolean;
   data: {
-    courseId: string;
-    title: string;
-    level: string;
-    totalPurchase: number;
-    totalAmountCoin: number;
-    price: number;
-    buyers: Buyer[];
+    pageNumber: number;
+    pageSize: number;
+    totalPackages: number;
+    items: {
+      courseId: string;
+      title: string;
+      level: string;
+      price: number;
+      totalPurchase: number;
+      totalAmountCoin: number;
+      totalBuyers: number;
+      buyerPageNumber: number;
+      buyerPageSize: number;
+      buyers: Buyer[];
+    }[];
   };
-  businessCode: number;
-  message: string;
+  businessCode: string | number;
+  message?: string;
 }
 export const getPurchaseDetails = async (purchaseId: string): Promise<PurchaseDetailsResponse> => {
   try {
@@ -238,11 +260,13 @@ export const getAiBuyers = async (pageNumber: number, pageSize: number, buyerPag
     throw new Error("An unknown error occurred");
   }
 };
-export const getReviewFeeBuyers = async (pageNumber: number, pageSize: number): Promise<ReviewFeeBuyersResponse> => {
+export const getReviewFeeBuyers = async (pageNumber: number, pageSize: number, buyerPageNumber: number, buyerPageSize: number): Promise<ReviewFeeBuyersResponse> => {
   try {
     const queryParams = new URLSearchParams({
       pageNumber: pageNumber.toString(),
       pageSize: pageSize.toString(),
+      buyerPageNumber: buyerPageNumber.toString(),
+      buyerPageSize: buyerPageSize.toString(),
     });
     const response = await fetchWithAuth(`/api/AdminDashboard/purchase/reviewfee-buyers?${queryParams.toString()}`, {
       method: "GET",
@@ -260,11 +284,13 @@ export const getReviewFeeBuyers = async (pageNumber: number, pageSize: number): 
     throw new Error("An unknown error occurred");
   }
 };
-export const getEnrolledCourseBuyers = async (pageNumber: number, pageSize: number): Promise<EnrolledCourseResponse> => {
+export const getEnrolledCourseBuyers = async (pageNumber: number, pageSize: number, buyerPageNumber: number, buyerPageSize: number): Promise<EnrolledCourseResponse> => {
   try {
     const queryParams = new URLSearchParams({
       pageNumber: pageNumber.toString(),
       pageSize: pageSize.toString(),
+      buyerPageNumber: buyerPageNumber.toString(),
+      buyerPageSize: buyerPageSize.toString(),
     });
     const response = await fetchWithAuth(`/api/AdminDashboard/purchase/course-enroll?${queryParams.toString()}`, {
       method: "GET",

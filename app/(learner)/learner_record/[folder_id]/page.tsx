@@ -60,7 +60,7 @@ const PracticeRecordLayout = () => {
   const [recording, setRecording] = useState<boolean>(false);
   const [uiBlocked, setUiBlocked] = useState<boolean>(false);
   const [mainTitle, setMainTitle] = useState<string>(
-    "AESP- An English Speaking Practice with AI"
+    // "An English Speaking Practice with AI"
   );
   const [pronunciationAccuracy, setPronunciationAccuracy] =
     useState<string>("");

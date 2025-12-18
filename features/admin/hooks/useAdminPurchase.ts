@@ -28,15 +28,15 @@ export const useAiBuyers = (pageNumber: number, pageSize: number, buyerPageNumbe
         queryFn: () => getAiBuyers(pageNumber, pageSize, buyerPageNumber, buyerPageSize),
     });
 };
-export const useReviewFeeBuyers = (pageNumber: number, pageSize: number) => {
+export const useReviewFeeBuyers = (pageNumber: number, pageSize: number, buyerPageNumber: number, buyerPageSize: number) => {
     return useQuery<ReviewFeeBuyersResponse, Error>({
-        queryKey: ["reviewFeeBuyers", pageNumber, pageSize],
-        queryFn: () => getReviewFeeBuyers(pageNumber, pageSize),
+        queryKey: ["reviewFeeBuyers", pageNumber, pageSize, buyerPageNumber, buyerPageSize],
+        queryFn: () => getReviewFeeBuyers(pageNumber, pageSize, buyerPageNumber, buyerPageSize),
     });
 };
-export const useEnrolledCourseBuyers = (pageNumber: number, pageSize: number) => {
+export const useEnrolledCourseBuyers = (pageNumber: number, pageSize: number, buyerPageNumber: number, buyerPageSize: number) => {
     return useQuery<EnrolledCourseResponse, Error>({
-        queryKey: ["enrolledCourseBuyers", pageNumber, pageSize],
-        queryFn: () => getEnrolledCourseBuyers(pageNumber, pageSize),
+        queryKey: ["enrolledCourseBuyers", pageNumber, pageSize, buyerPageNumber, buyerPageSize],
+        queryFn: () => getEnrolledCourseBuyers(pageNumber, pageSize, buyerPageNumber, buyerPageSize),
     });
 };
