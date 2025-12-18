@@ -43,6 +43,7 @@ import ReviewFeeManagement from "../reviewfee-management/page";
 import { handleLogout } from "@/utils/auth";
 import router from "next/router";
 import EnrollCourseManagement from "../enrollCourse-management/page";
+import RecordChargeManagement from "../recordCharge-management/page";
 
 Chart.register(
   CategoryScale,
@@ -287,7 +288,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
-
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("recordCharge")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "recordCharge"
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "recordCharge"
+                    ? "bg-white/20"
+                    : "bg-green-500/20 group-hover:bg-green-500/30"
+                }`}
+              >
+                <MessageSquareText size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Quản lí phí ghi âm</span>
+                <span className="text-xs opacity-70">Quản lí phí ghi âm.</span>
+              </div>
+            </button>
+          </li>
            <li>
             <button
               type="button"
@@ -310,6 +335,56 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Gói hội thoại AI</span>
                 <span className="text-xs opacity-70">Quản lí gói hội thoại AI.</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+                onClick={() => setActiveMenu("reviewfee")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "reviewfee"
+                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "reviewfee"
+                    ? "bg-white/20"
+                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
+                }`}
+              >
+                <Coins size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Quản lí gói phí đánh giá</span>
+                <span className="text-xs opacity-70">Quản lí gói phí đánh giá.</span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+                onClick={() => setActiveMenu("enrollCourse")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "enrollCourse"
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "enrollCourse"
+                    ? "bg-white/20"
+                    : "bg-blue-500/20 group-hover:bg-blue-500/30"
+                }`}
+              >
+                <BookOpen size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center ">
+                <span className="font-semibold text-sm">Khóa học được đăng ký</span>
+                <span className="text-xs opacity-70">Quản lí khóa học được đăng ký</span>
               </div>
             </button>
           </li>
@@ -384,56 +459,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
-          <li>
-            <button
-              type="button"
-                onClick={() => setActiveMenu("reviewfee")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "reviewfee"
-                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span
-                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "reviewfee"
-                    ? "bg-white/20"
-                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
-                }`}
-              >
-                <Coins size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Quản lí gói phí đánh giá</span>
-                <span className="text-xs opacity-70">Quản lí gói phí đánh giá.</span>
-              </div>
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-                onClick={() => setActiveMenu("enrollCourse")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "enrollCourse"
-                  ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-lg transform scale-105"
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span
-                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "enrollCourse"
-                    ? "bg-white/20"
-                    : "bg-rose-500/20 group-hover:bg-rose-500/30"
-                }`}
-              >
-                <BookOpen size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Quản lí khóa học đã đăng ký</span>
-                <span className="text-xs opacity-70">Quản lí khóa học đã đăng ký</span>
-              </div>
-            </button>
-          </li>
+
           <li>
             <button
               type="button"
@@ -548,8 +574,8 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
         subtitle: "Quản lí phản hồi và bình luận.",
       },
       manager: {
-        title: "Quản lí quản trị viên",
-        subtitle: "Quản lí tài khoản quản trị và hoạt động.",
+        title: "Quản lí Người quản lý",
+        subtitle: "Quản lí tài khoản người quản lý và hoạt động.",
       },
       withdraw: {
         title: "Yêu cầu rút tiền",
@@ -574,7 +600,11 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
         enrollCourse: {
           title: "Quản lí khóa học đã đăng ký",
           subtitle: "Quản lí khóa học đã đăng ký.",
-        }
+        },
+        recordCharge: {
+          title: "Quản lí record charge",
+          subtitle: "Quản lí record charge.",
+        },
       //soldpackages: { title: "Gói đã bán", subtitle: "Quản lí gói đã bán và hoạt động." },
     };
     return (
@@ -638,6 +668,8 @@ const DashboardAdmin = () => {
         return <ReviewFeeManagement />;
       case "enrollCourse":
         return <EnrollCourseManagement />;
+      case "recordCharge":
+        return <RecordChargeManagement />;
         default:
         return null;
     }

@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { useLearnerStore } from "@/store/useLearnerStore";
 
 export const handleTokenExpiration = (message?: string) => {
   if (typeof window !== "undefined") {
@@ -20,6 +21,16 @@ export const handleLogout = async () => {
   } catch (error) {
     console.error("Logout API failed:", error);
   } finally {
+    // Clear dữ liệu learner ở localStorage
+    useLearnerStore.getState().clearLearnerData();
+    
+    // Clear các dữ liệu khác nếu có
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("messages"); // Clear tin nhắn AI conversation
+      localStorage.removeItem("enrollingFirst_courseStorage"); // Clear Zustand persist storage
+      localStorage.removeItem("entrance_test_progress"); 
+    }
+    
     handleTokenExpiration("Đăng xuất thành công.");
   }
 };

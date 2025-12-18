@@ -49,6 +49,10 @@ export default function AssessmentManagement() {
       pageNumber,
       PAGE_SIZE,
     );
+const formatScore = (score?: number) => {
+  if (score === undefined || score === null) return "-";
+  return score.toFixed(2);
+};
 
   const assessments = data?.data.items ?? [];
   const totalPages = data?.data.totalPages ?? 1;
@@ -115,7 +119,7 @@ export default function AssessmentManagement() {
                       <div className="flex flex-col">
                         <span className="font-medium truncate">{assessment.learnerName}</span>
                         <span className="text-xs text-muted-foreground">
-                          Điểm: {assessment.score ?? "-"} • Câu hỏi: {assessment.numberOfQuestion} •{" "}
+                        Điểm: {formatScore(assessment.score)} • Câu hỏi: {assessment.numberOfQuestion} •{" "}
                           {formatDate(assessment.createdAt)}
                         </span>
                       </div>
@@ -157,9 +161,10 @@ export default function AssessmentManagement() {
                 </p>
               </div>
               {selectedAssessment && (
-                <Badge variant={getScoreVariant(selectedAssessment.score)}>
-                  Điểm tổng: {selectedAssessment.score ?? "-"}
-                </Badge>
+            <Badge variant={getScoreVariant(selectedAssessment.score)}>
+  Điểm tổng: {formatScore(selectedAssessment.score)}
+</Badge>
+
               )}
             </div>
 
@@ -175,7 +180,9 @@ export default function AssessmentManagement() {
                       <span className="font-medium truncate">
                         Câu hỏi: {detail.questionAssessment.content}
                       </span>
-                      <Badge variant={getScoreVariant(detail.score)}>Điểm: {detail.score ?? "-"}</Badge>
+<Badge variant={getScoreVariant(detail.score)}>
+  Điểm: {formatScore(detail.score)}
+</Badge>
                     </div>
                     {/* <p className="text-xs text-muted-foreground mt-1">
                       Loại: {detail.type || "Chưa có"} • Phản hồi AI:{" "}

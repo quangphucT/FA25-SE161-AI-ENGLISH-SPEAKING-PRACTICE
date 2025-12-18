@@ -42,12 +42,14 @@ import {
   Music,
   Star,
   MessageSquare,
+  Mic,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { formatAiFeedbackHtml } from "@/utils/formatAiFeedback";
 import { toast } from "sonner";
+import BuyRecordChargeModal from "@/components/BuyRecordChargeModal";
 
 export default function LearnerRecordPage() {
   const router = useRouter();
@@ -65,7 +67,7 @@ export default function LearnerRecordPage() {
   const isFoldersCollapsed = false;
   const isRecordsCollapsed = false;
   const [feedbackRecord, setFeedbackRecord] = useState<Record | null>(null);
-
+  const [showBuyRecordChargeDialog, setShowBuyRecordChargeDialog] = useState(false);
   // Queries
   const { data: foldersData, isLoading: isLoadingFolders } = useLearnerRecordFolders();
   const { data: recordsData, isLoading: isLoadingRecords } = useLearnerRecords(selectedFolderId);
@@ -219,48 +221,63 @@ export default function LearnerRecordPage() {
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Record</h1>
           <p className="text-gray-600 mt-1">Tạo và quản lý các thư mục và record của bạn</p>
         </div>
-        <Dialog open={showCreateFolderDialog} onOpenChange={setShowCreateFolderDialog}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <FolderPlus className="w-4 h-4 mr-2" />
-              Tạo thư mục mới
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Tạo thư mục mới</DialogTitle>
-              <DialogDescription>Nhập tên cho thư mục mới của bạn</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
-                placeholder="Tên thư mục"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCreateFolder();
-                }}
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowCreateFolderDialog(false)}>
-                  Hủy
-                </Button>
-                <Button
-                  onClick={handleCreateFolder}
-                  disabled={!newFolderName.trim() || isCreatingFolder}
-                >
-                  {isCreatingFolder ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Đang tạo...
-                    </>
-                  ) : (
-                    "Tạo"
-                  )}
-                </Button>
+        <div className="flex items-center gap-3">
+          <Dialog open={showCreateFolderDialog} onOpenChange={setShowCreateFolderDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <FolderPlus className="w-4 h-4 mr-2" />
+                Tạo thư mục mới
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Tạo thư mục mới</DialogTitle>
+                <DialogDescription>Nhập tên cho thư mục mới của bạn</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Tên thư mục"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateFolder();
+                  }}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowCreateFolderDialog(false)}>
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleCreateFolder}
+                    disabled={!newFolderName.trim() || isCreatingFolder}
+                  >
+                    {isCreatingFolder ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Đang tạo...
+                      </>
+                    ) : (
+                      "Tạo"
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700" 
+            onClick={() => {
+              if (!selectedFolderId) {
+                toast.error("Vui lòng chọn một folder trước khi mua gói ghi âm");
+                return;
+              }
+              setShowBuyRecordChargeDialog(true);
+            }}
+          >
+            <Mic className="w-4 h-4 mr-2" />
+            Mua gói ghi âm
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
@@ -293,21 +310,68 @@ export default function LearnerRecordPage() {
               folders.map((folder) => (
                 <div
                   key={folder.learnerRecordId}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  className={`group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                     selectedFolderId === folder.learnerRecordId
-                      ? "bg-blue-50 border-blue-500"
-                      : "hover:bg-gray-50 border-gray-200"
+                      ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-500 shadow-md"
+                      : "bg-white hover:bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-sm"
                   }`}
                   onClick={() => setSelectedFolderId(folder.learnerRecordId)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Folder className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <span className="font-medium truncate">{folder.name}</span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className={`p-2 rounded-lg flex-shrink-0 ${
+                        selectedFolderId === folder.learnerRecordId
+                          ? "bg-blue-100"
+                          : "bg-gray-100 group-hover:bg-blue-100"
+                      }`}>
+                        <Folder className={`w-5 h-5 ${
+                          selectedFolderId === folder.learnerRecordId
+                            ? "text-blue-600"
+                            : "text-gray-600 group-hover:text-blue-600"
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-semibold text-base mb-2 truncate ${
+                          selectedFolderId === folder.learnerRecordId
+                            ? "text-blue-900"
+                            : "text-gray-900"
+                        }`}>
+                          {folder.name}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {folder.numberOfRecord !== undefined && folder.numberOfRecord !== null && (
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200"
+                            >
+                              <Mic className="w-3 h-3 mr-1" />
+                              {folder.numberOfRecord} lượt còn lại
+                            </Badge>
+                          )}
+                          {folder.status && (
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${
+                                folder.status === "Active"
+                                  ? "border-green-300 text-green-700 bg-green-50"
+                                  : "border-gray-300 text-gray-700"
+                              }`}
+                            >
+                              {folder.status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className={`h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
+                            selectedFolderId === folder.learnerRecordId ? "opacity-100" : ""
+                          }`}
+                        >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -318,7 +382,7 @@ export default function LearnerRecordPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDeleteFolder(folder.learnerRecordId)}
-                          className="text-red-600"
+                          className="text-red-600 focus:text-red-600"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Xóa
@@ -326,11 +390,6 @@ export default function LearnerRecordPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  {folder.status && (
-                    <Badge variant="outline" className="mt-2 text-xs">
-                      {folder.status}
-                    </Badge>
-                  )}
                 </div>
               ))
             )}
@@ -356,8 +415,7 @@ export default function LearnerRecordPage() {
                   </CardDescription>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-               
+              <div className="flex items-center gap-2">  
                 {selectedFolderId && !isRecordsCollapsed && (
                   <Dialog open={showCreateRecordDialog} onOpenChange={setShowCreateRecordDialog}>
                     <DialogTrigger asChild>
@@ -416,7 +474,7 @@ export default function LearnerRecordPage() {
                      className="bg-blue-600 hover:bg-blue-700"
                      onClick={() => {
                        router.push(
-                         `/learner_record/${selectedFolderId}`
+                         `/learner_record/${selectedFolderId}?recordId=${selectedRecords[0].recordId}&content=${encodeURIComponent(selectedRecords[0].content)}`
                        );
                      }}
                      disabled={selectedRecords.length === 0 || isLoadingRecords}
@@ -458,23 +516,21 @@ export default function LearnerRecordPage() {
                   {selectedRecords.map((record: Record) => {
                     const hasAiFeedback = Boolean(record.aiFeedback && record.aiFeedback.trim());
                     return (
-                      <Card key={record.recordId} className="hover:shadow-md transition-shadow">
+                      <Card 
+                        key={record.recordId} 
+                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => {
+                          if (selectedFolderId) {
+                            router.push(`/learner_record/${selectedFolderId}?recordId=${record.recordId}&content=${encodeURIComponent(record.content)}`);
+                          }
+                        }}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 space-y-3">
                               <div className="flex flex-wrap items-center gap-2">
                                 <h3 className="font-semibold text-lg">{record.content}</h3>
-                                <Badge
-                                  variant={
-                                    record.status === "Completed"
-                                      ? "default"
-                                      : record.status === "Pending"
-                                      ? "secondary"
-                                      : "outline"
-                                  }
-                                >
-                                  {record.status}
-                                </Badge>
+                                
                                 {hasAiFeedback && (
                                   <Badge variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50">
                                     Có phản hồi AI
@@ -495,12 +551,12 @@ export default function LearnerRecordPage() {
                                 <div className="flex items-center gap-2">
                                   <Star className="w-4 h-4 text-yellow-500" />
                                   <span className="text-gray-600">Điểm số:</span>
-                                  <span className="font-semibold">{record.score || "N/A"}</span>
+                                  <span className="font-semibold">{record.score || 0}/100</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <MessageSquare className="w-4 h-4 text-blue-500" />
                                   <span className="text-gray-600">Trạng thái:</span>
-                                  <span className="font-semibold">{record.status || 0}</span>
+                                  <span className="font-semibold">{record.status}</span>
                                 </div>
                               </div>
 
@@ -511,14 +567,22 @@ export default function LearnerRecordPage() {
 
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <MoreVertical className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
                                 {hasAiFeedback && (
                                   <DropdownMenuItem
-                                    onClick={() => setFeedbackRecord(record)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setFeedbackRecord(record);
+                                    }}
                                     className="flex items-center gap-2 cursor-pointer"
                                   >
                                     <MessageSquare className="w-4 h-4 text-blue-500" />
@@ -526,14 +590,20 @@ export default function LearnerRecordPage() {
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
-                                  onClick={() => openEditContentDialog(record)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditContentDialog(record);
+                                  }}
                                   className="text-blue-600 cursor-pointer"
                                 >
                                   <Edit className="w-4 h-4 mr-2" />
                                   Sửa nội dung
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => handleDeleteRecord(record.recordId)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteRecord(record.recordId);
+                                  }}
                                   className="text-red-600 cursor-pointer"
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" />
@@ -676,6 +746,13 @@ export default function LearnerRecordPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Buy Record Charge Modal */}
+      <BuyRecordChargeModal
+        open={showBuyRecordChargeDialog}
+        onClose={() => setShowBuyRecordChargeDialog(false)}
+        folderId={selectedFolderId || ""}
+      />
     </div>
   );
 }

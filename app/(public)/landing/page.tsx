@@ -115,7 +115,7 @@ export default function Page() {
             <h1 className="text-[34px] md:text-[44px] lg:text-[50px] font-extrabold leading-tight tracking-tight">
               Nền tảng luyện nói tiếng Anh{" "}
               <span className="bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent">
-                có sự hỗ trợ của AI & Reviewer
+                có sự hỗ trợ của AI
               </span>
             </h1>
 

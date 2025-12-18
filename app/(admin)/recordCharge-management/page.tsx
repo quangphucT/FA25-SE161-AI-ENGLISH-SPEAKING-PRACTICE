@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import {
-  useDeleteAIConversationPackage, 
-  getAIConversationPackages, 
-  useCreateAIConversationPackages,
-  useUpdateAIConversationPackage,
-  useUpdateAIConversationPackageStatus
-} from "@/features/admin/hooks/aiConversationPackagesHooks/packages";
-import { useAiBuyers } from "@/features/admin/hooks/useAdminPurchase";
-import type { AiBuyersResponse, Buyer } from "@/features/admin/services/adminPurchaseService";
+  useAdminRecordCharge,
+  useAdminRecordChargeDetail,
+  useAdminRecordChargeCreate,
+  useAdminRecordChargeUpdate,
+  useAdminRecordChargeDelete,
+  useAdminRecordChargePatch,
+} from "@/features/admin/hooks/useAdminRecordCharge";
+import type { RecordCharge, Buyer } from "@/features/admin/services/adminRecordChargeService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -32,14 +32,15 @@ import {
 import { 
   Plus, 
   Trash2, 
-  Clock, 
+  FileAudio, 
   Coins, 
   Loader2,
-  MessageCircle,
+  Mic,
   AlertCircle,
   Edit,
   Eye,
-  Users
+  Users,
+  Power
 } from "lucide-react";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -60,94 +61,108 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const PACKAGE_PAGE_SIZE = 5;
+const RECORD_CHARGE_PAGE_SIZE = 5;
 const BUYERS_PAGE_SIZE = 5;
 
-const AiConversationPackageManagement = () => {
-  const { mutate: createPackage, isPending: isCreating } = useCreateAIConversationPackages();
-  const { mutate: deletePackage } = useDeleteAIConversationPackage();
-  const { mutate: updatePackage, isPending: isUpdating } = useUpdateAIConversationPackage();
+const RecordChargeManagement = () => {
   // Pagination
-const [pageNumber, setPageNumber] = useState(1);
-const pageSize = PACKAGE_PAGE_SIZE; // hoặc 10 tùy ý
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = RECORD_CHARGE_PAGE_SIZE;
 
-const { data: packagesData, isPending: isLoading } =
-  getAIConversationPackages(pageNumber, pageSize);
+  const { data: recordChargeData, isPending: isLoading } = useAdminRecordCharge(pageNumber, pageSize);
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isBuyersDialogOpen, setIsBuyersDialogOpen] = useState(false);
-  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  const [selectedRecordChargeId, setSelectedRecordChargeId] = useState<string | null>(null);
   const [buyersPageNumber, setBuyersPageNumber] = useState(1);
-  const buyersPageSize = BUYERS_PAGE_SIZE; // Giảm xuống 5 để dễ test pagination
+  const buyersPageSize = BUYERS_PAGE_SIZE;
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editingPackage, setEditingPackage] = useState<{
-    aiConversationChargeId: string;
+  const [editingRecordCharge, setEditingRecordCharge] = useState<{
+    recordChargeId: string;
     amountCoin: number;
-    allowedMinutes: number;
+    allowedRecords: number;
   } | null>(null);
   
-  // State for status update
-  const [statusUpdateId, setStatusUpdateId] = useState<string>("");
-  const statusUpdateMutation = useUpdateAIConversationPackageStatus(statusUpdateId);
+  // Form state
+  const [amountCoin, setAmountCoin] = useState<number>(0);
+  const [allowedRecords, setAllowedRecords] = useState<number>(0);
   
-  // Fetch buyers data when a package is selected
-  const { data: buyersData, isPending: isLoadingBuyers } = useAiBuyers(
-    pageNumber,
-    pageSize,
+  // State for mutation parameters (hooks require parameters at call time)
+  const [createBody, setCreateBody] = useState<{ amountCoin: number; allowedRecordCount: number }>({ amountCoin: 0, allowedRecordCount: 0 });
+  const [updateId, setUpdateId] = useState<string>("");
+  const [updateBody, setUpdateBody] = useState<{ amountCoin: number; allowedRecordCount: number }>({ amountCoin: 0, allowedRecordCount: 0 });
+  const [deleteIdParam, setDeleteIdParam] = useState<string>("");
+  const [patchId, setPatchId] = useState<string>("");
+  
+  // Fetch buyers data when a record charge is selected
+  const { data: buyersData, isPending: isLoadingBuyers } = useAdminRecordChargeDetail(
+    selectedRecordChargeId || "",
     buyersPageNumber,
     buyersPageSize
   );
   
-  // Form state
-  const [amountCoin, setAmountCoin] = useState<number>(0);
-  const [allowedMinutes, setAllowedMinutes] = useState<number>(0);
+  // Mutations - hooks are called with state values
+  const createMutation = useAdminRecordChargeCreate(createBody);
+  const updateMutation = useAdminRecordChargeUpdate(updateId, updateBody);
+  const deleteMutation = useAdminRecordChargeDelete(deleteIdParam);
+  const patchMutation = useAdminRecordChargePatch(patchId);
 
   const handleCreate = () => {
-    if (amountCoin <= 0) { 
+    if (amountCoin <= 0) {
       toast.error("Số coin phải lớn hơn 0");
       return;
     }
-    if (allowedMinutes <= 0) {
-      toast.error("Số phút phải lớn hơn 0");
+    if (allowedRecords <= 0) {
+      toast.error("Số lượt ghi âm phải lớn hơn 0");
       return;
     }
 
-    createPackage(
-      { amountCoin, allowedMinutes },
-      {
+    const body = { amountCoin, allowedRecordCount: allowedRecords };
+    setCreateBody(body);
+    // Trigger mutation after state update
+    requestAnimationFrame(() => {
+      createMutation.mutate(body, {
         onSuccess: () => {
           setIsDialogOpen(false);
           setAmountCoin(0);
-          setAllowedMinutes(0);
+          setAllowedRecords(0);
+          setCreateBody({ amountCoin: 0, allowedRecordCount: 0 });
         },
-      }
-    );
-  };
-
-  const handleDelete = (id: string) => {
-    deletePackage(id, {
-      onSuccess: () => {
-        setDeleteId(null);
-      },
-      onError: () => {
-        setDeleteId(null);
-      },
+      });
     });
   };
 
-  const handleEdit = (pkg: {
-    aiConversationChargeId: string;
+  const handleDelete = (id: string) => {
+    setDeleteIdParam(id);
+    // Trigger mutation after state update
+    requestAnimationFrame(() => {
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          setDeleteId(null);
+          setDeleteIdParam("");
+        },
+        onError: () => {
+          setDeleteId(null);
+          setDeleteIdParam("");
+        },
+      });
+    });
+  };
+
+  const handleEdit = (recordCharge: {
+    recordChargeId: string;
     amountCoin: number;
-    allowedMinutes: number;
+    allowedRecords: number;
   }) => {
-    setEditingPackage(pkg);
-    setAmountCoin(pkg.amountCoin);
-    setAllowedMinutes(pkg.allowedMinutes);
+    setEditingRecordCharge(recordCharge);
+    setAmountCoin(recordCharge.amountCoin);
+    setAllowedRecords(recordCharge.allowedRecords);
     setIsUpdateDialogOpen(true);
   };
 
-  const handleViewBuyers = (packageId: string) => {
-    setSelectedPackageId(packageId);
+  const handleViewBuyers = (recordChargeId: string) => {
+    setSelectedRecordChargeId(recordChargeId);
     setBuyersPageNumber(1); // Reset to first page when opening modal
     setIsBuyersDialogOpen(true);
   };
@@ -157,49 +172,45 @@ const { data: packagesData, isPending: isLoading } =
       toast.error("Số coin phải lớn hơn 0");
       return;
     }
-    if (allowedMinutes <= 0) {
-      toast.error("Số phút phải lớn hơn 0");
+    if (allowedRecords <= 0) {
+      toast.error("Số lượt ghi âm phải lớn hơn 0");
       return;
     }
-    if (!editingPackage) return;
+    if (!editingRecordCharge) return;
 
-    updatePackage(
-      {
-        aiConversationPackageId: editingPackage.aiConversationChargeId,
-        amountCoin,
-        allowedMinutes,
-      },
-      {
-        onSuccess: () => {
-          setIsUpdateDialogOpen(false);
-          setEditingPackage(null);
-          setAmountCoin(0);
-          setAllowedMinutes(0);
-        },
-      }
-    );
-  };
-
-  const handleStatusUpdate = (id: string) => {
-    setStatusUpdateId(id);
+    const body = { amountCoin, allowedRecordCount: allowedRecords };
+    setUpdateId(editingRecordCharge.recordChargeId);
+    setUpdateBody(body);
     // Trigger mutation after state update
     requestAnimationFrame(() => {
-      statusUpdateMutation.mutate(id, {
+      updateMutation.mutate(body, {
         onSuccess: () => {
-          setStatusUpdateId("");
-        },
-        onError: () => {
-          setStatusUpdateId("");
+          setIsUpdateDialogOpen(false);
+          setEditingRecordCharge(null);
+          setAmountCoin(0);
+          setAllowedRecords(0);
+          setUpdateId("");
+          setUpdateBody({ amountCoin: 0, allowedRecordCount: 0 });
         },
       });
     });
   };
 
-const packages = packagesData?.data?.items ?? [];
-const totalItems = packagesData?.data?.totalItems ?? 0;
-const totalActivePackages = packagesData?.data?.totalActivePackages ?? 0;
-const totalActiveItems = packagesData?.data?.totalActiveItems ?? 0;
-const totalPages = Math.ceil(totalItems / pageSize);
+  const handlePatch = (id: string) => {
+    setPatchId(id);
+    // Trigger mutation after state update
+    requestAnimationFrame(() => {
+      patchMutation.mutate(id, {
+        onSuccess: () => {
+          setPatchId("");
+        },
+      });
+    });
+  };
+
+  const recordCharges = recordChargeData?.data?.items ?? [];
+  const totalItems = recordChargeData?.data?.totalItems ?? 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -208,27 +219,27 @@ const totalPages = Math.ceil(totalItems / pageSize);
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                <Mic className="w-6 h-6 text-white" />
               </div>
-              Quản lý Gói AI Conversation
+              Quản lý Gói Phí Ghi Âm
             </h1>
             <p className="text-gray-600 mt-1">
-              Tạo và quản lý các gói coin cho tính năng trò chuyện với AI
+              Tạo và quản lý các gói coin cho tính năng ghi âm
             </p>
           </div>
 
           {/* Create Button */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
+              <Button className="bg-purple-600 hover:bg-purple-700 cursor-pointer">
                 <Plus className="w-4 h-4 mr-2" />
                 Tạo gói mới
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Tạo Gói AI Conversation Mới</DialogTitle>
+                <DialogTitle>Tạo Gói Record Charge Mới</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 {/* Amount Coin Input */}
@@ -250,33 +261,33 @@ const totalPages = Math.ceil(totalItems / pageSize);
                   </p>
                 </div>
 
-                {/* Allowed Minutes Input */}
+                {/* Allowed Records Input */}
                 <div className="space-y-2">
-                  <Label htmlFor="allowedMinutes" className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-blue-600" />
-                    Số Phút
+                  <Label htmlFor="allowedRecords" className="flex items-center gap-2">
+                    <FileAudio className="w-4 h-4 text-purple-600" />
+                    Số Lượt Ghi Âm
                   </Label>
                   <Input
-                    id="allowedMinutes"
+                    id="allowedRecords"
                     type="number"
                     placeholder="VD: 10"
-                    value={allowedMinutes || ""}
-                    onChange={(e) => setAllowedMinutes(Number(e.target.value))}
+                    value={allowedRecords || ""}
+                    onChange={(e) => setAllowedRecords(Number(e.target.value))}
                     min={0}
                   />
                   <p className="text-xs text-gray-500">
-                    Thời gian trò chuyện được phép (phút)
+                    Số lượt ghi âm được phép
                   </p>
                 </div>
 
                 {/* Preview */}
-                {amountCoin > 0 && allowedMinutes > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm font-medium text-blue-900 mb-1">
-                      Tỷ lệ: {amountCoin / allowedMinutes} coin/phút
+                {amountCoin > 0 && allowedRecords > 0 && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-purple-900 mb-1">
+                      Tỷ lệ: {(amountCoin / allowedRecords).toFixed(1)} coin/lượt
                     </p>
-                    <p className="text-xs text-blue-700">
-                      {allowedMinutes} phút sẽ tốn {amountCoin} coin
+                    <p className="text-xs text-purple-700">
+                      {allowedRecords} lượt ghi âm sẽ tốn {amountCoin} coin
                     </p>
                   </div>
                 )}
@@ -287,16 +298,16 @@ const totalPages = Math.ceil(totalItems / pageSize);
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
                   className="flex-1 cursor-pointer"
-                  disabled={isCreating}
+                  disabled={createMutation.isPending}
                 >
                   Hủy
                 </Button>
                 <Button
                   onClick={handleCreate}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                  disabled={isCreating}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                  disabled={createMutation.isPending}
                 >
-                  {isCreating ? (
+                  {createMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Đang tạo...
@@ -313,15 +324,15 @@ const totalPages = Math.ceil(totalItems / pageSize);
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card className="p-4 border-l-4 border-l-blue-500">
+        <Card className="p-4 border-l-4 border-l-purple-500">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <MessageCircle className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Mic className="w-6 h-6 text-purple-600" />
             </div>
             <div>
               <p className="text-sm text-gray-600">Tổng số gói</p>
               <p className="text-2xl font-bold text-gray-900">
-                {totalItems}
+                {recordChargeData?.data?.totalItems}
               </p>
             </div>
           </div>
@@ -330,12 +341,12 @@ const totalPages = Math.ceil(totalItems / pageSize);
         <Card className="p-4 border-l-4 border-l-green-500">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Coins className="w-6 h-6 text-green-600" />
+              <Power className="w-6 h-6 text-green-600" />
             </div>
             <div>
               <p className="text-sm text-gray-600">Gói hoạt động</p>
               <p className="text-2xl font-bold text-gray-900">
-                {totalActivePackages}
+                {recordChargeData?.data?.totalActiveItems}
               </p>
             </div>
           </div>
@@ -351,10 +362,10 @@ const totalPages = Math.ceil(totalItems / pageSize);
 
           {isLoading ? (
             <div className="text-center py-12">
-              <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+              <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
               <p className="text-gray-600">Đang tải...</p>
             </div>
-          ) : packages.length === 0 ? (
+          ) : recordCharges.length === 0 ? (
             <div className="text-center py-12">
               <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">Chưa có gói nào</p>
@@ -369,36 +380,36 @@ const totalPages = Math.ceil(totalItems / pageSize);
                   <TableRow>
                     <TableHead>STT</TableHead>
                     <TableHead>Số Coin</TableHead>
-                    <TableHead>Số Phút</TableHead>
-                    <TableHead>Tỷ lệ (coin/phút)</TableHead>
+                    <TableHead>Số Lượt Ghi Âm</TableHead>
+                    <TableHead>Tỷ lệ (coin/lượt)</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead>Ngày tạo</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {packages.map((pkg, index) => (
-                    <TableRow key={pkg.aiConversationChargeId}>
+                  {recordCharges.map((recordCharge, index) => (
+                    <TableRow key={recordCharge.recordChargeId}>
                       <TableCell className="font-medium">{index + 1}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Coins className="w-4 h-4 text-yellow-600" />
                           <span className="font-semibold text-yellow-700">
-                            {pkg.amountCoin}
+                            {recordCharge.amountCoin}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-blue-600" />
-                          <span className="font-semibold text-blue-700">
-                            {pkg.allowedMinutes}
+                          <FileAudio className="w-4 h-4 text-purple-600" />
+                          <span className="font-semibold text-purple-700">
+                            {recordCharge.allowedRecords}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm font-medium text-gray-700">
-                          {(pkg.amountCoin / pkg.allowedMinutes).toFixed(1)}
+                          {(recordCharge.amountCoin / recordCharge.allowedRecords).toFixed(1)}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -411,12 +422,12 @@ const totalPages = Math.ceil(totalItems / pageSize);
                               <div className="flex items-center justify-between gap-2 min-w-[120px]">
                                 <span
                                   className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                                    pkg.status === "Active"
+                                    recordCharge.status === "Active"
                                       ? "bg-green-100 text-green-800"
                                       : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
-                                  {pkg.status === "Active" ? "Active" : "InActive"}
+                                  {recordCharge.status === "Active" ? "Active" : "InActive"}
                                 </span>
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -432,8 +443,8 @@ const totalPages = Math.ceil(totalItems / pageSize);
                           <DropdownMenuContent align="start" className="w-56">
                             <DropdownMenuItem
                               onClick={() => {
-                                if (pkg.status !== "Active") {
-                                  handleStatusUpdate(pkg.aiConversationChargeId);
+                                if (recordCharge.status !== "Active") {
+                                  handlePatch(recordCharge.recordChargeId);
                                 }
                               }}
                               className="flex items-center justify-between px-4 py-3"
@@ -444,7 +455,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                                   Gói đang hoạt động - có thể sử dụng
                                 </span>
                               </div>
-                              {pkg.status === "Active" && (
+                              {recordCharge.status === "Active" && (
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   viewBox="0 0 24 24"
@@ -457,8 +468,8 @@ const totalPages = Math.ceil(totalItems / pageSize);
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
-                                if (pkg.status !== "InActive") {
-                                  handleStatusUpdate(pkg.aiConversationChargeId);
+                                if (recordCharge.status !== "InActive") {
+                                  handlePatch(recordCharge.recordChargeId);
                                 }
                               }}
                               className="flex items-center justify-between px-4 py-3"
@@ -469,7 +480,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                                   Gói không hoạt động - không thể sử dụng
                                 </span>
                               </div>
-                              {pkg.status === "InActive" && (
+                              {recordCharge.status === "InActive" && (
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   viewBox="0 0 24 24"
@@ -484,14 +495,14 @@ const totalPages = Math.ceil(totalItems / pageSize);
                         </DropdownMenu>
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">
-                        {dayjs(pkg.createdAt).format("DD/MM/YYYY HH:mm")}
+                        {dayjs(recordCharge.createdAt).format("DD/MM/YYYY HH:mm")}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleViewBuyers(pkg.aiConversationChargeId)}
+                            onClick={() => handleViewBuyers(recordCharge.recordChargeId)}
                             className="text-green-600 hover:text-green-700 hover:bg-green-50 cursor-pointer"
                             title="Xem chi tiết người mua"
                           >
@@ -500,7 +511,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEdit(pkg)}
+                            onClick={() => handleEdit(recordCharge)}
                             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
                             title="Chỉnh sửa"
                           >
@@ -509,7 +520,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setDeleteId(pkg.aiConversationChargeId)}
+                            onClick={() => setDeleteId(recordCharge.recordChargeId)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                             title="Xóa"
                           >
@@ -522,51 +533,47 @@ const totalPages = Math.ceil(totalItems / pageSize);
                 </TableBody>
               </Table>
               {/* Pagination Footer */}
-<div className="flex justify-between items-center px-6 py-4 border-t text-sm text-gray-700">
+              <div className="flex justify-between items-center px-6 py-4 border-t text-sm text-gray-700">
+                {/* Left: Rows per page */}
+                <div className="flex items-center gap-2">
+                  <span>Rows per page:</span>
+                  <span className="font-medium">{pageSize}</span>
+                </div>
 
-  {/* Left: Rows per page */}
-  <div className="flex items-center gap-2">
-    <span>Rows per page:</span>
-    <span className="font-medium">{pageSize}</span>
-  </div>
+                {/* Middle: 1–5 of 18 */}
+                <div>
+                  {totalItems === 0
+                    ? "0–0 of 0"
+                    : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} of ${totalItems}`}
+                </div>
 
-  {/* Middle: 1–5 of 18 */}
-  <div>
-    {totalItems === 0
-      ? "0–0 of 0"
-      : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} of ${totalItems}`}
-  </div>
+                {/* Right: Previous / Page number / Next */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pageNumber === 1}
+                    onClick={() => setPageNumber(pageNumber - 1)}
+                    className="cursor-pointer"
+                  >
+                    Previous
+                  </Button>
 
-  {/* Right: Previous / Page number / Next */}
-  <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 border rounded-md bg-gray-50">
+                    {pageNumber}
+                  </span>
 
-    <Button
-      variant="outline"
-      size="sm"
-      disabled={pageNumber === 1}
-      onClick={() => setPageNumber(pageNumber - 1)}
-      className="cursor-pointer"
-    >
-      Previous
-    </Button>
-
-    <span className="px-3 py-1 border rounded-md bg-gray-50">
-      {pageNumber}
-    </span>
-
-    <Button
-      variant="outline"
-      size="sm"
-      disabled={pageNumber === totalPages}
-      onClick={() => setPageNumber(pageNumber + 1)}
-      className="cursor-pointer"
-    >
-      Next
-    </Button>
-
-  </div>
-</div>
-
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pageNumber === totalPages}
+                    onClick={() => setPageNumber(pageNumber + 1)}
+                    className="cursor-pointer"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -576,7 +583,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Cập nhật Gói AI Conversation</DialogTitle>
+            <DialogTitle>Cập nhật Gói Record Charge</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Amount Coin Input */}
@@ -598,33 +605,33 @@ const totalPages = Math.ceil(totalItems / pageSize);
               </p>
             </div>
 
-            {/* Allowed Minutes Input */}
+            {/* Allowed Records Input */}
             <div className="space-y-2">
-              <Label htmlFor="updateAllowedMinutes" className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-600" />
-                Số Phút
+              <Label htmlFor="updateAllowedRecords" className="flex items-center gap-2">
+                <FileAudio className="w-4 h-4 text-purple-600" />
+                Số Lượt Ghi Âm
               </Label>
               <Input
-                id="updateAllowedMinutes"
+                id="updateAllowedRecords"
                 type="number"
                 placeholder="VD: 10"
-                value={allowedMinutes || ""}
-                onChange={(e) => setAllowedMinutes(Number(e.target.value))}
+                value={allowedRecords || ""}
+                onChange={(e) => setAllowedRecords(Number(e.target.value))}
                 min={0}
               />
               <p className="text-xs text-gray-500">
-                Thời gian trò chuyện được phép (phút)
+                Số lượt ghi âm được phép
               </p>
             </div>
 
             {/* Preview */}
-            {amountCoin > 0 && allowedMinutes > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm font-medium text-blue-900 mb-1">
-                  Tỷ lệ: {amountCoin / allowedMinutes} coin/phút
+            {amountCoin > 0 && allowedRecords > 0 && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <p className="text-sm font-medium text-purple-900 mb-1">
+                  Tỷ lệ: {(amountCoin / allowedRecords).toFixed(1)} coin/lượt
                 </p>
-                <p className="text-xs text-blue-700">
-                  {allowedMinutes} phút sẽ tốn {amountCoin} coin
+                <p className="text-xs text-purple-700">
+                  {allowedRecords} lượt ghi âm sẽ tốn {amountCoin} coin
                 </p>
               </div>
             )}
@@ -635,21 +642,21 @@ const totalPages = Math.ceil(totalItems / pageSize);
               variant="outline"
               onClick={() => {
                 setIsUpdateDialogOpen(false);
-                setEditingPackage(null);
+                setEditingRecordCharge(null);
                 setAmountCoin(0);
-                setAllowedMinutes(0);
+                setAllowedRecords(0);
               }}
               className="flex-1 cursor-pointer"
-              disabled={isUpdating}
+              disabled={updateMutation.isPending}
             >
               Hủy
             </Button>
             <Button
               onClick={handleUpdate}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              disabled={isUpdating}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 cursor-pointer"
+              disabled={updateMutation.isPending}
             >
-              {isUpdating ? (
+              {updateMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Đang cập nhật...
@@ -666,33 +673,28 @@ const totalPages = Math.ceil(totalItems / pageSize);
       <Dialog open={isBuyersDialogOpen} onOpenChange={(open) => {
         setIsBuyersDialogOpen(open);
         if (!open) {
-          setSelectedPackageId(null);
+          setSelectedRecordChargeId(null);
           setBuyersPageNumber(1); // Reset pagination when closing
         }
       }}>
         <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
-              Chi tiết người mua gói AI Conversation
+              <Users className="w-5 h-5 text-purple-600" />
+              Chi tiết người mua gói Record Charge
             </DialogTitle>
           </DialogHeader>
           
           {isLoadingBuyers ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
             </div>
-          ) : buyersData?.data?.items ? (
+          ) : buyersData?.data ? (
             (() => {
-              const filteredData =
-                selectedPackageId
-                  ? buyersData.data.items.find(
-                      (item) => item.aiConversationChargeId === selectedPackageId
-                    ) ?? null
-                  : null;
-
-              // If no matching package found, show empty state
-              if (!filteredData) {
+              // API có thể trả về object hoặc mảng object, nên chuẩn hoá lại
+              const rawDetail = buyersData.data as any;
+              const detail = Array.isArray(rawDetail) ? rawDetail[0] : rawDetail;
+              if (!detail) {
                 return (
                   <div className="text-center py-8 text-gray-500">
                     <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -700,32 +702,32 @@ const totalPages = Math.ceil(totalItems / pageSize);
                   </div>
                 );
               }
-
-              const buyers: Buyer[] = filteredData.buyers ?? [];
-              const totalPurchase = filteredData.totalPurchase || 0;
-              const totalAmountCoin = filteredData.totalAmountCoin || 0;
-              const allowedMinutes = filteredData.allowedMinutes || 0;
-              const totalBuyers = filteredData.totalBuyers || 0;
+              const buyers: Buyer[] = detail.buyers ?? [];
+              const summary = detail.summary;
+              const totalBuyer = summary?.totalBuyer || 0;
+              const totalCoin = summary?.totalCoin || 0;
+              const allowedRecordCount = summary?.allowedRecordCount || 0;
+              const totalItems = detail.totalItems || 0;
               
-              // Calculate pagination info - API already returns paginated buyers
-              const totalPages = Math.ceil(totalBuyers / buyersPageSize);
-              const paginatedBuyers = buyers; // API already paginated
+              // Calculate pagination info
+              const totalPages = Math.ceil(totalItems / buyersPageSize);
               const startIndex = (buyersPageNumber - 1) * buyersPageSize;
-              const endIndex = Math.min(startIndex + paginatedBuyers.length, totalBuyers);
+              const endIndex = startIndex + buyersPageSize;
+              const paginatedBuyers = buyers.slice(startIndex, endIndex);
 
               return (
                 <div className="space-y-6">
                   {/* Summary Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="p-4 border-l-4 border-l-blue-500">
+                    <Card className="p-4 border-l-4 border-l-purple-500">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Users className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-purple-600" />
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Tổng người mua</p>
                           <p className="text-xl font-bold text-gray-900">
-                            {totalPurchase}
+                            {totalBuyer}
                           </p>
                         </div>
                       </div>
@@ -739,7 +741,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                         <div>
                           <p className="text-sm text-gray-600">Tổng coin</p>
                           <p className="text-xl font-bold text-gray-900">
-                            {totalAmountCoin}
+                            {totalCoin}
                           </p>
                         </div>
                       </div>
@@ -748,12 +750,12 @@ const totalPages = Math.ceil(totalItems / pageSize);
                     <Card className="p-4 border-l-4 border-l-green-500">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Clock className="w-5 h-5 text-green-600" />
+                          <FileAudio className="w-5 h-5 text-green-600" />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">Phút cho phép</p>
+                          <p className="text-sm text-gray-600">Lượt ghi âm cho phép</p>
                           <p className="text-xl font-bold text-gray-900">
-                            {allowedMinutes}
+                            {allowedRecordCount}
                           </p>
                         </div>
                       </div>
@@ -761,10 +763,10 @@ const totalPages = Math.ceil(totalItems / pageSize);
                   </div>
 
                   {/* Buyers Table */}
-                  {paginatedBuyers.length > 0 ? (
+                  {buyers.length > 0 ? (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Danh sách người mua ({totalBuyers})
+                        Danh sách người mua ({totalItems})
                       </h3>
                       <div className="overflow-x-auto">
                         <Table>
@@ -779,7 +781,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                           </TableHeader>
                           <TableBody>
                             {paginatedBuyers.map((buyer: Buyer, index: number) => (
-                                <TableRow key={`${buyer.userId}-${buyer.createdAt}-${index}`}>
+                              <TableRow key={`${buyer.email}-${index}`}>
                                 <TableCell className="font-medium">
                                   {startIndex + index + 1}
                                 </TableCell>
@@ -789,12 +791,12 @@ const totalPages = Math.ceil(totalItems / pageSize);
                                   <div className="flex items-center gap-2">
                                     <Coins className="w-4 h-4 text-yellow-600" />
                                     <span className="font-semibold text-yellow-700">
-                                      {buyer.amountCoin}
+                                      {buyer.coin}
                                     </span>
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-sm text-gray-600">
-                                  {dayjs(buyer.createdAt).format("DD/MM/YYYY HH:mm")}
+                                  {dayjs(buyer.purchaseDate).format("DD/MM/YYYY HH:mm")}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -803,7 +805,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                       </div>
                       
                       {/* Pagination - Always show if there are buyers */}
-                      {totalBuyers > 0 && (
+                      {totalItems > 0 && (
                         <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
                           {/* Left: Rows per page */}
                           <div className="flex items-center gap-2">
@@ -813,9 +815,9 @@ const totalPages = Math.ceil(totalItems / pageSize);
 
                           {/* Middle: 1–5 of 10 */}
                           <div>
-                            {totalBuyers === 0
+                            {totalItems === 0
                               ? "0–0 of 0"
-                              : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} of ${totalBuyers}`}
+                              : `${startIndex + 1}–${Math.min(endIndex, totalItems)} of ${totalItems}`}
                           </div>
 
                           {/* Right: Previous / Page number / Next */}
@@ -862,8 +864,6 @@ const totalPages = Math.ceil(totalItems / pageSize);
               <p>Không thể tải thông tin người mua</p>
             </div>
           )}
-          
-          
         </DialogContent>
       </Dialog>
 
@@ -891,4 +891,4 @@ const totalPages = Math.ceil(totalItems / pageSize);
   );
 };
 
-export default AiConversationPackageManagement;
+export default RecordChargeManagement;

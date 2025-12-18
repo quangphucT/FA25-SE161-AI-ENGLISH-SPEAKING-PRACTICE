@@ -6,6 +6,7 @@ export interface RecordCategory {
   name: string;
   status?: string;
   createdAt?: Date;
+  numberOfRecord?: number;
 }
 
 export interface RecordCategoryResponse {
@@ -262,5 +263,30 @@ export const LearnerRecordUpdateContentService = async (recordId: string, conten
             throw new Error(error.message || "Cập nhật nội dung record thất bại");
         }
         throw new Error("Cập nhật nội dung record thất bại");
+    }
+}
+export const LearnerBuyRecordChargeService = async (folderId : string, recordChargeId: string): Promise<any> => {
+    try {
+        if (!folderId) {
+            throw new Error("folder ID is required");
+        }
+        const response = await fetchWithAuth(`/api/learner/recordCategory/folder/${folderId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ recordChargeId }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Mua đánh giá record thất bại");
+        }
+        return data;
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(error.message || "Mua đánh giá record thất bại");
+        }
+        throw new Error("Mua đánh giá record thất bại");
     }
 }

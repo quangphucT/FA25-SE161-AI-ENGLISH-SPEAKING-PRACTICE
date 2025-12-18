@@ -17,7 +17,6 @@ export interface CreateExcerciseRequest {
   chapterId: string;
   title: string;
   description: string;
-  orderIndex: number;
   numberOfQuestion: number;
 }
 export interface CreateExcerciseResponse {
