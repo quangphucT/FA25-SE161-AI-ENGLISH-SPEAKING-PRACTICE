@@ -122,12 +122,11 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
   return (
     <div className="max-w-5xl mx-auto">
       {/* Hero Balance Section */}
-      <div className="relative mb-10 p-8 bg-slate-900 rounded-3xl overflow-hidden">
+      <div className="relative mb-10 p-8  rounded-3xl overflow-hidden">
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
+
         
-        <div className="relative flex items-center justify-between">
+        <div className="relative flex items-center justify-between py-6 px-6 rounded-[15px] bg-[rgba(0,0,0,0.05)]">
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-14 h-14 bg-yellow-500 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/30">
@@ -136,7 +135,7 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
               <div>
                 <p className="text-slate-400 text-sm">Số dư của bạn</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-black text-white">{userData?.coinBalance || 0}</span>
+                  <span className="text-5xl font-black text-yellow-500">{userData?.coinBalance || 0}</span>
                   <span className="text-yellow-500 font-semibold">COIN</span>
                 </div>
               </div>
@@ -146,9 +145,9 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
           <Button
             variant="outline"
             onClick={() => setShowHistoryModal(true)}
-            className="bg-slate-800 rounded-3xl  text-white border-slate-700 cursor-pointer"
+            className="bg-white rounded-3xl text-black  border-gray-300 cursor-pointer"
           >
-             Lịch sử
+             Lịch sử giao dịch
           </Button>
         </div>
       </div>
@@ -176,10 +175,22 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-2xl mb-4 group-hover:scale-105 transition-transform duration-300 shadow-md shadow-amber-200/50">
                   <Coins className="w-8 h-8 text-amber-600" />
                 </div>
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl py-3 px-4">
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl py-3 px-4 relative">
+                  {pkg.bonusPercent > 0 && (
+                    <div className="absolute -top-3 -right-3 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                      +{pkg.bonusPercent}%
+                    </div>
+                  )}
                   <p className="text-4xl font-black text-amber-600 mb-0.5">
                     {pkg.numberOfCoin.toLocaleString()}
                   </p>
+                  <div className="h-5">
+                    {pkg.bonusPercent > 0 && (
+                      <p className="text-xs font-medium text-green-600">
+                        + {Math.floor(pkg.numberOfCoin * pkg.bonusPercent / 100).toLocaleString()} coin bonus
+                      </p>
+                    )}
+                  </div>
                   <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide">Coin</p>
                 </div>
               </div>
@@ -252,8 +263,20 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
                     <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-100 rounded-xl mb-3 shadow-sm">
                       <Coins className="w-6 h-6 text-amber-600" />
                     </div>
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg py-2 px-3">
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg py-2 px-3 relative">
+                      {pkg.bonusPercent > 0 && (
+                        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+                          +{pkg.bonusPercent}%
+                        </div>
+                      )}
                       <p className="text-2xl font-black text-amber-600">{pkg.numberOfCoin.toLocaleString()}</p>
+                      <div className="h-4">
+                        {pkg.bonusPercent > 0 && (
+                          <p className="text-[10px] font-medium text-green-600">
+                            + {Math.floor(pkg.numberOfCoin * pkg.bonusPercent / 100).toLocaleString()} bonus
+                          </p>
+                        )}
+                      </div>
                       <p className="text-[10px] font-semibold text-amber-500 uppercase">Coin</p>
                     </div>
                   </div>

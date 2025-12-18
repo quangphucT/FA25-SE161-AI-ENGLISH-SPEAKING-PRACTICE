@@ -160,6 +160,8 @@ const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0)
   const [showUpdateLevelModal, setShowUpdateLevelModal] = useState<boolean>(false);
   const [selectedReviewer, setSelectedReviewer] =
     useState<ReviewerApplicant | null>(null);
+  const [isApproving, setIsApproving] = useState<boolean>(false);
+  const [isRejecting, setIsRejecting] = useState<boolean>(false);
 
   // Form schema for updating reviewer level
   const updateLevelSchema = z.object({
@@ -196,7 +198,9 @@ const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0)
   };
 
   const approveReviewer = async (id: string) => {
+    if (!id || isApproving) return;
     try {
+      setIsApproving(true);
       const response = await approveReviewerMutation(id);
       const isSuccess =
         response?.isSucess ?? response?.isSuccess ?? response?.success ?? true;
@@ -216,11 +220,15 @@ const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0)
       }
     } catch (error) {
       console.error("Error approving reviewer:", error);
+    } finally {
+      setIsApproving(false);
     }
   };
 
   const rejectReviewer = async (id: string) => {
+    if (!id || isRejecting) return;
     try {
+      setIsRejecting(true);
       const response = await rejectReviewerMutation(id);
       const isSuccess =
         response?.isSucess ?? response?.isSuccess ?? response?.success ?? true;
@@ -240,6 +248,8 @@ const currentRevenue = revenueData[selectedRevenueYear] || new Array(12).fill(0)
       }
     } catch (error) {
       console.error("Error rejecting reviewer:", error);
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -1215,17 +1225,17 @@ return context[0].label + " " + selectedRevenueYear;
                         <path d="M18 6L6 18M6 6l12 12" />
                       </svg>
                     </button>
-                    <Button
+                <Button
                   onClick={() => {
                     if (selectedCertificateId) {
                       approveReviewer(selectedCertificateId);
                      
                     }
                   }}
-                  className="absolute top-15 right-3 z-10 bg-green-600 hover:bg-green-700 cursor-pointer"
-                  disabled={!selectedCertificateId}
+                  className="absolute top-15 right-3 z-10 bg-green-600 hover:bg-green-700 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-green-600"
+                  disabled={!selectedCertificateId || isApproving || isRejecting}
                 >
-                  Duyệt
+                  {isApproving ? "Đang duyệt..." : "Duyệt"}
                 </Button>
                 <Button
                   onClick={() => {
@@ -1234,10 +1244,10 @@ return context[0].label + " " + selectedRevenueYear;
                      
                     }
                   }}
-                  className="absolute top-25 right-3 z-10 bg-red-600 hover:bg-red-700 cursor-pointer"
-                  disabled={!selectedCertificateId}
+                  className="absolute top-25 right-3 z-10 bg-red-600 hover:bg-red-700 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-red-600"
+                  disabled={!selectedCertificateId || isApproving || isRejecting}
                 >
-                  Không duyệt
+                  {isRejecting ? "Đang xử lý..." : "Không duyệt"}
                 </Button>
                     <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
                       <button

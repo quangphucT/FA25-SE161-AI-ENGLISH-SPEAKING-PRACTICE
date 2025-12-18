@@ -42,11 +42,7 @@ export default function EnrollCourseManagement() {
   // Fetch enrolled courses data
   const { data: coursesData, isPending: isLoading } = useEnrolledCourseBuyers(
     pageNumber,
-    pageSize
-  );
-
-  // Fetch buyers data when a course is selected
-  const { data: buyersData, isPending: isLoadingBuyers } = useEnrolledCourseBuyers(
+    pageSize,
     buyersPageNumber,
     buyersPageSize
   );
@@ -58,21 +54,17 @@ export default function EnrollCourseManagement() {
     setBuyersPageNumber(1);
   };
 
-  // Process courses data - handle both array and single object
-  const courses = coursesData?.data 
-    ? (Array.isArray(coursesData.data) ? coursesData.data : [coursesData.data])
-    : [];
+  // Process courses data from API response
+  const courses = coursesData?.data?.items || [];
 
-  // Calculate totals
-  const totalCourses = courses.length;
+  // Calculate totals from all courses (not just current page)
+  const totalCourses = coursesData?.data?.totalPackages || 0;
   const totalPurchases = courses.reduce((sum, course) => sum + (course.totalPurchase || 0), 0);
   const totalCoins = courses.reduce((sum, course) => sum + (course.totalAmountCoin || 0), 0);
 
-  // Pagination for courses
+  // Pagination for courses - API already handles pagination
   const totalPages = Math.ceil(totalCourses / pageSize);
-  const startIndex = (pageNumber - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedCourses = courses.slice(startIndex, endIndex);
+  const paginatedCourses = courses; // API returns paginated results
 
   // Get level badge color
   const getLevelBadgeColor = (level: string) => {
@@ -214,7 +206,7 @@ export default function EnrollCourseManagement() {
                       <TableRow key={course.courseId}>
                         <TableCell className="text-center">
                           <div className="flex justify-center">
-                            {startIndex + index + 1}
+                            {(pageNumber - 1) * pageSize + index + 1}
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">
@@ -286,7 +278,7 @@ export default function EnrollCourseManagement() {
                   <div>
                     {totalCourses === 0
                       ? "0–0 of 0"
-                      : `${startIndex + 1}–${Math.min(endIndex, totalCourses)} of ${totalCourses}`}
+                      : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalCourses)} of ${totalCourses}`}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -340,39 +332,33 @@ export default function EnrollCourseManagement() {
             </DialogTitle>
           </DialogHeader>
 
-          {isLoadingBuyers ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
-          ) : buyersData?.data ? (
-            (() => {
-              // Process buyers data - handle both array and single object
-              const allBuyersData = Array.isArray(buyersData.data)
-                ? buyersData.data
-                : [buyersData.data];
-
-              // Filter buyers data by selectedCourseId
-              const filteredData = allBuyersData.find(
-                (item) => item.courseId === selectedCourseId
+          ) : (() => {
+              // Find the selected course from the courses data
+              const selectedCourse = courses.find(
+                (course) => course.courseId === selectedCourseId
               );
 
-              if (!filteredData) {
+              if (!selectedCourse) {
                 return (
                   <div className="text-center py-8 text-gray-500">
                     <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p>Chưa có người đăng ký khóa học này</p>
+                    <p>Không tìm thấy thông tin khóa học</p>
                   </div>
                 );
               }
 
-              const buyers: Buyer[] = filteredData.buyers ?? [];
-              const totalPurchase = filteredData.totalPurchase || 0;
-              const totalAmountCoin = filteredData.totalAmountCoin || 0;
-              const courseTitle = filteredData.title || "N/A";
-              const courseLevel = filteredData.level || "N/A";
+              const buyers: Buyer[] = selectedCourse.buyers ?? [];
+              const totalPurchase = selectedCourse.totalPurchase || 0;
+              const totalAmountCoin = selectedCourse.totalAmountCoin || 0;
+              const courseTitle = selectedCourse.title || " ";
+              const courseLevel = selectedCourse.level || " ";
 
-              // Calculate pagination info
-              const totalBuyers = buyers.length;
+              // Calculate pagination info for buyers
+              const totalBuyers = selectedCourse.totalBuyers || buyers.length;
               const totalPages = Math.ceil(totalBuyers / buyersPageSize);
               const startIndex = (buyersPageNumber - 1) * buyersPageSize;
               const endIndex = startIndex + buyersPageSize;
@@ -393,7 +379,7 @@ export default function EnrollCourseManagement() {
                         Level: {courseLevel}
                       </Badge>
                       <span className="text-sm text-gray-600">
-                        Giá: {filteredData.price?.toLocaleString() || 0} coin
+                        Giá: {selectedCourse.price?.toLocaleString() || 0} coin
                       </span>
                     </div>
                   </div>
@@ -525,13 +511,7 @@ export default function EnrollCourseManagement() {
                   )}
                 </div>
               );
-            })()
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p>Không thể tải thông tin người đăng ký</p>
-            </div>
-          )}
+            })()}
         </DialogContent>
       </Dialog>
     </div>

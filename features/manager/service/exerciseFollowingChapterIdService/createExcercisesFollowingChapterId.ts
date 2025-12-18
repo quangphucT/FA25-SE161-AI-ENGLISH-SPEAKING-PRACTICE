@@ -5,7 +5,7 @@ export const createExcerciseFollowingChapterId = async (
   body: CreateExcerciseRequest
 ): Promise<CreateExcerciseResponse> => {
   try {
-    const { chapterId, title, description, orderIndex, numberOfQuestion } = body;
+    const { chapterId, title, description, numberOfQuestion } = body;
 
     const response = await fetchWithAuth(
       `/api/manager/excerciseApiRoutes/createExerciseFollowingChapterId/${chapterId}`,
@@ -18,7 +18,6 @@ export const createExcerciseFollowingChapterId = async (
         body: JSON.stringify({
           title,
           description,
-          orderIndex,
           numberOfQuestion,
         }),
       }

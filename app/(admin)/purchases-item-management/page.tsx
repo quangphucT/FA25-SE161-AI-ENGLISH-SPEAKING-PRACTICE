@@ -113,7 +113,13 @@ const PurchasesItemManagement = () => {
   };
 
   const getItemType = (purchase: Purchase): string => {
-    return purchase.itemType || "Unknown";
+    const itemTypeMap: Record<string, string> = {
+      "Course": "Khóa học",
+      "ReviewFee": "Phí đánh giá",
+      "AIConversation": "Phí nói chuyện AI",
+      "RecordCharge": "Phí lượt ghi âm",
+    };
+    return itemTypeMap[purchase.itemType || ""] || purchase.itemType || "Không xác định";
   };
 
   const getItemName = (purchase: Purchase): string => {
@@ -221,11 +227,12 @@ const PurchasesItemManagement = () => {
                 />
               </div>
               <Tabs value={itemTypeFilter} onValueChange={(v) => setItemTypeFilter(v)}>
-                <TabsList className="grid grid-cols-4 w-auto">
+                <TabsList className="grid grid-cols-5 w-auto">
                   <TabsTrigger value="All">Tất cả loại</TabsTrigger>
                   <TabsTrigger value="Course">Khóa học</TabsTrigger>
                   <TabsTrigger value="ReviewFee">Phí đánh giá</TabsTrigger>
-                  <TabsTrigger value="AIConversation">AI Conversation</TabsTrigger>
+                  <TabsTrigger value="AIConversation">Phí nói chuyện AI</TabsTrigger>
+                  <TabsTrigger value="RecordCharge">Phí lượt ghi âm</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>

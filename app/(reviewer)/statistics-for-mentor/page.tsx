@@ -17,7 +17,7 @@ import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { signalRService } from "@/lib/realtime/realtime";
 import { ReviewCompleted } from "@/lib/realtime/realtime";
 import { useRealtime } from "@/providers/RealtimeProvider";
-import { CircleCheck, Mic, MessageSquare, User, FileText, Calendar, Star, CheckCircle2, XCircle, Clock, Headphones, Play } from "lucide-react";
+import { CircleCheck, Mic, MessageSquare, User, FileText, Calendar, Star, CheckCircle2, XCircle, Clock, Headphones, Play, Coins } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { uploadAudioToCloudinary } from "@/utils/upload";
@@ -144,7 +144,18 @@ const StatisticsForMentor = () => {
   // Track numberOfReview updates from SignalR events
   const [numberOfReviewUpdates, setNumberOfReviewUpdates] = useState<Record<string, number>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<{ id: string; question: string; audioUrl: string; submittedAt: string; type: string; aiFeedback: string } | null>(null);
+  const [selectedReview, setSelectedReview] = useState<{ 
+    id: string; 
+    questionText: string; 
+    audioUrl: string; 
+    submittedAt: string; 
+    type: string; 
+    aiFeedback: string;
+    transcribedText: string;
+    aiScore: number;
+    learnerFullName: string;
+    expectedReviewerCoin: number;
+  } | null>(null);
   const [isFeedbackDetailModalOpen, setIsFeedbackDetailModalOpen] = useState(false);
   const [selectedFeedbackDetail, setSelectedFeedbackDetail] = useState<ReviewerFeedbackHistory | null>(null);
   const [comment, setComment] = useState("");
@@ -174,11 +185,15 @@ const StatisticsForMentor = () => {
     if (review) {
       setSelectedReview({
         id: review.id,
-        question: review.question,
+        questionText: review.questionText,
         audioUrl: review.audioUrl,
         submittedAt: review.submittedAt,
-        type: review.type ,
+        type: review.type,
         aiFeedback: review.aiFeedback,
+        transcribedText: review.transcribedText,
+        aiScore: review.aiScore,
+        learnerFullName: review.learnerFullName,
+        expectedReviewerCoin: review.expectedReviewerCoin,
       });
       setIsModalOpen(true);
       setComment("");
@@ -324,13 +339,16 @@ const StatisticsForMentor = () => {
     if (!pendingReviewsData?.data?.items) return [];
     return pendingReviewsData.data.items.map((item) => ({
       id: item.id,
-      question: item.questionText,
+      questionText: item.questionText,
       audioUrl: item.audioUrl,
       submittedAt: new Date(item.submittedAt).toLocaleDateString("en-US"),
       status: "Pending",
       learnerFullName: item.learnerFullName,
       type: item.type,
       aiFeedback: item.aiFeedback,
+      transcribedText: item.transcribedText,
+      aiScore: item.aiScore,
+      expectedReviewerCoin: item.expectedReviewerCoin,
       // Use updated numberOfReview from SignalR if available, otherwise use from API
       numberOfReview:
         numberOfReviewUpdates[item.id] !== undefined
@@ -666,47 +684,69 @@ const StatisticsForMentor = () => {
                 availableReviews.map((review) => (
                   <div
                     key={review.id}
-                    className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 cursor-pointer"
+                    className="p-5 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
                     onClick={() => handleOpenReviewModal(review.id)}
                   >
                     <div className="flex items-start gap-4">
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        {/* Question */}
+                        {/* Learner Name & Question */}
                         <div className="mb-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-gray-900">
-                              Question:
-                            </h4>
+                          <div className="flex items-start gap-2 mb-2">
+                            <FileText className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 flex items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <span className="font-semibold text-gray-900 text-sm mr-2">Question:</span>
+                                <span className="text-sm text-gray-700 leading-relaxed">
+                                  {review.questionText}
+                                </span>
+                              </div>
+                              {review.expectedReviewerCoin > 0 && (
+                                <div className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0">
+                                  <Coins className="w-3 h-3" />
+                                  Expected Reward: {review.expectedReviewerCoin}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-700 leading-relaxed">
-                            {review.question}
-                          </p>
                         </div>
+
+                        {/* Transcribed Text Preview */}
+                        {review.transcribedText && (
+                          <div className="mb-3">
+                            <div className="flex items-start gap-2">
+                              <MessageSquare className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 flex items-start gap-2">
+                                <span className="text-xs font-medium text-gray-600 flex-shrink-0">Transcribed:</span>
+                                <span className="text-xs text-gray-600 italic">
+                                  /{review.transcribedText}/
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Audio Player */}
                         <div className="mb-3">
-                          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                            <button className="w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-colors">
-                              <svg
-                                width="16"
-                                height="16"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M8 5v14l11-7z" />
-                              </svg>
-                            </button>
+                          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-full flex items-center justify-center text-white transition-all shadow-md">
+                              <Headphones className="w-5 h-5" />
+                            </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-sm font-medium text-gray-900">
                                   Audio Response
                                 </span>
-                               
+                                {review.aiScore > 0 && (
+                                  <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                    <Star className="w-3 h-3 fill-purple-700" />
+                                    AI: {review.aiScore}/10
+                                  </div>
+                                )}
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div
-                                  className="bg-blue-600 h-2 rounded-full"
+                                  className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full"
                                   style={{ width: "0%" }}
                                 ></div>
                               </div>
@@ -715,12 +755,16 @@ const StatisticsForMentor = () => {
                         </div>
 
                         {/* Meta Info */}
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-gray-500">
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Calendar className="w-3.5 h-3.5" />
                             {review.submittedAt}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {review.numberOfReview}
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold">
+                              <Clock className="w-3 h-3" />
+                              Reviews remaining: {review.numberOfReview}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1083,18 +1127,39 @@ const StatisticsForMentor = () => {
       {/* Review Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent 
-          className="max-w-3xl max-w-4xl min-h-[55vh] max-h-[60vh] overflow-y-auto data-[state=open]:!animate-none data-[state=closed]:!animate-none"
+          className="max-w-3xl max-w-4xl min-h-[50vh] max-h-[60vh] overflow-y-auto data-[state=open]:!animate-none data-[state=closed]:!animate-none"
         >
           <DialogHeader>
-            <DialogTitle>{selectedReview?.question}</DialogTitle>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <DialogTitle className="text-xl">{selectedReview?.questionText}</DialogTitle>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                    /{selectedReview?.transcribedText}/
+                  </p>
+              </div>
+              {selectedReview && selectedReview.expectedReviewerCoin > 0 && (
+                <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 flex-shrink-0">
+                  <Coins className="w-4 h-4 text-yellow-600" />
+                  <span className="text-sm font-semibold text-yellow-800">
+                    Expected Reward: {selectedReview.expectedReviewerCoin} coins
+                  </span>
+                </div>
+              )}
+            </div>
           </DialogHeader>
           
           {selectedReview && (
-            <div className="space-y-5 mt-4">
+            <div className="space-y-5 mt-3">
+              {/* Transcribed Text */}
+              {/* Audio Player */}
               {selectedReview.audioUrl && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-xs font-medium text-slate-700 mb-2">
-                    Audio
+                <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50 p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Headphones className="w-4 h-4 text-blue-600" />
+                    <div className="text-sm font-semibold text-slate-700">
+                      Audio Response
+                    </div>
+                    
                   </div>
                   <audio ref={audioRef} controls className="w-full">
                     <source src={selectedReview.audioUrl} type="audio/mpeg" />
@@ -1140,19 +1205,55 @@ const StatisticsForMentor = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAnswer(!showAnswer)}
-                  className="cursor-pointer"
-                  disabled={recording || isSubmittingReview}
-                >
-                  {showAnswer ? "Hide Ai Feedback" : "> View Ai Feedback"}
-                </Button>
+              {/* AI Feedback Display */}
+              {showAnswer && selectedReview?.aiFeedback && (
+                <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="w-5 h-5 text-purple-600 fill-purple-600" />
+                    <div className="text-sm font-semibold text-purple-800">
+                      AI Feedback
+                    </div>
+                    {selectedReview.aiScore > 0 && (
+                      <div className="ml-auto bg-purple-200 text-purple-800 px-3 py-1 rounded-full text-xs font-bold">
+                        AI Score: {selectedReview.aiScore}/10
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className="text-sm leading-relaxed text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: formatAiFeedbackHtml(selectedReview.aiFeedback),
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Bottom Section: AI Feedback Toggle, Mic button, and Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                {/* AI Feedback Toggle */}
+                <div className="flex justify-start">
+                  {selectedReview.aiFeedback && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAnswer(!showAnswer)}
+                      className="cursor-pointer border-purple-300 hover:bg-purple-50"
+                      disabled={recording || isSubmittingReview}
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      {showAnswer ? "Hide AI Feedback" : "View AI Feedback"}
+                      {selectedReview.aiScore > 0 && (
+                        <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                          Score: {selectedReview.aiScore}/10
+                        </span>
+                      )}
+                    </Button>
+                  )}
+                </div>
+
                 {/* Mic button */}
                 <div
                   id="btn-record"
-                  className="flex flex-col items-center justify-center mt-6 mb-4 gap-3"
+                  className="flex flex-col items-center justify-center gap-3"
                 >
                   <div className="relative flex items-center justify-center">
                     {recording && (
@@ -1209,7 +1310,9 @@ const StatisticsForMentor = () => {
                     </>
                   )}
                 </div>
-                <div className="flex gap-3">
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 justify-end">
                   <Button
                     variant="outline"
                     onClick={handleCloseModal}
@@ -1233,23 +1336,6 @@ const StatisticsForMentor = () => {
                   </Button>
                 </div>
               </div>
-
-              
-              {showAnswer && (
-                <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="text-sm font-medium text-slate-700 mb-1">
-                    Ai Feedback
-                  </div>
-                  <p className="text-sm text-slate-700">
-                  <div
-                    className="text-sm leading-relaxed text-slate-700 space-y-2"
-                    dangerouslySetInnerHTML={{
-                      __html: formatAiFeedbackHtml(selectedReview?.aiFeedback || ""),
-                    }}
-                  />
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>

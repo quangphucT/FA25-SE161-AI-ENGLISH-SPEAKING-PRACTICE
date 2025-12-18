@@ -50,7 +50,8 @@ const PracticeRecordLayout = () => {
   // Lấy record hiện tại
   const currentRecord = recordsList[currentQuestionIndex] || null;
   const currentRecordId = currentRecord?.recordId || recordId || "";
-  const currentContent = currentRecord?.content || content || "";
+  // Ưu tiên content từ query params nếu có, sau đó mới dùng từ currentRecord
+  const currentContent = content || currentRecord?.content || "";
 
   const [language, setLanguage] = useState<"en-gb" | "en">("en-gb");
   const [score, setScore] = useState<number>(0);
@@ -59,7 +60,7 @@ const PracticeRecordLayout = () => {
   const [recording, setRecording] = useState<boolean>(false);
   const [uiBlocked, setUiBlocked] = useState<boolean>(false);
   const [mainTitle, setMainTitle] = useState<string>(
-    "AESP- An English Speaking Practice with AI"
+    // "An English Speaking Practice with AI"
   );
   const [pronunciationAccuracy, setPronunciationAccuracy] =
     useState<string>("");
@@ -331,7 +332,7 @@ const PracticeRecordLayout = () => {
           score: finalScore,
           feedback: finalFeedback.substring(0, 50) + "...",
         });
-
+        
         // Update record
         await updateRecord({
           recordId: targetRecordId,
@@ -383,7 +384,7 @@ const PracticeRecordLayout = () => {
 
   const initializeServer = useCallback(async () => {
     let valid = false;
-    setMainTitle("Initializing server, this may take up to 2 minutes...");
+    //setMainTitle("Initializing server, this may take up to 2 minutes...");
     let tries = 0;
     const maxTries = 4;
     while (!valid) {
@@ -412,7 +413,7 @@ const PracticeRecordLayout = () => {
     }
   }, [AILanguage, STScoreAPIKey, apiMainPathSTS]);
 
-  const getNextSample = useCallback(async () => {
+  const getNextSample = useCallback(async (overrideContent?: string) => {
     setUiBlocked(true);
     if (!serverIsInitialized) {
       await initializeServer();
@@ -455,12 +456,15 @@ const PracticeRecordLayout = () => {
       //   return;
       // }
 
+      // Use overrideContent if provided, otherwise use currentContent or content from URL
+      const questionContent = overrideContent || currentContent || content;
+      
       const res = await fetch(apiMainPathSample + "/getSample", {
         method: "post",
         body: JSON.stringify({
           category: 1,
           language: AILanguage,
-          question: currentContent || content,
+          question: questionContent,
         }),
         headers: { "X-Api-Key": STScoreAPIKey },
       });
@@ -473,7 +477,7 @@ const PracticeRecordLayout = () => {
       setPronunciationAccuracy("");
       setSingleWordPair("Reference | Spoken");
  
-      setMainTitle("An English Practice Speaking with AI ");
+      setMainTitle("An English Practice Speaking with AI");
       setTranslatedScript(data.transcript_translation || "");
       setCurrentSoundRecorded(false);
     } catch {
@@ -518,9 +522,9 @@ const PracticeRecordLayout = () => {
         router.replace(
           `/learner_record/${folderId}?recordId=${nextRecord.recordId}&content=${encodeURIComponent(nextRecord.content)}`
         );
-        // Fetch new sample for the new question
+        // Fetch new sample for the new question with the new content
         setTimeout(() => {
-          getNextSample();
+          getNextSample(nextRecord.content);
         }, 100);
       }
     }
@@ -546,88 +550,17 @@ const PracticeRecordLayout = () => {
         router.replace(
           `/learner_record/${folderId}?recordId=${prevRecord.recordId}&content=${encodeURIComponent(prevRecord.content)}`
         );
-        // Fetch new sample for the new question
+        // Fetch new sample for the new question with the new content
         setTimeout(() => {
-          getNextSample();
+          getNextSample(prevRecord.content);
         }, 100);
       }
     }
   }, [currentQuestionIndex, recordsList, folderId, router, getNextSample]);
 
-  // Handle go back - upload audio and create record
-  const handleGoBack = useCallback(async () => {
-    if (!folderId) {
-      router.push("/dashboard-learner-layout?menu=learnerRecord");
-      return;
-    }
-
-    // Check if there's recorded audio
-    if (!recordedAudioBlobRef.current) {
-      // No audio recorded, just go back
-      router.push("/dashboard-learner-layout?menu=learnerRecord");
-      return;
-    }
-
-    try {
-      setUiBlocked(true);
-      setMainTitle("Đang tải audio lên...");
-
-      const recordedMp3Blob = recordedAudioBlobMp3Ref.current;
-      if (!recordedMp3Blob) {
-        setMainTitle("Không tìm thấy audio để tải lên");
-        setUiBlocked(false);
-        return;
-      }
-
-      // Convert blob to File
-      const audioFile = new File(
-        [recordedMp3Blob],
-        `record-${Date.now()}.mp3`,
-        { type: "audio/mp3" }
-      );
-      console.log("audioFile", audioFile);
-      // Upload to Cloudinary
-      const audioUrl = await uploadAudioToCloudinary(audioFile);
-      
-      if (!audioUrl) {
-        setMainTitle("Lỗi khi tải audio lên");
-        setTimeout(() => {
-          router.push("/dashboard-learner-layout?menu=learnerRecord");
-        }, 2000);
-        return;
-      }
-
-      setMainTitle("Đang tạo record...");
-
-      // Get score and feedback from current state
-      const finalScore = score.toString();
-      const finalFeedback = aiFeedback || "";
-
-      // Update record
-      await updateRecord({
-        recordId: currentRecordId || recordId,
-        reviewData: {
-          audioRecordingURL: audioUrl,
-          score: Number(finalScore),
-          aiFeedback: finalFeedback,
-          transcribedText: Array.isArray(matchedTranscriptsIpa) ? matchedTranscriptsIpa.join(" ") : matchedTranscriptsIpa || "",
-        },
-      });
-
-      setMainTitle("Tạo record thành công!");
-      setTimeout(() => {
-        router.push("/dashboard-learner-layout?menu=learnerRecord");
-      }, 1500);
-    } catch (error) {
-      console.error("Error creating record:", error);
-      setMainTitle("Lỗi khi tạo record");
-      setTimeout(() => {
-        router.push("/dashboard-learner-layout?menu=learnerRecord");
-      }, 2000);
-    } finally {
-      setUiBlocked(false);
-    }
-  }, [folderId, score, aiFeedback, updateRecord, router, currentRecordId, recordId, matchedTranscriptsIpa]);
+  const handleGoBack = useCallback(() => {
+    router.push("/dashboard-learner-layout?menu=learnerRecord");
+  }, [router]);
 
   // Utility functions from original code
   const convertBlobToBase64 = useCallback(async (blob: Blob) => {
@@ -684,7 +617,6 @@ const PracticeRecordLayout = () => {
         if (typeof text !== "string") {
           text = String(text);
         }
-
         // Remove HTML tags
         text = text.replace(/<[^>]*>?/gm, "");
 
@@ -1020,7 +952,7 @@ const PracticeRecordLayout = () => {
             const acc = parseFloat(pronunciationAccuracyValue);
             if (!Number.isNaN(acc)) playSoundForAnswerAccuracy(acc);
             setRecordedIpaScript(`/ ${data?.ipa_transcript || ""} /`); 
-            setMainTitle("An English Practice Speaking with AI ");
+            setMainTitle("An English Practice Speaking with AI");
             setPronunciationAccuracy(`${pronunciationAccuracyValue}%`);
             const feedbackValue = data?.AIFeedback || data?.aiFeedback || data?.feedback || "";
             console.log("data?.AIFeedback", data?.AIFeedback);
@@ -1132,7 +1064,7 @@ const PracticeRecordLayout = () => {
   return (
     <>
       <Head>
-        <title>An English Practice Speaking with AI </title>
+        <title>An English Practice Speaking with AI</title>
         <link
           href="https://fonts.googleapis.com/icon?family=Material+Icons"
           rel="stylesheet"
@@ -1336,7 +1268,7 @@ const PracticeRecordLayout = () => {
             <div id="nextButtonDiv" className="absolute right-4 top-1/2 -translate-y-1/2">
               <button
                 id="buttonNext"
-                onClick={getNextSample}
+                onClick={() => getNextSample()}
                 disabled={uiBlocked}
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >

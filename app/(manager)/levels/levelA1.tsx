@@ -125,6 +125,29 @@ interface Media {
 interface LevelProps {
   level: string;
 }
+
+function CourseStatusBadge({ status }: { status?: string }) {
+  if (status === "Active") {
+    return (
+      <span className="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+        Đang hoạt động
+      </span>
+    );
+  }
+
+  if (status === "Inactive") {
+    return (
+      <span className="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+        Ngưng hoạt động
+      </span>
+    );
+  }
+
+  return null;
+}
+
+
+
 const LevelA1 = ({ level }: LevelProps) => {
   const {
     data: response,
@@ -144,10 +167,11 @@ const { mutateAsync: uploadImage } = useUploadImage();
 const { mutateAsync: uploadVideo } = useUploadVideo();
 
   // State for multiple questions
-  const [questionsList, setQuestionsList] = useState<Array<{text: string;type: number;orderIndex: number;
-      phonemeJson: string;
-    }>
-  >([]);
+const [questionsList, setQuestionsList] = useState<Array<{
+  text: string;
+  type: number;
+}>>([]);
+
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteChapterDialog, setShowDeleteChapterDialog] = useState(false);
@@ -176,6 +200,40 @@ const [viewingQuestionDetails, setViewingQuestionDetails] = useState<Question | 
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [editingMedia, setEditingMedia] = useState<Media | null>(null);
   const [viewingMediaDetails, setViewingMediaDetails] = useState<Media | null>(null);
+
+
+  useEffect(() => {
+  // 🔁 Khi đổi Course → reset toàn bộ state con
+
+  // Selection hierarchy
+  setSelectedChapter(null);
+  setSelectedExercise(null);
+  setSelectedQuestion(null);
+
+  // Temporary data
+  setQuestionsList([]);
+
+  // Close modals
+  setShowChapterModal(false);
+  setShowExerciseModal(false);
+  setShowQuestionModal(false);
+  setShowEditQuestionModal(false);
+  setShowMediaModal(false);
+
+  // Clear editing states
+  setEditingChapter(null);
+  setEditingExercise(null);
+  setEditingQuestion(null);
+  setEditingMedia(null);
+
+  // Clear viewing states
+  setViewingChapterDetails(null);
+  setViewingExerciseDetails(null);
+  setViewingQuestionDetails(null);
+  setViewingMediaDetails(null);
+
+}, [selectedCourse?.courseId]);
+
   const { mutate: createCourseMutation } = useCreateCourse();
   const { mutate: updateCourseMutation } = useUpdateCourse();
   const { mutate: deleteCourseMutation } = useDeleteCourse();
@@ -203,6 +261,20 @@ const [viewingQuestionDetails, setViewingQuestionDetails] = useState<Question | 
   selectedExercise?.exerciseId || "",
   !!selectedExercise?.exerciseId
 );
+
+
+const detectQuestionType = (text: string): number => {
+  const normalized = text
+    .trim()
+    .replace(/\s+/g, " "); // xoá space dư
+
+  const wordCount = normalized.split(" ").length;
+
+  if (wordCount <= 1) return 0;      // word
+  if (wordCount === 2) return 1;     // phrase
+  return 2;                          // sentence
+};
+
 
 const {
   data: mediaData,
@@ -252,15 +324,61 @@ useEffect(() => {
     { label: "phrase", value: 1 },
   ];
 
+const QUESTION_TYPE_LABEL_VI = (type: string | number) => {
+  const normalized =
+    typeof type === "number"
+      ? type
+      : type.toString().toLowerCase();
+
+  switch (normalized) {
+    case 0:
+    case "word":
+      return "Từ đơn";
+
+    case 1:
+    case "phrase":
+      return "Cụm từ";
+
+    case 2:
+    case "sentence":
+      return "Câu";
+
+    default:
+      return "Không xác định";
+  }
+};
+
+  
   // Course Schema and Form
   const courseSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
     level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"], "Level is required"),
     numberOfChapter: z.coerce.number().int().min(0, "Must be >= 0"),
-    price: z.coerce.number().min(0, "Price must be >= 0"),
-    orderIndex: z.coerce.number().int().min(0, "Order index must be >= 0"),
-    duration: z.coerce.number().int().min(0, "Duration must be >= 0"),
+price: z.coerce
+  .number()
+  .min(0)
+  .superRefine((val, ctx) => {
+    if (!Number.isInteger(val)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Phải nhập số nguyên",
+      });
+    }
+  }),
+
+duration: z.coerce
+  .number()
+  .min(0)
+  .superRefine((val, ctx) => {
+    if (!Number.isInteger(val)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Phải nhập số nguyên",
+      });
+    }
+  }),
+
     status: z.enum(["Active", "Inactive"], "Status is required"),
   });
 
@@ -275,7 +393,6 @@ useEffect(() => {
       level: "A1",
       numberOfChapter: 0,
       price: 0,
-      orderIndex: 0,
       duration: 0,
       status: "Active",
     },
@@ -286,7 +403,6 @@ useEffect(() => {
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
     numberOfExercise: z.coerce.number().int().min(0, "Must be >= 0").default(0),
-    courseId: z.string().optional(), // Optional courseId for moving chapter
   });
 
   type ChapterFormValues = z.infer<typeof chapterSchema>;
@@ -298,7 +414,6 @@ useEffect(() => {
       title: "",
       description: "",
       numberOfExercise: 0,
-      courseId: undefined,
     },
   });
 
@@ -306,7 +421,6 @@ useEffect(() => {
   const exerciseSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
-    orderIndex: z.coerce.number().int().min(0, "Order index must be >= 0"),
     numberOfQuestion: z.coerce.number().int().min(0, "Must be >= 0").default(0),
   });
 
@@ -318,43 +432,49 @@ useEffect(() => {
     defaultValues: {
       title: "",
       description: "",
-      orderIndex: 0,
       numberOfQuestion: 0,
     },
   });
 
   // Question Schema and Form
-  const questionSchema = z.object({
-    text: z.string().min(1, "Question text is required"),
-    type: z.coerce.number().int().min(0, "Type must be >= 0").default(0),
-    orderIndex: z.coerce.number().int().min(0, "Order index must be >= 0"),
-    phonemeJson: z.string().min(1, "Phoneme JSON is required"),
-  });
+ // ===============================
+// CREATE QUESTION (NO orderIndex)
+// ===============================
+const createQuestionSchema = z.object({
+  text: z.string().min(1, "Question text is required"),
+type: z.number().int().min(0),
+});
 
-  type QuestionFormValues = z.infer<typeof questionSchema>;
+type CreateQuestionFormValues = z.infer<typeof createQuestionSchema>;
 
-  const questionFormMethods = useForm<QuestionFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(questionSchema) as any,
-    defaultValues: {
-      text: "",
-      type: 0,
-      orderIndex: 0,
-      phonemeJson: "",
-    },
-  });
+const questionFormMethods = useForm<CreateQuestionFormValues>({
+  resolver: zodResolver(createQuestionSchema),
+  defaultValues: {
+    text: "",
+    type: 0,
+  },
+});
+
 
   // Edit Single Question Form (separate from multi-create)
-  const editQuestionFormMethods = useForm<QuestionFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(questionSchema) as any,
-    defaultValues: {
-      text: "",
-      type: 0,
-      orderIndex: 0,
-      phonemeJson: "",
-    },
-  });
+  const updateQuestionSchema = z.object({
+  text: z.string().min(1),
+  type: z.number().int().min(0),
+orderIndex: z.number().int().min(0),
+  phonemeJson: z.string().optional(),
+});
+
+type UpdateQuestionFormValues = z.infer<typeof updateQuestionSchema>;
+
+const editQuestionFormMethods = useForm<UpdateQuestionFormValues>({
+  resolver: zodResolver(updateQuestionSchema),
+  defaultValues: {
+    text: "",
+    type: 0,
+    orderIndex: 0,
+    phonemeJson: "",
+  },
+});
 
   // const mediaSchema = z.object({
   //   accent: z.string().min(1, "Accent is required"),
@@ -410,7 +530,6 @@ useEffect(() => {
       level: "A1",
       numberOfChapter: 0,
       price: 0,
-      orderIndex: 0,
       status: "Active",
       duration: 0,
     });
@@ -425,7 +544,6 @@ useEffect(() => {
       level: course.level as "A1" | "A2" | "B1" | "B2" | "C1" | "C2",
       numberOfChapter: course.numberOfChapter,
       price: course.price,
-      orderIndex: course.orderIndex ?? 0,
       duration: course.duration || 0,
       status: (course.status as "Active" | "Inactive") || "Active",
     });
@@ -462,45 +580,38 @@ useEffect(() => {
     title: chapter.title,
     description: chapter.description,
     numberOfExercise: chapter.numberOfExercise || 0,
-    courseId: selectedCourse?.courseId || "",
   });
   setShowChapterModal(true);
 };
 
 
-  const onSubmitChapter = (values: ChapterFormValues) => {
-    // For create: must have selectedCourse
-    // For update: can use values.courseId (if moving) or selectedCourse
-    const targetCourseId = editingChapter
-      ? values.courseId || selectedCourse?.courseId
-      : selectedCourse?.courseId;
+ const onSubmitChapter = (values: ChapterFormValues) => {
+  if (!selectedCourse) {
+    toast.error("Please select a course first");
+    return;
+  }
 
-    if (!targetCourseId) {
-      console.error("No course selected");
-      toast.error("Please select a course first");
-      return;
-    }
-
-    if (editingChapter) {
-      updateChapterMutation({
-        id: editingChapter.chapterId,
-        payload: {
-          courseId: targetCourseId,
-          title: values.title,
-          description: values.description,
-          numberOfExercise: values.numberOfExercise,
-        },
-      });
-    } else {
-      createChapterMutation({
-        courseId: targetCourseId,
+  if (editingChapter) {
+    updateChapterMutation({
+      id: editingChapter.chapterId,
+      payload: {
+        courseId: selectedCourse.courseId, // 🔒 FIX CỨNG
         title: values.title,
         description: values.description,
         numberOfExercise: values.numberOfExercise,
-      });
-    }
-    setShowChapterModal(false);
-  };
+      },
+    });
+  } else {
+    createChapterMutation({
+      courseId: selectedCourse.courseId,
+      title: values.title,
+      description: values.description,
+      numberOfExercise: values.numberOfExercise,
+    });
+  }
+
+  setShowChapterModal(false);
+};
 
   // Exercise Handlers
   const handleCreateExercise = () => {
@@ -508,7 +619,6 @@ useEffect(() => {
     exerciseFormMethods.reset({
       title: "",
       description: "",
-      orderIndex: 0,
       numberOfQuestion: 0,
     });
     setShowExerciseModal(true);
@@ -519,7 +629,6 @@ useEffect(() => {
     exerciseFormMethods.reset({
       title: exercise.title,
       description: exercise.description,
-      orderIndex: exercise.orderIndex,
       numberOfQuestion: 0, // hoặc lấy từ exercise nếu có field này
     });
     setShowExerciseModal(true);
@@ -540,7 +649,6 @@ useEffect(() => {
           chapterId: selectedChapter!.chapterId || "", // Use current expanded chapter
           title: values.title,
           description: values.description,
-          orderIndex: values.orderIndex,
           numberOfQuestion: values.numberOfQuestion,
         },
       });
@@ -549,7 +657,6 @@ useEffect(() => {
   chapterId: selectedChapter!.chapterId,
         title: values.title,
         description: values.description,
-        orderIndex: values.orderIndex,
         numberOfQuestion: values.numberOfQuestion,
       });
     }
@@ -560,36 +667,42 @@ useEffect(() => {
   // Question Handlers
   const handleCreateQuestion = () => {
     questionFormMethods.reset({
-      text: "",
-      type: 0,
-      orderIndex: 0,
-      phonemeJson: "",
-    });
+  text: "",
+  type: 0,
+});
+
     setQuestionsList([]); // Reset questions list
     setShowQuestionModal(true);
   };
 
-  const handleAddQuestionToList = (values: QuestionFormValues) => {
-    setQuestionsList([
-      ...questionsList,
-      {
-        text: values.text,
-        type: values.type,
-        orderIndex: values.orderIndex,
-        phonemeJson: values.phonemeJson,
-      },
-    ]);
+const handleAddQuestionToList = (values: CreateQuestionFormValues) => {
+  const autoType = detectQuestionType(values.text);
 
-    // Reset form for next question
-    questionFormMethods.reset({
-      text: "",
-      type: 0,
-      orderIndex: questionsList.length + 1, // Auto increment order
-      phonemeJson: "",
-    });
+  setQuestionsList([
+    ...questionsList,
+    {
+      text: values.text,
+      type: autoType, // ✅ AUTO
+    },
+  ]);
 
-    toast.success("Question added to list");
-  };
+  questionFormMethods.reset({
+    text: "",
+    type: autoType, // optional – chỉ để UI sync
+  });
+
+  toast.success("Question added (auto detect type)");
+};
+
+const watchedQuestionText = questionFormMethods.watch("text");
+
+useEffect(() => {
+  if (!watchedQuestionText) return;
+
+  const autoType = detectQuestionType(watchedQuestionText);
+  questionFormMethods.setValue("type", autoType);
+}, [watchedQuestionText]);
+
 
   const handleRemoveQuestion = (index: number) => {
     setQuestionsList(questionsList.filter((_, i) => i !== index));
@@ -637,22 +750,25 @@ useEffect(() => {
     setShowEditQuestionModal(true);
   };
 
-  const onSubmitEditQuestion = (values: QuestionFormValues) => {
-    if (!editingQuestion) return;
+const onSubmitEditQuestion = (values: UpdateQuestionFormValues) => {
+  if (!editingQuestion) return;
 
-    updateQuestionMutation({
-      id: editingQuestion.questionId,
-      payload: {
-        text: values.text,
-        type: values.type,
-        orderIndex: values.orderIndex,
-        phonemeJson: values.phonemeJson,
-      },
-    });
+  const autoType = detectQuestionType(values.text);
 
-    setShowEditQuestionModal(false);
-    setEditingQuestion(null);
-  };
+  updateQuestionMutation({
+    id: editingQuestion.questionId,
+    payload: {
+      text: values.text,
+      type: autoType, // ✅ FIX
+      orderIndex: values.orderIndex,
+      phonemeJson: values.phonemeJson ?? "",
+    },
+  });
+
+  setShowEditQuestionModal(false);
+  setEditingQuestion(null);
+};
+
 
   // Media Handlers
   
@@ -843,25 +959,28 @@ useEffect(() => {
   <div className="w-1/3 bg-white border p-4 rounded-lg">
 
 <div className="flex justify-between items-center mb-3">
-  <h2 className="text-lg font-semibold">Courses</h2>
+  <h2 className="text-lg font-semibold">Khoá học</h2>
   <Button size="sm" onClick={handleCreateCourse}>
-    + Add Course
+    + Thêm khoá học
   </Button>
 </div>
   {sortedCourses.map((course) => (
   <div
     key={course.courseId}
-    onClick={() => {
-      setSelectedCourse(course);
-      setSelectedChapter(null);
-    }}
+   onClick={() => {
+  setSelectedCourse(course);
+}}
+
     className={`p-3 mb-2 rounded-lg cursor-pointer border flex justify-between items-center ${
       selectedCourse?.courseId === course.courseId
         ? "bg-blue-50 border-blue-500"
         : "hover:bg-gray-50"
     }`}
   >
-   <p className="font-medium">{course.title}</p>
+<div className="flex items-center">
+  <p className="font-medium">{course.title}</p>
+  <CourseStatusBadge status={course.status} />
+</div>
 
 <div className="flex gap-2">
   <Button
@@ -903,17 +1022,20 @@ useEffect(() => {
 
     {selectedCourse && (
       <>
-        <h3 className="mt-5 mb-2 font-semibold">Chapters</h3>
+        <h3 className="mt-5 mb-2 font-semibold">Chương</h3>
 
    {chaptersData?.data?.map((chapter) => (
   <div
     key={chapter.chapterId}
     onClick={() => setSelectedChapter(chapter)}
     className={`p-3 mb-2 rounded-lg cursor-pointer border flex justify-between items-center ${
-      selectedChapter?.chapterId === chapter.chapterId
-        ? "bg-green-50 border-green-600"
-        : "hover:bg-gray-50"
-    }`}
+  selectedChapter?.chapterId === chapter.chapterId
+    ? "bg-green-50 border-green-600"
+    : selectedCourse?.status === "Inactive"
+    ? "opacity-60 hover:bg-gray-50"
+    : "hover:bg-gray-50"
+}`}
+
   >
     <p className="font-medium">{chapter.title}</p>
 
@@ -965,7 +1087,7 @@ useEffect(() => {
           className="mt-3 w-full"
           onClick={handleCreateChapter}
         >
-          + Add Chapter
+          + Thêm chương
         </Button>
       </>
     )}
@@ -984,9 +1106,9 @@ useEffect(() => {
   {selectedChapter && (
   <div>
     <div className="flex justify-between items-center mb-4">
-      <h2 className="text-lg font-semibold">Exercises</h2>
+      <h2 className="text-lg font-semibold">Bài tập</h2>
       <Button size="sm" onClick={handleCreateExercise}>
-        + Add Exercise
+        + Thêm bài tập
       </Button>
     </div>
 
@@ -1056,13 +1178,13 @@ onClick={() => {
 {selectedExercise && (
   <div className="mt-8 border-t pt-4">
     <div className="flex justify-between items-center mb-3">
-      <h2 className="text-lg font-semibold">Questions</h2>
+      <h2 className="text-lg font-semibold">Câu hỏi</h2>
       <Button size="sm" onClick={handleCreateQuestion}>
-        + Add Question
+        + Thêm câu hỏi
       </Button>
     </div>
 
-    {isQuestionsLoading && <p>Loading questions...</p>}
+    {isQuestionsLoading && <p>Đang tải câu hỏi...</p>}
 
   {questionsData?.data?.map((question) => (
   <div
@@ -1079,9 +1201,10 @@ ${
     <div className="flex justify-between">
       <div>
         <p className="font-medium">{question.text}</p>
-        <p className="text-sm text-gray-500">
-          Type: {question.type} | Order: {question.orderIndex}
-        </p>
+      <p className="text-sm text-gray-500">
+  Loại: {QUESTION_TYPE_LABEL_VI(question.type)}
+</p>
+
       </div>
 
       <div className="flex gap-2">
@@ -1128,29 +1251,43 @@ ${
   </div>
 )}
 {/* MEDIA OF QUESTION */}
-{selectedQuestion && mediaData?.data && mediaData.data.length > 0 && (
+{selectedQuestion && (
   <div className="mt-6 border-t pt-4">
     <div className="flex justify-between items-center mb-3">
-     <h2 className="text-lg font-semibold">
-  Media của câu hỏi: 
-  <span className="text-purple-600 ml-2">
-    {selectedQuestion?.text}
-  </span>
-</h2>
+      <h2 className="text-lg font-semibold">
+        Media của câu hỏi:
+        <span className="text-purple-600 ml-2">
+          {selectedQuestion.text}
+        </span>
+      </h2>
 
       <Button size="sm" onClick={handleCreateMedia}>
-        + Add Media
+        + Thêm phương tiện
       </Button>
     </div>
 
-{mediaData?.data?.map((media) => (
+    {/* LOADING */}
+    {!mediaData && (
+      <p className="text-gray-500 text-sm">Đang tải phương tiện...</p>
+    )}
+
+    {/* EMPTY STATE */}
+    {mediaData?.data?.length === 0 && (
+      <div className="p-4 border rounded-lg bg-gray-50 text-gray-500 text-sm">
+        Chưa có media cho câu hỏi này.  
+        Nhấn <b>+ Add Media</b> để tạo.
+      </div>
+    )}
+
+    {/* MEDIA LIST */}
+    {mediaData?.data?.map((media) => (
       <div
         key={media.questionMediaId}
         className="p-3 mb-2 border rounded-lg flex justify-between items-center"
       >
         <div>
           <p className="font-medium">Accent: {media.accent}</p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 break-all">
             {media.audioUrl || media.videoUrl || media.imageUrl || "No source"}
           </p>
         </div>
@@ -1159,9 +1296,7 @@ ${
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => {
-              setViewingMediaDetails(media);
-            }}
+            onClick={() => setViewingMediaDetails(media)}
           >
             👁
           </Button>
@@ -1169,9 +1304,7 @@ ${
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => {
-              handleEditMedia(media);
-            }}
+            onClick={() => handleEditMedia(media)}
           >
             ✏️
           </Button>
@@ -1179,9 +1312,7 @@ ${
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => {
-              handleDeleteMedia(media);
-            }}
+            onClick={() => handleDeleteMedia(media)}
           >
             🗑
           </Button>
@@ -1190,6 +1321,7 @@ ${
     ))}
   </div>
 )}
+
 
   </div>
 
@@ -1201,7 +1333,7 @@ ${
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingCourse ? "Edit Course" : "Create New Course"}
+              {editingCourse ? "Chỉnh sửa Course" : "Tạo Course mới"}
             </DialogTitle>
           </DialogHeader>
 
@@ -1215,7 +1347,7 @@ ${
                 control={courseFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course Title</FormLabel>
+                    <FormLabel>Tiêu đề khoá học</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Basic Speaking Practice"
@@ -1232,7 +1364,7 @@ ${
                 control={courseFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Mô tả</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Learn basic English speaking skills"
@@ -1250,7 +1382,7 @@ ${
                   control={courseFormMethods.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Level</FormLabel>
+                      <FormLabel>Cấp độ</FormLabel>
                       <FormControl>
                         <Select
                           value={field.value}
@@ -1278,7 +1410,7 @@ ${
                   control={courseFormMethods.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Number of Chapters</FormLabel>
+                      <FormLabel>Số lượng chương</FormLabel>
                       <FormControl>
                         <Input type="number" min={0} {...field} />
                       </FormControl>
@@ -1289,27 +1421,15 @@ ${
               </div>
 
               <div className="grid grid-cols-2 gap-6">
-                <FormField
-                  name="orderIndex"
-                  control={courseFormMethods.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Order Index</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={0} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+               
                 <FormField
                   name="price"
                   control={courseFormMethods.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price</FormLabel>
+                      <FormLabel>Giá</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="5" {...field} />
+                        <Input type="number" min={0} step="any" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1321,9 +1441,9 @@ ${
                   control={courseFormMethods.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duration</FormLabel>
+                      <FormLabel>Thời hạn</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} step="5" {...field} />
+                        <Input type="number" min={0} step="any" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1335,7 +1455,7 @@ ${
                   <FormField name="status" control={courseFormMethods.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>Trạng thái</FormLabel>
                         <FormControl>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <SelectTrigger>
@@ -1362,13 +1482,13 @@ ${
                   variant="outline"
                   onClick={() => setShowCourseModal(false)}
                 >
-                  Cancel
+                  Huỷ
                 </Button>
                 <Button
                   type="submit"
                   className=" text-white cursor-pointer"
                 >
-                  {editingCourse ? "Update" : "Create"} Course
+                  {editingCourse ? "Cập nhật" : "Tạo"} Course
                 </Button>
               </DialogFooter>
             </form>
@@ -1381,7 +1501,7 @@ ${
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingChapter ? "Edit Chapter" : "Create New Chapter"}
+              {editingChapter ? "Chỉnh sửa chương" : "Tạo chương mới"}
             </DialogTitle>
           </DialogHeader>
 
@@ -1395,7 +1515,7 @@ ${
                 control={chapterFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Chapter Title</FormLabel>
+                    <FormLabel>Tiêu đề chương</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Introduction to English"
@@ -1412,7 +1532,7 @@ ${
                 control={chapterFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Mô tả chương</FormLabel>
                     <FormControl>
                       <Input placeholder="Chapter description..." {...field} />
                     </FormControl>
@@ -1421,82 +1541,14 @@ ${
                 )}
               />
 
-              {/* Course Select - Only show when editing */}
-              {editingChapter && (
-                <FormField
-                  name="courseId"
-                  control={chapterFormMethods.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Move to Course (Optional)</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a course to move this chapter" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                    {sortedCourses.map((course) => (
-  <div
-    key={course.courseId}
-    onClick={() => {
-      setSelectedCourse(course);
-      setSelectedChapter(null);
-      refetchChapters();
-    }}
-    className={`p-3 mb-2 rounded-lg cursor-pointer border flex justify-between items-center ${
-      selectedCourse?.courseId === course.courseId
-        ? "bg-blue-50 border-blue-500"
-        : "hover:bg-gray-50"
-    }`}
-  >
-    <p className="font-medium">{course.title}</p>
-
-    <div className="flex gap-2">
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleEditCourse(course);
-        }}
-      >
-        ✏️
-      </Button>
-
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleDelete(course);
-        }}
-      >
-        🗑
-      </Button>
-    </div>
-  </div>
-))}
-
-
-
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+             
 
               <FormField
                 name="numberOfExercise"
                 control={chapterFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Exercises</FormLabel>
+                    <FormLabel>Số lượng bài tập</FormLabel>
                     <FormControl>
                       <Input type="number" min={0} {...field} />
                     </FormControl>
@@ -1512,14 +1564,14 @@ ${
                   variant="outline"
                   onClick={() => setShowChapterModal(false)}
                 >
-                  Cancel
+                  Huỷ
                 </Button>
                 <Button
                   type="submit"
                   className=" text-white cursor-pointer"
                   
                 >
-                  {editingChapter ? "Update Chapter" : "Create Chapter"}
+                  {editingChapter ? "Cập nhật chương" : "Tạo chương mới"}
                 </Button>
               </DialogFooter>
             </form>
@@ -1532,7 +1584,7 @@ ${
         <DialogContent className="max-w-2xl ">
           <DialogHeader>
             <DialogTitle>
-              {editingExercise ? "Edit Exercise" : "Create New Exercise"}
+              {editingExercise ? "Chỉnh sửa bài tập" : "Tạo bài tập mới"}
             </DialogTitle>
           </DialogHeader>
 
@@ -1546,7 +1598,7 @@ ${
                 control={exerciseFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Exercise Title</FormLabel>
+                    <FormLabel>Tiêu đề bài tập</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Practice Dialogue" {...field} />
                     </FormControl>
@@ -1560,7 +1612,7 @@ ${
                 control={exerciseFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Mô tả bài tập</FormLabel>
                     <FormControl>
                       <Input placeholder="Exercise description..." {...field} />
                     </FormControl>
@@ -1569,26 +1621,14 @@ ${
                 )}
               />
 
-              <FormField
-                name="orderIndex"
-                control={exerciseFormMethods.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Order Index</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={0} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            
 
               <FormField
                 name="numberOfQuestion"
                 control={exerciseFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Questions</FormLabel>
+                    <FormLabel>Số lượng câu hỏi</FormLabel>
                     <FormControl>
                       <Input type="number" min={0} {...field} />
                     </FormControl>
@@ -1604,10 +1644,10 @@ ${
                   variant="outline"
                   onClick={() => setShowExerciseModal(false)}
                 >
-                  Cancel
+                  Huỷ
                 </Button>
               <Button type="submit" className="cursor-pointer">
-  {editingExercise ? "Update Exercise" : "Create Exercise"}
+  {editingExercise ? "Cập nhật bài tập" : "Tạo bài tập mới"}
 </Button>
 
               </DialogFooter>
@@ -1620,7 +1660,7 @@ ${
       <Dialog open={showQuestionModal} onOpenChange={setShowQuestionModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Questions for Exercise</DialogTitle>
+            <DialogTitle>Tạo câu hỏi cho bài tập</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -1640,10 +1680,11 @@ ${
                         <p className="font-medium text-sm">
                           #{index + 1}: {q.text}
                         </p>
-                        <p className="text-xs text-gray-600">
-                          Type: {questionTypeOptions.find(opt => opt.value === q.type)?.label || q.type} | Order: {q.orderIndex} | Phoneme:{" "}
-                          {q.phonemeJson || "N/A"}
-                        </p>
+                      <p className="text-xs text-gray-600">
+  Type: {questionTypeOptions.find(opt => opt.value === q.type)?.label || q.type}
+  {" "} 
+</p>
+
                       </div>
                       <Button
                         type="button"
@@ -1662,7 +1703,7 @@ ${
 
             {/* Add Question Form */}
             <div className="border-t pt-4">
-              <h3 className="text-sm font-semibold mb-4">Add Question:</h3>
+              <h3 className="text-sm font-semibold mb-4">Thêm câu hỏi:</h3>
               <Form {...questionFormMethods}>
                 <form
                   onSubmit={questionFormMethods.handleSubmit(
@@ -1675,10 +1716,10 @@ ${
                     control={questionFormMethods.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Question Text</FormLabel>
+                        <FormLabel>Tiêu đề câu hỏi</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter the question..."
+                            placeholder="Nhập câu hỏi..."
                             {...field}
                           />
                         </FormControl>
@@ -1688,68 +1729,12 @@ ${
                   />
 
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      name="type"
-                      control={questionFormMethods.control}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(parseInt(value))}
-                            value={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select question type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {questionTypeOptions.map((option) => (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.value.toString()}
-                                >
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                 
 
-                    <FormField
-                      name="orderIndex"
-                      control={questionFormMethods.control}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Order Index</FormLabel>
-                          <FormControl>
-                            <Input type="number" min={0} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  
                   </div>
 
-                  <FormField
-                    name="phonemeJson"
-                    control={questionFormMethods.control}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phoneme JSON (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter phoneme JSON..."
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                 
 
                   <Button
                     type="submit"
@@ -1790,7 +1775,7 @@ ${
       <Dialog open={showEditQuestionModal} onOpenChange={setShowEditQuestionModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Question</DialogTitle>
+            <DialogTitle>Chỉnh sửa câu hỏi</DialogTitle>
           </DialogHeader>
 
           <Form {...editQuestionFormMethods}>
@@ -1803,10 +1788,10 @@ ${
                 control={editQuestionFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Question Text</FormLabel>
+                    <FormLabel>Tiêu đề câu hỏi</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter the question..."
+                        placeholder="Nhập câu hỏi..."
                         {...field}
                       />
                     </FormControl>
@@ -1816,68 +1801,13 @@ ${
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  name="type"
-                  control={editQuestionFormMethods.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Type</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select question type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {questionTypeOptions.map((option) => (
-                            <SelectItem
-                              key={option.value}
-                              value={option.value.toString()}
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      
 
-                <FormField
-                  name="orderIndex"
-                  control={editQuestionFormMethods.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Order Index</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={0} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
+             
               </div>
 
-              <FormField
-                name="phonemeJson"
-                control={editQuestionFormMethods.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phoneme JSON (Optional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter phoneme JSON..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+             
 
               <DialogFooter>
                 <Button
@@ -1889,13 +1819,13 @@ ${
                     setEditingQuestion(null);
                   }}
                 >
-                  Cancel
+                  Huỷ
                 </Button>
                 <Button
                   type="submit"
                  className="cursor-pointer "
                 >
-                  Update Question
+                  Cập nhật câu hỏi
                 </Button>
               </DialogFooter>
             </form>
@@ -1908,7 +1838,7 @@ ${
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingMedia ? "Edit Media" : "Create Media"}
+              {editingMedia ? "Edit Media" : "Tạo phương tiện mới"}
             </DialogTitle>
           </DialogHeader>
 
@@ -1922,7 +1852,7 @@ ${
                 control={mediaFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Accent</FormLabel>
+                    <FormLabel>Giọng điệu</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. US, UK, AU..." {...field} />
                     </FormControl>
@@ -1936,7 +1866,7 @@ ${
                 control={mediaFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Audio URL (Optional)</FormLabel>
+                    <FormLabel>Âm thanh URL (Lựa chọn khác)</FormLabel>
                     <FormControl>
                       <Input
                         type="url"
@@ -1954,7 +1884,7 @@ ${
                 control={mediaFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Video URL (Optional)</FormLabel>
+                    <FormLabel>Video URL (Lựa chọn khác)</FormLabel>
                     <FormControl>
                       <Input
                         type="url"
@@ -1972,7 +1902,7 @@ ${
                 control={mediaFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Image URL (Optional)</FormLabel>
+                    <FormLabel>Hình ảnh URL (Lựa chọn khác)</FormLabel>
                     <FormControl>
                       <Input
                         type="url"
@@ -1991,7 +1921,7 @@ ${
   control={mediaFormMethods.control}
   render={({ field }) => (
     <FormItem>
-      <FormLabel>Upload Image (Optional)</FormLabel>
+      <FormLabel>Tải hình ảnh (Lựa chọn khác)</FormLabel>
       <FormControl>
         <Input
           type="file"
@@ -2010,7 +1940,7 @@ ${
   control={mediaFormMethods.control}
   render={({ field }) => (
     <FormItem>
-      <FormLabel>Upload Video (Optional)</FormLabel>
+      <FormLabel>Tải Video (Lựa chọn khác)</FormLabel>
       <FormControl>
         <Input
           type="file"
@@ -2029,7 +1959,7 @@ ${
                 control={mediaFormMethods.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Source</FormLabel>
+                    <FormLabel>Nguồn</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g. YouTube, Internal, etc."
@@ -2058,7 +1988,7 @@ ${
                   type="submit"
                   className="cursor-pointer text-white"
                 >
-                  {editingMedia ? "Update Media" : "Create Media"}
+                  {editingMedia ? "Cập nhật phương tiện" : "Tạo phương tiện mới"}
                 </Button>
               </DialogFooter>
             </form>
@@ -2072,7 +2002,7 @@ ${
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <FileImage className="h-5 w-5 mr-2 text-purple-600" />
-              Media Details
+              Phương tiện chi tiết
             </DialogTitle>
           </DialogHeader>
 
@@ -2096,7 +2026,7 @@ ${
 
 
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Audio URL</label>
+                <label className="text-sm font-semibold text-slate-700">Âm thanh URL</label>
                 <div className="p-3 bg-slate-50 rounded-md border">
                   {viewingMediaDetails.audioUrl ? (
                     <a 
@@ -2132,7 +2062,7 @@ ${
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Image URL</label>
+                <label className="text-sm font-semibold text-slate-700">Hình ảnh URL</label>
                 <div className="p-3 bg-slate-50 rounded-md border">
                   {viewingMediaDetails.imageUrl ? (
                     <a 
@@ -2150,7 +2080,7 @@ ${
               </div>
 
                <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Source</label>
+                <label className="text-sm font-semibold text-slate-700">Nguồn</label>
                 <div className="p-3 bg-slate-50 rounded-md border">
                   {viewingMediaDetails.source ? (
                     <a 
@@ -2175,7 +2105,7 @@ ${
               onClick={() => setViewingMediaDetails(null)}
               className="cursor-pointer"
             >
-              Close
+              Đóng
             </Button>
             <Button
               onClick={() => {
@@ -2185,7 +2115,7 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
               className="bg-purple-600 cursor-pointer hover:bg-purple-700 text-white"
             >
               <Pencil className="h-4 w-4 mr-2" />
-              Edit Media
+              Chỉnh sửa phương tiện
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2200,11 +2130,11 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
             </div>
             
             <AlertDialogTitle className="text-2xl font-bold text-slate-900 mb-2">
-              Delete this course?
+              Xóa khóa học này?
             </AlertDialogTitle>
             
             <AlertDialogDescription className="text-slate-600 mb-6">
-              This action cannot be undone. This will permanently delete the course.
+              Hành động này không thể hoàn tác. Hành động này sẽ xóa vĩnh viễn khóa học.
             </AlertDialogDescription>
 
             <div className="w-full bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -2223,13 +2153,13 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 
             <div className="flex gap-3 w-full">
               <AlertDialogCancel className="flex-1 h-11 cursor-pointer border-slate-300 hover:bg-slate-50">
-                Cancel
+                Huỷ
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDelete}
                 className="flex-1 h-11 bg-red-600 cursor-pointer hover:bg-red-700 rounded-2xl font-bold text-white shadow-sm"
               >
-                Delete Course
+                  Delete Course
               </AlertDialogAction>
             </div>
           </div>
@@ -2245,11 +2175,11 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
             </div>
             
             <AlertDialogTitle className="text-2xl font-bold text-slate-900 mb-2">
-              Delete this chapter?
+                Delete this chapter?
             </AlertDialogTitle>
             
             <AlertDialogDescription className="text-slate-600 mb-6">
-              This action cannot be undone. This will permanently delete the chapter.
+                  Hành động này không thể hoàn tác. Hành động này sẽ xóa vĩnh viễn chương.
             </AlertDialogDescription>
 
             <div className="w-full bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -2268,13 +2198,13 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 
             <div className="flex gap-3 w-full">
               <AlertDialogCancel className="flex-1 h-11 cursor-pointer border-slate-300 hover:bg-slate-50">
-                Cancel
+                Huỷ
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDeleteChapter}
                 className="flex-1 h-11 cursor-pointer bg-red-600 hover:bg-red-700 rounded-2xl font-bold text-white shadow-sm"
               >
-                Delete Chapter
+                Xoá chương
               </AlertDialogAction>
             </div>
           </div>
@@ -2290,11 +2220,11 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
             </div>
             
             <AlertDialogTitle className="text-2xl font-bold text-slate-900 mb-2">
-              Delete this exercise?
+              Xoá bài tập này?
             </AlertDialogTitle>
             
             <AlertDialogDescription className="text-slate-600 mb-6">
-              This action cannot be undone. This will permanently delete the exercise.
+              Hành động này không thể hoàn tác. Hành động này sẽ xóa vĩnh viễn bài tập.
             </AlertDialogDescription>
 
             <div className="w-full bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -2313,13 +2243,13 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 
             <div className="flex gap-3 w-full">
               <AlertDialogCancel className="flex-1 h-11 border-slate-300 hover:bg-slate-50">
-                Cancel
+                Huỷ
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDeleteExercise}
                 className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white shadow-sm"
               >
-                Delete Exercise
+                Xoá bài tập
               </AlertDialogAction>
             </div>
           </div>
@@ -2335,11 +2265,11 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
             </div>
             
             <AlertDialogTitle className="text-2xl font-bold text-slate-900 mb-2">
-              Delete this question?
+              Xoá câu hỏi này?
             </AlertDialogTitle>
             
             <AlertDialogDescription className="text-slate-600 mb-6">
-              This action cannot be undone. This will permanently delete the question.
+              Hành động này không thể hoàn tác. Hành động này sẽ xóa vĩnh viễn câu hỏi.
             </AlertDialogDescription>
 
             <div className="w-full bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -2358,13 +2288,13 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 
             <div className="flex gap-3 w-full">
               <AlertDialogCancel className="flex-1 h-11 cursor-pointer border-slate-300 hover:bg-slate-50">
-                Cancel
+                Huỷ
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDeleteQuestion}
                 className="flex-1 h-11 bg-red-600 rounded-md cursor-pointer hover:bg-red-700 text-white shadow-sm"
               >
-                Delete Question
+                Xoá câu hỏi
               </AlertDialogAction>
             </div>
           </div>
@@ -2380,11 +2310,11 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
             </div>
             
             <AlertDialogTitle className="text-2xl font-bold text-slate-900 mb-2">
-              Delete this media?
+              Xoá media này?
             </AlertDialogTitle>
             
             <AlertDialogDescription className="text-slate-600 mb-6">
-              This action cannot be undone. This will permanently delete the media file.
+              Hành động này không thể hoàn tác. Hành động này sẽ xóa vĩnh viễn file media.
             </AlertDialogDescription>
 
             <div className="w-full bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -2392,7 +2322,7 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
                 <FileImage className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                 <div className="text-left flex-1">
                   <p className="font-semibold text-slate-900 mb-1">
-                    Accent: {deletingMedia?.accent}
+                    Giọng điệu: {deletingMedia?.accent}
                   </p>
                  
                 </div>
@@ -2401,13 +2331,13 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 
             <div className="flex gap-3 w-full">
               <AlertDialogCancel className="flex-1 h-11 border-slate-300 hover:bg-slate-50">
-                Cancel
+                Huỷ
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDeleteMedia}
                 className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white shadow-sm"
               >
-                Delete Media
+                Xoá phương tiện
               </AlertDialogAction>
             </div>
           </div>
@@ -2419,23 +2349,24 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 >
   <DialogContent className="max-w-3xl bg-white text-black">
     <DialogHeader>
-      <DialogTitle>Course Details</DialogTitle>
+      <DialogTitle>Khoá học chi tiểt</DialogTitle>
     </DialogHeader>
 
     {viewingCourseDetails && (
       <div className="space-y-3">
-        <p><b>Title:</b> {viewingCourseDetails.title}</p>
-        <p><b>Description:</b> {viewingCourseDetails.description}</p>
-        <p><b>Level:</b> {viewingCourseDetails.level}</p>
-        <p><b>Price:</b> {viewingCourseDetails.price}</p>
-        <p><b>NumberOfChapters:</b> {viewingCourseDetails.numberOfChapter}</p>
-        <p><b>Status:</b> {viewingCourseDetails.status}</p>
+        <p><b>Tiêu đề:</b> {viewingCourseDetails.title}</p>
+        <p><b>Mô tả:</b> {viewingCourseDetails.description}</p>
+        <p><b>Cấp độ:</b> {viewingCourseDetails.level}</p>
+        <p><b>Giá:</b> {viewingCourseDetails.price}</p>
+        <p><b>Thời hạn:</b> {viewingCourseDetails.duration}</p>
+        <p><b>Số lượng chương:</b> {viewingCourseDetails.numberOfChapter}</p>
+        <p><b>Trạng thái:</b> {viewingCourseDetails.status}</p>
       </div>
     )}
 
     <DialogFooter>
       <Button variant="outline" onClick={() => setViewingCourseDetails(null)}>
-        Close
+        Đóng
       </Button>
     </DialogFooter>
   </DialogContent>
@@ -2449,22 +2380,22 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 >
   <DialogContent className="max-w-3xl bg-white text-black">
     <DialogHeader>
-      <DialogTitle>Chapter Details</DialogTitle>
+      <DialogTitle>Chương chi tiết</DialogTitle>
     </DialogHeader>
 
     {viewingChapterDetails && (
       <div className="space-y-3">
-        <p><b>Title:</b> {viewingChapterDetails.title}</p>
-        <p><b>Description:</b> {viewingChapterDetails.description}</p>
-        <p><b>NumberOfExercises:</b> {viewingChapterDetails.numberOfExercise}</p>
-        <p><b>CreatedAt:</b> {viewingChapterDetails.createdAt}</p>
+        <p><b>Tiêu đề:</b> {viewingChapterDetails.title}</p>
+        <p><b>Mô tả:</b> {viewingChapterDetails.description}</p>
+        <p><b>Số lượng bài tập:</b> {viewingChapterDetails.numberOfExercise}</p>
+        <p><b>Ngày tạo:</b> {viewingChapterDetails.createdAt}</p>
 
       </div>
     )}
 
     <DialogFooter>
       <Button variant="outline" onClick={() => setViewingChapterDetails(null)}>
-        Close
+        Đóng
       </Button>
     </DialogFooter>
   </DialogContent>
@@ -2476,21 +2407,21 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 >
   <DialogContent className="max-w-3xl bg-white text-black">
     <DialogHeader>
-      <DialogTitle>Exercise Details</DialogTitle>
+      <DialogTitle>Bài tập chi tiết</DialogTitle>
     </DialogHeader>
 
     {viewingExerciseDetails && (
       <div className="space-y-3">
-        <p><b>Title:</b> {viewingExerciseDetails.title}</p>
-        <p><b>Description:</b> {viewingExerciseDetails.description}</p>
-        <p><b>Order:</b> {viewingExerciseDetails.orderIndex}</p>
-        <p><b>NumberQuestions:</b> {viewingExerciseDetails.numberOfQuestion}</p>
+        <p><b>Tiêu đề:</b> {viewingExerciseDetails.title}</p>
+        <p><b>Mô tả:</b> {viewingExerciseDetails.description}</p>
+        <p><b>Thứ tự:</b> {viewingExerciseDetails.orderIndex}</p>
+        <p><b>Số lượng câu hỏi:</b> {viewingExerciseDetails.numberOfQuestion}</p>
       </div>
     )}
 
     <DialogFooter>
       <Button variant="outline" onClick={() => setViewingExerciseDetails(null)}>
-        Close
+        Đóng
       </Button>
     </DialogFooter>
   </DialogContent>
@@ -2503,21 +2434,22 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
 >
   <DialogContent className="max-w-3xl bg-white text-black">
     <DialogHeader>
-      <DialogTitle>Question Details</DialogTitle>
+      <DialogTitle>Câu hỏi chi tiết</DialogTitle>
     </DialogHeader>
 
     {viewingQuestionDetails && (
       <div className="space-y-3">
-        <p><b>Text:</b> {viewingQuestionDetails.text}</p>
-        <p><b>Type:</b> {viewingQuestionDetails.type}</p>
-        <p><b>Order:</b> {viewingQuestionDetails.orderIndex}</p>
-        <p><b>Phoneme:</b> {viewingQuestionDetails.phonemeJson || "N/A"}</p>
+        <p><b>Văn bản:</b> {viewingQuestionDetails.text}</p>
+<p>
+  <b>Loại:</b>{" "}
+  {QUESTION_TYPE_LABEL_VI(viewingQuestionDetails.type)}
+</p>
       </div>
     )}
 
     <DialogFooter>
       <Button variant="outline" onClick={() => setViewingQuestionDetails(null)}>
-        Close
+        Đóng
       </Button>
     </DialogFooter>
   </DialogContent>
