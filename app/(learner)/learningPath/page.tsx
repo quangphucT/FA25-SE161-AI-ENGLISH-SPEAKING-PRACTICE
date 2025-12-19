@@ -472,10 +472,10 @@ function LearningPathContent() {
                                   exercise.learningPathExerciseId
                                     ? "..."
                                     : exercise.status === "NotStarted"
-                                    ? "Bắt đầu"
+                                    ? "Bắt đầu học"
                                     : exercise.status === "InProgress"
-                                    ? "Tiếp tục"
-                                    : "Ôn tập"}
+                                    ? "Tiếp tục học"
+                                    : "Ôn tập lại"}
                                 </Button>
                               </div>
                             </div>

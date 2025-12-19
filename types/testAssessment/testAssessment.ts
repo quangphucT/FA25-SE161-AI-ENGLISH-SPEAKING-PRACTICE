@@ -15,7 +15,7 @@ export interface Assessment {
 }
 
 export interface Section {
-  type: "word" | "sentence" | "paragraph"; 
+  type: "Word" | "Sentence" | "Phrase"; 
   questions: QuestionAssessment[];
 }
 

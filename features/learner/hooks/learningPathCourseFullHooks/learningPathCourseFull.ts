@@ -13,6 +13,7 @@ interface Question {
   questionId: string;
   status: string;
   score: number;
+  relearnScore: number | null;
   numberOfRetake: number;
   text: string;
   type: string;
