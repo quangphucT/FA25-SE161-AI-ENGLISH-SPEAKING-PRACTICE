@@ -551,7 +551,7 @@ export default function LearnerRecordPage() {
                                 <div className="flex items-center gap-2">
                                   <Star className="w-4 h-4 text-yellow-500" />
                                   <span className="text-gray-600">Điểm số:</span>
-                                  <span className="font-semibold">{record.score || 0}/100</span>
+                                  <span className="font-semibold">{record.score}/100</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <MessageSquare className="w-4 h-4 text-blue-500" />
