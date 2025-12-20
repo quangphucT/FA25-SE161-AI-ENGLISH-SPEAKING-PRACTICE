@@ -164,6 +164,7 @@ const StatisticsForMentor = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recordedAudioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [showRewardForm, setShowRewardForm] = useState(false);
   const [rewardAmount, setRewardAmount] = useState("");
   const [rewardMessage, setRewardMessage] = useState("");
@@ -226,6 +227,7 @@ const StatisticsForMentor = () => {
       recordedAudioPreviewRef.current.pause();
       recordedAudioPreviewRef.current.currentTime = 0;
     }
+    setIsPlayingAudio(false);
     setRecordedAudioUrl(null);
   };
 
@@ -248,10 +250,30 @@ const StatisticsForMentor = () => {
       return;
     }
 
-    recordedAudioPreviewRef.current.currentTime = 0;
-    recordedAudioPreviewRef.current
+    const audio = recordedAudioPreviewRef.current;
+    audio.currentTime = 0;
+    
+    // Set playing state to true
+    setIsPlayingAudio(true);
+    
+    // Add event listeners to track when audio ends
+    const handleEnded = () => {
+      setIsPlayingAudio(false);
+      audio.removeEventListener("ended", handleEnded);
+    };
+    
+    const handlePause = () => {
+      setIsPlayingAudio(false);
+      audio.removeEventListener("pause", handlePause);
+    };
+    
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("pause", handlePause);
+    
+    audio
       .play()
       .catch(() => {
+        setIsPlayingAudio(false);
         toast.error("Không thể phát bản ghi. Vui lòng thử lại.");
       });
   }, [recordedAudioUrl]);
@@ -393,25 +415,88 @@ const StatisticsForMentor = () => {
     }
 
     const handleReviewCompleted = (review: ReviewCompleted) => {
-      console.log('SignalR: Review completed', review);
+      console.log('🔔 SignalR: Review completed event received', review);
       
-      if (!review.learnerAnswerId) return;
+      // Get both IDs from the event
+      const learnerAnswerId = review.learnerAnswerId;
+      const recordId = review.recordId;
+      
+      if (!learnerAnswerId && !recordId) {
+        console.warn('⚠️ SignalR: Review completed event missing both learnerAnswerId and recordId');
+        return;
+      }
+
+      // Normalize IDs for comparison (convert to lowercase string)
+      const normalizeId = (id: string | null) => id ? String(id).toLowerCase().trim() : null;
+      const normalizedLearnerAnswerId = normalizeId(learnerAnswerId);
+      const normalizedRecordId = normalizeId(recordId);
+
+      // Find the actual review ID in pending reviews data
+      // This handles the case where backend sends one ID but review uses the other
+      let actualReviewId: string | null = null;
+      
+      if (pendingReviewsData?.data?.items) {
+        console.log('🔍 Searching in pending reviews, total items:', pendingReviewsData.data.items.length);
+        
+        // Try to find review by either ID (case-insensitive comparison)
+        const foundReview = pendingReviewsData.data.items.find(
+          (item) => {
+            const normalizedItemId = normalizeId(item.id);
+            return (
+              (normalizedLearnerAnswerId && normalizedItemId === normalizedLearnerAnswerId) ||
+              (normalizedRecordId && normalizedItemId === normalizedRecordId)
+            );
+          }
+        );
+        
+        if (foundReview) {
+          actualReviewId = foundReview.id;
+          console.log('✅ Found review in pending list:', actualReviewId, 'Current numberOfReview:', foundReview.numberOfReview);
+        } else {
+          console.warn('⚠️ Review not found in pending list. LearnerAnswerId:', learnerAnswerId, 'RecordId:', recordId);
+          console.log('Available IDs:', pendingReviewsData.data.items.map(item => item.id).slice(0, 5));
+        }
+      }
+      
+      // Fallback to the ID from event if not found in pending reviews
+      if (!actualReviewId) {
+        actualReviewId = learnerAnswerId || recordId;
+        console.log('📝 Using fallback ID:', actualReviewId);
+      }
+
+      // Early return if we still don't have a valid ID
+      if (!actualReviewId) {
+        console.warn('⚠️ Cannot update: no valid review ID found');
+        return;
+      }
+
+      console.log('📊 Updating review remaining:', {
+        actualReviewId,
+        remaining: review.remaining,
+        currentState: actualReviewId ? numberOfReviewUpdates[actualReviewId] : undefined
+      });
 
       // Case 1: If remaining = 0, remove from all reviewers' lists
       if (review.remaining === 0) {
+        console.log('🗑️ Removing review (remaining = 0):', actualReviewId);
         setReviewedAnswers((prev) => {
-          if (prev.includes(review.learnerAnswerId)) {
+          if (prev.includes(actualReviewId!)) {
             return prev;
           }
-          return [...prev, review.learnerAnswerId];
+          return [...prev, actualReviewId!];
         });
       } 
       // Case 2: If remaining > 0, only update numberOfReview for other reviewers
       else {
-        setNumberOfReviewUpdates((prev) => ({
-          ...prev,
-          [review.learnerAnswerId]: review.remaining,
-        }));
+        console.log('🔄 Updating numberOfReview:', actualReviewId, '→', review.remaining);
+        setNumberOfReviewUpdates((prev) => {
+          const updated = {
+            ...prev,
+            [actualReviewId!]: review.remaining,
+          };
+          console.log('✅ Updated numberOfReviewUpdates:', updated);
+          return updated;
+        });
       }
     };
 
@@ -422,7 +507,7 @@ const StatisticsForMentor = () => {
     return () => {
       signalRService.setReviewCompletedHandler(null);
     };
-  }, [isConnected]);
+  }, [isConnected, pendingReviewsData]);
 
   // Full feedback data for modal - mapped from API
   const allFeedbackDataForModal = useMemo(() => {
@@ -719,7 +804,7 @@ const StatisticsForMentor = () => {
                               <div className="flex-1 flex items-start gap-2">
                                 <span className="text-xs font-medium text-gray-600 flex-shrink-0">Transcribed:</span>
                                 <span className="text-xs text-gray-600 italic">
-                                  /{review.transcribedText}/
+                                  {review.transcribedText}
                                 </span>
                               </div>
                             </div>
@@ -740,7 +825,7 @@ const StatisticsForMentor = () => {
                                 {review.aiScore > 0 && (
                                   <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-semibold">
                                     <Star className="w-3 h-3 fill-purple-700" />
-                                    AI: {review.aiScore}/10
+                                    AI: {review.aiScore}/100
                                   </div>
                                 )}
                               </div>
@@ -1127,14 +1212,14 @@ const StatisticsForMentor = () => {
       {/* Review Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent 
-          className="max-w-3xl max-w-4xl min-h-[50vh] max-h-[60vh] overflow-y-auto data-[state=open]:!animate-none data-[state=closed]:!animate-none"
+          className="max-w-5xl min-h-[65vh] max-h-[90vh] overflow-y-auto data-[state=open]:!animate-none data-[state=closed]:!animate-none"
         >
           <DialogHeader>
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
                 <DialogTitle className="text-xl">{selectedReview?.questionText}</DialogTitle>
                 <p className="text-sm text-gray-700 leading-relaxed">
-                    /{selectedReview?.transcribedText}/
+                    {selectedReview?.transcribedText}
                   </p>
               </div>
               {selectedReview && selectedReview.expectedReviewerCoin > 0 && (
@@ -1274,7 +1359,8 @@ const StatisticsForMentor = () => {
                       disabled={
                         !mediaRecorderRef.current ||
                         submitReviewMutation.isPending ||
-                        isSubmittingReview
+                        isSubmittingReview ||
+                        isPlayingAudio
                       }
                       className={`relative z-10 box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${
                         recording ? "bg-[#477c5b] hover:bg-[#3a6549]" : "bg-[#49d67d] hover:bg-[#3db868]"
@@ -1317,7 +1403,7 @@ const StatisticsForMentor = () => {
                     variant="outline"
                     onClick={handleCloseModal}
                     className="cursor-pointer"
-                    disabled={recording || isSubmittingReview}
+                    disabled={recording || isSubmittingReview || isPlayingAudio}
                   >
                     Cancel
                   </Button>
@@ -1326,7 +1412,8 @@ const StatisticsForMentor = () => {
                     disabled={
                       recording ||
                       isSubmittingReview ||
-                      submitReviewMutation.isPending
+                      submitReviewMutation.isPending ||
+                      isPlayingAudio
                     }
                     className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50"
                   >

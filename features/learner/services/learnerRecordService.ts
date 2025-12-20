@@ -1,10 +1,11 @@
 import fetchWithAuth from "@/utils/fetchWithAuth";
 
+export type Status = "Draft" | "InProgress" | "Done";
 // Interfaces
 export interface RecordCategory {
   learnerRecordId: string;
   name: string;
-  status?: string;
+  status?: Status;
   createdAt?: Date;
   numberOfRecord?: number;
 }
@@ -15,16 +16,19 @@ export interface RecordCategoryResponse {
   isSucess: boolean; // Note: API returns "isSucess" with one 'c'
   businessCode?: string;
 }
-
+export type StatusRecord = "Draft"  | "Submitted";
 export interface Record {
-    recordId: string;
-    learnerRecordId: string;
+    recordContentId: string;
     content: string;
+    recordId: string;
     audioRecordingURL: string;
+    transcribedText: string;
     score: number;
     aiFeedback: string;
-    status: string;
+    status: StatusRecord;
     createdAt: Date;
+    numberOfReview: number;
+    isNeedReviewed: boolean;
 }
 
 export interface RecordResponse {
@@ -188,17 +192,16 @@ export const LearnerRecordCreateService = async (folderId: string, content: stri
     }
 }
 
-export const LearnerRecordDeleteService = async (recordId: string): Promise<DeleteResponse> => {
+export const LearnerRecordDeleteService = async (recordContentId: string): Promise<DeleteResponse> => {
     try {
-        if (!recordId) {
-            throw new Error("Record ID is required");
+        if (!recordContentId) {
+            throw new Error("Record Content ID is required");
         }
-        const response = await fetchWithAuth(`/api/learner/record/${recordId}`, {
+        const response = await fetchWithAuth(`/api/learner/record/recordContent/${recordContentId}`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ recordId }),
             credentials: "include",
         });
         const data = await response.json();
@@ -214,17 +217,17 @@ export const LearnerRecordDeleteService = async (recordId: string): Promise<Dele
     }
 }
 
-export const LearnerRecordUpdateService = async (recordId: string, reviewData: ReviewRecordRequest): Promise<ReviewRecordResponse> => {
+export const LearnerRecordPostSubmitService = async (recordContentId: string, body: ReviewRecordRequest): Promise<ReviewRecordResponse> => {
     try {
-        if (!recordId) {
-            throw new Error("Record ID is required");
+        if (!recordContentId) {
+            throw new Error("Record Content ID is required");
         }
-        const response = await fetchWithAuth(`/api/learner/record/${recordId}`, {
-            method: "PUT",
+        const response = await fetchWithAuth(`/api/learner/record/recordContent/${recordContentId}`, {
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ recordId, ...reviewData }),
+            body: JSON.stringify(body),
             credentials: "include",
         });
         const data = await response.json();
@@ -240,12 +243,12 @@ export const LearnerRecordUpdateService = async (recordId: string, reviewData: R
     }
 }
 
-export const LearnerRecordUpdateContentService = async (recordId: string, content: string): Promise<ReviewRecordResponse> => {
+export const LearnerRecordUpdateContentService = async (recordContentId: string, content: string): Promise<ReviewRecordResponse> => {
     try {
-        if (!recordId) {
-            throw new Error("Record ID is required");
+        if (!recordContentId) {
+            throw new Error("Record Content ID is required");
         }
-        const response = await fetchWithAuth(`/api/learner/record/${recordId}/update-content`, {
+        const response = await fetchWithAuth(`/api/learner/record/recordContent/${recordContentId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
