@@ -9,7 +9,7 @@ import {
   useAdminRecordChargeDelete,
   useAdminRecordChargePatch,
 } from "@/features/admin/hooks/useAdminRecordCharge";
-import type { RecordCharge, Buyer } from "@/features/admin/services/adminRecordChargeService";
+import type { RecordCharge, Buyer, RecordChargeDetail } from "@/features/admin/services/adminRecordChargeService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -692,8 +692,8 @@ const RecordChargeManagement = () => {
           ) : buyersData?.data ? (
             (() => {
               // API có thể trả về object hoặc mảng object, nên chuẩn hoá lại
-              const rawDetail = buyersData.data as any;
-              const detail = Array.isArray(rawDetail) ? rawDetail[0] : rawDetail;
+              const rawDetail: RecordChargeDetail | RecordChargeDetail[] = buyersData.data;
+              const detail: RecordChargeDetail | undefined = Array.isArray(rawDetail) ? rawDetail[0] : rawDetail;
               if (!detail) {
                 return (
                   <div className="text-center py-8 text-gray-500">
