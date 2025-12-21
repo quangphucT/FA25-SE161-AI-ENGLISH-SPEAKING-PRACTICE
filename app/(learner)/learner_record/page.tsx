@@ -675,7 +675,7 @@ export default function LearnerRecordPage() {
                                 <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDeleteRecord(record.recordId);
+                                    handleDeleteRecord(record.recordContentId);
                                   }}
                                   className="text-red-600 cursor-pointer"
                                 >
