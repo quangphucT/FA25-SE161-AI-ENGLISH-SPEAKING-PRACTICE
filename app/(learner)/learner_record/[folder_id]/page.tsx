@@ -17,7 +17,9 @@ const PracticeRecordLayout = () => {
   const router = useRouter();
   const folderId = params?.folder_id as string;
   const content = searchParams?.get("content") || "";
-  // Nhận recordId đơn lẻ (từ nút "Học" trên từng record)
+  // Nhận recordContentId từ URL query params (từ nút "Học" trên từng record)
+  const recordContentIdFromUrl = searchParams?.get("recordContentId") || "";
+  // Nhận recordId đơn lẻ (fallback cho trường hợp cũ)
   const recordId = searchParams?.get("recordId") || "";
   // Lấy tất cả records từ folderId
   const { data: recordsDataResponse } = useLearnerRecords(folderId);
@@ -37,15 +39,20 @@ const PracticeRecordLayout = () => {
   // State để quản lý câu hỏi hiện tại
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   
-  // Tìm index của record hiện tại nếu có recordId từ URL
+  // Tìm index của record hiện tại dựa trên recordContentId hoặc recordId từ URL
   useEffect(() => {
-    if (recordId && recordsList.length > 0) {
-      const index = recordsList.findIndex((r: Record) => r.recordId === recordId);
+    if (recordsList.length > 0) {
+      let index = -1;
+      // Ưu tiên tìm theo recordContentId từ URL
+      if (recordContentIdFromUrl) {
+        index = recordsList.findIndex((r: Record) => r.recordContentId === recordContentIdFromUrl);
+      }
+      
       if (index !== -1) {
         setCurrentQuestionIndex(index);
       }
     }
-  }, [recordId, recordsList]);
+  }, [recordContentIdFromUrl, recordsList]);
   
   // Lấy record hiện tại
   const currentRecord = recordsList[currentQuestionIndex] || null;
@@ -300,8 +307,8 @@ const PracticeRecordLayout = () => {
 
         setMainTitle("Đang tạo record...");
 
-        // Validate recordId - prefer recordContentId if available
-        const targetRecordContentId = currentRecord?.recordContentId 
+        // Validate recordId - ưu tiên recordContentId từ URL, sau đó mới dùng từ currentRecord
+        const targetRecordContentId = recordContentIdFromUrl || currentRecord?.recordContentId;
         if (!targetRecordContentId) {
           setMainTitle("Không tìm thấy record content ID");
           setUiBlocked(false);
@@ -359,7 +366,7 @@ const PracticeRecordLayout = () => {
         setUiBlocked(false);
       }
     }, 500); // Wait 500ms for onstop handler to complete
-  }, [folderId, score, aiFeedback, updateRecord, router, currentRecordId, recordId, matchedTranscriptsIpa]);
+  }, [folderId, score, aiFeedback, updateRecord, router, recordContentIdFromUrl, currentRecord, matchedTranscriptsIpa]);
   const cacheSoundFiles = useCallback(async () => {
     try {
       if (!audioContextRef.current) return;
@@ -520,7 +527,7 @@ const PracticeRecordLayout = () => {
         setSingleWordPair("Reference | Spoken");
         // Update URL with new recordId and content
         router.replace(
-          `/learner_record/${folderId}?recordId=${nextRecord.recordId}&content=${encodeURIComponent(nextRecord.content)}`
+          `/learner_record/${folderId}?recordContentId=${nextRecord.recordContentId}&content=${encodeURIComponent(nextRecord.content)}`
         );
         // Fetch new sample for the new question with the new content
         setTimeout(() => {
@@ -548,7 +555,7 @@ const PracticeRecordLayout = () => {
         setSingleWordPair("Reference | Spoken");
         // Update URL with new recordId and content
         router.replace(
-          `/learner_record/${folderId}?recordId=${prevRecord.recordId}&content=${encodeURIComponent(prevRecord.content)}`
+          `/learner_record/${folderId}?recordContentId=${prevRecord.recordContentId}&content=${encodeURIComponent(prevRecord.content)}`
         );
         // Fetch new sample for the new question with the new content
         setTimeout(() => {
