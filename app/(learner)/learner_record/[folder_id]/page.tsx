@@ -60,7 +60,7 @@ const PracticeRecordLayout = () => {
   // Ưu tiên content từ query params nếu có, sau đó mới dùng từ currentRecord
   const currentContent = content || currentRecord?.content || "";
 
-  const [language, setLanguage] = useState<"en-gb" | "en">("en-gb");
+  const [language, setLanguage] = useState<"en-gb" | "en">("en");
   const [score, setScore] = useState<number>(0);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
 
@@ -1116,9 +1116,9 @@ const PracticeRecordLayout = () => {
                     disabled={uiBlocked}
                     className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-blue-400 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {languageLabel} ▼
+                    {languageLabel} 
                   </button>
-                  {dropdownOpen && (
+                  {/* {dropdownOpen && (
                     <div className="absolute mt-2 w-40 bg-white rounded-lg shadow-lg z-20 border border-gray-200 overflow-hidden">
                       <button
                         onClick={() => changeLanguage("en-gb")}
@@ -1135,7 +1135,7 @@ const PracticeRecordLayout = () => {
                         English-USA
                       </button>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
 
