@@ -17,7 +17,7 @@ import {
   ReviewRecordRequest,
   ReviewRecordResponse,
   LearnerRecordUpdateContentService,
-  LearnerRecordUpdateService,
+  LearnerRecordPostSubmitService,
   LearnerBuyRecordChargeService,
 } from "../services/learnerRecordService";
 import { toast } from "sonner";
@@ -107,7 +107,7 @@ export const useLearnerRecordCreate = () => {
 export const useLearnerRecordDelete = () => {
   const queryClient = useQueryClient();
   return useMutation<DeleteResponse, Error, string>({
-    mutationFn: (recordId: string) => LearnerRecordDeleteService(recordId),
+    mutationFn: (recordContentId: string) => LearnerRecordDeleteService(recordContentId),
     onSuccess: (data) => {
       toast.success(data.message || "Xóa record thành công");
       queryClient.invalidateQueries({ queryKey: ["learnerRecords"] });
@@ -120,8 +120,8 @@ export const useLearnerRecordDelete = () => {
 
 export const useLearnerRecordUpdateContent = () => {
   const queryClient = useQueryClient();
-  return useMutation<ReviewRecordResponse, Error, { recordId: string; content: string }>({
-    mutationFn: ({ recordId, content }) => LearnerRecordUpdateContentService(recordId, content),
+  return useMutation<ReviewRecordResponse, Error, { recordContentId: string; content: string }>({
+    mutationFn: ({ recordContentId, content }) => LearnerRecordUpdateContentService(recordContentId, content),
     onSuccess: (data) => {
       toast.success(data.message || "Cập nhật nội dung record thành công");
       queryClient.invalidateQueries({ queryKey: ["learnerRecords"] });
@@ -132,16 +132,16 @@ export const useLearnerRecordUpdateContent = () => {
   });
 };
 
-export const useLearnerRecordUpdate= () => {
+export const useLearnerRecordPostSubmit= () => {
   const queryClient = useQueryClient();
-  return useMutation<ReviewRecordResponse, Error, { recordId: string; reviewData: ReviewRecordRequest }>({
-    mutationFn: ({ recordId, reviewData }) => LearnerRecordUpdateService(recordId, reviewData),
+  return useMutation<ReviewRecordResponse, Error, { recordContentId: string; body: ReviewRecordRequest }>({
+    mutationFn: ({ recordContentId, body }) => LearnerRecordPostSubmitService(recordContentId, body),
     onSuccess: (data) => {
-      toast.success(data.message || "Cập nhật nội dung record thành công");
+      toast.success(data.message || "Đánh giá record thành công");
       queryClient.invalidateQueries({ queryKey: ["learnerRecords"] });
     },
     onError: (error) => {
-      toast.error(error.message || "Cập nhật nội dung record thất bại");
+      toast.error(error.message || "Đánh giá record thất bại");
     },
   });
 };

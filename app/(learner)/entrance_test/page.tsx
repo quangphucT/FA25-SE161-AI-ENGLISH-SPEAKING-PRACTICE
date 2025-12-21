@@ -649,7 +649,7 @@ const EntranceTest = () => {
           {/* Question type badge with gradient */}
           <div className="text-center mb-8">
             <span
-              className="inline-flex items-center px-4 py-1.5 
+              className="inline-flex items-center mt-1 px-4 py-1.5 
   bg-blue-50 text-blue-600 text-sm font-semibold 
   rounded-full tracking-wide"
             >
