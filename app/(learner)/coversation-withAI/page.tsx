@@ -247,171 +247,130 @@ const ConversationWithAI = () => {
       {/* LiveKit Modal - Enhanced Design */}
       {showLiveKit && (
 
-        <div className="fixed inset-0 bg-linear-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-linear-to-br from-white via-blue-50/30 to-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-white/50 animate-in slide-in-from-bottom-4 duration-500">
-            {/* Header with Gradient & Decorative Elements */}
-            <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-8 py-6 flex items-center justify-between flex-shrink-0 overflow-hidden">
-              {/* Decorative Background Pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-300 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
-              </div>
-
-              <div className="flex items-center gap-4 relative z-10">
-                {/* Animated Icon */}
-                <div className="relative">
-                  <div className="w-14 h-14 bg-linear-to-br from-white to-blue-100 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-300">
-                    <MessageCircle className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl z-50 flex flex-col animate-in fade-in duration-300">
+          {/* Minimal Professional Header */}
+          <div className="relative px-6 py-4 flex items-center justify-between flex-shrink-0 border-b border-white/10">
+            {/* Left - Logo & Status */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                  <MessageCircle className="w-5 h-5 text-white" />
                 </div>
-
                 <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  Speaking with AI
-                    <span className="text-sm font-normal bg-white/20 px-3 py-1 rounded-full">
-                      Live
+                  <h2 className="text-lg font-bold text-white">Luyện nói với AI</h2>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    <span className="text-xs text-gray-400">
+                      {token ? "Đã kết nối" : "Đang kết nối..."}
                     </span>
-                  </h2>
-                  <p className="text-blue-100 text-sm flex items-center gap-2 mt-1">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    {token
-                      ? "Đã kết nối - Sẵn sàng trò chuyện!"
-                      : "Đang kết nối với trợ lý AI..."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Timer Display */}
-              {token && timeRemaining > 0 && (
-                <div className="relative z-10 mx-4">
-                  <div className={`px-4 py-2 rounded-xl backdrop-blur-sm font-mono text-lg font-bold flex items-center gap-2 ${
-                    timeRemaining <= 60 ? 'bg-red-500/90 text-white animate-pulse' : 
-                    timeRemaining <= 120 ? 'bg-yellow-500/90 text-white' : 
-                    'bg-white/20 text-white'
-                  }`}>
-                    <Clock className="w-5 h-5" />
-                    {formatTime(timeRemaining)}
                   </div>
                 </div>
-              )}
-
-              <button
-                onClick={() => {
-                  if (isDisconnecting) return; // Prevent multiple clicks
-                  
-                  setIsDisconnecting(true);
-                  
-                  // Clear timer
-                  if (timerIntervalRef.current) {
-                    clearInterval(timerIntervalRef.current);
-                    timerIntervalRef.current = null;
-                  }
-                  
-                  toast.info("Đang kết thúc trò chuyện...");
-                  
-                  // Give time for cleanup
-                  setTimeout(() => {
-                    setShowLiveKit(false);
-                    setToken(null);
-                    setServerUrl(null);
-                    setTimeRemaining(0);
-                    setIsDisconnecting(false);
-                    
-                    // Navigate to feedback page
-                    router.push("/aiFeedback-afterConver");
-                  }, 500);
-                }}
-                disabled={isDisconnecting}
-                className={`relative z-10 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90 group ${
-                  isDisconnecting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                }`}
-                title="Đóng"
-              >
-                <X className="w-6 h-6 text-white group-hover:text-red-200 transition-colors" />
-              </button>
+              </div>
             </div>
 
-            {/* Content - Scrollable with Enhanced Styling */}
-            <div className="p-8 overflow-y-auto flex-1 bg-gradient-to-b from-transparent via-blue-50/20 to-transparent">
-              {token ? (
-                <div className="h-full">
-
-                     {/* LiveKit Room có nhiệm vụ là kết nối vào 1 cái room trên livekit server để stream audio/video và dữ liệu thời gian thực */}
-                  <LiveKitRoom
-                    serverUrl={
-                      serverUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || ""
-                    }
-                    token={token}
-                    connect={!isDisconnecting}
-                    video={true}
-                    audio={true}
-                    onDisconnected={handleDisconnect}
-                    onError={(error) => {
-                      console.error("LiveKit Room Error:", error);
-                      // Don't show error toast if we're intentionally disconnecting
-                      if (!isDisconnecting && !error.message?.includes("Client initiated disconnect")) {
-                        toast.error(`Lỗi kết nối: ${error.message}`);
-                      }
-                    }}
-                  >
-                    <RoomAudioRenderer />  {/* Xử lý phát âm thanh từ phòng LiveKit */}
-                    
-                    <EnhancedVoiceAssistant /> {/* Hiển thị nội dung cuộc trò chuyện với AI */}
-                  </LiveKitRoom>
+            {/* Center - Timer */}
+            {token && timeRemaining > 0 && (
+              <div className="absolute left-1/2 -translate-x-1/2">
+                <div className={`px-6 py-2.5 rounded-full font-mono text-xl font-bold flex items-center gap-3 transition-all duration-300 ${
+                  timeRemaining <= 60 
+                    ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/30 animate-pulse' 
+                    : timeRemaining <= 120 
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30' 
+                    : 'bg-white/10 text-white border border-white/20'
+                }`}>
+                  <Clock className="w-5 h-5" />
+                  {formatTime(timeRemaining)}
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 bg-white/60 backdrop-blur-sm rounded-2xl border border-blue-100/50">
-                  {/* Animated Loading Spinner */}
-                  <div className="relative mb-6">
-                    <div className="w-20 h-20 border-4 border-blue-200 rounded-full"></div>
-                    <div className="w-20 h-20 border-4 border-blue-600 rounded-full border-t-transparent animate-spin absolute top-0"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <MessageCircle className="w-8 h-8 text-blue-600 animate-pulse" />
+              </div>
+            )}
+
+            {/* Right - End Call Button */}
+            <button
+              onClick={() => {
+                if (isDisconnecting) return;
+                
+                setIsDisconnecting(true);
+                
+                if (timerIntervalRef.current) {
+                  clearInterval(timerIntervalRef.current);
+                  timerIntervalRef.current = null;
+                }
+                
+                toast.info("Đang kết thúc...");
+                
+                setTimeout(() => {
+                  setShowLiveKit(false);
+                  setToken(null);
+                  setServerUrl(null);
+                  setTimeRemaining(0);
+                  setIsDisconnecting(false);
+                  
+                  router.push("/aiFeedback-afterConver");
+                }, 500);
+              }}
+              disabled={isDisconnecting}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm font-semibold shadow-lg shadow-red-500/25 hover:shadow-red-500/40 transition-all duration-300 hover:scale-105 ${
+                isDisconnecting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
+            >
+              <X className="w-4 h-4" />
+              Kết thúc
+            </button>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-hidden">
+            {token ? (
+              <LiveKitRoom
+                serverUrl={
+                  serverUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || ""
+                }
+                token={token}
+                connect={!isDisconnecting}
+                video={true}
+                audio={true}
+                onDisconnected={handleDisconnect}
+                onError={(error) => {
+                  console.error("LiveKit Room Error:", error);
+                  if (!isDisconnecting && !error.message?.includes("Client initiated disconnect")) {
+                    toast.error(`Connection error: ${error.message}`);
+                  }
+                }}
+              >
+                <RoomAudioRenderer />
+                <EnhancedVoiceAssistant />
+              </LiveKitRoom>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                {/* Loading State */}
+                <div className="relative mb-8">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justif
+                  
+                  
+                  
+                  y-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500/30 to-indigo-500/30 flex items-center justify-center animate-pulse">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <MessageCircle className="w-8 h-8 text-white" />
+                      </div>
                     </div>
                   </div>
-
-                  <div className="text-center space-y-2">
-                    <p className="text-xl font-bold text-gray-800">
-                      Đang kết nối...
-                    </p>
-                    <p className="text-sm text-gray-500 max-w-md">
-                      Đang thiết lập kết nối với AI Assistant. Vui lòng chờ
-                      trong giây lát...
-                    </p>
-                  </div>
-
-                  {/* Loading Progress Dots */}
-                  <div className="flex gap-2 mt-6">
-                    <div
-                      className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    ></div>
-                  </div>
+                  {/* Spinning Ring */}
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" />
                 </div>
-              )}
-            </div>
 
-            {/* Footer with Tips */}
-            {token && (
-              <div className="px-8 py-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border-t border-blue-100 flex-shrink-0">
-                <div className="flex items-center gap-3 text-xs text-blue-700">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <p className="flex-1">
-                    <span className="font-semibold">Mẹo:</span> Nói rõ ràng và
-                    tự nhiên. AI sẽ phản hồi theo thời gian thực và điều chỉnh
-                    theo trình độ của bạn.
-                  </p>
+                <h3 className="text-xl font-bold text-white mb-2">Connecting to AI...</h3>
+                <p className="text-gray-400 text-sm">Please wait while we set up your session</p>
+
+                {/* Loading Dots */}
+                <div className="flex gap-1.5 mt-6">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
                 </div>
               </div>
             )}
