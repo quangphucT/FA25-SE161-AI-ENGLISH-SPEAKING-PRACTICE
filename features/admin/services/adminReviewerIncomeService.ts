@@ -122,13 +122,16 @@ export const adminReviewerIncomeService = async (): Promise<AdminReviewerIncomeR
   export const adminReviewerIncomeDetailService = async (
     reviewerProfileId: string,
     fromDate?: string,
-    toDate?: string
+    toDate?: string,
+    pageNumber?: number,
+    pageSize?: number
   ): Promise<AdminReviewerIncomeDetailResponse> => {
     try {
       const params = new URLSearchParams();
       if (fromDate) params.set("fromDate", fromDate);
       if (toDate) params.set("toDate", toDate);
-
+      if (pageNumber) params.set("pageNumber", pageNumber.toString());
+      if (pageSize) params.set("pageSize", pageSize.toString());
       const queryString = params.toString();
       const url = `/api/AdminDashboard/reviewIncomeDetail/${reviewerProfileId}${queryString ? `?${queryString}` : ""}`;
       

@@ -1327,7 +1327,7 @@ const StatisticsForMentor = () => {
                     </div>
                     {selectedReview.aiScore > 0 && (
                       <div className="ml-auto bg-purple-200 text-purple-800 px-3 py-1 rounded-full text-xs font-bold">
-                        AI Score: {selectedReview.aiScore}/10
+                        AI Score: {selectedReview.aiScore}/100
                       </div>
                     )}
                   </div>
@@ -1355,7 +1355,7 @@ const StatisticsForMentor = () => {
                       {showAnswer ? "Hide AI Feedback" : "View AI Feedback"}
                       {selectedReview.aiScore > 0 && (
                         <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-semibold">
-                          Score: {selectedReview.aiScore}/10
+                          Score: {selectedReview.aiScore}/100
                         </span>
                       )}
                     </Button>
@@ -1537,7 +1537,7 @@ const StatisticsForMentor = () => {
                         Feedback Type
                       </Label>
                       <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                        {selectedFeedbackDetail.feedbackType  === "ReviewerFeedback" ? "Phản hồi" : "Báo cáo"}   
+                        {selectedFeedbackDetail.feedbackType  === "ReviewerFeedback" ? "Feedback" : "Report"}   
                       </p>
                     </div>
 
@@ -1586,7 +1586,7 @@ const StatisticsForMentor = () => {
                       </Label>
                       <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
                         <p className="text-2xl font-bold text-green-700">
-                          {selectedFeedbackDetail.reviewScore}/10
+                          {selectedFeedbackDetail.reviewScore}/100 
                         </p>
                       </div>
                     </div>
@@ -1606,7 +1606,7 @@ const StatisticsForMentor = () => {
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
                             <Clock className="w-4 h-4" />
-                            {selectedFeedbackDetail.reviewStatus}
+                            {selectedFeedbackDetail.reviewStatus === "Reported_Pending" ? "Reported Pending" : ""}
                           </span>
                         )}
                       </div>
@@ -1619,7 +1619,7 @@ const StatisticsForMentor = () => {
                         Review Type
                       </Label>
                       <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                        {selectedFeedbackDetail.reviewType === "Record" ? "Báo cáo" : "Phản hồi"}   
+                        {selectedFeedbackDetail.reviewType === "Record" ? "Record" : "Feedback"}   
                       </p>
                     </div>
 

@@ -30,11 +30,13 @@ export const useAdminReviewerIncomeList = (
 export const useAdminReviewerIncomeDetail = (
   reviewerProfileId: string,
   fromDate?: string,
-  toDate?: string
+  toDate?: string,
+  pageNumber?: number,
+  pageSize?: number
 ) => {
   return useQuery<AdminReviewerIncomeDetailResponse, Error>({
-    queryKey: ["adminReviewerIncomeDetail", reviewerProfileId, fromDate, toDate],
-    queryFn: () => adminReviewerIncomeDetailService(reviewerProfileId, fromDate, toDate),
+    queryKey: ["adminReviewerIncomeDetail", reviewerProfileId, fromDate, toDate, pageNumber, pageSize],
+    queryFn: () => adminReviewerIncomeDetailService(reviewerProfileId, fromDate, toDate, pageNumber, pageSize),
     enabled: !!reviewerProfileId, // Only fetch when reviewerProfileId is provided
   });
 };

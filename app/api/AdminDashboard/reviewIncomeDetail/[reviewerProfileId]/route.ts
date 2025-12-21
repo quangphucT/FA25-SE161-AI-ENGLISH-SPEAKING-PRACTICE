@@ -9,6 +9,8 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const fromDate = searchParams.get("fromDate");
   const toDate = searchParams.get("toDate");
+  const pageNumber = searchParams.get("pageNumber");
+  const pageSize = searchParams.get("pageSize");
   try {
     // Build URL with path parameter and query parameters
     const backendUrl = new URL(
@@ -21,7 +23,12 @@ export async function GET(
     if (toDate) {
       backendUrl.searchParams.set("toDate", toDate);
     }
-
+    if (pageNumber) {
+      backendUrl.searchParams.set("pageNumber", pageNumber);
+    }
+    if (pageSize) {
+      backendUrl.searchParams.set("pageSize", pageSize);
+    }
     const backendResponse = await fetch(backendUrl.toString(), {
       method: "GET",
       headers: {
