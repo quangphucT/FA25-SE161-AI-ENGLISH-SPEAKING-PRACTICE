@@ -151,3 +151,27 @@
 .animate-scan {
   animation: scan 2.5s ease-in-out infinite;
 }
+
+/* LiveKit Voice Assistant Control Bar Overrides */
+.lk-control-bar {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Hide disconnect button completely */
+.lk-disconnect-button {
+  display: none !important;
+}
+
+/* Hide dropdown/menu buttons */
+.lk-button-group-menu,
+button[aria-haspopup='menu'] {
+  display: none !important;
+}
+
+/* Style mic button */
+.lk-button {
+  background: white !important;
+  border-radius: 9999px !important;
+  padding: 12px 24px !important;
+}
