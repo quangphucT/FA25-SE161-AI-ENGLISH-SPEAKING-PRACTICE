@@ -800,7 +800,7 @@ const FeedbacksCommentsManagement = () => {
                         variant={selectedFeedback.type === "feedback" ? "default" : "secondary"}
                         className="text-xs font-medium"
                       >
-                        {selectedFeedback.type === "feedback" ? "Phản hồi" : "Bình luận"}
+                        {selectedFeedback.type === "feedback" ? "Phản hồi" : "Báo cáo"}
                       </Badge>
                     </div>
                   </div>
