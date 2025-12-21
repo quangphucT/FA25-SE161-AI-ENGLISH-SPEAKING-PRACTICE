@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { uploadAudioToCloudinary } from "@/utils/upload";
-import { useLearnerRecords, useLearnerRecordUpdate } from "@/features/learner/hooks/useLearnerRecord";
+import { useLearnerRecords, useLearnerRecordPostSubmit } from "@/features/learner/hooks/useLearnerRecord";
 import type { Record } from "@/features/learner/services/learnerRecordService";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, BookOpen, Play, Volume2, Mic, MessageSquare, X } from "lucide-react";
@@ -108,7 +108,7 @@ const PracticeRecordLayout = () => {
   const soundFileBadRef = useRef<AudioBuffer | null>(null);
   
   // Hook for creating record
-  const { mutateAsync: updateRecord, isPending: isUpdatingRecord } = useLearnerRecordUpdate();
+  const { mutateAsync: updateRecord, isPending: isUpdatingRecord } = useLearnerRecordPostSubmit();
 
   // Speech synthesis
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -300,10 +300,10 @@ const PracticeRecordLayout = () => {
 
         setMainTitle("Đang tạo record...");
 
-        // Validate recordId
-        const targetRecordId = currentRecordId || recordId;
-        if (!targetRecordId) {
-          setMainTitle("Không tìm thấy record ID");
+        // Validate recordId - prefer recordContentId if available
+        const targetRecordContentId = currentRecord?.recordContentId 
+        if (!targetRecordContentId) {
+          setMainTitle("Không tìm thấy record content ID");
           setUiBlocked(false);
           return;
         }
@@ -327,7 +327,7 @@ const PracticeRecordLayout = () => {
         }
 
         console.log("Submitting record:", {
-          recordId: targetRecordId,
+          recordId: targetRecordContentId,
           audioUrl,
           score: finalScore,
           feedback: finalFeedback.substring(0, 50) + "...",
@@ -335,12 +335,12 @@ const PracticeRecordLayout = () => {
         
         // Update record
         await updateRecord({
-          recordId: targetRecordId,
-          reviewData: {
+          recordContentId: targetRecordContentId,
+          body: {
             audioRecordingURL: audioUrl,
             score: finalScore,
             aiFeedback: finalFeedback,
-            transcribedText: Array.isArray(matchedTranscriptsIpa) ? matchedTranscriptsIpa.join(" ") : matchedTranscriptsIpa || "",
+            transcribedText: `/ ${Array.isArray(matchedTranscriptsIpa) ? matchedTranscriptsIpa.join(" ") : matchedTranscriptsIpa || ""} /`,
           },
         });
 
@@ -437,7 +437,7 @@ const PracticeRecordLayout = () => {
     if (!Number.isNaN(parsedAcc))
       setScore((s) => Math.round(s + parsedAcc * 1));
 
-    setMainTitle("Processing new sample...");
+    setMainTitle("Processing new content...");
    
 
     try {

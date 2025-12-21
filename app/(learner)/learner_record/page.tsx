@@ -29,7 +29,7 @@ import {
   useLearnerRecordDelete,
   useLearnerRecordUpdateContent,
 } from "@/features/learner/hooks/useLearnerRecord";
-import { RecordCategory, Record } from "@/features/learner/services/learnerRecordService";
+import { RecordCategory, Record, Status, StatusRecord } from "@/features/learner/services/learnerRecordService";
 import {
   FolderPlus,
   FilePlus,
@@ -173,9 +173,13 @@ export default function LearnerRecordPage() {
   };
   const handleUpdateRecordContent = async () => {
     if (!recordToEdit || !editingContent.trim()) return;
+    if (!recordToEdit.recordContentId) {
+      toast.error("Không tìm thấy Record Content ID");
+      return;
+    }
     try {
       await updateRecordContent({ 
-        recordId: recordToEdit.recordId, 
+        recordContentId: recordToEdit.recordContentId, 
         content: editingContent.trim() 
       });
       setEditingContent("");
@@ -204,12 +208,46 @@ export default function LearnerRecordPage() {
     setShowRenameDialog(true);
   };
 
-  const formatDate = (dateString: string | Date) => {
+  const formatDate = (dateString: string | Date | undefined | null) => {
+    if (!dateString) {
+      return "N/A";
+    }
     try {
       const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+      if (isNaN(date.getTime())) {
+        return "N/A";
+      }
       return format(date, "dd/MM/yyyy HH:mm", { locale: vi });
     } catch {
-      return typeof dateString === 'string' ? dateString : dateString.toString();
+      return typeof dateString === 'string' ? dateString : (dateString?.toString() || "N/A");
+    }
+  };
+
+  // Map folder status to Vietnamese
+  const getFolderStatusLabel = (status: Status | string | undefined): string => {
+    if (!status) return "";
+    switch (status) {
+      case "Draft":
+        return "Nháp";
+      case "InProgress":
+        return "Đang thực hiện";
+      case "Done":
+        return "Hoàn thành";
+      default:
+        return status;
+    }
+  };
+
+  // Map record status to Vietnamese
+  const getRecordStatusLabel = (status: StatusRecord | string | undefined): string => {
+    if (!status) return "";
+    switch (status) {
+      case "Draft":
+        return "Nháp";
+      case "Submitted":
+        return "Đã nộp";
+      default:
+        return status;
     }
   };
 
@@ -307,9 +345,9 @@ export default function LearnerRecordPage() {
                 <p className="text-sm">Tạo thư mục mới để bắt đầu</p>
               </div>
             ) : (
-              folders.map((folder) => (
+              folders.map((folder, index) => (
                 <div
-                  key={folder.learnerRecordId}
+                  key={folder.learnerRecordId || `folder-${index}`}
                   className={`group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                     selectedFolderId === folder.learnerRecordId
                       ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-500 shadow-md"
@@ -354,10 +392,14 @@ export default function LearnerRecordPage() {
                               className={`text-xs ${
                                 folder.status === "Active"
                                   ? "border-green-300 text-green-700 bg-green-50"
-                                  : "border-gray-300 text-gray-700"
+                                  : folder.status === "Done"
+                                  ? "border-green-300 text-green-700 bg-green-50"
+                                  : folder.status === "InProgress"
+                                  ? "border-yellow-300 text-yellow-700 bg-yellow-50"
+                                  : "border-gray-300 text-gray-700 bg-gray-50"
                               }`}
                             >
-                              {folder.status}
+                              {getFolderStatusLabel(folder.status)}
                             </Badge>
                           )}
                         </div>
@@ -473,9 +515,14 @@ export default function LearnerRecordPage() {
                      size="sm" 
                      className="bg-blue-600 hover:bg-blue-700"
                      onClick={() => {
-                       router.push(
-                         `/learner_record/${selectedFolderId}?recordId=${selectedRecords[0].recordId}&content=${encodeURIComponent(selectedRecords[0].content)}`
-                       );
+                       const firstRecord = selectedRecords[0];
+                       if (firstRecord && firstRecord.recordId && firstRecord.content) {
+                         router.push(
+                           `/learner_record/${selectedFolderId}?recordId=${firstRecord.recordId}&content=${encodeURIComponent(firstRecord.content)}`
+                         );
+                       } else {
+                         toast.error("Không thể tìm thấy record để học");
+                       }
                      }}
                      disabled={selectedRecords.length === 0 || isLoadingRecords}
                    >
@@ -513,23 +560,40 @@ export default function LearnerRecordPage() {
               </div>
             ) : (
                 <div className="space-y-4">
-                  {selectedRecords.map((record: Record) => {
+                  {selectedRecords.map((record: Record, index: number) => {
                     const hasAiFeedback = Boolean(record.aiFeedback && record.aiFeedback.trim());
                     return (
                       <Card 
-                        key={record.recordId} 
+                        key={record.recordId || `record-${index}`} 
                         className="hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => {
-                          if (selectedFolderId) {
-                            router.push(`/learner_record/${selectedFolderId}?recordId=${record.recordId}&content=${encodeURIComponent(record.content)}`);
+                          if (!selectedFolderId) {
+                            toast.error("Vui lòng chọn thư mục trước");
+                            return;
                           }
+                          
+                          // Use recordContentId if available, otherwise fallback to recordId
+                          const recordIdToUse = record.recordContentId || record.recordId;
+                          const contentToUse = record.content || "";
+                          
+                          if (!recordIdToUse) {
+                            toast.error("Record không có ID hợp lệ");
+                            return;
+                          }
+                          
+                          if (!contentToUse) {
+                            toast.error("Record không có nội dung");
+                            return;
+                          }
+                          
+                          router.push(`/learner_record/${selectedFolderId}?recordId=${recordIdToUse}&content=${encodeURIComponent(contentToUse)}`);
                         }}
                       >
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 space-y-3">
                               <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-semibold text-lg">{record.content}</h3>
+                                <h3 className="font-semibold text-lg">{record.content || "N/A"}</h3>
                                 
                                 {hasAiFeedback && (
                                   <Badge variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50">
@@ -551,12 +615,21 @@ export default function LearnerRecordPage() {
                                 <div className="flex items-center gap-2">
                                   <Star className="w-4 h-4 text-yellow-500" />
                                   <span className="text-gray-600">Điểm số:</span>
-                                  <span className="font-semibold">{record.score || 0}/100</span>
+                                  <span className="font-semibold">{record.score ?? 0}/100</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <MessageSquare className="w-4 h-4 text-blue-500" />
                                   <span className="text-gray-600">Trạng thái:</span>
-                                  <span className="font-semibold">{record.status}</span>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs font-semibold ${
+                                      record.status === "Submitted"
+                                        ? "border-green-300 text-green-700 bg-green-50"
+                                        : "border-gray-300 text-gray-700 bg-gray-50"
+                                    }`}
+                                  >
+                                    {getRecordStatusLabel(record.status)}
+                                  </Badge>
                                 </div>
                               </div>
 
