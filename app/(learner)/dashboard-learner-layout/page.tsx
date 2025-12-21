@@ -52,11 +52,6 @@ function DashboardContent() {
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
     { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
     //{ id: "reviewRecord", label: "Lịch sử đánh giá", icon: BookOpen, description: "Lịch sử đánh giá của tôi" },
-<<<<<<< HEAD
-
-=======
-    { id: "progress", label: "Tiến độ học tập", icon: BarChart3, description: "Theo dõi kết quả học tập" },
->>>>>>> 1daedf1010455d8a0fa31f6309da7ad03f4a5bd6
   ];
 
 
