@@ -1080,7 +1080,7 @@ const PracticeRecordLayout = () => {
           rel="stylesheet"
         />
       </Head>
-      <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 max-w-[95%] mx-auto relative">
+      <div className="min-h-screen w-full  max-w-[100%] mx-auto relative">
         {/* Header Section */}
         <div className="bg-white border-b border-gray-100 shadow-md sticky top-0 z-40">
           <div className="flex items-center py-4 px-8 max-w-7xl mx-auto">
@@ -1122,7 +1122,7 @@ const PracticeRecordLayout = () => {
           <div className="flex items-center justify-center mb-8 gap-4">
             {/* Processing status */}
             {isAnalyzing && (
-              <div className="flex items-center gap-3 px-6 py-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+              <div className="flex items-center gap-3 px-6 py-4 ">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 <div>
                   <span className="text-blue-900 font-semibold block text-sm">
@@ -1135,7 +1135,7 @@ const PracticeRecordLayout = () => {
               </div>
             )}
             
-            <div className="bg-white rounded-2xl px-8 py-6 shadow-lg border-2 border-gray-100">
+            <div className="">
               <p
                 id="original_script"
                 className="font-bold text-gray-900 tracking-wide text-3xl md:text-4xl text-center"
@@ -1198,11 +1198,13 @@ const PracticeRecordLayout = () => {
             
             {/* Left Column - IPA Results */}
             <div className="space-y-5">
-              {/* Section Header */}
-              <div className="flex items-center gap-3 px-1">
-                <div className="w-1.5 h-8 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></div>
-                <h3 className="text-lg font-bold text-gray-800 tracking-tight">Kết quả phân tích</h3>
-              </div>
+              {/* Section Header - Only show when there's recorded result */}
+              {recordedIpaScript && (
+                <div className="flex items-center gap-3 px-1">
+                  <div className="w-1.5 h-8 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></div>
+                  <h3 className="text-lg font-bold text-gray-800 tracking-tight">Kết quả phân tích</h3>
+                </div>
+              )}
 
               {/* IPA Cards Container */}
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/50 overflow-hidden">
@@ -1211,11 +1213,11 @@ const PracticeRecordLayout = () => {
                   {ipaScript && (
                     <div className="p-6 hover:bg-gray-50/50 transition-colors">
                       <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
+                        {/* <div className="flex-shrink-0">
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
                             <span className="text-white text-xs font-bold tracking-wider">IPA</span>
                           </div>
-                        </div>
+                        </div> */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="text-sm font-semibold text-gray-900">Phiên âm chuẩn</h4>
@@ -1432,7 +1434,7 @@ const PracticeRecordLayout = () => {
               {/* Tips Card */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">💡</span>
+                 
                   <h4 className="text-sm font-semibold text-amber-800">Mẹo ghi âm chất lượng</h4>
                 </div>
                 <ul className="space-y-2 text-xs text-amber-700">
