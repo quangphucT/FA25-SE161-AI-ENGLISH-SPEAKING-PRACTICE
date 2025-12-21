@@ -18,8 +18,6 @@ import { signalRService } from "@/lib/realtime/realtime";
 import { ReviewCompleted } from "@/lib/realtime/realtime";
 import { useRealtime } from "@/providers/RealtimeProvider";
 import { CircleCheck, Mic, MessageSquare, User, FileText, Calendar, Star, CheckCircle2, XCircle, Clock, Headphones, Play, Coins } from "lucide-react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
 import { uploadAudioToCloudinary } from "@/utils/upload";
 import { formatAiFeedbackHtml } from "@/utils/formatAiFeedback";
 import { toast } from "sonner";
@@ -36,6 +34,35 @@ const reviewFormSchema = z.object({
     .min(1, "Score must be between 1 and 10")
     .max(10, "Score must be between 1 and 10"),
 });
+
+// Helper function to format dates
+const formatDate = (date: string | Date, includeTime: boolean = false): string => {
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) {
+      return "Invalid date";
+    }
+    
+    // Format manually to ensure dd/MM/yyyy format
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const year = dateObj.getFullYear();
+    
+    let formatted = `${day}/${month}/${year}`;
+    
+    if (includeTime) {
+      const hours = String(dateObj.getHours()).padStart(2, "0");
+      const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+      const seconds = String(dateObj.getSeconds()).padStart(2, "0");
+      formatted += ` ${hours}:${minutes}:${seconds}`;
+    }
+    
+    return formatted;
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Invalid date";
+  }
+};
 
 const StatisticsForMentor = () => {
   const [showAllFeedback, setShowAllFeedback] = useState(false);
@@ -98,7 +125,7 @@ const StatisticsForMentor = () => {
       rating: item.rating,
       comment: item.content,
       sessionType: item.reviewType || "Pronunciation review",
-      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: enUS }),
+      date: formatDate(item.createdAt),
       avatar: getInitials(item.learnerName),
     }));
   }, [feedbackData]);
@@ -363,7 +390,7 @@ const StatisticsForMentor = () => {
       id: item.id,
       questionText: item.questionText,
       audioUrl: item.audioUrl,
-      submittedAt: new Date(item.submittedAt).toLocaleDateString("en-US"),
+      submittedAt: formatDate(item.submittedAt, true),
       status: "Pending",
       learnerFullName: item.learnerFullName,
       type: item.type,
@@ -519,7 +546,7 @@ const StatisticsForMentor = () => {
       rating: item.rating,
       comment: item.content,
       sessionType: item.reviewType || "Pronunciation review",
-      date: format(new Date(item.createdAt), "dd/MM/yyyy", { locale: enUS }),
+      date: formatDate(item.createdAt),
       avatar: getInitials(item.learnerName),
     }));
   }, [allFeedbackData]);
@@ -822,7 +849,7 @@ const StatisticsForMentor = () => {
                                 <span className="text-sm font-medium text-gray-900">
                                   Audio Response
                                 </span>
-                                {review.aiScore > 0 && (
+                                {review.aiScore >= 0 && review.aiScore <= 100 && (
                                   <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-semibold">
                                     <Star className="w-3 h-3 fill-purple-700" />
                                     AI: {review.aiScore}/100
@@ -1510,7 +1537,7 @@ const StatisticsForMentor = () => {
                         Feedback Type
                       </Label>
                       <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                        {selectedFeedbackDetail.feedbackType}
+                        {selectedFeedbackDetail.feedbackType  === "ReviewerFeedback" ? "Phản hồi" : "Báo cáo"}   
                       </p>
                     </div>
 
@@ -1521,7 +1548,7 @@ const StatisticsForMentor = () => {
                         Created At
                       </Label>
                       <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                        {format(new Date(selectedFeedbackDetail.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: enUS })}
+                        {formatDate(selectedFeedbackDetail.createdAt, true)}
                       </p>
                     </div>
 
@@ -1592,7 +1619,7 @@ const StatisticsForMentor = () => {
                         Review Type
                       </Label>
                       <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                        {selectedFeedbackDetail.reviewType}
+                        {selectedFeedbackDetail.reviewType === "Record" ? "Báo cáo" : "Phản hồi"}   
                       </p>
                     </div>
 
@@ -1603,7 +1630,7 @@ const StatisticsForMentor = () => {
                         Review Created At
                       </Label>
                       <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                        {format(new Date(selectedFeedbackDetail.reviewCreatedAt), "dd/MM/yyyy HH:mm:ss", { locale: enUS })}
+                        {formatDate(selectedFeedbackDetail.reviewCreatedAt, true)}
                       </p>
                     </div>
 

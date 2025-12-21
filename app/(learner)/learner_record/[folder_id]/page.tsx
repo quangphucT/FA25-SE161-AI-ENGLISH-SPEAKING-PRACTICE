@@ -66,6 +66,7 @@ const PracticeRecordLayout = () => {
 
   const [recording, setRecording] = useState<boolean>(false);
   const [uiBlocked, setUiBlocked] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [mainTitle, setMainTitle] = useState<string>(
     // "An English Speaking Practice with AI"
   );
@@ -260,10 +261,10 @@ const PracticeRecordLayout = () => {
     if (recording) {
       setRecording(false);
       if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
-      setMainTitle("Processing audio...");
+      setMainTitle("Đang xử lý...");
       setUiBlocked(true);
     } else {
-      setMainTitle("Recording... click again when done speaking");
+      setMainTitle("Đang ghi âm... nhấn lại khi nói xong");
       if (
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state !== "recording"
@@ -886,6 +887,7 @@ const PracticeRecordLayout = () => {
         };
         mr.onstop = async () => {
           setUiBlocked(true);
+          setIsAnalyzing(true);
           const blob = new Blob(audioChunksRef.current, { type: "audio/ogg;" });
           const blobMp3 = new Blob(audioChunksRef.current, { type: "audio/mp3;" });
           recordedAudioBlobRef.current = blob; // Store blob for later upload
@@ -1030,6 +1032,7 @@ const PracticeRecordLayout = () => {
             setMainTitle("Server Error: " + (error as Error).message);
           } finally {
             setUiBlocked(false);
+            setIsAnalyzing(false);
           }
         };
       })
@@ -1079,86 +1082,26 @@ const PracticeRecordLayout = () => {
       </Head>
       <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 max-w-[95%] mx-auto relative">
         {/* Header Section */}
-        <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm sticky top-0 z-40">
-          <div className="flex flex-row items-center justify-between gap-4 py-4 px-6 flex-wrap">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={handleGoBack}
-                disabled={uiBlocked || isUpdatingRecord}
-                variant="outline"
-                size="sm"
-                className="shadow-sm hover:shadow-md transition-shadow"
-              >
-                {isUpdatingRecord ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Quay lại
-                  </>
-                )}
-              </Button>
-              <h1 id="main_title" className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {mainTitle}
-              </h1>
-            </div>
-
-            <div className="flex flex-row items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-600">Language:</span>
-                <div className="relative">
-                  <button
-                    id="languageBox"
-                    onClick={() => setDropdownOpen((o) => !o)}
-                    disabled={uiBlocked}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-blue-400 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {languageLabel} 
-                  </button>
-                  {/* {dropdownOpen && (
-                    <div className="absolute mt-2 w-40 bg-white rounded-lg shadow-lg z-20 border border-gray-200 overflow-hidden">
-                      <button
-                        onClick={() => changeLanguage("en-gb")}
-                        disabled={uiBlocked}
-                        className="block w-full text-left px-4 py-2.5 hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                      >
-                        English-UK
-                      </button>
-                      <button
-                        onClick={() => changeLanguage("en")}
-                        disabled={uiBlocked}
-                        className="block w-full text-left px-4 py-2.5 hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                      >
-                        English-USA
-                      </button>
-                    </div>
-                  )} */}
-                </div>
-              </div>
-
-              {recordsList.length > 0 && (
-                <div className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg border border-blue-200">
-                  <p className="text-sm font-semibold text-blue-700">
-                    Câu {currentQuestionIndex + 1}/{recordsList.length}
-                  </p>
-                </div>
+        <div className="bg-white border-b border-gray-100 shadow-md sticky top-0 z-40">
+          <div className="flex items-center py-4 px-8 max-w-7xl mx-auto">
+            <Button
+              onClick={handleGoBack}
+              disabled={uiBlocked || isUpdatingRecord}
+              variant="ghost"
+              className="text-gray-600 cursor-pointer hover:text-gray-900 hover:bg-gray-50 font-medium transition-colors"
+            >
+              {isUpdatingRecord ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Quay lại
+                </>
               )}
-              
-              {currentRecordId && currentRecord?.audioRecordingURL && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="px-4 py-2 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all border-blue-300 text-blue-700 hover:bg-blue-50"
-                  onClick={() => setOpenBuyReviewModal(true)}
-                >
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  Đánh giá phát âm
-                </Button>
-              )}
-            </div>
+            </Button>
           </div>
         </div>
 
@@ -1170,116 +1113,307 @@ const PracticeRecordLayout = () => {
           />
         )}
 
-        <div className="mb-[200px]"></div>
+        <div className="pt-6 pb-[10px]"></div>
 
-        {/* Main card container */}
-        <div className="block absolute left-[2%] top-[18%] h-[59%] w-[96%] max-w-[96%] bg-white overflow-hidden rounded-3xl shadow-2xl border border-gray-200/50">
-          {/* Left floating controls */}
-          <div className="absolute top-4 left-4 flex flex-col items-start gap-4 z-10">
-            <button
-              id="playSampleAudio"
-              onClick={playAudio}
-              disabled={uiBlocked}
-              className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center transition-all hover:scale-110 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg border-4 border-white"
-              title="Phát âm thanh mẫu"
-            >
-              <Play className="w-6 h-6" fill="white" />
-            </button>
-
-            <button
-              id="playRecordedAudio"
-              onClick={() => playRecording()}
-              disabled={uiBlocked || !currentSoundRecorded}
-              className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center transition-all hover:scale-110 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg border-4 border-white"
-              title="Phát âm thanh đã ghi"
-            >
-              <Volume2 className="w-6 h-6" fill="white" />
-            </button>
-
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl px-4 py-3 shadow-md border border-emerald-200">
-              <p className="text-xs text-gray-600 mb-1 font-medium">Điểm số</p>
-              <p id="pronunciation_accuracy" className="text-center text-2xl font-bold text-emerald-600">
-                {pronunciationAccuracy || "-"}
-              </p>
-            </div>
+        {/* Main Content - 2 Column Layout like Exercise */}
+        <div className="max-w-7xl mx-auto px-6 pb-9">
+          
+          {/* Question Text & Listen Button */}
+          <div className="flex items-center justify-center mb-8 gap-4">
+            {/* Processing status */}
+            {isAnalyzing && (
+              <div className="flex items-center gap-3 px-6 py-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <div>
+                  <span className="text-blue-900 font-semibold block text-sm">
+                    Đang phân tích âm thanh...
+                  </span>
+                  <span className="text-blue-700 text-xs">
+                    AI đang đánh giá phát âm của bạn
+                  </span>
+                </div>
+              </div>
+            )}
             
-            {/* AI Feedback Button - Only show when feedback is available */}
+            <div className="bg-white rounded-2xl px-8 py-6 shadow-lg border-2 border-gray-100">
+              <p
+                id="original_script"
+                className="font-bold text-gray-900 tracking-wide text-3xl md:text-4xl text-center"
+                contentEditable
+                dangerouslySetInnerHTML={{ __html: originalScriptHtml || "" }}
+              />
+            </div>
+          </div>
+
+          {/* Stats Row */}
+          <div className="flex justify-center gap-8 mb-8">
+            {/* Score Display */}
+            {pronunciationAccuracy && (
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-600 font-medium">Điểm phát âm</p>
+                  <p id="pronunciation_accuracy" className="text-2xl font-bold text-emerald-600">
+                    {pronunciationAccuracy}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* AI Feedback Button */}
             {aiFeedback && aiFeedback.trim() && (
               <button
                 onClick={() => setOpenAiFeedbackModal(true)}
-                className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center transition-all hover:scale-110 hover:shadow-xl shadow-lg border-4 border-white"
-                title="Xem AI Feedback"
+                className="flex items-center gap-3 bg-purple-50 px-4 py-3 rounded-xl border border-purple-200 hover:bg-purple-100 transition-colors cursor-pointer"
               >
-                <MessageSquare className="w-6 h-6" fill="white" />
+                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <div className="text-left">
+                  <p className="text-xs text-purple-700 font-medium">Phân tích AI</p>
+                  <p className="text-sm font-semibold text-purple-600">Xem chi tiết →</p>
+                </div>
+              </button>
+            )}
+
+            {/* Buy Review Button */}
+            {currentRecordId && currentRecord?.audioRecordingURL && (
+              <button
+                onClick={() => setOpenBuyReviewModal(true)}
+                className="flex items-center gap-3 bg-blue-50 px-4 py-3 rounded-xl border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+              >
+                <BookOpen className="w-6 h-6 text-blue-600" />
+                <div className="text-left">
+                  <p className="text-xs text-blue-700 font-medium">Reviewer</p>
+                  <p className="text-sm font-semibold text-blue-600">Đánh giá phát âm</p>
+                </div>
               </button>
             )}
           </div>
 
-          {/* Scrollable text area */}
-          <div
-            id="text-area"
-            className="overflow-y-auto absolute left-[10%] right-[10%] top-[2%] bottom-[2%] pr-2"
-          >
-            <p
-              id="original_script"
-              className="text-[2.5em] text-blue-600 max-w-[87%]"
-              contentEditable
-              dangerouslySetInnerHTML={{ __html: originalScriptHtml || "" }}
-            />
-            <p
-              id="ipa_script"
-              className="text-[1.8em] max-w-[87%] text-gray-500"
-            >
-              {ipaScript}
-            </p>
-            <p
-              id="recorded_ipa_script"
-              className="text-[1.8em] text-blue-600 max-w-[87%]"
-            >
-              {recordedIpaScript}
-            </p>
-            <p
-              id="translated_script"
-              className="text-[1.8em] text-gray-500 max-w-[87%]"
-            >
-              {translatedScript}
-            </p>
+          {/* 2 Column Grid Layout */}
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+            
+            {/* Left Column - IPA Results */}
+            <div className="space-y-6">
+              {/* IPA Card */}
+              <div className="bg-white rounded-3xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="space-y-6">
+                  {/* IPA Reference */}
+                  {ipaScript && (
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">IPA</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-blue-900">Phiên âm chuẩn</p>
+                          <p className="text-xs text-blue-700">International Phonetic Alphabet</p>
+                        </div>
+                      </div>
+                      <p id="ipa_script" className="text-xl md:text-2xl font-mono text-blue-700 bg-white rounded-lg p-4 border border-blue-200">
+                        {ipaScript}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Recorded IPA */}
+                  {recordedIpaScript && (
+                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-emerald-200">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                          <Mic className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-emerald-900">Phân tích phiên âm của bạn</p>
+                          <p className="text-xs text-emerald-700">Kết quả ghi âm vừa thực hiện</p>
+                        </div>
+                      </div>
+                      <p id="recorded_ipa_script" className="text-xl md:text-2xl font-mono text-emerald-700 bg-white rounded-lg p-4 border border-emerald-200">
+                        {recordedIpaScript}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Translation */}
+                  {translatedScript && (
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-200">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
+                          <span className="text-white text-lg">💡</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-amber-900">Nghĩa tiếng Việt</p>
+                          <p className="text-xs text-amber-700">Bản dịch tham khảo</p>
+                        </div>
+                      </div>
+                      <p id="translated_script" className="text-lg text-amber-800 bg-white rounded-lg p-4 border border-amber-200 italic">
+                        {translatedScript}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {!ipaScript && !recordedIpaScript && !translatedScript && (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Mic className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-500 font-medium">Chưa có dữ liệu</p>
+                      <p className="text-sm text-gray-400 mt-1">Nhấn nút ghi âm để bắt đầu luyện tập</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Navigation - Moved to left column */}
+              {recordsList.length > 1 && (
+                <div className="flex items-center justify-between bg-white rounded-2xl p-4 border-2 border-gray-200 shadow-sm">
+                  <Button
+                    onClick={handlePreviousQuestion}
+                    disabled={uiBlocked || currentQuestionIndex === 0}
+                    className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl disabled:opacity-30 transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                    <span className="text-sm font-medium">Câu trước</span>
+                  </Button>
+                  
+                  <span className="text-sm font-semibold text-gray-600">
+                    {currentQuestionIndex + 1} / {recordsList.length}
+                  </span>
+                  
+                  <Button
+                    onClick={handleNextQuestion}
+                    disabled={uiBlocked || currentQuestionIndex >= recordsList.length - 1}
+                    className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl disabled:opacity-30 transition-all"
+                  >
+                    <span className="text-sm font-medium">Câu tiếp</span>
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Recording Controls */}
+            <div className="lg:sticky lg:top-32 space-y-6">
+              {/* Recording Card */}
+              <div className="bg-white rounded-3xl p-8 border-2 border-gray-200 shadow-lg">
+                <div className="flex flex-col items-center gap-6">
+                  {/* Recording status indicator */}
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
+                    recording
+                      ? "bg-red-100 text-red-700 animate-pulse"
+                      : currentSoundRecorded
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-200 text-gray-700"
+                  }`}>
+                    <span className="w-2 h-2 rounded-full bg-current"></span>
+                    {recording
+                      ? "Đang ghi âm..."
+                      : currentSoundRecorded
+                      ? "Đã ghi âm"
+                      : "Chưa ghi âm"}
+                  </div>
+
+                  {/* Recording Button */}
+                  <div className="relative">
+                    {recording && (
+                      <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75"></div>
+                    )}
+                    <button
+                      id="recordAudio"
+                      onClick={updateRecordingState}
+                      disabled={uiBlocked && !recording}
+                      className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl cursor-pointer ${
+                        recording
+                          ? "bg-red-600 hover:bg-red-700"
+                          : currentSoundRecorded
+                          ? "bg-green-600 hover:bg-green-700"
+                          : "bg-indigo-600 hover:bg-indigo-700"
+                      }`}
+                    >
+                      {recording ? (
+                        <div className="w-7 h-7 bg-white rounded"></div>
+                      ) : (
+                        <Mic className="w-10 h-10 text-white" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Label */}
+                  <p className="text-base font-semibold text-gray-800">
+                    {recording
+                      ? "Click để dừng"
+                      : currentSoundRecorded
+                      ? "Ghi lại"
+                      : "Bắt đầu ghi âm"}
+                  </p>
+
+                  {/* Play buttons */}
+                  <div className="flex items-center gap-3 w-full">
+                    <button
+                      id="playSampleAudio"
+                      onClick={playAudio}
+                      disabled={uiBlocked}
+                      className="flex-1 flex cursor-pointer items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Play className="w-4 h-4" fill="white" />
+                      <span className="text-sm">Nghe mẫu</span>
+                    </button>
+
+                    <button
+                      id="playRecordedAudio"
+                      onClick={() => playRecording()}
+                      disabled={uiBlocked || !currentSoundRecorded}
+                      className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl border-2 border-gray-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span className="text-sm">Nghe lại</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tips Card */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">💡</span>
+                  <h4 className="text-sm font-semibold text-amber-800">Mẹo ghi âm chất lượng</h4>
+                </div>
+                <ul className="space-y-2 text-xs text-amber-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-1">•</span>
+                    <span>Nói rõ ràng, tốc độ vừa phải</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-1">•</span>
+                    <span>Giữ micro cách miệng 10-15cm</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-1">•</span>
+                    <span>Hạn chế tiếng ồn xung quanh</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-1">•</span>
+                    <span>Nghe mẫu trước khi ghi âm</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
 
-
-          {/* Navigation buttons */}
-          {recordsList.length > 1 && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3">
-              <Button
-                onClick={handlePreviousQuestion}
-                disabled={uiBlocked || currentQuestionIndex === 0}
-                variant="outline"
-                size="icon"
-                className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all"
-              >
-                <ChevronLeft className="w-7 h-7" />
-              </Button>
-              <Button
-                onClick={handleNextQuestion}
-                disabled={uiBlocked || currentQuestionIndex >= recordsList.length - 1}
-                variant="outline"
-                size="icon"
-                className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all"
-              >
-                <ChevronRight className="w-7 h-7" />
-              </Button>
-            </div>
-          )}
-          {/* Next button on right side (fallback if no records list) */}
+          {/* Fallback Next Button */}
           {recordsList.length === 0 && (
-            <div id="nextButtonDiv" className="absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="flex justify-center mt-8">
               <button
                 id="buttonNext"
                 onClick={() => getNextSample()}
                 disabled={uiBlocked}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-3 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next Sample
+                Next Sample →
               </button>
             </div>
           )}
@@ -1338,8 +1472,8 @@ const PracticeRecordLayout = () => {
           </div>
         )}
 
-        {/* Small container for single word pair */}
-        <div className="fixed left-[68%] top-[79%] h-[7%] w-[25%] bg-white overflow-hidden rounded-2xl shadow-[0_0_20px_8px_#d0d0d0] flex items-center justify-center text-center">
+        {/* Small container for single word pair - Hidden */}
+        <div className="hidden">
           <p
             id="single_word_ipa_pair"
             className="text-[1.5em]"
@@ -1347,23 +1481,8 @@ const PracticeRecordLayout = () => {
           />
         </div>
 
-        {/* Mic button */}
-        <div
-          id="btn-record"
-          className="fixed left-1/2 top-[80%] -translate-x-1/2"
-        >
-          <button
-            id="recordAudio"
-            onClick={updateRecordingState}
-            disabled={uiBlocked && !recording}
-            className={`box-border w-[4.5em] h-[4.5em] rounded-full border-[6px] border-white text-white flex items-center justify-center transition disabled:opacity-50 disabled:cursor-not-allowed ${
-              recording ? "bg-[#477c5b]" : "bg-[#49d67d]"
-            }`}
-          >
-            <Mic id="recordIcon" className="w-10 h-10" />
-          </button>
-        </div>
-
+        {/* Hidden floating mic button - already have mic in Recording Card */}
+        <div id="btn-record" className="hidden"></div>
        
       </div>
     </>
