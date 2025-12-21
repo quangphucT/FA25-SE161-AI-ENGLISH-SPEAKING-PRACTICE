@@ -111,7 +111,7 @@ export default function LoginForm() {
             if (!data?.isPlacementTestDone) {
               router.push("/entrance_test");
             } else {
-              router.push("/dashboard-learner-layout?menu=learningPath");
+              router.push("/dashboard-learner-layout?menu=enrollingCourses");
             }
           },
           onError: (error) => {
