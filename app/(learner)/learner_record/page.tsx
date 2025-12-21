@@ -210,12 +210,12 @@ export default function LearnerRecordPage() {
 
   const formatDate = (dateString: string | Date | undefined | null) => {
     if (!dateString) {
-      return "N/A";
+      return "Chưa học lần nào";
     }
     try {
       const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
       if (isNaN(date.getTime())) {
-        return "N/A";
+        return "Chưa học lần nào";
       }
       return format(date, "dd/MM/yyyy HH:mm", { locale: vi });
     } catch {
@@ -634,7 +634,7 @@ export default function LearnerRecordPage() {
                               </div>
 
                               <div className="text-xs text-gray-500">
-                                Tạo lúc: {formatDate(record.createdAt)}
+                                Học lần cuối: {formatDate(record.createdAt)}
                               </div>
                             </div>
 
