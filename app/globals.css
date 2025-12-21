@@ -165,7 +165,7 @@
 
 /* Hide dropdown/menu buttons */
 .lk-button-group-menu,
-button[aria-haspopup='menu'] {
+.lk-control-bar button[aria-haspopup='menu'] {
   display: none !important;
 }
 
