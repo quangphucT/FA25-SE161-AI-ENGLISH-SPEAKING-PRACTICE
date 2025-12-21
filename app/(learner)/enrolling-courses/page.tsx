@@ -11,6 +11,7 @@ import { BookOpen, Coins, TrendingUp, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useGetLevelAndLearnerCourseIdAfterEnrolling } from "@/features/learner/hooks/enrollingCourseHooks/enrollingCourses";
 import { useLearnerStore } from "@/store/useLearnerStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEnrollCourseNotFree } from "@/features/learner/hooks/enrollingCourseNotFreeHooks/enrollCourseNotFree";
 import { useRouter } from "next/navigation";
 import { upLevelForLearner } from "@/features/learner/hooks/up-level/upLevelHook";
@@ -21,7 +22,8 @@ export default function EnrollingCourses() {
     (state) => state.getAllLearnerData().learnerCourseId
   );
 
-  const { data: userData, refetch: refetchUserData } = useGetMeQuery();
+  const { data: userData } = useGetMeQuery();
+  const queryClient = useQueryClient();
   const userLevel = userData?.learnerProfile?.level || "A1";
 
   const [viewingLevel, setViewingLevel] = useState<string>(userLevel);
@@ -112,7 +114,7 @@ export default function EnrollingCourses() {
             status: data.data.status,
           });
 
-          refetchUserData();
+          queryClient.invalidateQueries({ queryKey: ["getMe"] });
           router.push(`/dashboard-learner-layout?menu=learningPath`);
         },
         onError: (error) => {

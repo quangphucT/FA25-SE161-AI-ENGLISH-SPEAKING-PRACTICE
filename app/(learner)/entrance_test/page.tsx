@@ -63,7 +63,7 @@ const EntranceTest = () => {
       type: string;
       sectionType: string;
     }> = [];
-    const typeOrder = ["WORD", "SENTENCE", "PHRASE"];
+    const typeOrder = ["Word", "Sentence", "Phrase"];
     const sortedSections = [...testAssessmentData.data.sections].sort(
       (a, b) => {
         const indexA = typeOrder.indexOf(a.type);
@@ -136,8 +136,6 @@ const EntranceTest = () => {
           );
           setCurrentQuestionIndex(parsed.currentQuestionIndex || 0);
         } catch (error) {
-          console.error("Error loading saved progress:", error);
-          // Nếu lỗi thì khởi tạo mới
           setRecorded(new Array(allQuestions.length).fill(false));
           setPronunciationAccuracy(new Array(allQuestions.length).fill(""));
           setPronunciationScores(new Array(allQuestions.length).fill(0));
@@ -219,11 +217,11 @@ const EntranceTest = () => {
 
   const getQuestionDescription = (type: string) => {
     switch (type) {
-      case "WORD":
+      case "Word":
         return "Hãy đọc to từ sau:";
-      case "SENTENCE":
+      case "Sentence":
         return "Hãy đọc to câu sau:";
-      case "PHRASE":
+      case "Phrase":
         return "Hãy đọc to cụm từ sau:";
       default:
         return "Hãy đọc to:";
@@ -651,7 +649,7 @@ const EntranceTest = () => {
           {/* Question type badge with gradient */}
           <div className="text-center mb-8">
             <span
-              className="inline-flex items-center px-4 py-1.5 
+              className="inline-flex items-center mt-1 px-4 py-1.5 
   bg-blue-50 text-blue-600 text-sm font-semibold 
   rounded-full tracking-wide"
             >
