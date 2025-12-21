@@ -4,14 +4,13 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   ArcElement,
   Tooltip,
   Legend,
 } from "chart.js";
 
-import { Line, Doughnut } from "react-chartjs-2";
+import { Bar, Doughnut } from "react-chartjs-2";
 
 import { Card } from "@/components/ui/card";
 import { useGetMyProgressAnalytics } from "@/features/learner/hooks/progressAnalyticsHooks/useGetMyProgressAnalytics";
@@ -20,14 +19,13 @@ import { Clock, CheckCircle, Star } from "lucide-react";
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   ArcElement,
   Tooltip,
   Legend
 );
 
-export default function ProgressPage() {
+export default function ProgressSection() {
   const { data, isLoading, error } = useGetMyProgressAnalytics();
 
   if (isLoading) return <div className="text-gray-500">Đang tải tiến độ...</div>;
@@ -46,19 +44,54 @@ const hasSkillData =
 
 
   // ✅ Line Chart Data
-  const lineChartData = {
-    labels: ["Thời gian nói", "Số buổi", "Điểm phát âm"],
-    datasets: [
-      {
-        label: "Tiến độ học tập",
-        data: [speakingTime, sessionsCompleted, pronunciationScoreAvg],
-        borderColor: "#3b82f6",
-        backgroundColor: "rgba(59, 130, 246, 0.4)",
-        tension: 0.4,
-        fill: true,
+const barChartData = {
+  labels: ["Thời gian nói", "Số buổi", "Điểm phát âm"],
+  datasets: [
+    {
+      label: "Tiến độ học tập",
+      data: [speakingTime, sessionsCompleted, pronunciationScoreAvg],
+      backgroundColor: ["#3b82f6", "#22c55e", "#a855f7"],
+      borderRadius: 12,        // bo góc cột
+      barThickness: 60,        // độ rộng cột
+    },
+  ],
+};
+const barChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      labels: {
+        font: { size: 14, weight: 600 },
       },
-    ],
-  };
+    },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      ticks: {
+        font: { size: 13 },
+      },
+      title: {
+        display: true,
+        text: "Giá trị",
+        font: { size: 14, weight: 600 },
+      },
+    },
+    x: {
+      ticks: {
+        font: { size: 13 },
+      },
+      title: {
+        display: true,
+        text: "Chỉ số đánh giá",
+        font: { size: 14, weight: 600 },
+      },
+    },
+  },
+};
+
 
   // ✅ Line Chart Options
  const lineChartOptions = {
@@ -211,7 +244,7 @@ const hasSkillData =
     {/* CHART */}
     <div className="flex-1">
   <div className="w-full h-[400px]">
-    <Line data={lineChartData} options={lineChartOptions} />
+<Bar data={barChartData} options={barChartOptions} />
   </div>
 </div>
 

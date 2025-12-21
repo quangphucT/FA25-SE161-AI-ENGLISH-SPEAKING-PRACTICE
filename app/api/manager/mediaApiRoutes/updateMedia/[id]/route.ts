@@ -14,14 +14,9 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { accent, audioUrl, videoUrl, imageUrl, source } = body;
+    const {videoUrl, imageUrl } = body;
 
-    if (!accent) {
-      return NextResponse.json(
-        { message: "accent  is required" },
-        { status: 400 }
-      );
-    }
+  
 
     const backendResponse = await fetch(
       `${process.env.BE_API_URL}/ManagerQuestionMedia/medias/${mediaId}`,
@@ -32,11 +27,10 @@ export async function PUT(request: NextRequest) {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          accent,
-          audioUrl,
+         
+        
           videoUrl,
           imageUrl,
-          source
         }),
       }
     );
