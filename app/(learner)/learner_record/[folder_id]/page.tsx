@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { uploadAudioToCloudinary } from "@/utils/upload";
-import { useLearnerRecords, useLearnerRecordUpdate } from "@/features/learner/hooks/useLearnerRecord";
+import { useLearnerRecords, useLearnerRecordPostSubmit } from "@/features/learner/hooks/useLearnerRecord";
 import type { Record } from "@/features/learner/services/learnerRecordService";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, BookOpen, Play, Volume2, Mic, MessageSquare, X } from "lucide-react";
@@ -17,7 +17,9 @@ const PracticeRecordLayout = () => {
   const router = useRouter();
   const folderId = params?.folder_id as string;
   const content = searchParams?.get("content") || "";
-  // Nhận recordId đơn lẻ (từ nút "Học" trên từng record)
+  // Nhận recordContentId từ URL query params (từ nút "Học" trên từng record)
+  const recordContentIdFromUrl = searchParams?.get("recordContentId") || "";
+  // Nhận recordId đơn lẻ (fallback cho trường hợp cũ)
   const recordId = searchParams?.get("recordId") || "";
   // Lấy tất cả records từ folderId
   const { data: recordsDataResponse } = useLearnerRecords(folderId);
@@ -37,15 +39,20 @@ const PracticeRecordLayout = () => {
   // State để quản lý câu hỏi hiện tại
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   
-  // Tìm index của record hiện tại nếu có recordId từ URL
+  // Tìm index của record hiện tại dựa trên recordContentId hoặc recordId từ URL
   useEffect(() => {
-    if (recordId && recordsList.length > 0) {
-      const index = recordsList.findIndex((r: Record) => r.recordId === recordId);
+    if (recordsList.length > 0) {
+      let index = -1;
+      // Ưu tiên tìm theo recordContentId từ URL
+      if (recordContentIdFromUrl) {
+        index = recordsList.findIndex((r: Record) => r.recordContentId === recordContentIdFromUrl);
+      }
+      
       if (index !== -1) {
         setCurrentQuestionIndex(index);
       }
     }
-  }, [recordId, recordsList]);
+  }, [recordContentIdFromUrl, recordsList]);
   
   // Lấy record hiện tại
   const currentRecord = recordsList[currentQuestionIndex] || null;
@@ -108,7 +115,7 @@ const PracticeRecordLayout = () => {
   const soundFileBadRef = useRef<AudioBuffer | null>(null);
   
   // Hook for creating record
-  const { mutateAsync: updateRecord, isPending: isUpdatingRecord } = useLearnerRecordUpdate();
+  const { mutateAsync: updateRecord, isPending: isUpdatingRecord } = useLearnerRecordPostSubmit();
 
   // Speech synthesis
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -300,10 +307,10 @@ const PracticeRecordLayout = () => {
 
         setMainTitle("Đang tạo record...");
 
-        // Validate recordId
-        const targetRecordId = currentRecordId || recordId;
-        if (!targetRecordId) {
-          setMainTitle("Không tìm thấy record ID");
+        // Validate recordId - ưu tiên recordContentId từ URL, sau đó mới dùng từ currentRecord
+        const targetRecordContentId = recordContentIdFromUrl || currentRecord?.recordContentId;
+        if (!targetRecordContentId) {
+          setMainTitle("Không tìm thấy record content ID");
           setUiBlocked(false);
           return;
         }
@@ -327,7 +334,7 @@ const PracticeRecordLayout = () => {
         }
 
         console.log("Submitting record:", {
-          recordId: targetRecordId,
+          recordId: targetRecordContentId,
           audioUrl,
           score: finalScore,
           feedback: finalFeedback.substring(0, 50) + "...",
@@ -335,12 +342,12 @@ const PracticeRecordLayout = () => {
         
         // Update record
         await updateRecord({
-          recordId: targetRecordId,
-          reviewData: {
+          recordContentId: targetRecordContentId,
+          body: {
             audioRecordingURL: audioUrl,
             score: finalScore,
             aiFeedback: finalFeedback,
-            transcribedText: Array.isArray(matchedTranscriptsIpa) ? matchedTranscriptsIpa.join(" ") : matchedTranscriptsIpa || "",
+            transcribedText: `/ ${Array.isArray(matchedTranscriptsIpa) ? matchedTranscriptsIpa.join(" ") : matchedTranscriptsIpa || ""} /`,
           },
         });
 
@@ -359,7 +366,7 @@ const PracticeRecordLayout = () => {
         setUiBlocked(false);
       }
     }, 500); // Wait 500ms for onstop handler to complete
-  }, [folderId, score, aiFeedback, updateRecord, router, currentRecordId, recordId, matchedTranscriptsIpa]);
+  }, [folderId, score, aiFeedback, updateRecord, router, recordContentIdFromUrl, currentRecord, matchedTranscriptsIpa]);
   const cacheSoundFiles = useCallback(async () => {
     try {
       if (!audioContextRef.current) return;
@@ -437,7 +444,7 @@ const PracticeRecordLayout = () => {
     if (!Number.isNaN(parsedAcc))
       setScore((s) => Math.round(s + parsedAcc * 1));
 
-    setMainTitle("Processing new sample...");
+    setMainTitle("Processing new content...");
    
 
     try {
@@ -520,7 +527,7 @@ const PracticeRecordLayout = () => {
         setSingleWordPair("Reference | Spoken");
         // Update URL with new recordId and content
         router.replace(
-          `/learner_record/${folderId}?recordId=${nextRecord.recordId}&content=${encodeURIComponent(nextRecord.content)}`
+          `/learner_record/${folderId}?recordContentId=${nextRecord.recordContentId}&content=${encodeURIComponent(nextRecord.content)}`
         );
         // Fetch new sample for the new question with the new content
         setTimeout(() => {
@@ -548,7 +555,7 @@ const PracticeRecordLayout = () => {
         setSingleWordPair("Reference | Spoken");
         // Update URL with new recordId and content
         router.replace(
-          `/learner_record/${folderId}?recordId=${prevRecord.recordId}&content=${encodeURIComponent(prevRecord.content)}`
+          `/learner_record/${folderId}?recordContentId=${prevRecord.recordContentId}&content=${encodeURIComponent(prevRecord.content)}`
         );
         // Fetch new sample for the new question with the new content
         setTimeout(() => {

@@ -7,20 +7,17 @@ export function middleware(request: NextRequest) {
    
   // Nếu không có token và truy cập trang root → chuyển thẳng tới login
   if (!accessToken && pathName === "/") {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    return NextResponse.redirect(new URL("/landing", request.url));
   }
 
   // Nếu không có token và đang truy cập dashboard hoặc trang entrance → redirect về login
   if (!accessToken && (pathName.startsWith("/dashboard") || pathName.startsWith("/entrance"))) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
-
-  
   if (accessToken) {
     try {
       const base64 = accessToken.split(".")[1];
       const decodedPayload = JSON.parse(Buffer.from(base64, "base64").toString());
-      console.log("Decoded:", decodedPayload)
       const role = decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
       const isPlacementTestDone = decodedPayload["IsPlacementTestDone"];
       const isReviewerActive = decodedPayload["IsReviewerActive"];
@@ -32,7 +29,7 @@ export function middleware(request: NextRequest) {
           if (!isPlacementTestDone) {
             return NextResponse.redirect(new URL("/entrance_test", request.url));
           }
-          return NextResponse.redirect(new URL("/dashboard-learner-layout?menu=learningPath", request.url));
+          return NextResponse.redirect(new URL("/dashboard-learner-layout?menu=enrollingCourses", request.url));
         }
         if (role === "REVIEWER") {
           // isReviewerActive = false → chưa upload certificate → entrance_information
@@ -113,7 +110,7 @@ export function middleware(request: NextRequest) {
         pathName === "/entrance_test"
       ) {
         return NextResponse.redirect(
-          new URL("/dashboard-learner-layout?menu=learningPath", request.url)
+          new URL("/dashboard-learner-layout?menu=enrollingCourses", request.url)
         );
       }
 

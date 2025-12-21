@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
 import EnhancedVoiceAssistant from "@/components/ai-conversation/EnhancedVoiceAssistant";
@@ -39,7 +40,8 @@ interface AIPackage {
 
 const ConversationWithAI = () => {
   const router = useRouter();
-  const { data: userData, refetch: refetchUserData } = useGetMeQuery();
+  const { data: userData } = useGetMeQuery();
+  const queryClient = useQueryClient();
   const {data: aiPackagesData} = useGetAIPackages();
   const [duration, setDuration] = useState<string>("");
   const [showLiveKit, setShowLiveKit] = useState(false);
@@ -216,7 +218,7 @@ const ConversationWithAI = () => {
               localStorage.removeItem("messages");
               setShowLiveKit(true);
               toast.success("Bắt đầu trò chuyện với AI!");
-              refetchUserData();
+              queryClient.invalidateQueries({ queryKey: ["getMe"] });
               setIsStarting(false);
             },
             onError: (error) => {

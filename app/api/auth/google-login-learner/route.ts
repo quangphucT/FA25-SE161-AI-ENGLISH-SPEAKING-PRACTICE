@@ -25,14 +25,14 @@ export async function POST(request: Request) {
       secure: true,
       path: "/",
       sameSite: "lax",
-      maxAge: 60, // 1 minutes
+      maxAge: 60 * 60 * 24, // 1 day
     });
     res.cookies.set("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       path: "/",
       sameSite: "lax",
-      maxAge: 60 * 60 , // 60 minutes
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
     return res;
 

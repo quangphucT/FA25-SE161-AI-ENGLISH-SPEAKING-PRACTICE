@@ -7,6 +7,7 @@ import { useBuyingCoinServicePackages } from "@/features/learner/hooks/servicePa
 import { useGetCoinServicePackage } from "@/hooks/coin-hooks/useGetCoinServicePackage";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { Coins, Loader2, Wallet } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ const WalletCoinPurchase = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const { data: userData } = useGetMeQuery();
   const { data: coinPackages } = useGetCoinServicePackage();
+  const queryClient = useQueryClient();
   const { mutate: buyCoin, isPending } = useBuyingCoinServicePackages();
 
   const handleBuyCoin = (servicePackageId: string) => {
@@ -40,10 +42,10 @@ const WalletCoinPurchase = () => {
         onSuccess: (data) => {
           setQrCodeImage(data?.qrBase64);
           setOrderCode(data?.orderCode);
-          // reset any previous image error state (no-op since we removed imageError)
           setShowCoinModal(false);
           setShowQrModal(true);
           setIsPollingStatus(true);
+          queryClient.invalidateQueries({ queryKey: ["getMe"] });
         },
         onSettled: () => {
           // always clear loading state when mutation is settled

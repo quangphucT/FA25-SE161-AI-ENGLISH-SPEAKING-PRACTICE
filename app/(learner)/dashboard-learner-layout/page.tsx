@@ -33,7 +33,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const menuParam = searchParams?.get("menu");
-  const [activeMenu, setActiveMenu] = useState(menuParam || "learningPath");
+  const [activeMenu, setActiveMenu] = useState(menuParam || "enrollingCourses");
   const { data: userData } = useGetMeQuery();
   
   // Update active menu when URL param changes
@@ -44,15 +44,19 @@ function DashboardContent() {
   }, [menuParam]);
   const sidebarMenu = [
     //{ id: "overview", label: "Tổng quan", icon: Home, description: "Bảng điều khiển chính" },
-    { id: "learningPath", label: "Lộ trình học", icon: BookOpen, description: "Xem và học theo lộ trình" },
     { id: "enrollingCourses", label: "Khoá học", icon: BookMarked, description: "Học theo các khoá học" },
+    { id: "learningPath", label: "Lộ trình học", icon: BookOpen, description: "Xem và học theo lộ trình" },
     { id: "wallet", label: "Ví Coin", icon: Wallet, description: "Quản lý và nạp Coin" },
     { id: "conversationWithAI", label: "Trò chuyện với AI", icon: PlayCircle, description: "Học qua giao tiếp với AI" },
     { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
     { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
     //{ id: "reviewRecord", label: "Lịch sử đánh giá", icon: BookOpen, description: "Lịch sử đánh giá của tôi" },
+<<<<<<< HEAD
 
+=======
+    { id: "progress", label: "Tiến độ học tập", icon: BarChart3, description: "Theo dõi kết quả học tập" },
+>>>>>>> 1daedf1010455d8a0fa31f6309da7ad03f4a5bd6
   ];
 
 

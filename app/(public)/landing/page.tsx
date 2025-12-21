@@ -89,13 +89,13 @@ export default function Page() {
             <Link href="/sign-in">
               <Button
                 variant="outline"
-                className="border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl px-5 py-2 text-sm"
+                className="border-slate-300 cursor-pointer text-slate-700 hover:bg-slate-100 rounded-xl px-5 py-2 text-sm"
               >
                 Đăng nhập
               </Button>
             </Link>
             <Link href="/sign-up">
-              <Button className="bg-gradient-to-r from-blue-500 to-emerald-400 hover:from-blue-400 hover:to-emerald-300 rounded-xl px-5 py-2 text-sm font-semibold shadow-md">
+              <Button className="bg-gradient-to-r cursor-pointer from-blue-500 to-emerald-400 hover:from-blue-400 hover:to-emerald-300 rounded-xl px-5 py-2 text-sm font-semibold shadow-md">
                 Bắt đầu miễn phí
               </Button>
             </Link>
@@ -127,7 +127,7 @@ export default function Page() {
             <div className="flex flex-wrap gap-4">
               <Link href="/sign-up">
                 <Button className="bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold px-8 py-6 rounded-2xl text-base shadow-md">
-                  🚀 Bắt đầu trải nghiệm
+                  Bắt đầu trải nghiệm
                 </Button>
               </Link>
               <a
@@ -215,7 +215,7 @@ className={`text-sm md:text-base font-sans font-bold
           <div className="flex justify-center gap-4">
             <Link href="/sign-up">
               <Button className="bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold px-10 py-6 rounded-2xl shadow-md">
-                🎯 Trải nghiệm với vai trò Learner
+                Trải nghiệm với vai trò Learner
               </Button>
             </Link>
           </div>
