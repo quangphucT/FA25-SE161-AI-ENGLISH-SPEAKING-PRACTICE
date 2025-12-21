@@ -118,13 +118,20 @@ export default function LearnerProfilePage() {
             </div>
           </div>
         </Card>
-
+ {/* HEADER */}
+        <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
+          <span className="w-1 h-6 bg-indigo-600 rounded-full"></span>
+          Tiến độ học tập
+        </h1>
         {/* STATS – LẤY TỪ PROGRESS ANALYTICS */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-5 bg-white border rounded-lg">
             <p className="text-sm text-slate-500">Trình độ</p>
           <p className="text-2xl font-semibold text-rose-600 mt-1">
   {userData?.learnerProfile?.level}
+</p>
+  <p className="text-xs text-slate-400 mt-1">
+  Cấp độ hiện tại theo đánh giá của hệ thống
 </p>
           </Card>
 
