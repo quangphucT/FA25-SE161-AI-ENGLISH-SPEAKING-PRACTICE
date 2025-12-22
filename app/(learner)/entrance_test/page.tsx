@@ -6,7 +6,7 @@ import { useSubmitTestAssessment } from "@/features/learner/hooks/testAssessment
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Loader2, Mic } from "lucide-react";
+import { Loader2, Mic, HelpCircle, X } from "lucide-react";
 export interface ResultsAfterTest {
   averageScore: number;
   assignedLevel: string;
@@ -41,6 +41,7 @@ const EntranceTest = () => {
   const [aiFeedbacks, setAiFeedbacks] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recordingAttempts, setRecordingAttempts] = useState<number[]>([]);
+  const [showLevelInfo, setShowLevelInfo] = useState(false);
   const MAX_RECORDING_ATTEMPTS = 2;
   const router = useRouter();
   const { data: userData } = useGetMeQuery();
@@ -1002,13 +1003,167 @@ const EntranceTest = () => {
 
                     {/* Level Badge */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">
-                        Trình độ của bạn:
-                      </p>
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <p className="text-sm text-gray-600">
+                          Trình độ của bạn:
+                        </p>
+                        <button
+                          onClick={() => setShowLevelInfo(true)}
+                          className="text-gray-400 hover:text-blue-600 transition-colors cursor-pointer"
+                          aria-label="Xem thông tin cách gán level"
+                        >
+                          <HelpCircle size={18} />
+                        </button>
+                      </div>
                       <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-full font-bold text-2xl shadow-md">
                         <span>🏆</span>
                         <span>{resultsAfterTest.assignedLevel}</span>
                       </div>
+
+                      {/* Level Info Popup */}
+                      {showLevelInfo && (
+                        <div
+                          className="fixed inset-0 bg-black/50  flex items-center justify-center z-50 p-4"
+                          onClick={() => setShowLevelInfo(false)}
+                        >
+                          <div
+                            className="bg-white rounded-2xl w-full max-w-sm shadow-xl"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                              <div className="flex items-center gap-2">
+                                <HelpCircle
+                                  size={20}
+                                  className="text-blue-600"
+                                />
+                                <h4 className="text-base font-bold text-gray-900">
+                                  Tiêu chí xếp loại Level
+                                </h4>
+                              </div>
+                              <button
+                                onClick={() => setShowLevelInfo(false)}
+                                className="w-7 h-7 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                              >
+                                <X size={16} className="text-gray-400" />
+                              </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="px-5 py-4">
+                              {/* Level table */}
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border-b border-gray-200">
+                                    <th className="text-center py-2 font-semibold text-gray-600">
+                                      Level
+                                    </th>
+                                    <th className="text-center py-2 font-semibold text-gray-600">
+                                      Tên gọi
+                                    </th>
+                                    <th className="text-center py-2 font-semibold text-gray-600">
+                                      Điểm
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr className="border-b border-gray-100">
+                                    <td className="py-2.5">
+                                      <span className="inline-flex items-center justify-center w-8 h-8 bg-red-500 text-white font-bold text-xs rounded">
+                                        A1
+                                      </span>
+                                    </td>
+                                    <td className="py-2.5 text-gray-700">
+                                      Beginner
+                                    </td>
+                                    <td className="py-2.5 text-center text-gray-600">
+                                      &lt; 45
+                                    </td>
+                                  </tr>
+                                  <tr className="border-b border-gray-100">
+                                    <td className="py-2.5">
+                                      <span className="inline-flex items-center justify-center w-8 h-8 bg-orange-500 text-white font-bold text-xs rounded">
+                                        A2
+                                      </span>
+                                    </td>
+                                    <td className="py-2.5 text-gray-700">
+                                      Elementary
+                                    </td>
+                                    <td className="py-2.5 text-center text-gray-600">
+                                      45 – 59
+                                    </td>
+                                  </tr>
+                                  <tr className="border-b border-gray-100">
+                                    <td className="py-2.5">
+                                      <span className="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-xs rounded">
+                                        B1
+                                      </span>
+                                    </td>
+                                    <td className="py-2.5 text-gray-700">
+                                      Intermediate
+                                    </td>
+                                    <td className="py-2.5 text-center text-gray-600">
+                                      60 – 74
+                                    </td>
+                                  </tr>
+                                  <tr className="border-b border-gray-100">
+                                    <td className="py-2.5">
+                                      <span className="inline-flex items-center justify-center w-8 h-8 bg-green-500 text-white font-bold text-xs rounded">
+                                        B2
+                                      </span>
+                                    </td>
+                                    <td className="py-2.5 text-gray-700">
+                                      Upper Inter.
+                                    </td>
+                                    <td className="py-2.5 text-center text-gray-600">
+                                      75 – 89
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td className="py-2.5">
+                                      <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white font-bold text-xs rounded">
+                                        C1
+                                      </span>
+                                    </td>
+                                    <td className="py-2.5 text-gray-700">
+                                      Advanced
+                                    </td>
+                                    <td className="py-2.5 text-center text-gray-600">
+                                      ≥ 90
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+
+                              {/* Note */}
+                              <p className="mt-4 text-xs text-gray-500 text-center">
+                                * Bài kiểm tra đầu vào chỉ đánh giá tối đa đến
+                                trình độ C1. Trình độ C2 cần được xác định thông
+                                qua quá trình học.
+                              </p>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-5 pb-5">
+                              <Button
+                                onClick={() => setShowLevelInfo(false)}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg cursor-pointer"
+                              >
+                                Đã hiểu
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {/* onClick={() => setShowLevelInfo(false)}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg cursor-pointer transition-colors"
+                              >
+                                Đã hiểu
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )} */}
                       <p className="text-gray-700 mb-8 text-base">
                         Kết quả đã được ghi nhận. Hãy tiếp tục luyện tập để nâng
                         cao kỹ năng của bạn!
