@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -130,13 +130,23 @@ const { mutate: createReviewFeePackage, isPending: isCreating } =
 
   const { data: detailData } = useAdminReviewFeeDetailQuery(selectedReviewFeeId);
 
-  // Fetch buyers data - pageNumber=1, pageSize=large to get all packages, then paginate buyers
+  // Fetch buyers data
+  // pageNumber and PAGE_SIZE: for packages list (main table outside modal) - không thay đổi khi mở modal
+  // buyersPageNumber and buyersPageSize: for buyers pagination (inside modal) - chỉ thay đổi khi click pagination trong modal
+  // Khi buyersPageNumber thay đổi, chỉ refetch buyers data, không ảnh hưởng đến packages list
   const { data: buyersData, isPending: isLoadingBuyers } = useReviewFeeBuyers(
-    pageNumber, // pageNumber for packages (fetch all)
-    PAGE_SIZE, // pageSize for packages (large number to get all)
-    buyersPageNumber, // buyerPageNumber for buyers pagination
-    buyersPageSize // buyerPageSize for buyers pagination
+    pageNumber, // pageNumber for packages (main table outside modal)
+    PAGE_SIZE, // pageSize for packages (main table outside modal)
+    buyersPageNumber, // buyerPageNumber for buyers pagination (inside modal)
+    buyersPageSize // buyerPageSize for buyers pagination (inside modal)
   );
+
+  // Reset buyersPageNumber when selectedReviewFeeId changes (open modal)
+  useEffect(() => {
+    if (selectedReviewFeeId) {
+      setBuyersPageNumber(1);
+    }
+  }, [selectedReviewFeeId]);
  
 
  const form = useForm<CreateReviewFeeFormData>({
@@ -1323,11 +1333,15 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
             const numberOfReview = filteredData.numberOfReview || 0;
             
             // Calculate pagination info for buyers
+            // API already returns paginated buyers, so we use them directly
             const totalBuyers = filteredData.totalBuyers ?? buyers.length;
             const totalPages = Math.ceil(totalBuyers / buyersPageSize);
-            const startIndex = (buyersPageNumber - 1) * buyersPageSize;
-            const endIndex = startIndex + buyersPageSize;
-            const paginatedBuyers = buyers.slice(startIndex, endIndex);
+            // Use buyerPageNumber from API response to ensure accuracy
+            const actualBuyerPageNumber = filteredData.buyerPageNumber ?? buyersPageNumber;
+            const startIndex = (actualBuyerPageNumber - 1) * buyersPageSize;
+            const endIndex = startIndex + buyers.length; // Use actual buyers count from API
+            // Use buyers directly from API response (already paginated)
+            const paginatedBuyers = buyers;
 
             return (
               <div className="space-y-6">
@@ -1439,22 +1453,22 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                           <Button
                             variant="outline"
                             size="sm"
-                            disabled={buyersPageNumber === 1}
-                            onClick={() => setBuyersPageNumber(buyersPageNumber - 1)}
+                            disabled={actualBuyerPageNumber === 1 || isLoadingBuyers}
+                            onClick={() => setBuyersPageNumber(actualBuyerPageNumber - 1)}
                             className="cursor-pointer"
                           >
                             Previous
                           </Button>
 
                           <span className="px-3 py-1 border rounded-md bg-gray-50">
-                            {buyersPageNumber} / {totalPages}
+                            {actualBuyerPageNumber} / {totalPages}
                           </span>
 
                           <Button
                             variant="outline"
                             size="sm"
-                            disabled={buyersPageNumber >= totalPages}
-                            onClick={() => setBuyersPageNumber(buyersPageNumber + 1)}
+                            disabled={actualBuyerPageNumber >= totalPages || isLoadingBuyers}
+                            onClick={() => setBuyersPageNumber(actualBuyerPageNumber + 1)}
                             className="cursor-pointer"
                           >
                             Next

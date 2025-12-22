@@ -100,6 +100,18 @@ const normalizeQuestionType = (type: QuestionTypeInput): QuestionType => {
 };
 
 
+const detectQuestionType = (content: string): QuestionType => {
+  const normalized = content.trim().replace(/\s+/g, " ");
+  if (!normalized) return "word";
+
+  const wordCount = normalized.split(" ").length;
+
+  if (wordCount === 1) return "word";
+  if (wordCount === 2) return "phrase";
+  return "sentence";
+};
+
+
 
 const QUESTION_TYPE_LABEL: Record<QuestionType, string> = {
   word: "Từ đơn",
@@ -359,30 +371,25 @@ const filteredQuestions =
               </Button>
             </div>
             <div className="space-y-3">
-              <div className="space-y-1">
-                <div className="text-sm font-medium">Loại</div>
-                <Select
-                  value={formType}
-                  onValueChange={(v) => setFormType(v as QuestionType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="word">Từ đơn</SelectItem>
-<SelectItem value="phrase">Cụm từ</SelectItem>
-<SelectItem value="sentence">Câu</SelectItem>
-
-                  </SelectContent>
-                </Select>
-              </div>
+           
               <div className="space-y-1">
                 <div className="text-sm font-medium">Nội dung</div>
-                <Input
-                  value={formContent}
-                  onChange={(e) => setFormContent(e.target.value)}
-                  placeholder="Nhập nội dung câu hỏi"
-                />
+               <Input
+  value={formContent}
+  onChange={(e) => {
+    const value = e.target.value;
+    setFormContent(value);
+    setFormType(detectQuestionType(value)); // ✅ AUTO DETECT
+  }}
+  placeholder="Nhập nội dung câu hỏi"
+/>
+<div className="text-sm text-gray-500">
+  Loại tự động:{" "}
+  <span className="font-medium text-black">
+    {QUESTION_TYPE_LABEL[formType]}
+  </span>
+</div>
+
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={closeModal}>

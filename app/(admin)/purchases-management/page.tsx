@@ -82,6 +82,17 @@ const PurchasesManagement = () => {
   const [pageSize, setPageSize] = useState<number>(10);
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
+  // Format status to Vietnamese
+  const formatStatus = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      "Approved": "Thành công",
+      "Pending": "Đang xử lý",
+      "Cancelled": "Thất bại",
+      "Paid": "Đã thanh toán",
+    };
+    return statusMap[status] || status;
+  };
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -314,7 +325,7 @@ const exportToPDF = () => {
                 <td>${t.amount_coin}</td>
                 <td>${t.type}</td>
                 <td>${formatDate(t.CreatedTransaction)}</td>
-                <td>${t.Status}</td>
+                <td>${formatStatus(t.Status)}</td>
               </tr>
             `).join("")}
           </tbody>
@@ -569,7 +580,7 @@ const exportToPDF = () => {
                           : ""
                       }`}
                     >
-                      {transaction.Status}
+                      {formatStatus(transaction.Status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
@@ -764,7 +775,7 @@ const exportToPDF = () => {
                             : "outline"
                         }
                       >
-                        {selectedTransaction.Status}
+                        {formatStatus(selectedTransaction.Status)}
                       </Badge>
                     </div>
                     <div className="pt-2">

@@ -29,7 +29,19 @@ export const createMediaServiceFollowingQuestionId = async (
   body: CreateMediaRequest
 ): Promise<CreateMediaResponse> => {
   try {
-    const { questionId, accent, audioUrl, videoUrl, imageUrl, source } = body;
+const { questionId, videoUrl, imageUrl } = body;
+
+const payload: Record<string, string> = {};
+
+if (videoUrl && videoUrl.trim() !== "") {
+  payload.videoUrl = videoUrl;
+}
+
+if (imageUrl && imageUrl.trim() !== "") {
+  payload.imageUrl = imageUrl;
+}
+
+
 
     const response = await fetchWithAuth(
       `/api/manager/mediaApiRoutes/createMediaFollowingQuestionId/${questionId}`,
@@ -39,15 +51,10 @@ export const createMediaServiceFollowingQuestionId = async (
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          accent,
-          audioUrl,
-          videoUrl,
-          imageUrl,
-          source,
-        }),
+        body: JSON.stringify(payload),
       }
     );
+
     const data = await response.json();
     if (!response.ok)
       throw new Error(data.message || "Create media failed");
@@ -60,6 +67,7 @@ export const createMediaServiceFollowingQuestionId = async (
     throw new Error(message);
   }
 };
+
 export const deleteMediaService = async (id: string): Promise<DeleteMediaResponse> => {
   try {
     const response = await fetchWithAuth(`/api/manager/mediaApiRoutes/delete-media/${id}`, {

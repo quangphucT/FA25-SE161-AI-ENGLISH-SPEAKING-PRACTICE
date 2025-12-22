@@ -3,11 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { updateMediaService } from "../../service/mediaFollowingQuestionIdService/mediaFolloingQuestionId";
 export interface UpdateMediaRequest {
-  accent: string;
-  audioUrl: string;
-  videoUrl: string;
-  imageUrl: string;
-  source: string;
+  videoUrl?: string;
+  imageUrl?: string;
 }
 export interface UpdateMediaResponse {
   message: string;

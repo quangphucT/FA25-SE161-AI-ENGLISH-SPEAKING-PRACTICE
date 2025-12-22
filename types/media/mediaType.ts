@@ -18,12 +18,9 @@ export interface QuestionMediaResponse {
 
 
 export interface CreateMediaRequest {
-questionId: string;
-  accent: string;
-  audioUrl: string;
-  videoUrl: string;
-  imageUrl: string;
-  source: string;
+ questionId: string;
+  videoUrl?: string;
+  imageUrl?: string;
 }
 
 

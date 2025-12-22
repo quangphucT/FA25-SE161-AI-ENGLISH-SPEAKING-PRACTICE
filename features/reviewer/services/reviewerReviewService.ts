@@ -199,7 +199,7 @@ export const reviewerReviewSubmitService = async (
     money: number;
     bankName: string;
     accountNumber: string;
-    status: "Withdraw" | "Reject" | "Pending";
+    status: "Approved" | "Rejected" | "Pending";
     orderCode: string;
     createdAt: string;
     description: string;
