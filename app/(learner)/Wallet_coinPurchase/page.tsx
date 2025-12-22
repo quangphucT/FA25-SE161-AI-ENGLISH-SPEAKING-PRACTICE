@@ -81,7 +81,8 @@ const { data: depositHistory, isLoading: isLoadingHistory } = useGetDepositHisto
           // Dừng polling ngay
           setIsPollingStatus(false);
           if (status === "Paid") {
-            toast.success("Thanh toán thành công! Coin sẽ được cộng sớm.");
+            toast.success("Thanh toán thành công! Coin đã được cộng vào ví.");
+            queryClient.invalidateQueries({ queryKey: ["getMe"] });
             clearPaymentState();
           } else if (status === "Cancelled") {
             toast.error("Giao dịch đã bị hủy.");
