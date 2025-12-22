@@ -2,19 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get("accessToken")?.value;
+  const { searchParams } = new URL(request.url);
+  const pageNumber = searchParams.get("pageNumber");
+  const pageSize = searchParams.get("pageSize");
+  const buyerPageNumber = searchParams.get("buyerPageNumber");
+  const buyerPageSize = searchParams.get("buyerPageSize");
 
   try {
-    const backendResponse = await fetch(
-      `${process.env.BE_API_URL}/AdminPurchase/reviewfee-buyers`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      }
+    // Build URL with query parameters
+    const backendUrl = new URL(
+      `${process.env.BE_API_URL}/AdminPurchase/reviewfee-buyers`
     );
+
+    if (pageNumber) {
+      backendUrl.searchParams.set("pageNumber", pageNumber);
+    }
+    if (pageSize) {
+      backendUrl.searchParams.set("pageSize", pageSize);
+    }
+    if (buyerPageNumber) {
+      backendUrl.searchParams.set("buyerPageNumber", buyerPageNumber);
+    }
+    if (buyerPageSize) {
+      backendUrl.searchParams.set("buyerPageSize", buyerPageSize);
+    }
+
+    const backendResponse = await fetch(backendUrl.toString(), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
 
     const data = await backendResponse.json();
 

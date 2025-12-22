@@ -62,7 +62,7 @@ export interface PurchaseDetailsResponse {
   isSucess?: boolean; // Handle typo in API response
   data: {
     info: Purchase;
-    itemDetail: CoursePurchaseDetail | ReviewFeePurchaseDetail | AIConversationPurchaseDetail;
+    itemDetail: CoursePurchaseDetail | ReviewFeePurchaseDetail | AIConversationPurchaseDetail | RecordChargePurchaseDetail;
   };
   businessCode: number | string;
   message: string;
@@ -86,6 +86,12 @@ export interface AIConversationPurchaseDetail {
     aiConversationChargeId: string;
     amountCoin: number;
     allowedMinutes: number;
+    status: string;
+}
+export interface RecordChargePurchaseDetail {
+    recordChargeId: string;
+    amountCoin: number;
+    allowedRecordCount: number;
     status: string;
 }
 

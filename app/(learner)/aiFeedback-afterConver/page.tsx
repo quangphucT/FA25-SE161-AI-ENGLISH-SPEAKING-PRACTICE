@@ -10,9 +10,19 @@ import {
   AlertCircle,
   ArrowLeft,
   RefreshCw,
+  Sparkles,
+  CheckCircle2,
+  TrendingUp,
+  Target,
+  Lightbulb,
+  Award,
+  CheckCircle,
 } from "lucide-react";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import fetchWithAuth from "@/utils/fetchWithAuth";
-
+dayjs.extend(utc);
+dayjs.extend(timezone);
 interface Message {
   type: "agent" | "user";
   text?: string;
@@ -27,13 +37,36 @@ interface FeedbackSection {
   items: string[];
 }
 
+const feedbackIcons = [
+  CheckCircle2,
+  TrendingUp,
+  Target,
+  Lightbulb,
+  Award,
+  Sparkles,
+  MessageSquare,
+  CheckCircle2,
+];
+
+const feedbackColors = [
+  "from-emerald-500 to-teal-600",
+  "from-blue-500 to-indigo-600",
+  "from-violet-500 to-purple-600",
+  "from-amber-500 to-orange-600",
+  "from-rose-500 to-pink-600",
+  "from-cyan-500 to-sky-600",
+  "from-indigo-500 to-blue-600",
+  "from-green-500 to-emerald-600",
+];
+
 const Feedback = () => {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [feedbackSections, setFeedbackSections] = useState<FeedbackSection[]>([]);
+  const [feedbackSections, setFeedbackSections] = useState<FeedbackSection[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
 
   useEffect(() => {
     const loadMessagesAndFetchFeedback = async () => {
@@ -135,78 +168,81 @@ const Feedback = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50">
-      {/* Header */}
-      <div className=" sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-2">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50/50">
+      {/* Professional Header */}
+      <div className="bg-white/80 backdrop-blur-lg border-b border-gray-100 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                 onClick={() =>
-                  router.push("/dashboard-learner-layout?menu=conversationWithAI")
-                }
-                className="cursor-pointer rounded-4xl border-gray-300"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Quay lại
-              </Button>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Button
+              variant="ghost"
+              onClick={() =>
+                router.push("/dashboard-learner-layout?menu=conversationWithAI")
+              }
+              className="cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-gray-100 gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="font-medium">Quay lại</span>
+            </Button>
+
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-full">
               <Calendar className="w-4 h-4" />
-              {dayjs().format("MMM D, YYYY h:mm A")}
+              <span className="font-medium">
+                {dayjs().tz("Asia/Ho_Chi_Minh").format("DD/MM/YYYY • HH:mm")}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-2">
-        {/* Title Section */}
-        <div className="text-center mb-2">
-          <div className="flex items-center justify-center gap-1 mb-2">
-            <div className="w-7 h-7 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-              <MessageSquare className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Phản hồi về cuộc trò chuyện
-              </h1>
-            </div>
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Hero Section */}
+        <div className="flex items-center gap-4 mb-10">
+          {/* Icon */}
+          <div className="flex items-center justify-center w-14 h-14 bg-gray-900 rounded-xl">
+            <CheckCircle className="w-7 h-7 text-white" />
           </div>
-          <p className="text-gray-600">
-            Phân tích và đánh giá từ AI về cuộc hội thoại của bạn
-          </p>
+
+          {/* Text */}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              Phản hồi cuộc hội thoại
+            </h1>
+            <p className="text-gray-500">
+              Phân tích và đề xuất cải thiện dựa trên phần luyện nói của bạn
+            </p>
+          </div>
         </div>
 
         {/* Loading State */}
         {loading && (
-          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-12 text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Đang phân tích...
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <div className="relative inline-flex">
+              <div className="w-12 h-12 border-3 border-gray-200 rounded-full"></div>
+              <div className="w-12 h-12 border-3 border-gray-900 rounded-full border-t-transparent animate-spin absolute inset-0"></div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-1">
+              Phân tích...
             </h3>
-            <p className="text-gray-600">
-              AI đang xem xét cuộc trò chuyện của bạn
-            </p>
+            <p className="text-gray-500 text-sm">Đang phân tích cuộc hội thoại của bạn</p>
           </div>
         )}
 
         {/* Error State */}
         {error && !loading && (
-          <div className="bg-linear-to-br from-red-50 to-pink-50 rounded-2xl border-2 border-red-200 shadow-lg p-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-12">
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                <AlertCircle className="w-8 h-8 text-red-600" />
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
+                <AlertCircle className="w-6 h-6 text-gray-600" />
               </div>
-              <h3 className="text-2xl font-bold text-red-900 mb-2">
-                Có lỗi xảy ra
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                Đã xảy ra lỗi khi tải phản hồi
               </h3>
-              <p className="text-red-700 mb-6">{error}</p>
+              <p className="text-gray-500 text-sm mb-5">{error}</p>
               <Button
                 onClick={fetchFeedback}
-                className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white cursor-pointer shadow-lg"
+                className="bg-gray-900 hover:bg-gray-800 text-white cursor-pointer gap-2"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className="w-4 h-4" />
                 Thử lại
               </Button>
             </div>
@@ -215,94 +251,131 @@ const Feedback = () => {
 
         {/* No Messages State */}
         {!loading && !error && messages.length === 0 && (
-          <div className="bg-linear-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 shadow-lg p-12 text-center">
-            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="w-8 h-8 text-amber-600" />
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="w-6 h-6 text-gray-600" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Chưa có cuộc trò chuyện
+
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              Chưa có cuộc hội thoại nào
             </h3>
-            <p className="text-gray-700 mb-6">
-              Vui lòng bắt đầu một cuộc trò chuyện trước khi xem phản hồi
+
+            <p className="text-gray-500 text-sm mb-5 max-w-sm mx-auto">
+              Hãy bắt đầu trò chuyện với AI để nhận phản hồi và đánh giá
             </p>
+
             <Button
-              onClick={() => router.push(`/dashboard-learner-layout?menu=conversationWithAI`)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer shadow-lg"
+              onClick={() =>
+                router.push(`/dashboard-learner-layout?menu=conversationWithAI`)
+              }
+              className="bg-gray-900 hover:bg-gray-800 text-white cursor-pointer"
             >
-              Bắt đầu trò chuyện
+              Bắt đầu luyện nói
             </Button>
           </div>
         )}
 
-  {/* Feedback Content */}
-{!loading && !error && feedbackSections.length > 0 && (() => {
-  // Flatten items into individual sections for display
-  const displaySections: FeedbackSection[] = [];
-  
-  feedbackSections.forEach((section) => {
-    if (section.items.length > 0) {
-      // Each item becomes its own section
-      section.items.forEach((item, idx) => {
-        displaySections.push({
-          title: `${idx + 1}`,
-          description: item,
-          items: []
-        });
-      });
-    } else {
-      // Keep sections without items as-is
-      displaySections.push(section);
-    }
-  });
+        {/* Feedback Content */}
+        {!loading &&
+          !error &&
+          feedbackSections.length > 0 &&
+          (() => {
+            const displaySections: FeedbackSection[] = [];
 
-  const leftSections = displaySections.slice(0, 4);
-  const rightSections = displaySections.slice(4);
+            feedbackSections.forEach((section) => {
+              if (section.items.length > 0) {
+                section.items.forEach((item, idx) => {
+                  displaySections.push({
+                    title: `${idx + 1}`,
+                    description: item,
+                    items: [],
+                  });
+                });
+              } else {
+                displaySections.push(section);
+              }
+            });
 
-  return (
-  <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-xl p-8">
-    <div className="grid grid-cols-2 gap-8">
+            // Split into 2 columns
+            const midPoint = Math.ceil(displaySections.length / 2);
+            const leftColumn = displaySections.slice(0, midPoint);
+            const rightColumn = displaySections.slice(midPoint);
 
-      {/* LEFT COLUMN (items 1-4) */}
-      <div className="space-y-6">
-        {leftSections.map((section, idx) => (
-          <div key={idx}>
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-500 rounded-[100%] flex items-center justify-center flex-shrink-0 shadow-md">
-                <span className="text-xl font-bold  text-white">{section.title}</span>
+            const renderCard = (
+              section: FeedbackSection,
+              idx: number,
+              globalIdx: number
+            ) => {
+              return (
+                <div
+                  key={idx}
+                  className="bg-white rounded-lg border border-gray-200 p-5 hover:border-gray-300 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Number Badge */}
+                    <div className="shrink-0 w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center">
+                      <span className="text-white text-xs font-semibold">
+                        {globalIdx + 1}
+                      </span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <p className="text-gray-700 leading-relaxed text-sm">
+                        {section.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            };
+
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  {leftColumn.map((section, idx) =>
+                    renderCard(section, idx, idx)
+                  )}
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {rightColumn.map((section, idx) =>
+                    renderCard(section, idx, idx + midPoint)
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-gray-800 leading-relaxed text-base">
-                  {section.description}
+            );
+          })()}
+
+        {/* Summary Stats */}
+        {!loading && !error && feedbackSections.length > 0 && (
+          <div className="mt-8 bg-gray-900 rounded-xl p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold mb-1">
+                  Hãy tiếp tục luyện tập!
+                </h3>
+                <p className="text-gray-400 text-sm max-w-lg">
+                  Luyện tập thường xuyên sẽ giúp bạn cải thiện độ trôi chảy và
+                  sự tự tin khi nói.
                 </p>
               </div>
+
+              <Button
+                onClick={() =>
+                  router.push(
+                    `/dashboard-learner-layout?menu=conversationWithAI`
+                  )
+                }
+                className="bg-white text-gray-900 hover:bg-gray-100 cursor-pointer font-medium"
+              >
+                Luyện tập lại
+              </Button>
             </div>
-            {idx < leftSections.length - 1 && <div className="border-b-2 border-gray-200 my-6"></div>}
           </div>
-        ))}
-      </div>
-
-      {/* RIGHT COLUMN (items 5+) */}
-      <div className="space-y-6">
-        {rightSections.map((section, idx) => (
-          <div key={idx}>
-            <div className="flex items-start gap-3 mb-4">
-            
-              <div className="flex-1">
-                <p className="text-gray-800 leading-relaxed text-base">
-                  {section.description}
-                </p>
-              </div>
-            </div>
-            {idx < rightSections.length - 1 && <div className="border-b-2 border-gray-200 my-6"></div>}
-          </div>
-        ))}
-      </div>
-
-    </div>
-  </div>
-  );
-})()}
-
+        )}
       </div>
     </div>
   );

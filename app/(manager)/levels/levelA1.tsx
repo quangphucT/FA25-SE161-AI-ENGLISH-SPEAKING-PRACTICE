@@ -71,6 +71,7 @@ import { useDeleteMedia } from "@/features/manager/hook/mediaQuestionHooks/useDe
 import { useUpdateMedia } from "@/features/manager/hook/mediaQuestionHooks/useUpdateMedia";
 import { useUploadImage } from "@/features/manager/hook/uploadImgHooks/useUploadImage";
 import { useUploadVideo } from "@/features/manager/hook/uploadVideoHooks/useUploadVideo";
+import VideoUploadField from "@/components/common/VideoUploadField";
 
 interface Course {
   courseId: string;
@@ -116,11 +117,9 @@ phonemeJson?: string | number;
 
 interface Media {
   questionMediaId: string;
-  accent: string;
-  audioUrl: string;
+  
   videoUrl: string;
   imageUrl: string;
-  source: string;
 }
 interface LevelProps {
   level: string;
@@ -200,6 +199,7 @@ const [viewingQuestionDetails, setViewingQuestionDetails] = useState<Question | 
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [editingMedia, setEditingMedia] = useState<Media | null>(null);
   const [viewingMediaDetails, setViewingMediaDetails] = useState<Media | null>(null);
+const [previewMedia, setPreviewMedia] = useState<Media | null>(null);
 
 
   useEffect(() => {
@@ -348,7 +348,13 @@ const QUESTION_TYPE_LABEL_VI = (type: string | number) => {
   }
 };
 
-  
+
+  const EmptyMediaBox = ({ label }: { label: string }) => (
+  <div className="w-full max-w-md h-48 flex items-center justify-center rounded-lg border border-dashed text-sm text-gray-400 bg-gray-50">
+    Chưa có {label}
+  </div>
+);
+
   // Course Schema and Form
   const courseSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -485,36 +491,36 @@ const editQuestionFormMethods = useForm<UpdateQuestionFormValues>({
   // });
 
 
- const mediaSchema = z.object({
-  accent: z.string().min(1, "Accent is required"),
+const mediaSchema = z
+  .object({
+    imageFile: z.any().nullable(),
+    videoUrl: z.string().trim().optional(),
+  })
+  .refine(
+    (data) => {
+      const hasImage = !!data.imageFile;
+      const hasVideo = !!data.videoUrl && data.videoUrl.length > 0;
+      return hasImage || hasVideo;
+    },
+    {
+      message: "Phải chọn hình ảnh hoặc video",
+      path: ["videoUrl"], // gắn lỗi vào 1 field cho FormMessage
+    }
+  );
 
-  audioUrl: z.string().optional(),
-  videoUrl: z.string().optional(),
-  imageUrl: z.string().optional(),
 
-  videoFile: z.any().optional(),
-  imageFile: z.any().optional(),
 
-  source: z.string().min(1, "Source is required"),
+type MediaFormValues = z.infer<typeof mediaSchema>;
+
+const mediaFormMethods = useForm<MediaFormValues>({
+  resolver: zodResolver(mediaSchema),
+  defaultValues: {
+    imageFile: null,
+    videoUrl: "",
+  },
 });
 
 
-  type MediaFormValues = z.infer<typeof mediaSchema>;
-
-  const mediaFormMethods = useForm<MediaFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(mediaSchema) as any,
-    defaultValues: {
-  accent: "",
-  audioUrl: "",
-  videoUrl: "",
-  imageUrl: "",
-  videoFile: null,
-  imageFile: null,
-  source: "",
-},
-
-  });
 
   // Sort courses by orderIndex
   const sortedCourses = [...coursesOfLevelA1].sort(
@@ -775,92 +781,55 @@ const onSubmitEditQuestion = (values: UpdateQuestionFormValues) => {
 
   const handleCreateMedia = () => {
     setEditingMedia(null);
-    mediaFormMethods.reset({
-      accent: "",
-      audioUrl: "",
-      videoUrl: "",
-      imageUrl: "",
-      source: "",
-    });
+ mediaFormMethods.reset({
+  videoUrl: "",
+  imageFile: null,
+});
     setShowMediaModal(true);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
  const handleEditMedia = (media: Media) => {
   setEditingMedia(media);
-  mediaFormMethods.reset({
-    accent: media.accent,
-    audioUrl: media.audioUrl,
-    videoUrl: media.videoUrl,
-    imageUrl: media.imageUrl,
-    videoFile: null,
-    imageFile: null,
-    source: media.source,
-  });
+mediaFormMethods.reset({
+  videoUrl: media.videoUrl,
+  imageFile: null,
+});
+
   setShowMediaModal(true);
 };
 
 
- const onSubmitMedia = async (values: MediaFormValues) => {
-  console.log("✅ SUBMIT MEDIA VALUES:", values);
-
+const onSubmitMedia = async (values: MediaFormValues) => {
   if (!selectedQuestion) {
     toast.error("Please select a question first");
     return;
   }
 
-  let finalImageUrl = values.imageUrl || "";
-  let finalVideoUrl = values.videoUrl || "";
+
+
+let finalImageUrl = "";
+const finalVideoUrl = values.videoUrl?.trim() || "";
+
 
   try {
-    // ✅ LOG TRƯỚC KHI UPLOAD IMAGE
     if (values.imageFile) {
-      console.log("📤 UPLOADING IMAGE:", values.imageFile);
-
       const imgRes = await uploadImage(values.imageFile);
-
-      console.log("✅ UPLOAD IMAGE RESPONSE:", imgRes);
-
       finalImageUrl = imgRes.url;
-
-      console.log("✅ FINAL IMAGE URL:", finalImageUrl);
     }
 
-    // ✅ LOG TRƯỚC KHI UPLOAD VIDEO
-   if (values.videoFile) {
-  console.log("📤 UPLOADING VIDEO:", values.videoFile);
+    const payload: Record<string, string> = {};
 
-  const vidRes = await uploadVideo(values.videoFile);
-
-  console.log("✅ UPLOAD VIDEO RESPONSE:", vidRes);
-
-  finalVideoUrl = vidRes.url;
-
-   mediaFormMethods.setValue("videoUrl", vidRes.url); // <-- DÒNG QUAN TRỌNG
-
-  console.log("✅ FINAL VIDEO URL:", finalVideoUrl);
-}
-
-
-    const payload = {
-      accent: values.accent,
-      audioUrl: values.audioUrl || "",
-      imageUrl: finalImageUrl || "",
-      videoUrl: finalVideoUrl || "",
-      source: values.source,
-    };
-
-    console.log("🚀 FINAL PAYLOAD SEND TO API:", payload);
+    if (finalImageUrl) payload.imageUrl = finalImageUrl;
+    if (finalVideoUrl) payload.videoUrl = finalVideoUrl;
 
     if (editingMedia) {
-      console.log("✏️ UPDATE MEDIA MODE:", editingMedia.questionMediaId);
-      updateMediaMutation({
+      await updateMediaMutation({
         id: editingMedia.questionMediaId,
         payload,
       });
     } else {
-      console.log("➕ CREATE MEDIA MODE:", selectedQuestion.questionId);
-      createMediaMutation({
+      await createMediaMutation({
         questionId: selectedQuestion.questionId,
         ...payload,
       });
@@ -872,10 +841,10 @@ const onSubmitEditQuestion = (values: UpdateQuestionFormValues) => {
     mediaFormMethods.reset();
     refetchMedia();
   } catch (err) {
-    console.error("❌ UPLOAD MEDIA FAILED:", err);
     toast.error("Upload media failed");
   }
 };
+
 
 
   const handleDelete = (course: Course) => {
@@ -1285,12 +1254,26 @@ ${
         key={media.questionMediaId}
         className="p-3 mb-2 border rounded-lg flex justify-between items-center"
       >
-        <div>
-          <p className="font-medium">Accent: {media.accent}</p>
-          <p className="text-sm text-gray-500 break-all">
-            {media.audioUrl || media.videoUrl || media.imageUrl || "No source"}
-          </p>
-        </div>
+<div className="flex-1 space-y-2">
+
+ <div className="text-xs font-semibold text-gray-500 flex items-center gap-2">
+  🖼 Hình ảnh & 🎥 Video
+
+  <button
+    className="text-purple-600 underline text-xs"
+    onClick={() => setPreviewMedia(media)}
+  >
+    Xem trước
+  </button>
+</div>
+
+
+  {/* PREVIEW */}
+
+</div>
+
+
+
 
         <div className="flex gap-2">
           <Button
@@ -1329,7 +1312,9 @@ ${
 
 
       {/* Course Create/Edit Modal */}
-      <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
+    {showCourseModal && (
+  <Dialog open onOpenChange={setShowCourseModal}>
+
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
@@ -1495,6 +1480,7 @@ ${
           </Form>
         </DialogContent>
       </Dialog>
+)};
 
       {/* Chapter Create/Edit Modal */}
       <Dialog open={showChapterModal} onOpenChange={setShowChapterModal}>
@@ -1834,167 +1820,79 @@ ${
       </Dialog>
 
       {/* Media Modal */}
-      <Dialog open={showMediaModal} onOpenChange={setShowMediaModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingMedia ? "Edit Media" : "Tạo phương tiện mới"}
-            </DialogTitle>
-          </DialogHeader>
+   {showMediaModal && (
+  <Dialog open onOpenChange={setShowMediaModal}>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>
+          {editingMedia ? "Chỉnh sửa phương tiện" : "Tạo phương tiện mới"}
+        </DialogTitle>
+      </DialogHeader>
 
-          <Form {...mediaFormMethods}>
-            <form
-              onSubmit={mediaFormMethods.handleSubmit(onSubmitMedia)}
-              className="space-y-4"
+      <Form {...mediaFormMethods}>
+        <form
+          onSubmit={mediaFormMethods.handleSubmit(onSubmitMedia)}
+          className="space-y-4"
+        >
+          {/* IMAGE */}
+          <FormField
+            name="imageFile"
+            control={mediaFormMethods.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tải hình ảnh</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      field.onChange(e.target.files?.[0] || null)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* VIDEO */}
+          <FormField
+            name="videoUrl"
+            control={mediaFormMethods.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tải video</FormLabel>
+                <VideoUploadField
+                  value={field.value}
+                  onUploaded={(url) => field.onChange(url)}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowMediaModal(false);
+                setEditingMedia(null);
+                mediaFormMethods.reset();
+              }}
             >
-              <FormField
-                name="accent"
-                control={mediaFormMethods.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Giọng điệu</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. US, UK, AU..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              Huỷ
+            </Button>
+            <Button type="submit">
+              {editingMedia ? "Cập nhật" : "Tạo mới"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </DialogContent>
+  </Dialog>
+)}
 
-              <FormField
-                name="audioUrl"
-                control={mediaFormMethods.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Âm thanh URL (Lựa chọn khác)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com/audio.mp3"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="videoUrl"
-                control={mediaFormMethods.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Video URL (Lựa chọn khác)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com/video.mp4"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="imageUrl"
-                control={mediaFormMethods.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hình ảnh URL (Lựa chọn khác)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com/image.jpg"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* IMAGE UPLOAD */}
-<FormField
-  name="imageFile"
-  control={mediaFormMethods.control}
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Tải hình ảnh (Lựa chọn khác)</FormLabel>
-      <FormControl>
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={(e) => field.onChange(e.target.files?.[0] || null)}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
-
-{/* VIDEO UPLOAD */}
-<FormField
-  name="videoFile"
-  control={mediaFormMethods.control}
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Tải Video (Lựa chọn khác)</FormLabel>
-      <FormControl>
-        <Input
-          type="file"
-          accept="video/*"
-          onChange={(e) => field.onChange(e.target.files?.[0] || null)}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
-
-
-              <FormField
-                name="source"
-                control={mediaFormMethods.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nguồn</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. YouTube, Internal, etc."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowMediaModal(false);
-                    setEditingMedia(null);
-                    mediaFormMethods.reset();
-                  }}
-                  className="cursor-pointer"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="cursor-pointer text-white"
-                >
-                  {editingMedia ? "Cập nhật phương tiện" : "Tạo phương tiện mới"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
 
       {/* Media Details Modal */}
       <Dialog open={!!viewingMediaDetails} onOpenChange={() => setViewingMediaDetails(null)}>
@@ -2025,23 +1923,7 @@ ${
               </div> */}
 
 
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Âm thanh URL</label>
-                <div className="p-3 bg-slate-50 rounded-md border">
-                  {viewingMediaDetails.audioUrl ? (
-                    <a 
-                      href={viewingMediaDetails.audioUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline text-sm break-all"
-                    >
-                      {viewingMediaDetails.audioUrl}
-                    </a>
-                  ) : (
-                    <span className="text-slate-400 text-sm">N/A</span>
-                  )}
-                </div>
-              </div>
+       
 
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-slate-700">Video URL</label>
@@ -2079,23 +1961,7 @@ ${
                 </div>
               </div>
 
-               <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Nguồn</label>
-                <div className="p-3 bg-slate-50 rounded-md border">
-                  {viewingMediaDetails.source ? (
-                    <a 
-                      href={viewingMediaDetails.source} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline text-sm break-all"
-                    >
-                      {viewingMediaDetails.source}
-                    </a>
-                  ) : (
-                    <span className="text-slate-400 text-sm">N/A</span>
-                  )}
-                </div>
-              </div>
+              
             </div>
           )}
 
@@ -2120,6 +1986,75 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+<Dialog
+  open={!!previewMedia}
+  onOpenChange={() => setPreviewMedia(null)}
+>
+  <DialogContent className="max-w-3xl">
+    <DialogHeader>
+      <DialogTitle>Xem trước phương tiện</DialogTitle>
+    </DialogHeader>
+
+  {previewMedia && (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    {/* IMAGE PREVIEW */}
+    <div className="space-y-2">
+      <div className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+        🖼 Hình ảnh
+      </div>
+
+      {previewMedia.imageUrl ? (
+        <img
+          src={previewMedia.imageUrl}
+          alt="Preview image"
+          className="w-full max-w-sm rounded-lg border object-cover"
+        />
+      ) : (
+        <div className="h-48 flex items-center justify-center rounded-lg border border-dashed text-gray-400 text-sm bg-gray-50">
+          Chưa có hình ảnh
+        </div>
+      )}
+    </div>
+
+    {/* VIDEO PREVIEW */}
+    <div className="space-y-2">
+      <div className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+        🎥 Video
+      </div>
+
+      {previewMedia.videoUrl ? (
+        <video
+          src={previewMedia.videoUrl}
+          controls
+          className="w-full max-w-sm rounded-lg border"
+        />
+      ) : (
+        <div className="h-48 flex items-center justify-center rounded-lg border border-dashed text-gray-400 text-sm bg-gray-50">
+          Chưa có video
+        </div>
+      )}
+    </div>
+
+  </div>
+)}
+
+
+    <DialogFooter>
+      <Button
+        variant="outline"
+        onClick={() => setPreviewMedia(null)}
+      >
+        Đóng
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+
+
+
 
       {/* Delete Course Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -2317,17 +2252,7 @@ if (viewingMediaDetails) handleEditMedia(viewingMediaDetails);
               Hành động này không thể hoàn tác. Hành động này sẽ xóa vĩnh viễn file media.
             </AlertDialogDescription>
 
-            <div className="w-full bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <FileImage className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div className="text-left flex-1">
-                  <p className="font-semibold text-slate-900 mb-1">
-                    Giọng điệu: {deletingMedia?.accent}
-                  </p>
-                 
-                </div>
-              </div>
-            </div>
+            
 
             <div className="flex gap-3 w-full">
               <AlertDialogCancel className="flex-1 h-11 border-slate-300 hover:bg-slate-50">

@@ -36,7 +36,7 @@ const Wallet = () => {
     bankName: string;
     accountNumber: string;
     reasonWithdrawReject?: string;
-    transactionEnum: "Withdraw" | "Reject" | "Pending";
+    transactionEnum: "Approved" | "Rejected" | "Pending";
   };
 
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
@@ -84,12 +84,12 @@ const Wallet = () => {
     if (!walletData?.isSucess || !walletData?.data?.transactions?.items) return [];
     
     return walletData.data.transactions.items.map((item) => {
-      // Map status: "Pending" -> "Pending", "Withdraw" -> "Withdraw", "Reject" -> "Reject"
-      let transactionEnum: "Withdraw" | "Reject" | "Pending" = "Pending";
-      if (item.status === "Withdraw") {
-        transactionEnum = "Withdraw";
-      } else if (item.status === "Reject") {
-        transactionEnum = "Reject";
+      // Map status: "Approved" -> "Approved", "Rejected" -> "Rejected", "Pending" -> "Pending"
+      let transactionEnum: "Approved" | "Rejected" | "Pending" = "Pending";
+      if (item.status === "Approved") {
+        transactionEnum = "Approved";
+      } else if (item.status === "Rejected") {
+        transactionEnum = "Rejected";
       } else {
         transactionEnum = "Pending";
       }
@@ -102,7 +102,7 @@ const Wallet = () => {
         wallet_id: item.orderCode,
         bankName: item.bankName || "",
         accountNumber: item.accountNumber || "",
-        reasonWithdrawReject: transactionEnum === "Reject" ? item.description : undefined,
+        reasonWithdrawReject: transactionEnum === "Rejected" ? item.description : undefined,
         transactionEnum,
       } as Transaction;
     });
@@ -119,7 +119,7 @@ const Wallet = () => {
       bankName: "",
       accountNumber: "",
       reasonWithdrawReject: "",
-      transactionEnum: "Withdraw",
+      transactionEnum: "Pending",
     });
     setIsAddingTransaction(true);
   };
@@ -176,7 +176,7 @@ const Wallet = () => {
         bankName: "",
         accountNumber: "",
         reasonWithdrawReject: "",
-        transactionEnum: "Withdraw",
+        transactionEnum: "Pending",
       });
     } catch (error) {
       // Error is handled by mutation hook via toast
@@ -291,15 +291,15 @@ const Wallet = () => {
                 >
                   <div className="flex items-start gap-4 flex-1">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      tx.transactionEnum === "Withdraw" 
+                      tx.transactionEnum === "Approved" 
                         ? "bg-green-100" 
-                        : tx.transactionEnum === "Reject"
+                        : tx.transactionEnum === "Rejected"
                         ? "bg-red-100"
                         : "bg-yellow-100"
                     }`}>
-                      {tx.transactionEnum === "Withdraw" ? (
+                      {tx.transactionEnum === "Approved" ? (
                         <CheckCircle2 className="w-6 h-6 text-green-600" />
-                      ) : tx.transactionEnum === "Reject" ? (
+                      ) : tx.transactionEnum === "Rejected" ? (
                         <XCircle className="w-6 h-6 text-red-600" />
                       ) : (
                         <Clock className="w-6 h-6 text-yellow-600" />
@@ -310,14 +310,14 @@ const Wallet = () => {
                         <p className="text-xl font-bold text-gray-900">{tx.amount} VND</p>
                         <Badge
                           className={`text-xs font-semibold ${
-                            tx.transactionEnum === "Withdraw"
+                            tx.transactionEnum === "Approved"
                               ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
-                              : tx.transactionEnum === "Reject"
+                              : tx.transactionEnum === "Rejected"
                               ? "bg-red-100 text-red-800 hover:bg-red-200 border-red-300"
                               : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300"
                           }`}
                         >
-                          {tx.transactionEnum === "Withdraw" ? "Withdrawn" : tx.transactionEnum === "Reject" ? "Rejected" : "Pending"}
+                          {tx.transactionEnum === "Approved" ? "Approved" : tx.transactionEnum === "Rejected" ? "Rejected" : "Pending"}
                         </Badge>
                       </div>
                       <div className="space-y-1">

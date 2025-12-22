@@ -14,14 +14,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { accent, audioUrl, videoUrl, imageUrl, source  } = body;
+    const {videoUrl, imageUrl } = body;
 
-    if (!accent || !audioUrl || !videoUrl || !imageUrl || !source) {
-      return NextResponse.json(
-        { message: "All fields are required" },
-        { status: 400 }
-      );
-    }
+  if (!videoUrl && !imageUrl) {
+  return NextResponse.json(
+    { message: "Phải có ít nhất một trong video hoặc hình ảnh" },
+    { status: 400 }
+  );
+}
+
 
 
     const backendResponse = await fetch(
@@ -32,12 +33,9 @@ export async function POST(request: NextRequest) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-            accent,
-            audioUrl,
+        body: JSON.stringify({        
             videoUrl,
-            imageUrl,
-            source
+            imageUrl,         
         }),
       }
     );

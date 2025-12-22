@@ -210,12 +210,12 @@ export default function LearnerRecordPage() {
 
   const formatDate = (dateString: string | Date | undefined | null) => {
     if (!dateString) {
-      return "N/A";
+      return "Chưa học lần nào";
     }
     try {
       const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
       if (isNaN(date.getTime())) {
-        return "N/A";
+        return "Chưa học lần nào";
       }
       return format(date, "dd/MM/yyyy HH:mm", { locale: vi });
     } catch {
@@ -518,7 +518,7 @@ export default function LearnerRecordPage() {
                        const firstRecord = selectedRecords[0];
                        if (firstRecord && firstRecord.recordId && firstRecord.content) {
                          router.push(
-                           `/learner_record/${selectedFolderId}?recordId=${firstRecord.recordId}&content=${encodeURIComponent(firstRecord.content)}`
+                           `/learner_record/${selectedFolderId}?recordContentId=${firstRecord.recordContentId}&content=${encodeURIComponent(firstRecord.content)}`
                          );
                        } else {
                          toast.error("Không thể tìm thấy record để học");
@@ -586,7 +586,7 @@ export default function LearnerRecordPage() {
                             return;
                           }
                           
-                          router.push(`/learner_record/${selectedFolderId}?recordId=${recordIdToUse}&content=${encodeURIComponent(contentToUse)}`);
+                          router.push(`/learner_record/${selectedFolderId}?recordContentId=${recordIdToUse}&content=${encodeURIComponent(contentToUse)}`);
                         }}
                       >
                         <CardContent className="p-4">
@@ -634,7 +634,7 @@ export default function LearnerRecordPage() {
                               </div>
 
                               <div className="text-xs text-gray-500">
-                                Tạo lúc: {formatDate(record.createdAt)}
+                                Học lần cuối: {formatDate(record.createdAt)}
                               </div>
                             </div>
 
@@ -675,7 +675,7 @@ export default function LearnerRecordPage() {
                                 <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDeleteRecord(record.recordId);
+                                    handleDeleteRecord(record.recordContentId);
                                   }}
                                   className="text-red-600 cursor-pointer"
                                 >

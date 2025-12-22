@@ -28,7 +28,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminPurchase, useAdminPurchaseDetails, useAdminPurchaseDashboard } from "@/features/admin/hooks/useAdminPurchase";
 import { useDownloadPurchaseExcel } from "@/features/admin/hooks/useAdminPurchaseExcel";
 import { Loader2, Search, Download, Eye, CheckCircle2, XCircle, Clock, DollarSign } from "lucide-react";
-import type { AIConversationPurchaseDetail, Purchase } from "@/features/admin/services/adminPurchaseService";
+import type { AIConversationPurchaseDetail, RecordChargePurchaseDetail, Purchase } from "@/features/admin/services/adminPurchaseService";
 
 const PAGE_SIZE = 10;
 
@@ -98,6 +98,20 @@ const PurchasesItemManagement = () => {
     setPageNumber(newPage);
   };
 
+  // Format status to Vietnamese
+  const formatStatus = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      "Success": "Thành công",
+      "Completed": "Hoàn thành",
+      "Pending": "Đang xử lý",
+      "Failed": "Thất bại",
+      "Refunded": "Đã hoàn tiền",
+      "Active": "Đang hoạt động",
+      "Inactive": "Không hoạt động",
+    };
+    return statusMap[status] || status;
+  };
+
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + " VND";
   };
@@ -115,11 +129,25 @@ const PurchasesItemManagement = () => {
   const getItemType = (purchase: Purchase): string => {
     const itemTypeMap: Record<string, string> = {
       "Course": "Khóa học",
-      "ReviewFee": "Phí đánh giá",
-      "AIConversation": "Phí nói chuyện AI",
-      "RecordCharge": "Phí lượt ghi âm",
+      "Review Fee": "Phí đánh giá",
+      "AI Conversation": "Phí nói chuyện AI",
+      "Record Charge": "Phí lượt ghi âm",
     };
     return itemTypeMap[purchase.itemType || ""] || purchase.itemType || "Không xác định";
+  };
+
+  // Format itemType string to Vietnamese (for use with raw string values)
+  const formatItemType = (itemType: string): string => {
+    const itemTypeMap: Record<string, string> = {
+      "Course": "Khóa học",
+      "Review Fee": "Phí đánh giá",
+      "ReviewFee": "Phí đánh giá",
+      "AI Conversation": "Phí nói chuyện AI",
+      "AIConversation": "Phí nói chuyện AI",
+      "Record Charge": "Phí lượt ghi âm",
+      "RecordCharge": "Phí lượt ghi âm",
+    };
+    return itemTypeMap[itemType] || itemType || "Không xác định";
   };
 
   const getItemName = (purchase: Purchase): string => {
@@ -177,7 +205,7 @@ const PurchasesItemManagement = () => {
                 <td>${getItemName(purchase)}</td>
                 <td>${purchase.coin?.toLocaleString("vi-VN") || 0} coin</td>
                 <td class="status-${purchase.status.toLowerCase()}">${
-                  purchase.status
+                  formatStatus(purchase.status)
                 }</td>
                 <td>${formatDate(purchase.createdAt)}</td>
               </tr>
@@ -410,7 +438,7 @@ const PurchasesItemManagement = () => {
                               : "outline"
                           }`}
                         >
-                          {purchase.status}
+                          {formatStatus(purchase.status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -623,7 +651,7 @@ const PurchasesItemManagement = () => {
                                 }
                                 className="font-medium"
                               >
-                                {rawItemType}
+                                {formatItemType(rawItemType)}
                               </Badge>
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -646,7 +674,7 @@ const PurchasesItemManagement = () => {
                                 }
                                 className="font-medium"
                               >
-                                {purchaseInfo.status}
+                                {formatStatus(purchaseInfo.status)}
                               </Badge>
                             </div>
                             <div className="flex justify-between items-start py-2">
@@ -744,7 +772,40 @@ const PurchasesItemManagement = () => {
                                     }
                                     className="font-medium"
                                   >
-                                    {(itemDetail as AIConversationPurchaseDetail).status}
+                                    {formatStatus((itemDetail as AIConversationPurchaseDetail).status)}
+                                  </Badge>
+                                </div>
+                              </>
+                            )}
+                            {(normalizedItemType === "recordcharge" || itemType === "RecordCharge") && "recordChargeId" in itemDetail && (
+                              <>
+                                <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                                  <span className="text-sm font-medium text-gray-600">Record Charge ID:</span>
+                                  <span className="font-mono text-sm text-gray-900 text-right">{(itemDetail as RecordChargePurchaseDetail).recordChargeId}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                  <span className="text-sm font-medium text-gray-600">Số coin:</span>
+                                  <span className="font-bold text-green-600">
+                                    {((itemDetail as RecordChargePurchaseDetail).amountCoin || 0).toLocaleString("vi-VN")} coin
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                                  <span className="text-sm font-medium text-gray-600">Số lượt ghi âm cho phép:</span>
+                                  <span className="text-sm text-gray-900 font-medium">{(itemDetail as RecordChargePurchaseDetail).allowedRecordCount} lượt</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2">
+                                  <span className="text-sm font-medium text-gray-600">Trạng thái:</span>
+                                  <Badge
+                                    variant={
+                                      (itemDetail as RecordChargePurchaseDetail).status === "Active"
+                                        ? "default"
+                                        : (itemDetail as RecordChargePurchaseDetail).status === "Inactive"
+                                        ? "secondary"
+                                        : "outline"
+                                    }
+                                    className="font-medium"
+                                  >
+                                    {formatStatus((itemDetail as RecordChargePurchaseDetail).status)}
                                   </Badge>
                                 </div>
                               </>
@@ -752,7 +813,8 @@ const PurchasesItemManagement = () => {
                             {/* Fallback if itemType doesn't match any known type */}
                             {normalizedItemType !== "course" && 
                              normalizedItemType !== "reviewfee" && 
-                             normalizedItemType !== "aiconversation" && (
+                             normalizedItemType !== "aiconversation" &&
+                             normalizedItemType !== "recordcharge" && (
                               <div className="text-gray-500 italic">
                                 Không có thông tin chi tiết cho loại item này: {rawItemType}
                               </div>
