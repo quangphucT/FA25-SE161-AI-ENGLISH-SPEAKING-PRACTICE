@@ -92,7 +92,7 @@ const FeedbacksCommentsManagement = () => {
     // Map UI status to API status format
     if (statusFilter === "Approved") return "approved";
     if (statusFilter === "Rejected") return "rejected";
-    if (statusFilter === "Pending") return "pending";
+    if (statusFilter === "Pending") return "Pending";
     if (statusFilter === "Processing") return "processing";
     return statusFilter; // Fallback to original value
   }, [statusFilter]);

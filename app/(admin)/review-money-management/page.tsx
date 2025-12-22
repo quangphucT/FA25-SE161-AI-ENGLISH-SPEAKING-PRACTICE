@@ -19,8 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAdminReviewerIncome, useAdminReviewerIncomeDetail, useAdminReviewerIncomeList } from "@/features/admin/hooks/useAdminReviewerIncome";
-import { Loader2, Search, Calendar, RefreshCw, Eye, TrendingUp, Users, DollarSign, FileText } from "lucide-react";
-import { useAdminReviewFeePackagesQuery } from "@/features/admin/hooks/useAdminReviewFee";
+import { Loader2, Search, Calendar, RefreshCw, Eye, TrendingUp, Users, DollarSign, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDateInput } from "@/utils/formatDateInput";
 
 
@@ -80,14 +79,6 @@ const ReviewMoneyManagement = () => {
   const [selectedReviewItem, setSelectedReviewItem] = useState<ReviewDetailItem | null>(null);
 const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
 
-    const { data: feePackages } = useAdminReviewFeePackagesQuery(1, 10);
-
-const pricePerReview = feePackages?.data?.items
-  ?.sort((a, b) =>
-    new Date(b.currentPricePolicy.appliedDate).getTime() -
-    new Date(a.currentPricePolicy.appliedDate).getTime()
-  )[0]?.currentPricePolicy?.pricePerReviewFee ?? 0;
-
   const { data: adminReviewerIncome, isLoading: isLoadingIncome, isError: isErrorIncome } = useAdminReviewerIncome();
   const calculatedPricePerReview =
   (adminReviewerIncome?.data?.totalIncome ?? 0) /
@@ -100,13 +91,15 @@ const pricePerReview = feePackages?.data?.items
   const [selectedReviewerName, setSelectedReviewerName] = useState<string>("");
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+  const [reviewDetailPageNumber, setReviewDetailPageNumber] = useState<number>(1);
+  const [reviewDetailPageSize, setReviewDetailPageSize] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
   const [fromDateInput, setFromDateInput] = useState<string>(toDisplayDate(DEFAULT_FROM_DATE_ISO));
   const [toDateInput, setToDateInput] = useState<string>(toDisplayDate(DEFAULT_TO_DATE_ISO));
   const [fromDateISO, setFromDateISO] = useState<string>(DEFAULT_FROM_DATE_ISO);
   const [toDateISO, setToDateISO] = useState<string>(DEFAULT_TO_DATE_ISO);
   const { data: adminReviewerIncomeList, isLoading: isLoadingList, isError: isErrorList } = useAdminReviewerIncomeList(pageNumber, pageSize, search, fromDateISO, toDateISO);
-  const { data: adminReviewerIncomeDetail, isLoading: isLoadingDetail } = useAdminReviewerIncomeDetail(selectedReviewerProfileId, fromDateISO, toDateISO);
+  const { data: adminReviewerIncomeDetail, isLoading: isLoadingDetail } = useAdminReviewerIncomeDetail(selectedReviewerProfileId, fromDateISO, toDateISO, reviewDetailPageNumber, reviewDetailPageSize);
   const handleFromDateChange = (rawValue: string) => {
     const formatted = formatDateInput(rawValue);
     setFromDateInput(formatted);
@@ -210,8 +203,19 @@ const pricePerReview = feePackages?.data?.items
 
   // Get records for selected reviewer from API
  const selectedReviewerRecords = adminReviewerIncomeDetail?.data?.items || [];
+ 
+ // Reset pagination when reviewer changes
+ useEffect(() => {
+   setReviewDetailPageNumber(1);
+ }, [selectedReviewerProfileId]);
 
   const selectedReviewerStats = adminReviewerIncomeDetail?.data;
+  
+  // Pagination calculations
+  const totalReviewDetailItems = parseInt(selectedReviewerStats?.totalReviews || "0") || selectedReviewerRecords.length;
+  const totalReviewDetailPages = Math.ceil(totalReviewDetailItems / reviewDetailPageSize) || 1;
+  const startIndex = (reviewDetailPageNumber - 1) * reviewDetailPageSize;
+  const endIndex = startIndex + reviewDetailPageSize;
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -680,20 +684,20 @@ const pricePerReview = feePackages?.data?.items
                     </TableCell>
 
                     <TableCell className="text-center font-semibold text-green-600">
-                      {formatCurrency(r.earnedFromThisReview)}
+                      {r.earnedFromThisReview} Coin
                     </TableCell>
                     <TableCell className="text-center">
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={() => {
-      setSelectedReviewItem(r);
-      setShowReviewDetailModal(true);
-    }}
-  >
-    Xem
-  </Button>
-</TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedReviewItem(r);
+                          setShowReviewDetailModal(true);
+                        }}
+                      >
+                        Xem
+                      </Button>
+                    </TableCell>
 
                   </TableRow>
                 ))}
@@ -714,6 +718,91 @@ const pricePerReview = feePackages?.data?.items
         )}
 
       </div>
+      
+      {/* Pagination Footer - Outside scrollable area */}
+      {totalReviewDetailItems > reviewDetailPageSize && (
+        <div className="border-t bg-white p-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Hiển thị:</span>
+                <select
+                  value={reviewDetailPageSize}
+                  onChange={(e) => {
+                    setReviewDetailPageSize(Number(e.target.value));
+                    setReviewDetailPageNumber(1);
+                  }}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white hover:border-gray-400 transition-colors"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <span className="text-sm text-gray-700">mục mỗi trang</span>
+              </div>
+              <div className="text-sm text-gray-600">
+                Hiển thị <span className="font-semibold text-gray-900">{startIndex + 1}</span> đến{" "}
+                <span className="font-semibold text-gray-900">{Math.min(endIndex, totalReviewDetailItems)}</span> trong tổng số{" "}
+                <span className="font-semibold text-gray-900">{totalReviewDetailItems}</span> review
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReviewDetailPageNumber(prev => Math.max(1, prev - 1))}
+                disabled={reviewDetailPageNumber === 1 || isLoadingDetail}
+                className="hover:bg-gray-50"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Trước
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalReviewDetailPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalReviewDetailPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (reviewDetailPageNumber <= 3) {
+                    pageNum = i + 1;
+                  } else if (reviewDetailPageNumber >= totalReviewDetailPages - 2) {
+                    pageNum = totalReviewDetailPages - 4 + i;
+                  } else {
+                    pageNum = reviewDetailPageNumber - 2 + i;
+                  }
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={reviewDetailPageNumber === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setReviewDetailPageNumber(pageNum)}
+                      disabled={isLoadingDetail}
+                      className={`min-w-[40px] ${
+                        reviewDetailPageNumber === pageNum
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReviewDetailPageNumber(prev => Math.min(totalReviewDetailPages, prev + 1))}
+                disabled={reviewDetailPageNumber >= totalReviewDetailPages || isLoadingDetail}
+                className="hover:bg-gray-50"
+              >
+                Sau
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   </div>
   
@@ -764,7 +853,7 @@ const pricePerReview = feePackages?.data?.items
         <div>
           <p className="text-gray-500 text-sm">Thu nhập review này</p>
           <p className="font-bold text-green-600">
-            {formatCurrency(selectedReviewItem.earnedFromThisReview)}
+            {selectedReviewItem.earnedFromThisReview} Coin
           </p>
         </div>
 
