@@ -574,6 +574,11 @@ const EntranceTest = () => {
       </div>
     );
   }
+const SECTION_TYPE_LABEL: Record<string, string> = {
+  Word: "Từ đơn",
+  Phrase: "Cụm từ",
+  Sentence: "Câu",
+};
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50">
@@ -654,7 +659,9 @@ const EntranceTest = () => {
   bg-blue-50 text-blue-600 text-sm font-semibold 
   rounded-full tracking-wide"
             >
-              {currentQuestion?.sectionType || "Question"}
+           {SECTION_TYPE_LABEL[currentQuestion?.sectionType ?? ""] ||
+  currentQuestion?.sectionType}
+
             </span>
           </div>
 

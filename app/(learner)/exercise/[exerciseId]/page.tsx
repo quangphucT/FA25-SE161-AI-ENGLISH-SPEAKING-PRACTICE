@@ -77,6 +77,11 @@ const ExercisePage = () => {
   const apiMainPathSTS = process.env.NEXT_PUBLIC_AI_STS_API_URL;
   const STScoreAPIKey = process.env.NEXT_PUBLIC_AI_STS_API_KEY || "";
   const AILanguage = process.env.NEXT_PUBLIC_AI_STS_LANGUAGE || "en";
+const QUESTION_TYPE_LABEL: Record<string, string> = {
+  Word: "Từ đơn",
+  Phrase: "Cụm từ",
+  Sentence: "Câu",
+};
 
   // Find current exercise from learning path data
   const currentExerciseData = useMemo(() => {
@@ -569,11 +574,8 @@ const ExercisePage = () => {
   bg-blue-50 text-blue-600 text-sm font-semibold 
   rounded-full tracking-wide"
           >
-            {currentQuestion.type === "Word"
-              ? "Word"
-              : currentQuestion.type === "Sentence"
-              ? "Sentence"
-              : "Phrase"}
+           {QUESTION_TYPE_LABEL[currentQuestion.type] || currentQuestion.type}
+
           </span>
         </div>
 

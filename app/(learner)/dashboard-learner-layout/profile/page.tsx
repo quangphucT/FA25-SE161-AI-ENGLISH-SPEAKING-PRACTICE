@@ -11,10 +11,17 @@ import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { useGetMyProgressAnalytics } from "@/features/learner/hooks/progressAnalyticsHooks/useGetMyProgressAnalytics";
 import { useEditLearnerProfile } from "@/features/learner/hooks/learnerProfileHooks/useUpdateLearnerProfile";
 import { useUploadAvatar } from "@/features/learner/hooks/uploadAvatarHooks/useUploadAvatar";
+import { changePasswordService } from "@/features/shared/services/authService";
+import { Eye, EyeOff, Lock } from "lucide-react";
 
 export default function LearnerProfilePage() {
   const { data: userData, isLoading, refetch } = useGetMeQuery();
   const { data: progressData } = useGetMyProgressAnalytics();
+const [openChangePassword, setOpenChangePassword] = useState(false);
+const [currentPassword, setCurrentPassword] = useState("");
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [isChanging, setIsChanging] = useState(false);
 
   const updateProfileMutation = useEditLearnerProfile();
   const uploadAvatarMutation = useUploadAvatar();
@@ -37,6 +44,8 @@ export default function LearnerProfilePage() {
     });
   };
 
+
+  
   const openEditModal = () => {
     setFullName(userData?.fullName || "");
     setPhoneNumber(userData?.phoneNumber || "");
@@ -68,10 +77,51 @@ export default function LearnerProfilePage() {
     }
   };
 
+const handleChangePassword = async () => {
+  // 1. Validate
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    alert("Vui lòng nhập đầy đủ thông tin");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    alert("Mật khẩu xác nhận không khớp");
+    return;
+  }
+
+  try {
+    setIsChanging(true);
+
+    // 2. Call API
+   await changePasswordService({
+  currentPassword,
+  newPassword,
+  confirmPassword,
+});
+
+
+    // 3. Thành công
+    alert("Đổi mật khẩu thành công");
+
+    // reset state
+    setOpenChangePassword(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  } catch (error: any) {
+    alert(error.message || "Đổi mật khẩu thất bại");
+  } finally {
+    setIsChanging(false);
+  }
+};
+
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
+
+  
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-6">
       <div className="max-w-7xl mx-auto space-y-10">
@@ -92,31 +142,92 @@ export default function LearnerProfilePage() {
               />
             </div>
 
-            <div className="flex-1 flex justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">{userData?.fullName}</h2>
-                <p className="text-sm text-slate-500">{userData?.email}</p>
-              </div>
+        <div className="flex-1 flex justify-between">
+  <div>
+    <h2 className="text-xl font-semibold">{userData?.fullName}</h2>
+    <p className="text-sm text-slate-500">{userData?.email}</p>
+  </div>
 
-              <Button
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                onClick={openEditModal}
-              >
-                Chỉnh sửa
-              </Button>
-            </div>
-          </div>
+  {/* BUTTON GROUP */}
+  <div className="flex flex-col gap-2 items-end">
+    <Button
+      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+      onClick={openEditModal}
+    >
+      Chỉnh sửa
+    </Button>
 
-          <div className="grid sm:grid-cols-2 gap-4 border-t p-6">
-            <div className="flex items-center gap-3">
-              <Mail className="text-indigo-500 w-5 h-5" />
-              <span>{userData?.email}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone className="text-indigo-500 w-5 h-5" />
-              <span>{userData?.phoneNumber || "Chưa cập nhật"}</span>
-            </div>
+    <Button
+      variant="outline"
+      className="flex items-center gap-2"
+      onClick={() => setOpenChangePassword(true)}
+    >
+      <Lock className="w-4 h-4" />
+      Đổi mật khẩu
+    </Button>
+  </div>
+</div>
+
+         
           </div>
+<Dialog open={openChangePassword} onOpenChange={setOpenChangePassword}>
+  <DialogContent className="sm:max-w-md">
+    <DialogHeader>
+      <DialogTitle>Đổi mật khẩu</DialogTitle>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      <Input
+        type="password"
+        placeholder="Mật khẩu hiện tại"
+        value={currentPassword}
+        onChange={(e) => setCurrentPassword(e.target.value)}
+      />
+
+      <Input
+        type="password"
+        placeholder="Mật khẩu mới"
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+      />
+
+      <Input
+        type="password"
+        placeholder="Xác nhận mật khẩu mới"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+      />
+
+      <div className="flex justify-end gap-2 pt-2">
+        <Button
+          variant="outline"
+          onClick={() => setOpenChangePassword(false)}
+        >
+          Hủy
+        </Button>
+        <Button
+          disabled={isChanging}
+          onClick={handleChangePassword}
+        >
+          Đổi mật khẩu
+        </Button>
+      </div>
+    </div>
+  </DialogContent>
+</Dialog>
+
+          <div className="grid grid-cols-1 gap-4 border-t p-6">
+  <div className="flex items-center gap-3">
+    <Mail className="text-indigo-500 w-5 h-5" />
+    <span>{userData?.email}</span>
+  </div>
+
+  <div className="flex items-center gap-3">
+    <Phone className="text-indigo-500 w-5 h-5" />
+    <span>{userData?.phoneNumber || "Chưa cập nhật"}</span>
+  </div>
+</div>
+
         </Card>
  {/* HEADER */}
         <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
