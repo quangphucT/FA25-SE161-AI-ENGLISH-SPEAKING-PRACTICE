@@ -52,12 +52,7 @@ function DashboardContent() {
     { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
     { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
-{ 
-  id: "learnerFeedback",
-  label: "Báo lỗi & Góp ý",
-  icon: BarChart3,
-  description: "Báo lỗi audio, nội dung học"
-},
+
   ];
 
 
