@@ -14,6 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Form,
   FormControl,
   FormField,
@@ -26,12 +32,13 @@ import {
   useAdminReviewFeePackageCreateMutation ,
     useAdminReviewFeePolicyCreateMutation,
     useAdminReviewFeePolicyUpcomingCreateMutation,
-    useDeleteReviewFeePackageMutation
+    useDeleteReviewFeePackageMutation,
+    useDeleteReviewFeePackageByIdMutation
 
 } from "@/features/admin/hooks/useAdminReviewFee";
 import { useQueryClient } from "@tanstack/react-query";
 import { CreateReviewFeePackageRequest } from "@/features/admin/services/adminReviewFeeService";
-import { Loader2, FileText, Plus, Package, CheckCircle2, XCircle, Users, Coins, Eye } from "lucide-react";
+import { Loader2, FileText, Plus, Package, CheckCircle2, XCircle, Users, Coins, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +48,8 @@ import { formatDateInput } from "@/utils/formatDateInput";
 import { useReviewFeeBuyers } from "@/features/admin/hooks/useAdminPurchase";
 import type { Buyer } from "@/features/admin/services/adminPurchaseService";
 import dayjs from "dayjs";
+import { DateTimeInput } from "@/components/common/DateTimeInput";
+import { NumberInput } from "@/components/common/NumberInput";
 
 
  const normalizePercent = (value: number) => {
@@ -58,6 +67,55 @@ const formatDate = (dateString?: string) => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm");
   } catch {
     return dateString;
+  }
+};
+
+// Format datetime input: dd/mm/yyyy hh:mm:ss
+const formatDateTimeInput = (value: string): string => {
+  // Remove all non-digit characters
+  const digits = value.replace(/\D/g, "");
+  
+  // Format: dd/mm/yyyy hh:mm:ss
+  if (digits.length <= 2) {
+    return digits;
+  } else if (digits.length <= 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  } else if (digits.length <= 8) {
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  } else if (digits.length <= 10) {
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)} ${digits.slice(8)}`;
+  } else if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)} ${digits.slice(8, 10)}:${digits.slice(10)}`;
+  } else if (digits.length <= 14) {
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)} ${digits.slice(8, 10)}:${digits.slice(10, 12)}:${digits.slice(12)}`;
+  } else {
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)} ${digits.slice(8, 10)}:${digits.slice(10, 12)}:${digits.slice(12, 14)}`;
+  }
+};
+
+// Parse dd/mm/yyyy hh:mm:ss to ISO string
+const parseDateTimeToISO = (dateTimeString: string): string => {
+  if (!dateTimeString) return "";
+  
+  // Format: dd/mm/yyyy hh:mm:ss
+  const parts = dateTimeString.trim().split(/[\s/:]+/);
+  if (parts.length < 3) return "";
+  
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+  const year = parseInt(parts[2], 10);
+  const hour = parts.length > 3 ? parseInt(parts[3], 10) : 0;
+  const minute = parts.length > 4 ? parseInt(parts[4], 10) : 0;
+  const second = parts.length > 5 ? parseInt(parts[5], 10) : 0;
+  
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return "";
+  
+  try {
+    const date = new Date(year, month, day, hour, minute, second);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString();
+  } catch {
+    return "";
   }
 };
 
@@ -107,7 +165,6 @@ export default function ReviewFeeManagement() {
   const queryClient = useQueryClient();
   const [pageNumber, setPageNumber] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
-
   const [selectedReviewFeeId, setSelectedReviewFeeId] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUpdateUpcomingModal, setShowUpdateUpcomingModal] = useState(false);
@@ -152,7 +209,7 @@ const { mutate: createReviewFeePackage, isPending: isCreating } =
  const form = useForm<CreateReviewFeeFormData>({
   resolver: zodResolver(createReviewFeeSchema),
   defaultValues: {
-    appliedDate: format(new Date(), "dd/MM/yyyy"),
+    appliedDate: new Date().toISOString(),
         numberOfReview: 0,   // ← thêm dòng này
 
     percentOfSystem: 0,
@@ -220,6 +277,9 @@ const { mutate: createUpcomingPolicy, isPending: isCreatingUpcomingPolicy } =
 const { mutate: deleteReviewFeePackage, isPending: isDeleting } =
   useDeleteReviewFeePackageMutation();
 
+const { mutate: deleteReviewFeePackageById, isPending: isDeletingPackage } =
+  useDeleteReviewFeePackageByIdMutation();
+
 
 
 
@@ -227,7 +287,7 @@ const policyForm = useForm<CreatePolicyForm>({
   defaultValues: {
     reviewFeeId: "",
     reviewFeeDetailId: "",
-    appliedDate: new Date().toISOString().slice(0, 16),
+    appliedDate: new Date().toISOString(),
     pricePerReviewFee: 0,
     percentOfSystem: 0,
     percentOfReviewer: 0,
@@ -458,17 +518,45 @@ const policyForm = useForm<CreatePolicyForm>({
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedReviewFeeId(pkg.reviewFeeId);
-                                setShowDetailModal(true);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              Xem chi tiết
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 cursor-pointer"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedReviewFeeId(pkg.reviewFeeId);
+                                    setShowDetailModal(true);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Xem chi tiết
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (confirm("Bạn có chắc muốn xóa gói phí đánh giá này?")) {
+                                      deleteReviewFeePackageById(pkg.reviewFeeId, {
+                                        onSuccess: () => {
+                                          refetch();
+                                        },
+                                      });
+                                    }
+                                  }}
+                                  className="cursor-pointer text-red-600 focus:text-red-600"
+                                  disabled={isDeletingPackage}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  {isDeletingPackage ? "Đang xóa..." : "Xóa"}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
 
                         </TableRow>
@@ -569,16 +657,10 @@ const policyForm = useForm<CreatePolicyForm>({
                           <FormItem>
                             <FormLabel>Ngày áp dụng *</FormLabel>
                             <FormControl>
-                              <Input
-                                type="text"
-                                inputMode="numeric"
-                                placeholder="dd/mm/yyyy"
-                                maxLength={10}
-                                {...field}
-                                value={field.value ?? ""}
-                                onChange={(event) =>
-                                  field.onChange(formatDateInput(event.target.value))
-                                }
+                              <DateTimeInput
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                                placeholder="dd/mm/yyyy hh:mm:ss"
                                 className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                               />
                             </FormControl>
@@ -593,11 +675,12 @@ const policyForm = useForm<CreatePolicyForm>({
                             <FormItem>
                               <FormLabel>Số lượng đánh giá *</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="number"
+                                <NumberInput
+                                  value={field.value || 0}
+                                  onChange={field.onChange}
                                   placeholder="VD: 35"
-                                  {...field}
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                  min={1}
+                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -612,13 +695,13 @@ const policyForm = useForm<CreatePolicyForm>({
                           <FormItem>
                             <FormLabel>Giá mỗi đánh giá (Coin) *</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="VD: 10000"
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                                className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                              />
+                            <NumberInput
+                                  value={field.value || 0}
+                                  onChange={field.onChange}
+                                  placeholder="VD: 35"
+                                  min={1}
+                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -633,14 +716,13 @@ const policyForm = useForm<CreatePolicyForm>({
                             <FormItem>
                               <FormLabel>% Hệ thống *</FormLabel>
                               <FormControl>
-                              <Input
-                                type="number"
-                                step="1"
-                                min="0"
-                                max="100"
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                              />
+                              <NumberInput
+                                  value={field.value || 0}
+                                  onChange={field.onChange}
+                                  placeholder="VD: 35"
+                                  min={1}
+                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
 
                               </FormControl>
                               <FormMessage />
@@ -655,14 +737,13 @@ const policyForm = useForm<CreatePolicyForm>({
                             <FormItem>
                               <FormLabel>% Reviewer *</FormLabel>
                               <FormControl>
-                             <Input
-  type="number"
-  step="1"
-  min="0"
-  max="100"
-  {...field}
-  onChange={(e) => field.onChange(Number(e.target.value))}
-/>
+                              <NumberInput
+                                  value={field.value || 0}
+                                  onChange={field.onChange}
+                                  placeholder="VD: 35"
+                                  min={1}
+                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
 
                               </FormControl>
                               <FormMessage />
@@ -729,10 +810,21 @@ const policyForm = useForm<CreatePolicyForm>({
     return;
   }
 
+  // Ensure appliedDate is in ISO format
+  let appliedDateISO = values.appliedDate;
+  if (appliedDateISO && !appliedDateISO.includes("T") && !appliedDateISO.includes("Z")) {
+    // If it's not ISO format, try to parse it
+    appliedDateISO = parseDateTimeToISO(appliedDateISO);
+    if (!appliedDateISO) {
+      alert("Ngày áp dụng không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy hh:mm:ss");
+      return;
+    }
+  }
+
   createPolicy(
     {
       reviewFeeId: values.reviewFeeId,
-      appliedDate: values.appliedDate,
+      appliedDate: appliedDateISO,
       pricePerReviewFee: values.pricePerReviewFee,
       percentOfSystem: sys / 100,
       percentOfReviewer: rev / 100,
@@ -778,8 +870,14 @@ const policyForm = useForm<CreatePolicyForm>({
               <FormItem>
                 <FormLabel>Ngày áp dụng</FormLabel>
                 <FormControl>
-                  <Input type="datetime-local" {...field} />
+                  <DateTimeInput
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder="dd/mm/yyyy hh:mm:ss"
+                    className="border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -791,7 +889,13 @@ const policyForm = useForm<CreatePolicyForm>({
               <FormItem>
                 <FormLabel>Giá mỗi lần đánh giá</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                    <NumberInput
+                                    value={field.value || 0}
+                                    onChange={field.onChange}
+                                    placeholder="VD: 10"
+                                    min={1}
+                                    className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                  />
                 </FormControl>
               </FormItem>
             )}
@@ -805,13 +909,13 @@ const policyForm = useForm<CreatePolicyForm>({
                 <FormItem>
                   <FormLabel>% Hệ thống</FormLabel>
                   <FormControl>
-<Input
-  type="number"
-  min={0}
-  max={100}
-  value={field.value}
-  onChange={(e) => field.onChange(Number(e.target.value))}
-/>
+                    <NumberInput
+                                  value={field.value || 0}
+                                  onChange={field.onChange}
+                                  placeholder="VD: 50"
+                                  min={1}
+                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
                   </FormControl>
                 </FormItem>
               )}
@@ -824,13 +928,13 @@ const policyForm = useForm<CreatePolicyForm>({
                 <FormItem>
                   <FormLabel>% Reviewer</FormLabel>
                   <FormControl>
-<Input
-  type="number"
-  min={0}
-  max={100}
-  value={field.value}
-  onChange={(e) => field.onChange(Number(e.target.value))}
-/>
+                    <NumberInput
+                                  value={field.value || 0}
+                                  onChange={field.onChange}
+                                  placeholder="VD: 50"
+                                  min={1}
+                                  className="border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
                   </FormControl>
                 </FormItem>
               )}
@@ -890,7 +994,10 @@ const policyForm = useForm<CreatePolicyForm>({
           <Button
             variant="ghost"
             className="h-10 w-10 rounded-full hover:bg-gray-100"
-            onClick={() => setShowDetailModal(false)}
+            onClick={() => {
+              setShowDetailModal(false);
+              setSelectedReviewFeeId(null);
+            }}
           >
             ✕
           </Button>
@@ -960,20 +1067,22 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
               Lịch sử chính sách
             </h3>
             <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow cursor-pointer"
-                onClick={() => {
-                  if (packages.length === 0) return;
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow cursor-pointer"
+              onClick={() => {
+                // Ưu tiên dùng reviewFeeId của gói đang xem chi tiết
+                const currentId =
+                  detailData?.data?.reviewFeeId ?? selectedReviewFeeId ?? packages[0]?.reviewFeeId;
 
-                  const firstId = packages[0].reviewFeeId;
+                if (!currentId) return;
 
-                  // ⬅️ SET GIÁ TRỊ VÀO FORM TRƯỚC KHI MỞ MODAL
-                  policyForm.setValue("reviewFeeId", firstId);
+                // Set đúng reviewFeeId vào form trước khi mở modal
+                policyForm.setValue("reviewFeeId", currentId);
 
-                  setShowCreatePolicyModal(true);
-                }}
-              >
-                Tạo chính sách mới
-              </Button>
+                setShowCreatePolicyModal(true);
+              }}
+            >
+              Tạo chính sách mới
+            </Button>
           </div>
 
           <div className="max-h-[280px] overflow-y-auto pr-2 space-y-3">
@@ -1047,14 +1156,23 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                             policyForm.setValue("pricePerReviewFee", upcoming.pricePerReviewFee);
                             policyForm.setValue("percentOfSystem", (1 - upcoming.percentOfReviewer) * 100);
                             policyForm.setValue("percentOfReviewer", upcoming.percentOfReviewer * 100);
-                            policyForm.setValue("appliedDate", new Date(upcoming.willApplyFrom).toISOString().slice(0, 16));
+                            
+                            // Kiểm tra và xử lý date hợp lệ
+                            let appliedDateValue = new Date().toISOString();
+                            if (upcoming.willApplyFrom) {
+                              const date = new Date(upcoming.willApplyFrom);
+                              if (!isNaN(date.getTime())) {
+                                appliedDateValue = date.toISOString();
+                              }
+                            }
+                            policyForm.setValue("appliedDate", appliedDateValue);
                           } else {
                             // Nếu chưa có, reset form và chọn current policy mặc định
                             const currentPolicy = detailData?.data?.historyPolicies?.find(h => h.isCurrent);
                             policyForm.reset({
                               reviewFeeId: "",
                               reviewFeeDetailId: currentPolicy?.reviewFeeDetailId || "",
-                              appliedDate: new Date().toISOString().slice(0, 16),
+                              appliedDate: new Date().toISOString(),
                               pricePerReviewFee: 0,
                               percentOfSystem: 0,
                               percentOfReviewer: 0,
@@ -1107,10 +1225,21 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
               return;
             }
 
+            // Ensure appliedDate is in ISO format
+            let appliedDateISO = values.appliedDate;
+            if (appliedDateISO && !appliedDateISO.includes("T") && !appliedDateISO.includes("Z")) {
+              // If it's not ISO format, try to parse it
+              appliedDateISO = parseDateTimeToISO(appliedDateISO);
+              if (!appliedDateISO) {
+                alert("Ngày áp dụng không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy hh:mm:ss");
+                return;
+              }
+            }
+
             createUpcomingPolicy(
               {
                 reviewFeeDetailId: values.reviewFeeDetailId,
-                appliedDate: values.appliedDate,
+                appliedDate: appliedDateISO,
                 pricePerReviewFee: values.pricePerReviewFee,
                 percentOfSystem: sys / 100,
                 percentOfReviewer: rev / 100,
@@ -1157,7 +1286,12 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
               <FormItem>
                 <FormLabel>Ngày áp dụng *</FormLabel>
                 <FormControl>
-                  <Input type="datetime-local" {...field} />
+                  <DateTimeInput
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder="dd/mm/yyyy hh:mm:ss"
+                    className="border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
