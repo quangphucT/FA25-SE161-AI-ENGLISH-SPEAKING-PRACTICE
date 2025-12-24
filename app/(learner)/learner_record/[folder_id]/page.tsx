@@ -1080,7 +1080,7 @@ const PracticeRecordLayout = () => {
           rel="stylesheet"
         />
       </Head>
-      <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 max-w-[95%] mx-auto relative">
+      <div className="min-h-screen w-full  max-w-[100%] mx-auto relative">
         {/* Header Section */}
         <div className="bg-white border-b border-gray-100 shadow-md sticky top-0 z-40">
           <div className="flex items-center py-4 px-8 max-w-7xl mx-auto">
@@ -1122,7 +1122,7 @@ const PracticeRecordLayout = () => {
           <div className="flex items-center justify-center mb-8 gap-4">
             {/* Processing status */}
             {isAnalyzing && (
-              <div className="flex items-center gap-3 px-6 py-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+              <div className="flex items-center gap-3 px-6 py-4 ">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 <div>
                   <span className="text-blue-900 font-semibold block text-sm">
@@ -1135,7 +1135,7 @@ const PracticeRecordLayout = () => {
               </div>
             )}
             
-            <div className="bg-white rounded-2xl px-8 py-6 shadow-lg border-2 border-gray-100">
+            <div className="">
               <p
                 id="original_script"
                 className="font-bold text-gray-900 tracking-wide text-3xl md:text-4xl text-center"
@@ -1197,101 +1197,156 @@ const PracticeRecordLayout = () => {
           <div className="grid lg:grid-cols-2 gap-8 items-start">
             
             {/* Left Column - IPA Results */}
-            <div className="space-y-6">
-              {/* IPA Card */}
-              <div className="bg-white rounded-3xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="space-y-6">
+            <div className="space-y-5">
+              {/* Section Header - Only show when there's recorded result */}
+              {recordedIpaScript && (
+                <div className="flex items-center gap-3 px-1">
+                  <div className="w-1.5 h-8 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></div>
+                  <h3 className="text-lg font-bold text-gray-800 tracking-tight">Kết quả phân tích</h3>
+                </div>
+              )}
+
+              {/* IPA Cards Container */}
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/50 overflow-hidden">
+                <div className="divide-y divide-gray-100">
                   {/* IPA Reference */}
                   {ipaScript && (
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">IPA</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-blue-900">Phiên âm chuẩn</p>
-                          <p className="text-xs text-blue-700">International Phonetic Alphabet</p>
+                    <div className="p-6 hover:bg-gray-50/50 transition-colors">
+                      <div className="flex items-start gap-4">
+                        {/* <div className="flex-shrink-0">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                            <span className="text-white text-xs font-bold tracking-wider">IPA</span>
+                          </div>
+                        </div> */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="text-sm font-semibold text-gray-900">Phiên âm chuẩn</h4>
+                            <span className="px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded-full uppercase tracking-wide">Reference</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-3">International Phonetic Alphabet</p>
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 rounded-xl"></div>
+                            <p id="ipa_script" className="relative text-lg md:text-xl font-mono text-blue-700 bg-white/80 rounded-xl px-5 py-4 border border-blue-100 shadow-sm">
+                              {ipaScript}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <p id="ipa_script" className="text-xl md:text-2xl font-mono text-blue-700 bg-white rounded-lg p-4 border border-blue-200">
-                        {ipaScript}
-                      </p>
                     </div>
                   )}
 
                   {/* Recorded IPA */}
                   {recordedIpaScript && (
-                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-emerald-200">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <Mic className="w-5 h-5 text-white" />
+                    <div className="p-6 hover:bg-gray-50/50 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                            <Mic className="w-5 h-5 text-white" />
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-emerald-900">Phân tích phiên âm của bạn</p>
-                          <p className="text-xs text-emerald-700">Kết quả ghi âm vừa thực hiện</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="text-sm font-semibold text-gray-900">Phát âm của bạn</h4>
+                            <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-700 rounded-full uppercase tracking-wide">Your Voice</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-3">Kết quả phân tích từ AI</p>
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-xl"></div>
+                            <p id="recorded_ipa_script" className="relative text-lg md:text-xl font-mono text-emerald-700 bg-white/80 rounded-xl px-5 py-4 border border-emerald-100 shadow-sm">
+                              {recordedIpaScript}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <p id="recorded_ipa_script" className="text-xl md:text-2xl font-mono text-emerald-700 bg-white rounded-lg p-4 border border-emerald-200">
-                        {recordedIpaScript}
-                      </p>
                     </div>
                   )}
 
                   {/* Translation */}
                   {translatedScript && (
-                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-200">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
-                          <span className="text-white text-lg">💡</span>
+                    <div className="p-6 hover:bg-gray-50/50 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                            </svg>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-amber-900">Nghĩa tiếng Việt</p>
-                          <p className="text-xs text-amber-700">Bản dịch tham khảo</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="text-sm font-semibold text-gray-900">Nghĩa tiếng Việt</h4>
+                            <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full uppercase tracking-wide">Translation</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-3">Bản dịch tham khảo</p>
+                          <p id="translated_script" className="text-base text-gray-700 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl px-5 py-4 border border-amber-100/80 italic leading-relaxed">
+                            {translatedScript}
+                          </p>
                         </div>
                       </div>
-                      <p id="translated_script" className="text-lg text-amber-800 bg-white rounded-lg p-4 border border-amber-200 italic">
-                        {translatedScript}
-                      </p>
                     </div>
                   )}
 
                   {/* Empty State */}
                   {!ipaScript && !recordedIpaScript && !translatedScript && (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Mic className="w-8 h-8 text-gray-400" />
+                    <div className="p-12">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-5 shadow-inner">
+                          <Mic className="w-9 h-9 text-gray-400" />
+                        </div>
+                        <h4 className="text-base font-semibold text-gray-700 mb-2">Chưa có dữ liệu phân tích</h4>
+                        <p className="text-sm text-gray-500 max-w-xs">
+                          Nhấn nút <span className="font-medium text-indigo-600">ghi âm</span> để AI phân tích phát âm của bạn
+                        </p>
                       </div>
-                      <p className="text-gray-500 font-medium">Chưa có dữ liệu</p>
-                      <p className="text-sm text-gray-400 mt-1">Nhấn nút ghi âm để bắt đầu luyện tập</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Navigation - Moved to left column */}
+              {/* Navigation */}
               {recordsList.length > 1 && (
-                <div className="flex items-center justify-between bg-white rounded-2xl p-4 border-2 border-gray-200 shadow-sm">
-                  <Button
-                    onClick={handlePreviousQuestion}
-                    disabled={uiBlocked || currentQuestionIndex === 0}
-                    className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl disabled:opacity-30 transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                    <span className="text-sm font-medium">Câu trước</span>
-                  </Button>
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 shadow-lg shadow-gray-200/30 p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Button
+                      onClick={handlePreviousQuestion}
+                      disabled={uiBlocked || currentQuestionIndex === 0}
+                      variant="ghost"
+                      className="flex-1 cursor-pointer h-12 flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
+                    >
+                      <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+                      <span className="text-sm font-medium">Câu trước</span>
+                    </Button>
+                    
+                    <div className="flex items-center gap-1.5 px-4">
+                      {recordsList.map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            idx === currentQuestionIndex
+                              ? "w-6 bg-gradient-to-r from-indigo-500 to-purple-600"
+                              : idx < currentQuestionIndex
+                              ? "bg-emerald-400"
+                              : "bg-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    
+                    <Button
+                      onClick={handleNextQuestion}
+                      disabled={uiBlocked || currentQuestionIndex >= recordsList.length - 1}
+                      variant="ghost"
+                      className="flex-1 cursor-pointer h-12 flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
+                    >
+                      <span className="text-sm font-medium">Câu tiếp</span>
+                      <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                    </Button>
+                  </div>
                   
-                  <span className="text-sm font-semibold text-gray-600">
-                    {currentQuestionIndex + 1} / {recordsList.length}
-                  </span>
-                  
-                  <Button
-                    onClick={handleNextQuestion}
-                    disabled={uiBlocked || currentQuestionIndex >= recordsList.length - 1}
-                    className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl disabled:opacity-30 transition-all"
-                  >
-                    <span className="text-sm font-medium">Câu tiếp</span>
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
+                  {/* Progress text */}
+                  <p className="text-center text-xs text-gray-500 mt-2 pb-1">
+                    Câu hỏi <span className="font-semibold text-gray-700">{currentQuestionIndex + 1}</span> / {recordsList.length}
+                  </p>
                 </div>
               )}
             </div>
@@ -1379,7 +1434,7 @@ const PracticeRecordLayout = () => {
               {/* Tips Card */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">💡</span>
+                 
                   <h4 className="text-sm font-semibold text-amber-800">Mẹo ghi âm chất lượng</h4>
                 </div>
                 <ul className="space-y-2 text-xs text-amber-700">

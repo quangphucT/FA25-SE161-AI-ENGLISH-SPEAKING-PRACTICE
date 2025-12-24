@@ -29,6 +29,8 @@ import { useGetMeQuery } from "@/hooks/useGetMeQuery";
 import { useReviewerProfileGet, useReviewerProfilePut } from "@/features/reviewer/hooks/useReviewerProfile";
 import { useReviewerCertificationUpload } from "@/features/reviewer/hooks/useCertificationUpload";
 import { useQueryClient } from "@tanstack/react-query";
+import { changePasswordService } from "@/features/shared/services/authService";
+import { Eye, EyeOff, Lock } from "lucide-react";
 const FileDropZone = ({
   onDrop,
   children,
@@ -89,7 +91,11 @@ const ReviewerProfile = () => {
   const { mutate: reviewerCertificationUpload, isPending: isCertUploadPending } = useReviewerCertificationUpload();
   const queryClient = useQueryClient();
   const profileData = reviewerProfileData?.data;
-  
+  const [openChangePassword, setOpenChangePassword] = useState(false);
+const [currentPassword, setCurrentPassword] = useState("");
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [isChanging, setIsChanging] = useState(false);
   const [formData, setFormData] = useState({
     fullname: meData?.fullName || "",
     experience: meData?.reviewerProfile?.experience || "",
@@ -267,6 +273,44 @@ const ReviewerProfile = () => {
     certifications: profileData?.certificates || [],
   };
 
+  const handleChangePassword = async () => {
+    // 1. Validate
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      alert("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+  
+    if (newPassword !== confirmPassword) {
+      alert("Mật khẩu xác nhận không khớp");
+      return;
+    }
+  
+    try {
+      setIsChanging(true);
+  
+      // 2. Call API
+     await changePasswordService({
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  });
+  
+  
+      // 3. Thành công
+      alert("Đổi mật khẩu thành công");
+  
+      // reset state
+      setOpenChangePassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      alert(error.message || "Đổi mật khẩu thất bại");
+    } finally {
+      setIsChanging(false);
+    }
+  };
+  
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Header Profile Section */}
@@ -412,10 +456,22 @@ const ReviewerProfile = () => {
                   <Edit className="w-5 h-5 mr-2" />
                   Edit profile
                 </Button>
+
+                  <Button
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      onClick={() => setOpenChangePassword(true)}
+                    >
+                      <Lock className="w-4 h-4" />
+                      Đổi mật khẩu
+                    </Button>
               </div>
             </div>
           </CardContent>
         </Card>
+
+
+        
       </div>
 
       {/* Certifications Section */}
@@ -744,6 +800,75 @@ const ReviewerProfile = () => {
           </div>
         </div>
       )}
+      {/* Change Password Dialog */}
+{openChangePassword && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b">
+        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <Lock className="w-5 h-5" />
+          Đổi mật khẩu
+        </h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setOpenChangePassword(false)}
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 space-y-4">
+        <div>
+          <Label>Mật khẩu hiện tại</Label>
+          <Input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label>Mật khẩu mới</Label>
+          <Input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label>Xác nhận mật khẩu mới</Label>
+          <Input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+        <Button
+          variant="outline"
+          onClick={() => setOpenChangePassword(false)}
+        >
+          Hủy
+        </Button>
+        <Button
+          onClick={handleChangePassword}
+          disabled={isChanging}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+        >
+          {isChanging ? "Đang xử lý..." : "Đổi mật khẩu"}
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
