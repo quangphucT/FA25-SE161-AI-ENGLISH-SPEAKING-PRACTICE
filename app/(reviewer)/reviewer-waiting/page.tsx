@@ -100,6 +100,15 @@ const ReviewerWaitingPage = () => {
     }
   }, [meData, isLoading, router]);
 
+  // Auto refresh every 1 minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 600000); // 60000ms = 1 minute
+
+    return () => clearInterval(interval);
+  }, [refetch]);
+
   if (isLoading && !meData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0f1a1f] via-[#18232a] to-[#0f1a1f] flex items-center justify-center">

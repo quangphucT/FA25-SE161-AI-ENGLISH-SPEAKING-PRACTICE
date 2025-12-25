@@ -195,8 +195,10 @@ const PurchasesManagement = () => {
   const transactionStats = useMemo(() => {
     if (dashboardData?.data) {
       return {
-        paid: dashboardData.data.totalPaid ?? 0,
-        approved: dashboardData.data.totalApproved ?? 0,
+        paid: dashboardData.data.totalDepositPaid ?? 0,
+        approved: dashboardData.data.totalWithdrawalApproved ?? 0,
+        depositAmount: dashboardData.data.totalDepositAmount ?? 0,
+        withdrawalAmount: dashboardData.data.totalWithdrawalAmount ?? 0,
         cancelled: dashboardData.data.totalFailTransaction ?? 0,
         pending: dashboardData.data.totalPendingTransaction ?? 0,
       };
@@ -267,7 +269,8 @@ const PurchasesManagement = () => {
     setShowDetailsModal(true);
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | undefined) => {
+    if (price === undefined || price === null) return "0 VND";
     return price.toLocaleString("vi-VN") + " VND";
   };
   const { mutate: downloadTransactionExcel, isPending: isDownloadingExcel } = useDownloadTransactionExcel();
@@ -414,6 +417,7 @@ const exportToPDF = () => {
             <div className="text-2xl font-bold text-green-600">
               {transactionStats.paid}
             </div>
+            <div className="text-sm text-gray-600">Số tiền: {formatPrice(transactionStats.depositAmount)}</div>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-blue-500">
@@ -427,6 +431,7 @@ const exportToPDF = () => {
             <div className="text-2xl font-bold text-blue-600">
               {transactionStats.approved}
             </div>
+            <div className="text-sm text-gray-600">Số tiền: {formatPrice(transactionStats.withdrawalAmount)}</div>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-red-500">

@@ -1586,7 +1586,7 @@ const StatisticsForMentor = () => {
                       </Label>
                       <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
                         <p className="text-2xl font-bold text-green-700">
-                          {selectedFeedbackDetail.reviewScore}/100 
+                          {selectedFeedbackDetail.reviewScore}/10
                         </p>
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 export interface CreateQuestionTestRequest {
-  type: "word" | "phrase" | "sentence";
+  type: "Word" | "Phrase" | "Sentence";
   content: string;
 }
 
@@ -7,7 +7,7 @@ export interface CreateQuestionTestResponse {
   isSuccess: boolean;
   data: {
     questionAssessmentId: string;
-    type: "word" | "phrase" | "sentence";
+    type: "Word" | "Phrase" | "Sentence";
     status: boolean;
     content: string;
   };
@@ -16,7 +16,7 @@ export interface CreateQuestionTestResponse {
 
 export interface QuestionAssessmentItem {
   questionAssessmentId: string;
-  type: "word" | "phrase" | "sentence";
+  type: "Word" | "Phrase" | "Sentence";
   status: boolean;
   content: string;
 }
@@ -32,20 +32,20 @@ export interface GetQuestionTestResponse {
 }
 
 // question type
-export type QuestionType = "word" | "phrase" | "sentence";
+export type QuestionType = "Word" | "Phrase" | "Sentence";
 
 // update question test
 
 export interface UpdateQuestionTestRequest {
   id: string;
-  type: "word" | "phrase" | "sentence";
+  type: "Word" | "Phrase" | "Sentence";
   content: string;
 }
 export interface UpdateQuestionTestResponse {
   isSuccess: boolean;
   data: {
     questionAssessmentId: string;
-    type: "word" | "phrase" | "sentence";
+    type: "Word" | "Phrase" | "Sentence";
     status: boolean;
     content: string;
   };
