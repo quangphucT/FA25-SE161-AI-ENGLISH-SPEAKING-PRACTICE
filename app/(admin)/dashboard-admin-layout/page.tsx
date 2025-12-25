@@ -27,6 +27,7 @@ import {
   Coins,
   ReceiptText,
   BookOpen,
+  Users,
 } from "lucide-react";
 import PageStatistics from "../statistics/page";
 import ReviewerManagement from "../reviewers-management/page";
@@ -202,12 +203,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
             >
               <span
                 className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "learner"
+                  activeMenu === "manager"
                     ? "bg-white/20"
-                    : "bg-ora-500/20 group-hover:bg-ora-500/30"
+                    : "bg-orange-500/20 group-hover:bg-orange-500/30"
                 }`}
               >
-                <User2Icon size={20} />
+                <Users size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
                 <span className="font-semibold text-sm">Người quản lý</span>
