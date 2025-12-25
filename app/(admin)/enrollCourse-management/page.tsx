@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function EnrollCourseManagement() {
   const [pageNumber, setPageNumber] = useState(1);
-  const pageSize = 10;
+  const pageSize = 5;
   const [isBuyersDialogOpen, setIsBuyersDialogOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [buyersPageNumber, setBuyersPageNumber] = useState(1);
@@ -271,14 +271,14 @@ export default function EnrollCourseManagement() {
               {totalCourses > 0 && (
                 <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
                   <div className="flex items-center gap-2">
-                    <span>Rows per page:</span>
+                    <span>Số dòng trên mỗi trang:</span>
                     <span className="font-medium">{pageSize}</span>
                   </div>
 
                   <div>
                     {totalCourses === 0
                       ? "0–0 of 0"
-                      : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalCourses)} of ${totalCourses}`}
+                      : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalCourses)} trong số ${totalCourses}`}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -289,7 +289,7 @@ export default function EnrollCourseManagement() {
                       onClick={() => setPageNumber(pageNumber - 1)}
                       className="cursor-pointer"
                     >
-                      Previous
+                      Trước
                     </Button>
 
                     <span className="px-3 py-1 border rounded-md bg-gray-50">
@@ -303,7 +303,7 @@ export default function EnrollCourseManagement() {
                       onClick={() => setPageNumber(pageNumber + 1)}
                       className="cursor-pointer"
                     >
-                      Next
+                      Sau
                     </Button>
                   </div>
                 </div>
@@ -465,14 +465,14 @@ export default function EnrollCourseManagement() {
                       {totalBuyers > 0 && (
                         <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
                           <div className="flex items-center gap-2">
-                            <span>Rows per page:</span>
+                            <span>Số dòng trên mỗi trang:</span>
                             <span className="font-medium">{buyersPageSize}</span>
                           </div>
 
                           <div>
                             {totalBuyers === 0
                               ? "0–0 of 0"
-                              : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} of ${totalBuyers}`}
+                              : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} trong số ${totalBuyers}`}
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -483,7 +483,7 @@ export default function EnrollCourseManagement() {
                               onClick={() => setBuyersPageNumber(buyersPageNumber - 1)}
                               className="cursor-pointer"
                             >
-                              Previous
+                              Trước
                             </Button>
 
                             <span className="px-3 py-1 border rounded-md bg-gray-50">
@@ -497,7 +497,7 @@ export default function EnrollCourseManagement() {
                               onClick={() => setBuyersPageNumber(buyersPageNumber + 1)}
                               className="cursor-pointer"
                             >
-                              Next
+                              Sau
                             </Button>
                           </div>
                         </div>

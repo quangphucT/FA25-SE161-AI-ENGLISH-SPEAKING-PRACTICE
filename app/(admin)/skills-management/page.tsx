@@ -355,7 +355,7 @@ const SkillManagement = () => {
           ACTIVE SKILLS: {filteredSkills.filter(s => s.status === "Active").length}/{filteredSkills.length} | 
           TOTAL MENTORS: {filteredSkills.reduce((sum, s) => sum + s.assignedMentors.length, 0)}
         </div>
-        <div>Rows per page: <span className="font-semibold">10</span> &nbsp; 1-10 of {filteredSkills.length}</div>
+        <div>Số dòng trên mỗi trang: <span className="font-semibold">10</span> &nbsp; 1-10 trong số {filteredSkills.length}</div>
       </div>
 
       {/* Add Skill Modal */}

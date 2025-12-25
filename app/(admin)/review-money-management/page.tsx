@@ -136,7 +136,8 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
   
   // Get reviewers from API data
   const reviewers = adminReviewerIncomeList?.data?.items || [];
-  const totalItems = reviewers.length; // API might not return totalItems, use current items length
+  // API might not return totalItems, use current items length as fallback
+  const totalItems = reviewers.length;
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
   // Handle pagination
@@ -467,87 +468,92 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
             </div>
           )}
 
-          {/* Pagination */}
-          {!isLoadingList && reviewers.length > 0 && (
-            <div className="flex flex-col md:flex-row items-center justify-between mt-6 pt-6 border-t gap-4">
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">Hiển thị:</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
-                      setPageNumber(1);
-                    }}
-                    className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white hover:border-gray-400 transition-colors"
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                  </select>
-                  <span className="text-sm text-gray-700">mục mỗi trang</span>
-                </div>
-                <div className="text-sm text-gray-600">
-                  Hiển thị <span className="font-semibold text-gray-900">{totalItems > 0 ? (pageNumber - 1) * pageSize + 1 : 0}</span> đến{" "}
-                  <span className="font-semibold text-gray-900">{Math.min(pageNumber * pageSize, totalItems)}</span> trong tổng số{" "}
-                  <span className="font-semibold text-gray-900">{totalItems}</span> reviewer
-                </div>
+    
+        </CardContent>
+      </Card>
+  {/* Pagination */}
+  {!isLoadingList && reviewers.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="text-sm text-gray-600">
+                Hiển thị{" "}
+                <span className="font-semibold text-gray-900">
+                  {totalItems > 0
+                    ? (pageNumber - 1) * pageSize + 1
+                    : 0}
+                </span>{" "}
+                đến{" "}
+                <span className="font-semibold text-gray-900">
+                  {Math.min(pageNumber * pageSize, totalItems)}
+                </span>{" "}
+                trong tổng số{" "}
+                <span className="font-semibold text-gray-900">
+                  {totalItems}
+                </span>{" "}
+                reviewer
               </div>
-
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handlePreviousPage}
+                  onClick={() => handlePageChange(pageNumber - 1)}
                   disabled={pageNumber === 1 || isLoadingList}
-                  className="hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-gray-50"
                 >
                   Trước
                 </Button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (pageNumber <= 3) {
-                    pageNum = i + 1;
-                  } else if (pageNumber >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = pageNumber - 2 + i;
-                  }
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={pageNumber === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(pageNum)}
-                      disabled={isLoadingList}
-                      className={`min-w-[40px] ${
-                        pageNumber === pageNum
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "hover:bg-gray-50"
-                      }`}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
+                <div className="flex items-center gap-1">
+                  {Array.from(
+                    { length: Math.min(5, totalPages) },
+                    (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pageNumber <= 3) {
+                        pageNum = i + 1;
+                      } else if (
+                        pageNumber >=
+                        totalPages - 2
+                      ) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = pageNumber - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={
+                            pageNumber === pageNum ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`cursor-pointer min-w-[40px] ${
+                            pageNumber === pageNum
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    }
+                  )}
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleNextPage}
+                  onClick={() => handlePageChange(pageNumber + 1)}
                   disabled={pageNumber >= totalPages || isLoadingList}
-                  className="hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-gray-50"
                 >
                   Sau
                 </Button>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
+          </CardContent>
+        </Card>
+      )}
      {/* Reviewer Details Modal */}
 {showReviewerDetails && (
   <div
@@ -606,7 +612,10 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
       <CardContent className="pt-6">
         <p className="text-gray-500 text-sm">Tổng thu nhập</p>
         <p className="text-3xl font-bold text-green-600">
-          {formatCurrency(selectedReviewerStats.totalEarnedFromSystem)}
+          {formatCoin(selectedReviewerStats.totalEarnedFromSystem)}
+        </p>
+        <p className="text-gray-500 text-sm"> 
+          {formatCurrency(selectedReviewerStats.totalEarnedFromSystem*1000)} VND
         </p>
       </CardContent>
     </Card>
@@ -614,9 +623,12 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
     {/* Thu nhập thực nhận */}
     <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-all">
       <CardContent className="pt-6">
-        <p className="text-gray-500 text-sm">Thu nhập thực nhận</p>
+        <p className="text-gray-500 text-sm">Thu nhập được nhận</p>
         <p className="text-3xl font-bold text-orange-600">
-          {formatCurrency(selectedReviewerStats.netIncome)}
+          {formatCoin(selectedReviewerStats.netIncome)}
+        </p>
+        <p className="text-gray-500 text-sm"> 
+          {formatCurrency(selectedReviewerStats.netIncome*1000)} VND
         </p>
       </CardContent>
     </Card>

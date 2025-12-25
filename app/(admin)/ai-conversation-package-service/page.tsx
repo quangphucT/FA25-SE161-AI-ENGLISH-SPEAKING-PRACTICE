@@ -526,7 +526,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
 
   {/* Left: Rows per page */}
   <div className="flex items-center gap-2">
-    <span>Rows per page:</span>
+    <span>Số dòng trên mỗi trang:</span>
     <span className="font-medium">{pageSize}</span>
   </div>
 
@@ -534,7 +534,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
   <div>
     {totalItems === 0
       ? "0–0 of 0"
-      : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} of ${totalItems}`}
+      : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} trong số ${totalItems}`}
   </div>
 
   {/* Right: Previous / Page number / Next */}
@@ -547,7 +547,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
       onClick={() => setPageNumber(pageNumber - 1)}
       className="cursor-pointer"
     >
-      Previous
+      Trước
     </Button>
 
     <span className="px-3 py-1 border rounded-md bg-gray-50">
@@ -561,7 +561,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
       onClick={() => setPageNumber(pageNumber + 1)}
       className="cursor-pointer"
     >
-      Next
+      Sau
     </Button>
 
   </div>
@@ -807,7 +807,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                         <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
                           {/* Left: Rows per page */}
                           <div className="flex items-center gap-2">
-                            <span>Rows per page:</span>
+                            <span>Số dòng trên mỗi trang:</span>
                             <span className="font-medium">{buyersPageSize}</span>
                           </div>
 
@@ -815,7 +815,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                           <div>
                             {totalBuyers === 0
                               ? "0–0 of 0"
-                              : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} of ${totalBuyers}`}
+                              : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} trong số ${totalBuyers}`}
                           </div>
 
                           {/* Right: Previous / Page number / Next */}
@@ -827,7 +827,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                               onClick={() => setBuyersPageNumber(buyersPageNumber - 1)}
                               className="cursor-pointer"
                             >
-                              Previous
+                              Trước 
                             </Button>
 
                             <span className="px-3 py-1 border rounded-md bg-gray-50">
@@ -841,7 +841,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
                               onClick={() => setBuyersPageNumber(buyersPageNumber + 1)}
                               className="cursor-pointer"
                             >
-                              Next
+                              Sau
                             </Button>
                           </div>
                         </div>

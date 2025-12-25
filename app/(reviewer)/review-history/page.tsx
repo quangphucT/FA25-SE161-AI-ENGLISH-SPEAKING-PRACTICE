@@ -449,7 +449,7 @@ const ReviewHistory = () => {
                 disabled={pageNumber === 1}
                 className="shadow-sm hover:shadow-md transition-all disabled:opacity-50"
               >
-                Previous
+                Trước
               </Button>
               <div className="flex items-center gap-1 bg-white p-1 rounded-lg shadow-sm">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -487,7 +487,7 @@ const ReviewHistory = () => {
                 disabled={pageNumber >= totalPages}
                 className="shadow-sm hover:shadow-md transition-all disabled:opacity-50"
               >
-                Next
+                Sau
               </Button>
             </div>
           </div>

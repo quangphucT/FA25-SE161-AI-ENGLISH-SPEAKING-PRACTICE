@@ -285,7 +285,7 @@ const TopicConversationManagement = () => {
           ACTIVE TOPICS: {filteredTopics.filter(t => t.status === "Active").length}/{filteredTopics.length} | 
           TOTAL TOPICS: {filteredTopics.length}
         </div>
-        <div>Rows per page: <span className="font-semibold">10</span> &nbsp; 1-10 of {filteredTopics.length}</div>
+        <div>Số dòng trên mỗi trang: <span className="font-semibold">10</span> &nbsp; 1-10 trong số {filteredTopics.length}</div>
       </div>
 
       {/* Add Topic Modal */}
