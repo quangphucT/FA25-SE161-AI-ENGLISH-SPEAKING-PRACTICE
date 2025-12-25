@@ -17,8 +17,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EnglishCare HUB",
-  description: "The HUB for EnglishCare mentors with AI tools integrated",
+  title: "AESP - AI English Speaking Practice",
+  description: "Practice your English with AI-powered conversations.",
+  icons: {
+    icon: "/images/aespLogoM.jpg",
+  },
 };
 
 export default function RootLayout({
