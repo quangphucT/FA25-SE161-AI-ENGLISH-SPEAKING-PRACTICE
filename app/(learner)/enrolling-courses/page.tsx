@@ -75,22 +75,45 @@ export default function EnrollingCourses() {
   const setAllLearnerData = useLearnerStore((state) => state.setAllLearnerData);
 
   const handleEnrollCourseNotFree = async (courseId: string) => {
-    // Lấy learnerCourseId từ Zustand, nếu không có thì lấy từ API data
-    let learnerCourseId: string | null = learnerCourseIdOnZustand;
+    // Ưu tiên lấy learnerCourseId từ level đang xem (viewingLevel) trong API data
+    // Không dùng Zustand vì có thể đang lưu data của level khác (VD: A1 khi đang xem A2)
+    let learnerCourseId: string | null = null;
 
-    // Nếu không có trong Zustand (sau khi logout), lấy từ levelAndLearnerCourseIdData
+    // Thử lấy từ level đang xem trước
+    const viewingLevelData = levelAndLearnerCourseIdData?.data?.levels.find(
+      (item) => item.Level === viewingLevel
+    );
+
+    if (viewingLevelData?.Courses && viewingLevelData.Courses.length > 0) {
+      const inProgressCourse = viewingLevelData.Courses.find(
+        (c) => c.status === "InProgress"
+      );
+      learnerCourseId =
+        inProgressCourse?.learnerCourseId ||
+        viewingLevelData.Courses[0].learnerCourseId ||
+        null;
+    }
+
+    // Nếu level đang xem không có course, fallback về userLevel
     if (!learnerCourseId) {
       const userLevelData = levelAndLearnerCourseIdData?.data?.levels.find(
         (item) => item.Level === userLevel
       );
 
-      // Bắt buộc phải lấy learnerCourseId từ course đang InProgress
       if (userLevelData?.Courses && userLevelData.Courses.length > 0) {
         const inProgressCourse = userLevelData.Courses.find(
           (c) => c.status === "InProgress"
         );
-        learnerCourseId = inProgressCourse?.learnerCourseId || null;
+        learnerCourseId =
+          inProgressCourse?.learnerCourseId ||
+          userLevelData.Courses[0].learnerCourseId ||
+          null;
       }
+    }
+
+    // Fallback cuối cùng: lấy từ Zustand (trường hợp API chưa load xong)
+    if (!learnerCourseId) {
+      learnerCourseId = learnerCourseIdOnZustand;
     }
 
     if (!learnerCourseId) {
@@ -108,7 +131,7 @@ export default function EnrollingCourses() {
       {
         onSuccess: (data) => {
           setAllLearnerData({
-            learnerCourseId: data.data.learningPathCourseId,
+            learnerCourseId: learnerCourseId!,
             courseId: data.data.courseId,
             learningPathCourseId: data.data.learningPathCourseId,
             status: data.data.status,
