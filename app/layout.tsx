@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "AESP - AI English Speaking Practice",
   description: "Practice your English with AI-powered conversations.",
   icons: {
-    icon: "/images/aespLogoM.jpg",
+    icon: "/images/1.png",
   },
 };
 

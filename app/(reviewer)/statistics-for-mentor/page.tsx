@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { useReviewReviewPending, useReviewReviewSubmit, useReviewReviewStatistics, useReviewerTipAfterReview } from "@/features/reviewer/hooks/useReviewReview";
+import { useReviewReviewPending, useReviewReviewSubmit, useReviewReviewStatistics } from "@/features/reviewer/hooks/useReviewReview";
 import { useReviewFeedback } from "@/features/reviewer/hooks/useReviewFeedback";
 import { ReviewerFeedbackHistory } from "@/features/reviewer/services/reviewerFeedbackService";
 import { useGetMeQuery } from "@/hooks/useGetMeQuery";
