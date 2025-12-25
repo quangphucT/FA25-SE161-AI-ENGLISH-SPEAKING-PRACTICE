@@ -266,7 +266,7 @@ const ManagerManagement = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <Input
-            placeholder="Search by name..."
+            placeholder="Tìm theo tên"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-[250px]"
