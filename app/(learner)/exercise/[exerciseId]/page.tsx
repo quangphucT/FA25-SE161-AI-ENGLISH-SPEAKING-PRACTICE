@@ -1015,9 +1015,8 @@ const QUESTION_TYPE_LABEL: Record<string, string> = {
                         Độ chính xác phát âm
                       </p>
                       <p className="text-3xl font-bold text-green-900">
-                        {pronunciationScores[currentQuestionIndex]?.toFixed(
-                          1
-                        ) || 0}
+                  
+                        {pronunciationScores[currentQuestionIndex] || 0}
                         %
                       </p>
                     </div>

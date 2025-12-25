@@ -199,7 +199,7 @@ const EntranceInformation = () => {
                     Kéo thả hoặc nhấn để chọn tệp
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Hỗ trợ hình ảnh và PDF. Có thể chọn nhiều tệp cùng lúc.
+                    Hỗ trợ hình ảnh . Có thể chọn nhiều tệp cùng lúc.
                   </p>
                 </div>
                 <Input

@@ -889,7 +889,16 @@ const FeedbacksCommentsManagement = () => {
                     )}
                   </div>
                 )}
-
+                {selectedFeedback.questionContent && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Câu hỏi
+                    </label>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-900">{selectedFeedback.questionContent}</p>
+                    </div>
+                  </div>
+                )}
                 {(selectedFeedback.reviewComment || selectedFeedback.reviewerComment) && (
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
