@@ -172,10 +172,7 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
+    return new Intl.NumberFormat("vi-VN").format(amount);
   };
 
   const formatCoin = (amount: number | undefined) => {

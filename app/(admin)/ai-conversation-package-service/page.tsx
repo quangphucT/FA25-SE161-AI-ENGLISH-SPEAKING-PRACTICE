@@ -211,7 +211,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
               <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
                 <MessageCircle className="w-6 h-6 text-white" />
               </div>
-              Quản lý Gói AI Conversation
+              Quản lý Hội thoại AI
             </h1>
             <p className="text-gray-600 mt-1">
               Tạo và quản lý các gói coin cho tính năng trò chuyện với AI
@@ -228,7 +228,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Tạo Gói AI Conversation Mới</DialogTitle>
+                <DialogTitle>Tạo gói hội thoại AI mới</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 {/* Amount Coin Input */}
@@ -576,7 +576,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Cập nhật Gói AI Conversation</DialogTitle>
+            <DialogTitle>Cập nhật Gói Hội thoại AI</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Amount Coin Input */}
@@ -674,7 +674,7 @@ const totalPages = Math.ceil(totalItems / pageSize);
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-600" />
-              Chi tiết người mua gói AI Conversation
+              Chi tiết người mua gói hội thoại AI 
             </DialogTitle>
           </DialogHeader>
           
