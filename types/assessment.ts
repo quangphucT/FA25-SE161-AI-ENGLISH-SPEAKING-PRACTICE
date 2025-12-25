@@ -1,5 +1,5 @@
 export type AssessmentType = "placement" | "practice";
-export type QuestionGranularity = "word" | "sentence" | "paragraph";
+export type QuestionGranularity = "Word" | "Sentence" | "Paragraph";
 
 export interface Assessment {
   id: string;

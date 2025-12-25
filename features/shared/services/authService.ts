@@ -14,6 +14,8 @@ import {
   UserResponse,
   VerifyOTPRequest,
   VerifyOTPResponse,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
 } from "@/types/auth";
 import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
@@ -199,6 +201,33 @@ export const getMeService = async (): Promise<UserResponse> => {
   } catch (error: any) {
     const message =
       error?.response?.data?.message || error.message || "Get me failed";
+    throw new Error(message);
+  }
+};
+
+// Change Password Service
+export const changePasswordService = async (
+  credentials: ChangePasswordRequest
+): Promise<ChangePasswordResponse> => {
+  try {
+    const response = await fetchWithAuth("/api/auth/change-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.message || "Change password failed");
+
+    return data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message ||
+      error.message ||
+      "Change password failed";
     throw new Error(message);
   }
 };

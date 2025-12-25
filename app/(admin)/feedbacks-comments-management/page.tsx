@@ -931,6 +931,21 @@ const FeedbacksCommentsManagement = () => {
                     </div>
                   </div>
                 )}
+
+                {selectedFeedback.reviewerRecordAudioUrl && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Audio của reviewer
+                    </label>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <audio controls className="w-full">
+                        <source src={selectedFeedback.reviewerRecordAudioUrl} type="audio/mpeg" />
+                        <source src={selectedFeedback.reviewerRecordAudioUrl} type="audio/wav" />
+                        Trình duyệt của bạn không hỗ trợ phát audio.
+                      </audio>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between mt-6 pt-6 border-t">

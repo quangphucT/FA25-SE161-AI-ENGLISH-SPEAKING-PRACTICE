@@ -1667,7 +1667,7 @@ ${
                           #{index + 1}: {q.text}
                         </p>
                       <p className="text-xs text-gray-600">
-  Type: {questionTypeOptions.find(opt => opt.value === q.type)?.label || q.type}
+  Loại: {QUESTION_TYPE_LABEL_VI(q.type)}
   {" "} 
 </p>
 
