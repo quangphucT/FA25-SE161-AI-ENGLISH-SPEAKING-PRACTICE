@@ -51,7 +51,7 @@ export default function QuestionForAssessmentPage() {
   const [typeFilter, setTypeFilter] = useState<"all" | QuestionType>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<QuestionAssessmentItem | null>(null);
-  const [formType, setFormType] = useState<QuestionType>("word");
+  const [formType, setFormType] = useState<QuestionType>("Word");
   const [formContent, setFormContent] = useState("");
   // pagination state
   const [page, setPage] = useState(1);
@@ -75,48 +75,48 @@ const normalizeQuestionType = (type: QuestionTypeInput): QuestionType => {
   if (typeof type === "number") {
     switch (type) {
       case 0:
-        return "word";
+        return "Word";
       case 1:
-        return "phrase";
+        return "Phrase";
       case 2:
-        return "sentence";
+        return "Sentence";
       default:
-        return "word";
+        return "Word";
     }
   }
 
   if (typeof type === "string") {
     const normalized = type.toLowerCase();
     if (
-      normalized === "word" ||
-      normalized === "phrase" ||
-      normalized === "sentence"
+      normalized === "Word" ||
+      normalized === "Phrase" ||
+      normalized === "Sentence"
     ) {
       return normalized;
     }
   }
 
-  return "word";
+  return "Word";
 };
 
 
 const detectQuestionType = (content: string): QuestionType => {
   const normalized = content.trim().replace(/\s+/g, " ");
-  if (!normalized) return "word";
+  if (!normalized) return "Word";
 
   const wordCount = normalized.split(" ").length;
 
-  if (wordCount === 1) return "word";
-  if (wordCount === 2) return "phrase";
-  return "sentence";
+  if (wordCount === 1) return "Word";
+  if (wordCount === 2) return "Phrase";
+  return "Sentence";
 };
 
 
 
 const QUESTION_TYPE_LABEL: Record<QuestionType, string> = {
-  word: "Từ đơn",
-  phrase: "Cụm từ",
-  sentence: "Câu",
+  Word: "Từ đơn",
+  Phrase: "Cụm từ",
+  Sentence: "Câu",
 };
 
 
@@ -129,7 +129,7 @@ const QUESTION_TYPE_LABEL: Record<QuestionType, string> = {
   const { mutate: chooseQuestionMutation } = useChooseQuestionForTestAssessment();
   function openAddModal() {
     setEditing(null);
-    setFormType("word");
+    setFormType("Word");
     setFormContent("");
     setIsModalOpen(true);
   }
@@ -231,9 +231,9 @@ const filteredQuestions =
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
-             <SelectItem value="word">Từ đơn</SelectItem>
-<SelectItem value="phrase">Cụm từ</SelectItem>
-<SelectItem value="sentence">Câu</SelectItem>
+             <SelectItem value="Word">Từ đơn</SelectItem>
+<SelectItem value="Phrase">Cụm từ</SelectItem>
+<SelectItem value="Sentence">Câu</SelectItem>
 
             </SelectContent>
           </Select>

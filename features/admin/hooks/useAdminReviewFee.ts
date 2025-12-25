@@ -17,6 +17,8 @@ import {
     CreateReviewFeePolicyUpcomingResponse,
     deleteReviewFeePackage,
     DeleteReviewFeePackageResponse,
+    DeleteReviewFeePackageByIdResponse,
+    deleteReviewFeePackageById,
 
 
 } from "../services/adminReviewFeeService";
@@ -110,6 +112,19 @@ export const useDeleteReviewFeePackageMutation = () => {
     },
     onError: (error) => {
       toast.error(error.message || "Xóa chính sách sắp áp dụng thất bại");
+    },
+  });
+};
+export const useDeleteReviewFeePackageByIdMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation<DeleteReviewFeePackageByIdResponse, Error, string>({
+    mutationFn: async (id) => await deleteReviewFeePackageById(id),
+    onSuccess: (data) => {
+      toast.success(data.message || "Xóa gói Review Fee thành công");
+      queryClient.invalidateQueries({ queryKey: ["adminReviewFeePackages"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Xóa gói Review Fee thất bại");
     },
   });
 };

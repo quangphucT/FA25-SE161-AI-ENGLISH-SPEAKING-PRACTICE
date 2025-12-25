@@ -15,13 +15,13 @@ interface OTPPopupProps {
 }
 export const OTPPopup = ({ isOpen, onClose, onVerify, onResendOTP, onResendOTPSuccess, isVerifying, isResendingOTP }: OTPPopupProps) => {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timeLeft, setTimeLeft] = useState(60); // 60 seconds countdown
+  const [timeLeft, setTimeLeft] = useState(120); // 120 seconds countdown (2 minutes)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Reset countdown when popup opens
   useEffect(() => {
     if (isOpen) {
-      setTimeLeft(60);
+      setTimeLeft(120);
       setOtp(["", "", "", "", "", ""]); // Reset OTP when reopened
     }
   }, [isOpen]);
@@ -29,7 +29,7 @@ export const OTPPopup = ({ isOpen, onClose, onVerify, onResendOTP, onResendOTPSu
   // Handle successful resend OTP
   useEffect(() => {
     if (onResendOTPSuccess) {
-      setTimeLeft(60); // Reset timer
+      setTimeLeft(120); // Reset timer (2 minutes)
       setOtp(["", "", "", "", "", ""]); // Clear OTP inputs
       toast.success("Đã gửi lại mã OTP!");
       // Call the callback để reset state trong parent

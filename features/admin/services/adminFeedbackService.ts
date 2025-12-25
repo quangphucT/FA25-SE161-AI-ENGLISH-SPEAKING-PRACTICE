@@ -35,6 +35,7 @@ export interface Feedback {
     reviewerType?: string;
     reviewType?: string; // Keep for backward compatibility
     learnerRecordAudioUrl?: string;
+    reviewerRecordAudioUrl?: string;
 }
 export interface AdminFeedbackDetailResponse {
     isSucess: boolean;

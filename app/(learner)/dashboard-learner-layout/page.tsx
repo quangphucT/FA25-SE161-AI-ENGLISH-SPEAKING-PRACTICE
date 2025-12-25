@@ -26,6 +26,7 @@ import EnrollingCourses from "../enrolling-courses/page";
 import ReviewRecordPage from "../review_record/page";
 import LearnerRecordPage from "../learner_record/page";
 import LearnerProfilePage from "../dashboard-learner-layout/profile/page";
+
 import Image from "next/image";
 
 
@@ -51,7 +52,7 @@ function DashboardContent() {
     { id: "learnerSendingAudioToReviewer", label: "Đánh giá audio", icon: BarChart3, description: "Được đánh giá bởi reviewer" },
     { id: "profile", label: "Hồ sơ", icon: User, description: "Thông tin cá nhân" },
     { id: "learnerRecord", label: "Thu âm của tôi", icon: BookOpen, description: "Lịch sử thu âm của tôi" },
-    //{ id: "reviewRecord", label: "Lịch sử đánh giá", icon: BookOpen, description: "Lịch sử đánh giá của tôi" },
+
   ];
 
 
@@ -215,6 +216,9 @@ function DashboardContent() {
           {activeMenu === "learnerRecord" && (
             <LearnerRecordPage />
           )}
+
+
+
           {/* REVIEW RECORD PAGE */}
           {activeMenu === "reviewRecord" && (
             <ReviewRecordPage />

@@ -589,7 +589,7 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
 
      {/* 🔥 THAY BLOCK NÀY – TOP STATISTICS MỚI */}
 {selectedReviewerStats && (
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
     {/* Tổng review */}
     <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-all">
@@ -621,16 +621,7 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
       </CardContent>
     </Card>
 
-    {/* Thu nhập mỗi review */}
-    <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-all">
-      <CardContent className="pt-6">
-        <p className="text-gray-500 text-sm">Thu nhập mỗi review</p>
-        <p className="text-3xl font-bold text-purple-600">
-          {formatCurrency(selectedReviewerStats.incomePerReview)}
-        </p>
-      </CardContent>
-    </Card>
-
+    
   </div>
 )}
 

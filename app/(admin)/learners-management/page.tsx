@@ -44,34 +44,18 @@ import {
   Course,
 } from "@/features/admin/services/adminLearnerService";
 
-// Type definitions
-interface Package {
-  name: string;
-  duration: string;
-  price: string;
-  status: "Active" | "Completed" | "Expired";
-}
-
-interface Achievement {
-  name: string;
-  description: string;
-  points: number;
-  icon: string;
-  date: string;
-  requirement: string;
-}
 
 // Legacy sample data has been removed; learners now come from the API.
 
 const levelToGoal = (
   level: string | null | undefined
-): "Beginner" | "Intermediate" | "Advanced" | "Expert" => {
+): "Beginner" | "Intermediate" | "Advanced" | "Expert" | "Not Taken Placement Test" => {
   const normalized = (level || "").toUpperCase();
   if (["A1", "A2"].includes(normalized)) return "Beginner";
   if (["B1"].includes(normalized)) return "Intermediate";
-  if (["B2", "C1"].includes(normalized)) return "Advanced";
-  if (["C2"].includes(normalized)) return "Expert";
-  return "Intermediate";
+  if (["B2"].includes(normalized)) return "Advanced";
+  if (["C1"].includes(normalized)) return "Expert";
+  return "Not Taken Placement Test";
 };
 
 const normalizeStatus = (
@@ -697,7 +681,7 @@ const LearnerManagement = () => {
                         <span className="font-medium">Trình độ:</span>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-sm px-3 py-1">
-                            {learnerDetail.level || "—"}
+                            {learnerDetail.level|| "Chưa làm bài test"}
                         </Badge>
                         <span className="text-xs text-gray-500">
                             {levelToGoal(learnerDetail.level) === "Beginner" &&
@@ -708,65 +692,21 @@ const LearnerManagement = () => {
                             "(Nâng cao)"}
                             {levelToGoal(learnerDetail.level) === "Expert" &&
                             "(Chuyên gia)"}
+                          
                         </span>
                       </div>
                     </div>
-                    <div>
-                      <span className="font-medium">Điểm đánh giá:</span>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-sm px-3 py-1">
-                            {learnerDetail.pronunciationScore != null
-                              ? Number((learnerDetail.pronunciationScore / 10).toFixed(1))
-                              : 0}
-                        </Badge>
-                      </div>
-                    </div>
+                    
                       <div>
-                        <span className="font-medium">Điểm trung bình:</span>
+                        <span className="font-medium">Điểm Phát Âm:</span>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="outline" className="text-sm px-3 py-1">
                             {learnerDetail.avgScore != null
-                              ? Number((learnerDetail.avgScore / 10).toFixed(1))
+                              ? Number(learnerDetail.avgScore )
                               : 0}
                           </Badge>
                         </div>
                       </div>
-                      <div>
-                        <span className="font-medium">Số bài đánh giá:</span>{" "}
-                        {learnerDetail.assessmentCount || 0}
-                      </div>
-                      <div>
-                        <span className="font-medium">Phút học mỗi ngày:</span>{" "}
-                        {learnerDetail.dailyMinutes || 0} phút
-                    </div>
-                    {/* Trạng thái gói */}
-                    <div>
-                      <span className="font-medium">Gói học hiện tại:</span>
-                      <div className="mt-2">
-                          {learnerDetail.courses?.filter(
-                            (course) => mapCourseStatus(course.status) === "Active"
-                        ).length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                              {learnerDetail.courses
-                                .filter(
-                                  (course) => mapCourseStatus(course.status) === "Active"
-                                )
-                                .map((course, index) => (
-                                <Badge
-                                  key={index}
-                                  className="bg-green-100 text-green-800 border-green-300"
-                                >
-                                    ✅ {course.title}
-                                </Badge>
-                              ))}
-                          </div>
-                        ) : (
-                          <Badge variant="outline" className="text-gray-500">
-                            Không có gói hoạt động
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
