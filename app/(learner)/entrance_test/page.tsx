@@ -994,7 +994,7 @@ const SECTION_TYPE_LABEL: Record<string, string> = {
                         </span>
                         <div className="flex items-baseline gap-1">
                           <span className="text-5xl font-bold text-blue-600">
-                            {resultsAfterTest.averageScore.toFixed(1)}
+                            {resultsAfterTest.averageScore}
                           </span>
                           <span className="text-2xl text-gray-500">/100</span>
                         </div>

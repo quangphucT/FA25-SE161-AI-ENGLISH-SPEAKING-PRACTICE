@@ -254,15 +254,7 @@ const PurchasesItemManagement = () => {
                   className="pl-10 w-full"
                 />
               </div>
-              <Tabs value={itemTypeFilter} onValueChange={(v) => setItemTypeFilter(v)}>
-                <TabsList className="grid grid-cols-5 w-auto">
-                  <TabsTrigger value="All">Tất cả loại</TabsTrigger>
-                  <TabsTrigger value="Course">Khóa học</TabsTrigger>
-                  <TabsTrigger value="ReviewFee">Phí đánh giá</TabsTrigger>
-                  <TabsTrigger value="AIConversation">Phí nói chuyện AI</TabsTrigger>
-                  <TabsTrigger value="RecordCharge">Phí lượt ghi âm</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              
             </div>
             <Button 
               onClick={() => downloadExcel()} 
@@ -338,7 +330,17 @@ const PurchasesItemManagement = () => {
                 Hiển thị {filteredPurchases.length} trên {totalItems} giao dịch
               </CardDescription>
             </div>
+            <Tabs value={itemTypeFilter} onValueChange={(v) => setItemTypeFilter(v)}>
+                <TabsList className="grid grid-cols-5 w-auto">
+                  <TabsTrigger value="All">Tất cả loại</TabsTrigger>
+                  <TabsTrigger value="Course">Khóa học</TabsTrigger>
+                  <TabsTrigger value="ReviewFee">Phí đánh giá</TabsTrigger>
+                  <TabsTrigger value="AIConversation">Phí nói chuyện AI</TabsTrigger>
+                  <TabsTrigger value="RecordCharge">Phí lượt ghi âm</TabsTrigger>
+                </TabsList>
+              </Tabs>
           </div>
+          
         </CardHeader>
         <CardContent className="p-0">
           {isError ? (

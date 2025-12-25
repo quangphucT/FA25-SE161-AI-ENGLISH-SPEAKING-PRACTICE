@@ -59,7 +59,7 @@ interface Transaction {
   Bankname: string;
   AccountNumber: string;
   Description: string;
-  Status: "Approved" | "Pending" | "Cancelled" | "Paid";
+  Status: "Approved" | "Pending" | "Cancelled" | "Paid" | "Rejected";
   amount_coin: number;
   type: string;
   OrderCode: string;
@@ -89,6 +89,7 @@ const PurchasesManagement = () => {
       "Pending": "Đang xử lý",
       "Cancelled": "Thất bại",
       "Paid": "Đã thanh toán",
+      "Rejected": "Từ chối",
     };
     return statusMap[status] || status;
   };
@@ -143,13 +144,15 @@ const PurchasesManagement = () => {
     
     return dataArray.map((item: TransactionAdmin) => {
       // Map status: "Pending" -> "Pending", "Success" -> "Success", "Cancelled" -> "Failed", etc.
-      let mappedStatus: "Approved" | "Pending" | "Cancelled" | "Paid"  = "Pending";
+      let mappedStatus: "Approved" | "Pending" | "Cancelled" | "Paid" | "Rejected" = "Pending";
       if (item.status === "Approved") {
         mappedStatus = "Approved";
       } else if (item.status === "Cancelled") {
         mappedStatus = "Cancelled";
       } else if (item.status === "Paid") {
         mappedStatus = "Paid";
+      } else if (item.status === "Rejected") {
+        mappedStatus = "Rejected";
       } else {
         mappedStatus = "Pending";
       }
@@ -209,6 +212,7 @@ const PurchasesManagement = () => {
       approved: transactions.filter((t) => t.Status === "Approved").length,
       cancelled: transactions.filter((t) => t.Status === "Cancelled").length,
       pending: transactions.filter((t) => t.Status === "Pending").length,
+      rejected: transactions.filter((t) => t.Status === "Rejected").length,
     };
   }, [dashboardData, transactions]);
 
@@ -380,13 +384,13 @@ const exportToPDF = () => {
             onValueChange={(v) => setStatusFilter(v)}
             className="w-full lg:w-auto"
           >
-            <TabsList className="grid grid-cols-5 md:grid-cols-5 gap-2 w-full">
+            <TabsList className="grid grid-cols-6 md:grid-cols-6 gap-2 w-full">
               <TabsTrigger value="All">Tất cả</TabsTrigger>
               <TabsTrigger value="Approved" >Thành công</TabsTrigger>
               <TabsTrigger value="Paid">Đã thanh toán</TabsTrigger>
               <TabsTrigger value="Pending">Đang xử lý</TabsTrigger>
               <TabsTrigger value="Cancelled">Thất bại</TabsTrigger>
-              
+              <TabsTrigger value="Rejected">Từ chối</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -572,6 +576,8 @@ const exportToPDF = () => {
                         transaction.Status === "Approved"
                           ? "default"
                           : transaction.Status === "Cancelled"
+                          ? "destructive"
+                          : transaction.Status === "Rejected"
                           ? "destructive"
                           : transaction.Status === "Pending"
                           ? "secondary"
@@ -802,10 +808,12 @@ const exportToPDF = () => {
                         {selectedTransaction.amount_coin.toLocaleString("vi-VN")} coin
                       </span>
                     </div>
+                    {selectedTransaction.Bankname !== "N/A" && (
                     <div className="flex justify-between items-center py-2 border-b">
-                      <span className="text-sm text-gray-600">Ngân hàng:</span>
-                      <span className="text-sm">{selectedTransaction.Bankname || "N/A"}</span>
-                    </div>
+                        <span className="text-sm text-gray-600">Ngân hàng:</span>
+                        <span className="text-sm">{selectedTransaction.Bankname || "N/A"}</span>
+                      </div>
+                    )}
                     {selectedTransaction.AccountNumber !== "N/A" && (
                       <div className="flex justify-between items-center py-2 border-b">
                         <span className="text-sm text-gray-600">Số tài khoản:</span>
@@ -814,10 +822,11 @@ const exportToPDF = () => {
                     )}
                     {selectedTransaction.user_id && (
                       <div className="flex justify-between items-center py-2">
-                        <span className="text-sm text-gray-600">User ID:</span>
-                        <span className="font-mono text-sm">{selectedTransaction.user_id}</span>
+                        <span className="text-sm text-gray-600">Tên người dùng:</span>
+                        <span className="font-mono text-sm">{selectedTransaction.UserName}</span>
                       </div>
                     )}
+
                   </CardContent>
                 </Card>
 

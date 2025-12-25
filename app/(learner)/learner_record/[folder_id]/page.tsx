@@ -296,7 +296,7 @@ const PracticeRecordLayout = () => {
           `record-${Date.now()}.mp3`,
           { type: "audio/mp3" }
         );
-        console.log("audioFile", audioFile);
+       // console.log("audioFile", audioFile);
         // Upload to Cloudinary
         const audioUrl = await uploadAudioToCloudinary(audioFile);
         
@@ -334,12 +334,12 @@ const PracticeRecordLayout = () => {
           return;
         }
 
-        console.log("Submitting record:", {
-          recordId: targetRecordContentId,
-          audioUrl,
-          score: finalScore,
-          feedback: finalFeedback.substring(0, 50) + "...",
-        });
+        // console.log("Submitting record:", {
+        //   recordId: targetRecordContentId,
+        //   audioUrl,
+        //   score: finalScore,
+        //   feedback: finalFeedback.substring(0, 50) + "...",
+        // });
         
         // Update record
         await updateRecord({
@@ -583,9 +583,9 @@ const PracticeRecordLayout = () => {
   // Word-level playback functions
   const generateWordModal = useCallback(
     (wordIdx: number) => {
-      console.log("generateWordModal called with wordIdx:", wordIdx);
-      console.log("realTranscriptsIpa:", realTranscriptsIpa);
-      console.log("matchedTranscriptsIpa:", matchedTranscriptsIpa);
+      // console.log("generateWordModal called with wordIdx:", wordIdx);
+      // console.log("realTranscriptsIpa:", realTranscriptsIpa);
+      // console.log("matchedTranscriptsIpa:", matchedTranscriptsIpa);
 
       if (
         realTranscriptsIpa.length > wordIdx &&
@@ -600,13 +600,13 @@ const PracticeRecordLayout = () => {
         const referenceText = `<span style="color: black; cursor: pointer;" onclick="window.playReferenceWord(${wordIdx})" title="Click to play reference pronunciation">${realIpa}</span>`;
         const spokenText = `<span style="color: ${color}; cursor: pointer;" onclick="window.playSpokenWord(${wordIdx})" title="Click to play your pronunciation">${matchedIpa}</span>`;
 
-        console.log(
-          "Setting singleWordPair:",
-          `${referenceText} | ${spokenText}`
-        );
+          // console.log(
+          //   "Setting singleWordPair:",
+          //   `${referenceText} | ${spokenText}`
+          // );
         setSingleWordPair(`${referenceText} | ${spokenText}`);
       } else {
-        console.log("Not enough data for wordIdx:", wordIdx);
+      //  console.log("Not enough data for wordIdx:", wordIdx);
       }
     },
     [realTranscriptsIpa, matchedTranscriptsIpa, wordCategories]
@@ -614,8 +614,8 @@ const PracticeRecordLayout = () => {
 
   const playCurrentWord = useCallback(
     async (wordIdx: number) => {
-      console.log("playCurrentWord called with wordIdx:", wordIdx);
-      console.log("currentText:", currentText);
+      // console.log("playCurrentWord called with wordIdx:", wordIdx);
+      // console.log("currentText:", currentText);
 
       if (currentText[0]) {
         // Get plain text from HTML string or any other type
@@ -628,26 +628,26 @@ const PracticeRecordLayout = () => {
         // Remove HTML tags
         text = text.replace(/<[^>]*>?/gm, "");
 
-        console.log("Processed text:", text);
+        // console.log("Processed text:", text);
 
         // Check if text is valid before splitting
         if (text && typeof text === "string") {
           const words = text.split(" ");
-          console.log("Words array:", words);
+          // console.log("Words array:", words);
 
           if (words[wordIdx]) {
-            console.log("Playing word:", words[wordIdx]);
+            // console.log("Playing word:", words[wordIdx]);
             setMainTitle("Generating word...");
             playWithSpeechSynthesis(words[wordIdx]);
             setMainTitle("Word was played");
           } else {
-            console.log("Word not found at index:", wordIdx);
+            // console.log("Word not found at index:", wordIdx);
           }
         } else {
-          console.log("Invalid text for splitting:", text);
+          // console.log("Invalid text for splitting:", text);
         }
       } else {
-        console.log("No currentText available");
+        // console.log("No currentText available");
       }
     },
     [currentText, playWithSpeechSynthesis]
@@ -668,14 +668,14 @@ const PracticeRecordLayout = () => {
 
   const playNativeAndRecordedWord = useCallback(
     async (wordIdx: number) => {
-      console.log("playNativeAndRecordedWord called with wordIdx:", wordIdx);
-      console.log("isNativeSelectedForPlayback:", isNativeSelectedForPlayback);
+      // console.log("playNativeAndRecordedWord called with wordIdx:", wordIdx);
+      // console.log("isNativeSelectedForPlayback:", isNativeSelectedForPlayback);
 
       if (isNativeSelectedForPlayback) {
-        console.log("Playing current word (native)");
+        // console.log("Playing current word (native)");
         await playCurrentWord(wordIdx);
       } else {
-        console.log("Playing recorded word");
+        // console.log("Playing recorded word");
         playRecordedWord(wordIdx);
       }
       setIsNativeSelectedForPlayback(!isNativeSelectedForPlayback);
@@ -686,7 +686,7 @@ const PracticeRecordLayout = () => {
   // New functions for direct Reference/Spoken playback
   const playReferenceWord = useCallback(
     async (wordIdx: number) => {
-      console.log("playReferenceWord called with wordIdx:", wordIdx);
+      // console.log("playReferenceWord called with wordIdx:", wordIdx);
       await playCurrentWord(wordIdx);
     },
     [playCurrentWord]
@@ -694,7 +694,7 @@ const PracticeRecordLayout = () => {
 
   const playSpokenWord = useCallback(
     (wordIdx: number) => {
-      console.log("playSpokenWord called with wordIdx:", wordIdx);
+      // console.log("playSpokenWord called with wordIdx:", wordIdx);
       playRecordedWord(wordIdx);
     },
     [playRecordedWord]
@@ -716,7 +716,7 @@ const PracticeRecordLayout = () => {
 
   // Debug: Log when aiFeedback changes
   useEffect(() => {
-    console.log("aiFeedback state changed:", aiFeedback, "Type:", typeof aiFeedback, "Length:", aiFeedback?.length, "Trimmed:", aiFeedback?.trim());
+    // console.log("aiFeedback state changed:", aiFeedback, "Type:", typeof aiFeedback, "Length:", aiFeedback?.length, "Trimmed:", aiFeedback?.trim());
   }, [aiFeedback]);
 
   useEffect(() => {
@@ -776,7 +776,7 @@ const PracticeRecordLayout = () => {
       (
         window as unknown as { generateWordModal: (wordIdx: number) => void }
       ).generateWordModal = (wordIdx: number) => {
-        console.log("generateWordModal called with wordIdx:", wordIdx);
+        // console.log("generateWordModal called with wordIdx:", wordIdx);
         generateWordModalRef.current(wordIdx);
       };
       (
@@ -784,19 +784,19 @@ const PracticeRecordLayout = () => {
           playNativeAndRecordedWord: (wordIdx: number) => void;
         }
       ).playNativeAndRecordedWord = (wordIdx: number) => {
-        console.log("playNativeAndRecordedWord called with wordIdx:", wordIdx);
+        // console.log("playNativeAndRecordedWord called with wordIdx:", wordIdx);
         playNativeAndRecordedWordRef.current(wordIdx);
       };
       (
         window as unknown as { playReferenceWord: (wordIdx: number) => void }
       ).playReferenceWord = (wordIdx: number) => {
-        console.log("playReferenceWord called with wordIdx:", wordIdx);
+        // console.log("playReferenceWord called with wordIdx:", wordIdx);
         playReferenceWordRef.current(wordIdx);
       };
       (
         window as unknown as { playSpokenWord: (wordIdx: number) => void }
       ).playSpokenWord = (wordIdx: number) => {
-        console.log("playSpokenWord called with wordIdx:", wordIdx);
+        // console.log("playSpokenWord called with wordIdx:", wordIdx);
         playSpokenWordRef.current(wordIdx);
       };
       console.log("Functions exposed to window:", {
@@ -905,9 +905,9 @@ const PracticeRecordLayout = () => {
           }
 
           try {
-            console.log("API Config:", { apiMainPathSTS, STScoreAPIKey });
-            console.log("originalScriptHtml type:", typeof originalScriptHtml);
-            console.log("originalScriptHtml value:", originalScriptHtml);
+            // console.log("API Config:", { apiMainPathSTS, STScoreAPIKey });
+            // console.log("originalScriptHtml type:", typeof originalScriptHtml);
+            // console.log("originalScriptHtml value:", originalScriptHtml);
 
             // Check if API is configured
             // if (!apiMainPathSTS || !STScoreAPIKey) {
@@ -931,7 +931,7 @@ const PracticeRecordLayout = () => {
             }
             text = text.trim().replace(/\s\s+/g, " ");
 
-            console.log("Processed text:", text);
+            // console.log("Processed text:", text);
             const payload = {
               title: text,
               base64Audio: base64,
@@ -953,7 +953,7 @@ const PracticeRecordLayout = () => {
               }
             );
 
-            console.log("Response status:", res.status);
+            // console.log("Response status:", res.status);
             const data = await res.json();
             console.log("Response data:", data);
 
@@ -964,15 +964,15 @@ const PracticeRecordLayout = () => {
             setMainTitle("An English Practice Speaking with AI");
             setPronunciationAccuracy(`${pronunciationAccuracyValue}%`);
             const feedbackValue = data?.AIFeedback || data?.aiFeedback || data?.feedback || "";
-            console.log("data?.AIFeedback", data?.AIFeedback);
-            console.log("Setting aiFeedback to:", feedbackValue);
+            // console.log("data?.AIFeedback", data?.AIFeedback);
+            // console.log("Setting aiFeedback to:", feedbackValue);
             setAiFeedback(feedbackValue);
             
             // Call handleSubmitRecord after API returns result to upload and update record
             // Pass score and feedback directly from API response
             const apiScore = parseFloat(pronunciationAccuracyValue) || 0;
             const apiFeedback = feedbackValue;
-            console.log("Passing to handleSubmitRecord - apiScore:", apiScore, "apiFeedback:", apiFeedback);
+            // console.log("Passing to handleSubmitRecord - apiScore:", apiScore, "apiFeedback:", apiFeedback);
             setTimeout(() => {
               handleSubmitRecordRef.current(apiScore, apiFeedback);
             }, 100);
