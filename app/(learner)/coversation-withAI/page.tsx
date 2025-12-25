@@ -41,6 +41,7 @@ interface AIPackage {
 const ConversationWithAI = () => {
   const router = useRouter();
   const { data: userData } = useGetMeQuery();
+  console.log("UserData:", userData)
   const queryClient = useQueryClient();
   const {data: aiPackagesData} = useGetAIPackages();
   const [duration, setDuration] = useState<string>("");
@@ -66,11 +67,11 @@ const ConversationWithAI = () => {
   const userCoins = userData?.coinBalance || 0;
   const hasEnoughCoins = userCoins >= requiredCoins;
 
-  const getToken = useCallback(async (userName: string): Promise<boolean> => {
+  const getToken = useCallback(async (userId: string): Promise<boolean> => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL}?name=${encodeURIComponent(
-          userName
+          userId
         )}`
       );
       const contentType = response.headers.get("content-type") || "";
@@ -205,8 +206,8 @@ const ConversationWithAI = () => {
     // Gọi getToken trước để đảm bảo kết nối thành công
     setIsStarting(true);
     try {
-      const name = userData?.fullName || "";
-      const tokenSuccess = await getToken(name);
+      const userId = userData?.userId || "";
+      const tokenSuccess = await getToken(userId);
       
       // Chỉ gọi mutation nếu getToken thành công
       if (tokenSuccess) {
