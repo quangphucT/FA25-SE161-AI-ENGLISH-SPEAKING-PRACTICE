@@ -217,31 +217,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
-          <li>
-            <button
-              type="button"
-              onClick={() => setActiveMenu("reviewMoney")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "reviewMoney"
-                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span
-                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "reviewMoney"
-                    ? "bg-white/20"
-                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
-                }`}
-              >
-                <MessageSquareText size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Tiền đánh giá</span>
-                <span className="text-xs opacity-70">Quản lí tiền đánh giá.</span>
-              </div>
-            </button>
-          </li>
         </ul>
         )}
       </div>
@@ -283,8 +258,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
                 <PackageIcon size={20} />
               </span>
               <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Gói dịch vụ</span>
-                <span className="text-xs opacity-70">Quản lí gói dịch vụ</span>
+                <span className="font-semibold text-sm">Gói dịch vụ xu</span>
+                <span className="text-xs opacity-70">Quản lí gói dịch vụ xu</span>
               </div>
             </button>
           </li>
@@ -399,7 +374,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
           className="flex items-center justify-between w-full mb-4 group hover:bg-slate-700/30 rounded-lg px-2 py-2 transition-colors"
         >
           <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-            Kinh doanh
+            Nguồn thu 
           </p>
           {isBusinessCollapsed ? (
             <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
@@ -459,7 +434,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
-
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("reviewMoney")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "reviewMoney"
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "reviewMoney"
+                    ? "bg-white/20"
+                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                }`}
+              >
+                <MessageSquareText size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Tiền đánh giá</span>
+                <span className="text-xs opacity-70">Quản lí tiền đánh giá.</span>
+              </div>
+            </button>
+          </li>
           <li>
             <button
               type="button"
@@ -561,8 +560,8 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
       //skill: { title: "Quản lí kĩ năng", subtitle: "Cấu hình kĩ năng và cấp độ." },
 
       package: {
-        title: "Gói dịch vụ",
-        subtitle: "Quản lí các gói học và giá.",
+        title: "Gói dịch vụ xu",
+        subtitle: "Quản lí các gói dịch vụ xu.",
       },
       //topic: { title: "Quản lí chủ đề", subtitle: "Tổ chức các chủ đề hội thoại." },
       purchase: {
@@ -582,8 +581,8 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
         subtitle: "Quản lí yêu cầu rút tiền.",
       },
         reviewMoney: {
-          title: "Quản lí tiền đánh giá",
-          subtitle: "Quản lí tiền đánh giá.",
+          title: "Quản lí luồng tiền đánh giá",
+          subtitle: "Quản lí luồng tiền đánh giá.",
         },
         purchaseItem: {
           title: "Quản lí mua gói vật phẩm",
@@ -602,8 +601,8 @@ const Header = ({ activeMenu }: { activeMenu: string }) => {
           subtitle: "Quản lí khóa học đã đăng ký.",
         },
         recordCharge: {
-          title: "Quản lí record charge",
-          subtitle: "Quản lí record charge.",
+          title: "Quản lí phí ghi âm",
+          subtitle: "Quản lí phí ghi âm.",
         },
       //soldpackages: { title: "Gói đã bán", subtitle: "Quản lí gói đã bán và hoạt động." },
     };
