@@ -68,6 +68,7 @@ interface ReviewDetailItem {
   createdAt: Date;
   learner: string;
   earnedFromThisReview: number;
+  tipAmount: number;
 }
 
 
@@ -209,9 +210,9 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
 
   const selectedReviewerStats = adminReviewerIncomeDetail?.data;
   
-  // Pagination calculations
-  const totalReviewDetailItems = parseInt(selectedReviewerStats?.totalReviews || "0") || selectedReviewerRecords.length;
-  const totalReviewDetailPages = Math.ceil(totalReviewDetailItems / reviewDetailPageSize) || 1;
+  // Pagination calculations - use fields from response
+  const totalReviewDetailItems = parseInt(selectedReviewerStats?.totalReviews || "0");
+  const totalReviewDetailPages = selectedReviewerStats?.totalPages || 1;
   const startIndex = (reviewDetailPageNumber - 1) * reviewDetailPageSize;
   const endIndex = startIndex + reviewDetailPageSize;
 
@@ -572,7 +573,7 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
 <p className="text-indigo-200 text-sm mt-1">
   Mã Reviewer: <span className="font-mono">{selectedReviewerProfileId}</span>
   <br />
-  Tổng review: {selectedReviewerStats?.totalReviews ?? 0}
+  Tổng review: {parseInt(selectedReviewerStats?.totalReviews || "0")}
 </p>
 
           </div>
@@ -599,7 +600,7 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
       <CardContent className="pt-6">
         <p className="text-gray-500 text-sm">Tổng review</p>
         <p className="text-3xl font-bold text-gray-900">
-          {selectedReviewerStats.totalReviews}
+          {parseInt(selectedReviewerStats.totalReviews || "0")}
         </p>
       </CardContent>
     </Card>
@@ -647,6 +648,7 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
                   <TableHead className="text-center font-semibold text-gray-700">
                     Thu nhập
                   </TableHead>
+                  <TableHead className="text-center font-semibold text-gray-700">Tip</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -685,6 +687,9 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
 
                     <TableCell className="text-center font-semibold text-green-600">
                       {r.earnedFromThisReview} Coin
+                    </TableCell>
+                    <TableCell className="text-center font-semibold text-orange-600">
+                      {r.tipAmount} Coin
                     </TableCell>
                     <TableCell className="text-center">
                       <Button
@@ -856,7 +861,12 @@ const [showReviewDetailModal, setShowReviewDetailModal] = useState(false);
             {selectedReviewItem.earnedFromThisReview} Coin
           </p>
         </div>
-
+        <div>
+          <p className="text-gray-500 text-sm">Tip</p>
+          <p className="font-bold text-orange-600">
+            {formatCoin(selectedReviewItem.tipAmount ?? 0)} 
+          </p>
+        </div>
         <div>
           <p className="text-gray-500 text-sm">Ngày tạo</p>
           <p>{new Date(selectedReviewItem.createdAt).toLocaleString("vi-VN")}</p>
