@@ -1272,8 +1272,13 @@ const QUESTION_TYPE_LABEL: Record<string, string> = {
             {currentQuestionIndex > 0 && (
               <Button
                 onClick={handlePreviousQuestion}
+                disabled={isRecording || isProcessingAudio || uiBlocked}
                 variant="outline"
-                className="px-6 py-3 cursor-pointer rounded-xl font-semibold"
+                className={`px-6 py-3 rounded-xl font-semibold ${
+                  isRecording || isProcessingAudio || uiBlocked
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer"
+                }`}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Câu trước
@@ -1340,6 +1345,7 @@ const QUESTION_TYPE_LABEL: Record<string, string> = {
                 disabled={
                   isProcessingAudio ||
                   uiBlocked ||
+                  isRecording ||
                   (!recorded[currentQuestionIndex] &&
                     currentQuestion.status !== "Completed")
                 }
@@ -1347,7 +1353,8 @@ const QUESTION_TYPE_LABEL: Record<string, string> = {
                   (recorded[currentQuestionIndex] ||
                     currentQuestion.status === "Completed") &&
                   !isProcessingAudio &&
-                  !uiBlocked
+                  !uiBlocked &&
+                  !isRecording
                     ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer transform hover:scale-105"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
