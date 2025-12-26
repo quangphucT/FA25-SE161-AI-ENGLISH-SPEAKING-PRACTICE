@@ -53,6 +53,11 @@ export default function LoginForm() {
     rawStatus?: string
   ) => {
     const reviewerStatus = rawStatus || "Pending";
+    // Nếu reviewer bị banned thì báo lỗi và không điều hướng
+    if (reviewerStatus === "Banned") {
+      toast.error("Tài khoản của bạn đã bị cấm. Vui lòng liên hệ quản trị viên.");
+      return;
+    }
     if (reviewerStatus === "Active" && isReviewerActive) {
       router.push("/dashboard-reviewer-layout");
       return;
