@@ -1226,12 +1226,12 @@ const SECTION_TYPE_LABEL: Record<string, string> = {
               {/* Navigation Button */}
               <Button
                 className={`flex-1 md:flex-initial font-semibold px-10 py-4 rounded-xl text-base transition-all shadow-lg ${
-                  recorded[currentQuestionIndex]
+                  recorded[currentQuestionIndex] && !isRecording && !isProcessingAudio
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer transform hover:scale-105"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
                 onClick={handleNext}
-                disabled={!recorded[currentQuestionIndex]}
+                disabled={!recorded[currentQuestionIndex] || isRecording || isProcessingAudio}
               >
                 {recorded[currentQuestionIndex] ? (
                   <span className="flex items-center gap-2">
