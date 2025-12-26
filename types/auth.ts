@@ -109,6 +109,7 @@ export interface ReviewerProfile {
   updatedAt: string | null;
   isDeleted: boolean;
 }
+
 export interface LearnerProfile {
   learnerProfileId: string;
   pronunciationScore: number;

@@ -2,6 +2,8 @@
 import { useEffect, useRef } from "react";
 import { handleLogout } from "@/utils/auth";
 import { usePathname } from "next/navigation";
+import { toast } from "sonner";
+
 export default function TokenRefresher() {
 	const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pathname = usePathname(); // lấy pathname chính xác ngay khi render
@@ -48,6 +50,39 @@ export default function TokenRefresher() {
 					 await handleLogout();
 					stop();
 					return;
+				}
+
+				// Kiểm tra nếu reviewer bị banned thì đá ra trang sign-in
+				const data = await res.json();
+				if (data.accessToken) {
+					try {
+						const base64 = data.accessToken.split(".")[1];
+						const decodedPayload = JSON.parse(
+							Buffer.from(base64, "base64").toString()
+						);
+						const role =
+							decodedPayload[
+								"http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+							];
+						const isReviewerActive = decodedPayload["IsReviewerActive"];
+						const reviewerStatus = decodedPayload["ReviewerStatus"];
+
+						// Nếu là REVIEWER và bị banned → đá ra trang sign-in
+						if (
+							role === "REVIEWER" &&
+							isReviewerActive === false &&
+							reviewerStatus === "Banned"
+						) {
+							toast.error(
+								"Tài khoản của bạn đã bị cấm. Vui lòng liên hệ quản trị viên."
+							);
+							await handleLogout();
+							stop();
+							return;
+						}
+					} catch {
+						// Lỗi decode token: bỏ qua, để middleware xử lý
+					}
 				}
 			
 			} catch {
