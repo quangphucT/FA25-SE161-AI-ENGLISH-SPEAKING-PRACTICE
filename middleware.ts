@@ -32,6 +32,13 @@ export function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL("/dashboard-learner-layout?menu=enrollingCourses", request.url));
         }
         if (role === "REVIEWER") {
+          // Nếu reviewer bị banned → redirect về sign-in và xóa cookies
+          if (reviewerStatus === "Banned") {
+            const response = NextResponse.redirect(new URL("/sign-in", request.url));
+            response.cookies.delete("accessToken");
+            response.cookies.delete("refreshToken");
+            return response;
+          }
           // isReviewerActive = false → chưa upload certificate → entrance_information
           if (!isReviewerActive) {
             return NextResponse.redirect(new URL("/entrance_information", request.url));
@@ -58,6 +65,17 @@ export function middleware(request: NextRequest) {
         pathName !== "/entrance_test" 
       ) {
         return NextResponse.redirect(new URL("/entrance_test", request.url));
+      }
+
+      // Nếu REVIEWER bị banned → redirect về sign-in và xóa cookies
+      if (
+        role === "REVIEWER" &&
+        reviewerStatus === "Banned"
+      ) {
+        const response = NextResponse.redirect(new URL("/sign-in", request.url));
+        response.cookies.delete("accessToken");
+        response.cookies.delete("refreshToken");
+        return response;
       }
 
       // Nếu REVIEWER chưa upload certificate (isReviewerActive = false) → entrance_information
