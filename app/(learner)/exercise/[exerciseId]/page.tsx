@@ -944,11 +944,11 @@ const QUESTION_TYPE_LABEL: Record<string, string> = {
                                       </div>
                                       <div>
                                         <p className="text-base font-bold text-green-900">
-                                          Hình Ảnh Minh Họa Khẩu Hình
+                                          Hình Ảnh Minh Họa 
                                         </p>
-                                        <p className="text-sm text-green-700">
+                                        {/* <p className="text-sm text-green-700">
                                           Tham khảo vị trí khẩu hình chuẩn
-                                        </p>
+                                        </p> */}
                                       </div>
                                     </div>
                                     <div className="rounded-xl overflow-hidden border-2 border-white shadow-lg bg-white">
@@ -958,13 +958,13 @@ const QUESTION_TYPE_LABEL: Record<string, string> = {
                                         className="w-full max-h-[450px] object-contain"
                                       />
                                     </div>
-                                    <div className="mt-4 bg-green-100 rounded-lg p-3">
+                                    {/* <div className="mt-4 bg-green-100 rounded-lg p-3">
                                       <p className="text-sm text-green-800 font-medium">
                                         💡 <strong>Mẹo học tập:</strong> Quan
                                         sát kỹ vị trí lưỡi, răng và môi trong
                                         hình để phát âm chuẩn
                                       </p>
-                                    </div>
+                                    </div> */}
                                   </>
                                 ) : (
                                   <div className="text-center py-12">
