@@ -41,6 +41,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLearnerReviewHistory } from "@/features/learner/hooks/useLearnerReview";
 import { useLearnerFeedback, useLearnerReportReview } from "@/features/learner/hooks/useLearnerFeedback";
 import {
@@ -57,6 +63,8 @@ import {
   Filter,
   Play,
   XCircle,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
 import type { LearnerReviewHistory } from "@/features/learner/services/learnerReviewService";
 
@@ -73,6 +81,8 @@ const SendingAudioToReviewer = () => {
   const [feedbackRating, setFeedbackRating] = useState<number>(5);
   const [feedbackContent, setFeedbackContent] = useState("");
   const [reportReason, setReportReason] = useState("");
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedDetailReview, setSelectedDetailReview] = useState<LearnerReviewHistory | null>(null);
   
   // Convert "all" to empty string for API call
   const apiStatus = status === "all" ? "" : status;
@@ -141,6 +151,11 @@ const SendingAudioToReviewer = () => {
   const handleStatusChange = (value: string) => {
     setStatus(value);
     setPageNumber(1); // Reset to first page when filter changes
+  };
+
+  const formatCoin = (amount: number | undefined) => {
+    const value = amount ?? 0;
+    return `${value} coin`;
   };
 
   const handleOpenRequest = (review: LearnerReviewHistory) => {
@@ -417,9 +432,10 @@ const SendingAudioToReviewer = () => {
                     <TableHead className="font-semibold">Reviewer</TableHead>
                     <TableHead className="font-semibold text-center">Điểm</TableHead>
                     <TableHead className="font-semibold text-center">Trạng thái</TableHead>
-                    <TableHead className="font-semibold">Nhận xét</TableHead>
-                    <TableHead className="font-semibold">Loại</TableHead>
-                    <TableHead className="font-semibold text-center">Audio</TableHead>
+                   
+                    <TableHead className="font-semibold">Tip</TableHead>
+                    <TableHead className="font-semibold text-center">Audio learner</TableHead>
+                    <TableHead className="font-semibold text-center">Audio reviewer</TableHead>
                     <TableHead className="font-semibold text-center">Hành động</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -460,21 +476,32 @@ const SendingAudioToReviewer = () => {
                       <TableCell className="text-center">
                         {getStatusBadge(review.feedbackStatus)}
                       </TableCell>
+                      
                       <TableCell>
                         <div className="max-w-md">
-                          {review.comment ? (
-                            <p className="text-sm text-gray-700 line-clamp-2">
-                              {review.comment}
-                            </p>
-                          ) : (
-                            <span className="text-sm text-gray-400 italic">Chưa có nhận xét</span>
-                          )}
+                          <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                            {formatCoin(review.tipAmount)}
+                          </p>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-medium">
-                          {review.reviewType === "Record" ? "Record" : "Learner Answer"}
-                        </Badge>
+                      <TableCell className="text-center">
+                        {review.learnerAudioUrl ? (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="cursor-pointer"
+                            onClick={() => {
+                              const audio = new Audio(review.learnerAudioUrl as string);
+                              audio.play().catch((err) => {
+                                console.error("Error playing audio:", err);
+                              });
+                            }}
+                          >
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Không có audio</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         {review.reviewAudioUrl ? (
@@ -496,18 +523,39 @@ const SendingAudioToReviewer = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {review.feedbackStatus === "NotSent" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="cursor-pointer"
-                          disabled={review.status == "Completed" || review.status == "Rejected"}
-                          onClick={() => handleOpenRequest(review)}
-                        >
-                          <Send className="w-4 h-4 mr-2" />
-                          Gửi đơn
-                        </Button>
-                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 cursor-pointer hover:bg-gray-100"
+                            >
+                              <MoreVertical className="w-4 h-4 text-gray-600" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            {review.feedbackStatus === "NotSent" && (
+                              <DropdownMenuItem
+                                onClick={() => handleOpenRequest(review)}
+                                disabled={review.status === "Completed" || review.status === "Rejected"}
+                                className="cursor-pointer flex items-center gap-2"
+                              >
+                                <Send className="w-4 h-4" />
+                                Gửi đơn
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedDetailReview(review);
+                                setShowDetailModal(true);
+                              }}
+                              className="cursor-pointer flex items-center gap-2"
+                            >
+                              <Eye className="w-4 h-4" />
+                              Xem chi tiết
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -686,6 +734,149 @@ const SendingAudioToReviewer = () => {
                 Gửi report
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal xem chi tiết */}
+      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết Review</DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về review này
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDetailReview && (
+            <div className="space-y-6">
+              {/* Thông tin cơ bản */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Ngày đánh giá</p>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm text-gray-900">{formatDate(selectedDetailReview.createdAt)}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Reviewer</p>
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm text-gray-900">{selectedDetailReview.reviewerFullName || "Chưa có reviewer"}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Điểm</p>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    <span className={`text-lg font-semibold ${getScoreColor(selectedDetailReview.score)}`}>
+                      {selectedDetailReview.score}/10
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Trạng thái</p>
+                  {getStatusBadge(selectedDetailReview.feedbackStatus)}
+                </div>
+               
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Tip</p>
+                  <p className="text-sm font-semibold text-orange-600">{formatCoin(selectedDetailReview.tipAmount)}</p>
+                </div>
+              </div>
+
+              {/* Câu hỏi */}
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-2">Câu hỏi</p>
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-900">{selectedDetailReview.questionContent || "N/A"}</p>
+                </div>
+              </div>
+
+              {/* Nhận xét */}
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-2">Nhận xét</p>
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  {selectedDetailReview.comment ? (
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedDetailReview.comment}</p>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">Chưa có nhận xét</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Tip message */}
+              {selectedDetailReview.tipMessage && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Lời nhắn kèm tip</p>
+                  <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                    <p className="text-sm text-gray-900">{selectedDetailReview.tipMessage}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Audio */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Audio learner</p>
+                  {selectedDetailReview.learnerAudioUrl ? (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <audio controls className="w-full">
+                        <source src={selectedDetailReview.learnerAudioUrl} type="audio/mpeg" />
+                        <source src={selectedDetailReview.learnerAudioUrl} type="audio/wav" />
+                        Trình duyệt của bạn không hỗ trợ phát audio.
+                      </audio>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">Không có audio</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Audio reviewer</p>
+                  {selectedDetailReview.reviewAudioUrl ? (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <audio controls className="w-full">
+                        <source src={selectedDetailReview.reviewAudioUrl} type="audio/mpeg" />
+                        <source src={selectedDetailReview.reviewAudioUrl} type="audio/wav" />
+                        Trình duyệt của bạn không hỗ trợ phát audio.
+                      </audio>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">Không có audio</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Feedback (nếu có) */}
+              {(selectedDetailReview.feedbackContent || selectedDetailReview.feedbackRating) && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Feedback của bạn</p>
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 space-y-2">
+                    {selectedDetailReview.feedbackRating && (
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <p className="text-sm text-gray-900">Đánh giá: {selectedDetailReview.feedbackRating}/5</p>
+                      </div>
+                    )}
+                    {selectedDetailReview.feedbackContent && (
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedDetailReview.feedbackContent}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDetailModal(false)}
+              className="cursor-pointer"
+            >
+              Đóng
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
