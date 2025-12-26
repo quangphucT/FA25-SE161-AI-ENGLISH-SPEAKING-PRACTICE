@@ -16,7 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
-import { useAdminManagerCreateMutation, useAdminManagerList, useAdminManagerDetail } from "@/features/admin/hooks/useAdminSummary";
+import { useAdminManagerCreateMutation, useAdminManagerList, useAdminManagerDetail, useAdminManagerUpdateMutation } from "@/features/admin/hooks/useAdminSummary";
 import { toast } from "sonner";
 import {
   Form,
@@ -34,11 +34,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 const formSchema = z.object({
   fullName: z.string().min(1, "Vui lòng nhập tên đầy đủ").max(100),
   email: z.string().email("Email không hợp lệ"),
   phoneNumber: z.string().min(8, "Số điện thoại không hợp lệ").max(15),
   password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
+});
+
+const updateFormSchema = z.object({
+  fullName: z.string().min(1, "Vui lòng nhập tên đầy đủ").max(100),
+  email: z.string().email("Email không hợp lệ"),
+  phoneNumber: z.string().min(8, "Số điện thoại không hợp lệ").max(15),
+  newPassword: z.string().optional(),
+  status: z.string().min(1, "Vui lòng chọn trạng thái"),
+}).refine((data) => {
+  // If newPassword is provided and not empty, it must be at least 6 characters
+  if (data.newPassword && data.newPassword.trim() !== "") {
+    return data.newPassword.length >= 6;
+  }
+  return true;
+}, {
+  message: "Mật khẩu tối thiểu 6 ký tự",
+  path: ["newPassword"],
 });
 const ManagerManagement = () => {
   const [search, setSearch] = useState<string>("");
@@ -54,6 +78,8 @@ const ManagerManagement = () => {
   const [copiedPassword, setCopiedPassword] = useState<boolean>(false);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
+  const [showPasswordUpdate, setShowPasswordUpdate] = useState<boolean>(false);
   const { data: managerList, isLoading, refetch } = useAdminManagerList(pageNumber, pageSize, search);
   
   // Fetch manager detail when viewing details
@@ -77,6 +103,19 @@ const ManagerManagement = () => {
     },
   });
   const { mutate, isPending } = useAdminManagerCreateMutation();
+  const { mutate: updateMutate, isPending: isUpdating } = useAdminManagerUpdateMutation();
+  
+  const updateForm = useForm<z.infer<typeof updateFormSchema>>({
+    resolver: zodResolver(updateFormSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      newPassword: "",
+      status: "Active",
+    },
+  });
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     mutate(values, {
       onSuccess: () => {
@@ -92,6 +131,35 @@ const ManagerManagement = () => {
         toast.error(err.message);
       },
     });
+  }
+
+  function onUpdateSubmit(values: z.infer<typeof updateFormSchema>) {
+    if (!selectedManager?.userId) return;
+    
+    const updateData = {
+      fullName: values.fullName,
+      email: values.email,
+      phoneNumber: values.phoneNumber,
+      newPassword: values.newPassword && values.newPassword.trim() !== "" ? values.newPassword : "",
+      status: values.status,
+    };
+
+    updateMutate(
+      { userId: selectedManager.userId, body: updateData },
+      {
+        onSuccess: () => {
+          updateForm.reset();
+          setShowPasswordUpdate(false);
+          setShowUpdateModal(false);
+          setShowDetailsModal(false);
+          setSelectedManager(null);
+          refetch();
+        },
+        onError: (err) => {
+          toast.error(err.message);
+        },
+      }
+    );
   }
   // Filter Managers by status (if status field exists in API)
   // Since API doesn't provide status, we'll show all managers
@@ -111,11 +179,50 @@ const ManagerManagement = () => {
     setPageNumber(1);
   }, [search]);
 
+  // Update form when detail data becomes available
+  useEffect(() => {
+    if (showUpdateModal && managerDetailData?.data && selectedManager) {
+      updateForm.reset({
+        fullName: managerDetailData.data.fullName,
+        email: managerDetailData.data.email,
+        phoneNumber: managerDetailData.data.phoneNumber,
+        newPassword: "",
+        status: managerDetailData.data.status || "Active",
+      });
+    }
+  }, [managerDetailData, showUpdateModal, selectedManager]);
+
   const handleViewDetails = (Manager: Manager) => {
     setSelectedManager(Manager);
     setShowDetailsModal(true);
     setShowPasswordDetail(false); // Reset password visibility when opening modal
     setCopiedPassword(false); // Reset copy state
+  };
+
+  const handleUpdate = (Manager: Manager) => {
+    setSelectedManager(Manager);
+    setShowUpdateModal(true);
+    setShowPasswordUpdate(false);
+    // Pre-fill form with current manager data from detail or basic manager data
+    const detailData = managerDetailData?.data;
+    if (detailData) {
+      updateForm.reset({
+        fullName: detailData.fullName,
+        email: detailData.email,
+        phoneNumber: detailData.phoneNumber,
+        newPassword: "",
+        status: detailData.status || "Active",
+      });
+    } else {
+      // Fallback to basic manager data
+      updateForm.reset({
+        fullName: Manager.fullName,
+        email: Manager.email,
+        phoneNumber: Manager.phoneNumber,
+        newPassword: "",
+        status: Manager.status || "Active",
+      });
+    }
   };
 
   const handleCopyPassword = async (password: string) => {
@@ -159,7 +266,7 @@ const ManagerManagement = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <Input
-            placeholder="Search by name..."
+            placeholder="Tìm theo tên"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-[250px]"
@@ -338,6 +445,24 @@ const ManagerManagement = () => {
                             Xem chi tiết
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            onClick={() => handleUpdate(Manager)}
+                            className="cursor-pointer text-blue-600"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              className="inline mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            <span className="text-blue-600">Cập nhật</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() =>
                               handleBlockUnblock(
                                 Manager,
@@ -488,26 +613,39 @@ const ManagerManagement = () => {
                 <h2 className="text-2xl font-bold text-gray-800">
                   Thông tin chi tiết người quản lý
                 </h2>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    setSelectedManager(null);
-                    setShowPasswordDetail(false);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 cursor-pointer"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => {
+                      if (managerDetailData?.data) {
+                        handleUpdate(selectedManager!);
+                        setShowDetailsModal(false);
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                   >
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </Button>
+                    Cập nhật
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      setSelectedManager(null);
+                      setShowPasswordDetail(false);
+                    }}
+                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                  >
+                    <svg
+                      width="24"
+                      height="24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -792,6 +930,183 @@ const ManagerManagement = () => {
                       className="bg-green-600 hover:bg-green-700 cursor-pointer"
                     >
                       {isPending ? "Đang tạo..." : "Tạo người quản lý"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Manager Modal */}
+      {showUpdateModal && selectedManager && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl max-h-[90vh] overflow-y-auto w-full mx-4">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Cập nhật người quản lý
+                </h2>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setShowUpdateModal(false);
+                    setSelectedManager(null);
+                    setShowPasswordUpdate(false);
+                    updateForm.reset();
+                  }}
+                  className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <Form {...updateForm}>
+                <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)} className="space-y-6">
+                  {/* Thông tin người quản lý */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">
+                      Thông tin người quản lý
+                    </h3>
+                    <div className="space-y-4">
+                      <FormField
+                        control={updateForm.control}
+                        name="fullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tên người quản lý *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="VD: Nguyễn Văn A"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={updateForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="VD: nguyenvana@gmail.com"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={updateForm.control}
+                        name="phoneNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Số điện thoại *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="tel"
+                                placeholder="VD: 0909090909"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={updateForm.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mật khẩu mới (để trống nếu không đổi)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  type={showPasswordUpdate ? "text" : "password"}
+                                  placeholder="Để trống nếu không đổi mật khẩu"
+                                  {...field}
+                                  className="pr-10"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPasswordUpdate(!showPasswordUpdate)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                                >
+                                  {showPasswordUpdate ? (
+                                    <EyeOff className="h-4 w-4" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={updateForm.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Trạng thái *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn trạng thái" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Active">Hoạt động</SelectItem>
+                                <SelectItem value="Inactive">Ngưng hoạt động</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Nút thao tác */}
+                  <div className="flex gap-3 justify-end pt-6 border-t">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        updateForm.reset();
+                        setShowPasswordUpdate(false);
+                        setShowUpdateModal(false);
+                        setSelectedManager(null);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isUpdating}  
+                      className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    >
+                      {isUpdating ? "Đang cập nhật..." : "Cập nhật"}
                     </Button>
                   </div>
                 </form>

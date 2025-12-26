@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import {
   Form,
   FormField,
@@ -37,10 +36,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { 
+  Plus, 
+  Trash2, 
+  Coins, 
+  Loader2,
+  AlertCircle,
+  Edit,
+  Eye,
+  Package,
+  ShoppingBag,
+  Power
+} from "lucide-react";
 
 const ServicePackageManagement = () => {
   const [pageNumber, setPageNumber] = useState(1);
-const [pageSize] = useState(10);
+const [pageSize] = useState(5);
 
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
@@ -204,9 +215,40 @@ const totalPages = Math.ceil(totalItems / pageSize);
     return price.toLocaleString("vi-VN") + " VND";
   };
 
+  // Calculate stats
+  const totalActive = packages.filter((p) => p.status === "Active").length;
+  const totalInactive = packages.filter((p) => p.status === "Inactive").length;
+
   return (
-    <div className="p-6"> 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
+                <Package className="w-6 h-6 text-white" />
+              </div>
+              Quản lý Gói Dịch vụ Xu
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Tạo và quản lý các gói dịch vụ xu cho người dùng
+            </p>
+          </div>
+
+          {/* Create Button */}
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-600 hover:bg-green-700 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Tạo gói mới
+          </Button>
+        </div>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 w-full">
           <Input
             placeholder="Tìm kiếm gói dịch vụ..."
@@ -226,269 +268,262 @@ const totalPages = Math.ceil(totalItems / pageSize);
             </TabsList>
           </Tabs>
         </div>
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-700 cursor-pointer"
-          >
-            <svg
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              className="inline mr-2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v8M8 12h8" />
-            </svg>
-            Thêm gói
-          </Button>
-        </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#f7f9fa]">
-             
-              <TableHead className="text-gray-700 font-semibold">Tên gói</TableHead>
-              <TableHead className="text-gray-700 font-semibold">Mô tả</TableHead>
-              <TableHead className="text-gray-700 font-semibold">Giá</TableHead>
-              <TableHead className="text-gray-700 font-semibold">Số lượng xu</TableHead>
-              <TableHead className="text-gray-700 font-semibold">% Bonus</TableHead>
-              <TableHead className="text-gray-700 font-semibold">Số xu nhận</TableHead>
-              <TableHead className="text-gray-700 font-semibold">Số lượt mua</TableHead>
-              <TableHead className="text-gray-700 font-semibold">Trạng thái</TableHead>
-              <TableHead className="text-center text-gray-700 font-semibold">Hành động</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  <div className="text-gray-500">Đang tải...</div>
-                </TableCell>
-              </TableRow>
-            ) : error || servicePackagesData?.isSucess === false ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  <div className="text-red-500">
-                    {error?.message || servicePackagesData?.message || "Không thể tải dữ liệu"}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : packages.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  <div className="text-gray-500">Không có gói dịch vụ nào</div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              packages.map((pkg) => (
-                <TableRow
-                  key={pkg.servicePackageId}
-                  className="hover:bg-[#f0f7e6] transition-colors"
-                >
-               
-                  <TableCell className="font-semibold text-gray-900">{pkg.name}</TableCell>
-                  <TableCell
-                    className="text-gray-600 max-w-[220px] truncate"
-                    title={pkg.description}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card className="p-4 border-l-4 border-l-green-500">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Package className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Tổng số gói</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {totalItems}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 border-l-4 border-l-blue-500">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Power className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Gói hoạt động</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {totalActive}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Table */}
+      <Card>
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Danh sách gói
+          </h3>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <Loader2 className="w-12 h-12 text-green-600 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Đang tải...</p>
+            </div>
+          ) : packages.length === 0 ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-2">Chưa có gói nào</p>
+              <p className="text-sm text-gray-500">
+                Nhấn &quot;Tạo gói mới&quot; để thêm gói đầu tiên
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>STT</TableHead>
+                    <TableHead>Tên gói</TableHead>
+                    <TableHead>Mô tả</TableHead>
+                    <TableHead>Giá</TableHead>
+                    <TableHead>Số lượng xu</TableHead>
+                    <TableHead>% Bonus</TableHead>
+                    <TableHead>Số xu nhận</TableHead>
+                    <TableHead>Số lượt mua</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {packages.map((pkg, index) => (
+                    <TableRow key={pkg.servicePackageId}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell className="font-semibold text-gray-900">{pkg.name}</TableCell>
+                      <TableCell
+                        className="text-gray-600 max-w-[220px] truncate"
+                        title={pkg.description}
+                      >
+                        {pkg.description}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-gray-900">{formatPrice(pkg.price)}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Coins className="w-4 h-4 text-yellow-600" />
+                          <span className="font-semibold text-yellow-700">
+                            {Math.trunc(pkg.numberOfCoin)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-800 font-medium">
+                        {pkg.bonusPercent}%
+                      </TableCell>
+                      <TableCell className="text-gray-800 font-medium">
+                        {Math.trunc(pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100))}
+                      </TableCell>
+                      <TableCell className="text-gray-800 font-medium">
+                        {pkg.totalPurchases || 0}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-auto p-2 hover:bg-gray-100 text-sm font-medium text-gray-900"
+                            >
+                              <div className="flex items-center justify-between gap-2 min-w-[120px]">
+                                <span
+                                  className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
+                                    pkg.status === "Active"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {pkg.status === "Active" ? "Active" : "InActive"}
+                                </span>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="w-4 h-4 text-gray-500"
+                                >
+                                  <path d="M12 15.5l-5-5h10l-5 5z" />
+                                </svg>
+                              </div>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-56">
+                            <DropdownMenuItem
+                              className="flex items-center justify-between px-4 py-3"
+                              disabled
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">Active</span>
+                                <span className="text-xs text-gray-500">
+                                  Gói đang hoạt động - có thể sử dụng
+                                </span>
+                              </div>
+                              {pkg.status === "Active" && (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="h-4 w-4 text-green-600"
+                                >
+                                  <path d="M20.285 6.707l-11 11-5.657-5.657 1.414-1.414 4.243 4.243 9.586-9.586z" />
+                                </svg>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="flex items-center justify-between px-4 py-3"
+                              disabled
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">InActive</span>
+                                <span className="text-xs text-gray-500">
+                                  Gói không hoạt động - không thể sử dụng
+                                </span>
+                              </div>
+                              {pkg.status === "InActive" && (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="h-4 w-4 text-gray-600"
+                                >
+                                  <path d="M20.285 6.707l-11 11-5.657-5.657 1.414-1.414 4.243 4.243 9.586-9.586z" />
+                                </svg>
+                              )}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetails(pkg)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 cursor-pointer"
+                            title="Xem chi tiết người mua"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleUpdate(pkg)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
+                            title="Chỉnh sửa"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAction(pkg, "delete")}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {/* Pagination Footer */}
+              <div className="flex justify-between items-center px-6 py-4 border-t text-sm text-gray-700">
+                {/* Left: Rows per page */}
+                <div className="flex items-center gap-2">
+                  <span>Số dòng trên mỗi trang:</span>
+                  <span className="font-medium">{pageSize}</span>
+                </div>
+
+                {/* Middle: 1–5 of 18 */}
+                <div>
+                  {totalItems === 0
+                    ? "0–0 of 0"
+                    : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} trong số ${totalItems}`}
+                </div>
+
+                {/* Right: Previous / Page number / Next */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pageNumber === 1}
+                    onClick={() => setPageNumber(pageNumber - 1)}
+                    className="cursor-pointer"
                   >
-                    {pkg.description}
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-semibold text-gray-900">{formatPrice(pkg.price)}</span>
-                  </TableCell>
-                  <TableCell className="text-gray-800 font-medium">
-                    {Math.trunc(pkg.numberOfCoin)}
-                  </TableCell>
-                  <TableCell className="text-gray-800 font-medium">
-                    {pkg.bonusPercent}%
-                  </TableCell>
-                  <TableCell className="text-gray-800 font-medium">
-                    {Math.trunc(pkg.numberOfCoin + (pkg.numberOfCoin * pkg.bonusPercent / 100))}
-                  </TableCell>
-                  <TableCell className="text-gray-800 font-medium">
-                    {pkg.totalPurchases}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={`border ${
-                        pkg.status === "Active"
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : "bg-gray-100 text-gray-600 border-gray-200"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            pkg.status === "Active" ? "bg-green-500" : "bg-gray-400"
-                          }`}
-                        />
-                        {pkg.status === "Active" ? "Hoạt động" : "Ngưng hoạt động"}
-                      </span>
-                    </Badge>
-                  </TableCell>
+                    Trước
+                  </Button>
 
-                  <TableCell className="text-center">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-1 h-8 w-8 cursor-pointer"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle cx="12" cy="12" r="1" />
-                            <circle cx="19" cy="12" r="1" />
-                            <circle cx="5" cy="12" r="1" />
-                          </svg>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleViewDetails(pkg)}
-                          className="cursor-pointer"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            className="inline mr-2 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                          <span className="text-blue-600">Xem chi tiết</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleUpdate(pkg)}
-                          className="cursor-pointer"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            className="inline mr-2 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          <span className="text-green-600">Cập nhật</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleAction(pkg, "delete")}
-                          className="cursor-pointer text-red-600"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            className="inline mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M3 6h18" />
-                            <path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
-                          </svg>
-                          Xoá
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-       {packages.length > 0 && (
-  <div className="flex items-center justify-between mt-6">
-    {/* Text */}
-    <div className="text-sm text-gray-600">
-      Hiển thị{" "}
-      <span className="font-semibold">{(pageNumber - 1) * pageSize + 1}</span>{" "}
-      đến{" "}
-      <span className="font-semibold">
-        {Math.min(pageNumber * pageSize, totalItems)}
-      </span>{" "}
-      của <span className="font-semibold">{totalItems}</span> gói dịch vụ
-    </div>
+                  <span className="px-3 py-1 border rounded-md bg-gray-50">
+                    {pageNumber}
+                  </span>
 
-    {/* Pagination */}
-    <div className="flex items-center gap-2">
-      {/* Prev */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-        disabled={pageNumber === 1}
-      >
-        Trước
-      </Button>
-
-      {/* Page Numbers */}
-      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-        let page;
-
-        if (totalPages <= 5) {
-          page = i + 1;
-        } else if (pageNumber <= 3) {
-          page = i + 1;
-        } else if (pageNumber >= totalPages - 2) {
-          page = totalPages - 4 + i;
-        } else {
-          page = pageNumber - 2 + i;
-        }
-
-        return (
-          <Button
-            key={page}
-            size="sm"
-            variant={page === pageNumber ? "default" : "outline"}
-            onClick={() => setPageNumber(page)}
-            className={
-              page === pageNumber
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "cursor-pointer hover:bg-gray-50"
-            }
-          >
-            {page}
-          </Button>
-        );
-      })}
-
-      {/* Next */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setPageNumber((p) => Math.min(totalPages, p + 1))}
-        disabled={pageNumber === totalPages}
-      >
-        Sau
-      </Button>
-    </div>
-  </div>
-)}
-
-
-      </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pageNumber === totalPages}
+                    onClick={() => setPageNumber(pageNumber + 1)}
+                    className="cursor-pointer"
+                  >
+                    Sau
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Confirm Dialog */}
       {showConfirmDialog && packageToAction && (
@@ -1130,7 +1165,7 @@ const PackageDetailModal = ({
                     </TableRow>
                   ) : (
                     buyers.map((buyer) => (
-                      <TableRow key={buyer.userId} className="hover:bg-[#f0f7e6]">
+                      <TableRow key={buyer.orderCode} className="hover:bg-[#f0f7e6]">
                         <TableCell className="font-medium">{buyer.buyerName || "N/A"}</TableCell>
                         <TableCell className="text-gray-600">{buyer.buyerEmail || "N/A"}</TableCell>
                         <TableCell className="font-semibold text-gray-900">

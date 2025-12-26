@@ -9,9 +9,10 @@ import {
   AdminRegisteredReviewerResponse,
   adminRegisteredReviewerService,
 } from "../services/adminSummaryService";
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
-import { adminManagerCreateService, AdminManagerDetailResponse, adminManagerDetailService, AdminManagerResponse, adminManagerService } from "../services/adminManagerService";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { adminManagerCreateService, AdminManagerDetailResponse, adminManagerDetailService, AdminManagerResponse, adminManagerService, AdminManagerUpdateRequest, AdminManagerUpdateResponse, adminManagerUpdateService } from "../services/adminManagerService";
 import { AdminReviewersResponse, adminReviewersService } from "../services/adminReviewerService";
+import { toast } from "sonner";
 export const useAdminSummary = () => {
   return useQuery<AdminSummaryResponse, Error>({
     queryKey: ["adminSummary"],
@@ -65,5 +66,18 @@ export const useAdminManagerDetail = (userId: string) => {
     queryKey: ["adminManagerDetail", userId],
     queryFn: () => adminManagerDetailService(userId),
     enabled: !!userId && userId !== "", // Only fetch when userId is provided
+  });
+}
+export const useAdminManagerUpdateMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation<AdminManagerUpdateResponse, Error, { userId: string; body: AdminManagerUpdateRequest }>({
+    mutationFn: ({ userId, body }) => adminManagerUpdateService(userId, body),
+    onSuccess: (data) => {
+      toast.success(data.message || "Cập nhật manager thành công");
+      queryClient.invalidateQueries({ queryKey: ["adminManagerList"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Cập nhật manager thất bại");
+    },
   });
 }

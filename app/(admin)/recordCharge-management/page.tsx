@@ -536,7 +536,7 @@ const RecordChargeManagement = () => {
               <div className="flex justify-between items-center px-6 py-4 border-t text-sm text-gray-700">
                 {/* Left: Rows per page */}
                 <div className="flex items-center gap-2">
-                  <span>Rows per page:</span>
+                  <span>Số dòng trên mỗi trang:</span>
                   <span className="font-medium">{pageSize}</span>
                 </div>
 
@@ -544,7 +544,7 @@ const RecordChargeManagement = () => {
                 <div>
                   {totalItems === 0
                     ? "0–0 of 0"
-                    : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} of ${totalItems}`}
+                    : `${(pageNumber - 1) * pageSize + 1}–${Math.min(pageNumber * pageSize, totalItems)} trong số ${totalItems}`}
                 </div>
 
                 {/* Right: Previous / Page number / Next */}
@@ -556,7 +556,7 @@ const RecordChargeManagement = () => {
                     onClick={() => setPageNumber(pageNumber - 1)}
                     className="cursor-pointer"
                   >
-                    Previous
+                    Trước
                   </Button>
 
                   <span className="px-3 py-1 border rounded-md bg-gray-50">
@@ -570,7 +570,7 @@ const RecordChargeManagement = () => {
                     onClick={() => setPageNumber(pageNumber + 1)}
                     className="cursor-pointer"
                   >
-                    Next
+                      Sau
                   </Button>
                 </div>
               </div>
@@ -809,7 +809,7 @@ const RecordChargeManagement = () => {
                         <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
                           {/* Left: Rows per page */}
                           <div className="flex items-center gap-2">
-                            <span>Rows per page:</span>
+                            <span>Số dòng trên mỗi trang:</span>
                             <span className="font-medium">{buyersPageSize}</span>
                           </div>
 
@@ -817,7 +817,7 @@ const RecordChargeManagement = () => {
                           <div>
                             {totalItems === 0
                               ? "0–0 of 0"
-                              : `${startIndex + 1}–${Math.min(endIndex, totalItems)} of ${totalItems}`}
+                              : `${startIndex + 1}–${Math.min(endIndex, totalItems)} trong số ${totalItems}`}
                           </div>
 
                           {/* Right: Previous / Page number / Next */}
@@ -829,7 +829,7 @@ const RecordChargeManagement = () => {
                               onClick={() => setBuyersPageNumber(buyersPageNumber - 1)}
                               className="cursor-pointer"
                             >
-                              Previous
+                              Trước
                             </Button>
 
                             <span className="px-3 py-1 border rounded-md bg-gray-50">
@@ -843,7 +843,7 @@ const RecordChargeManagement = () => {
                               onClick={() => setBuyersPageNumber(buyersPageNumber + 1)}
                               className="cursor-pointer"
                             >
-                              Next
+                              Sau
                             </Button>
                           </div>
                         </div>

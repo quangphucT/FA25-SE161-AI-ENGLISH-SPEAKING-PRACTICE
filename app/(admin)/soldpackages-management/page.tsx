@@ -638,8 +638,8 @@ const SoldPackagesManagement = () => {
           {filteredPackages.reduce((sum, p) => sum + p.purchasedCount, 0)}
         </div>
         <div>
-          Rows per page: <span className="font-semibold">10</span> &nbsp; 1-10
-          of {filteredPackages.length}
+        Số dòng trên mỗi trang:  <span className="font-semibold">10</span> &nbsp; 1-10
+        trong số {filteredPackages.length}
         </div>
       </div>
 

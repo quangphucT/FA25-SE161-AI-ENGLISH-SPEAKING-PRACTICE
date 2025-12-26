@@ -122,3 +122,67 @@ export const adminManagerDetailService = async (userId: string): Promise<AdminMa
     throw new Error(message);
   }
 };
+export interface AdminManagerUpdateRequest {
+  fullName: string,
+  email: string,
+  phoneNumber: string,
+  newPassword: string,
+  status: string
+}
+export interface AdminManagerUpdateResponse {
+  isSucess: boolean;
+  businessCode: number;
+  message: string;
+}
+export const adminManagerUpdateService = async (
+  userId: string,
+  body: AdminManagerUpdateRequest
+): Promise<AdminManagerUpdateResponse> => {
+  try {
+    const url = `/api/AdminDashboard/manager?userId=${encodeURIComponent(userId)}`;
+    const response = await fetchWithAuth(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    
+    // Handle empty or non-JSON responses
+    let data: AdminManagerUpdateResponse;
+    try {
+      const text = await response.text();
+      if (text && text.trim()) {
+        data = JSON.parse(text);
+      } else {
+        // Empty response but status is OK
+        data = {
+          isSucess: response.ok,
+          businessCode: response.ok ? 200 : response.status,
+          message: response.ok ? "Cập nhật thành công" : "Cập nhật thất bại",
+        };
+      }
+    } catch (parseError) {
+      // If JSON parsing fails, create a default response
+      data = {
+        isSucess: response.ok,
+        businessCode: response.ok ? 200 : response.status,
+        message: response.ok ? "Cập nhật thành công" : "Cập nhật thất bại",
+      };
+    }
+    
+    if (!response.ok) {
+      throw new Error(data.message || "Update manager failed");
+    }
+    
+    return data;
+  } catch (error: unknown) {
+    const message =
+      (error && typeof error === "object" && "response" in error && error.response && typeof error.response === "object" && "data" in error.response && error.response.data && typeof error.response.data === "object" && "message" in error.response.data
+        ? (error.response.data as { message: string }).message
+        : null) ||
+      (error instanceof Error ? error.message : null) ||
+      "An unknown error occurred";
+    throw new Error(message);
+  }
+};
