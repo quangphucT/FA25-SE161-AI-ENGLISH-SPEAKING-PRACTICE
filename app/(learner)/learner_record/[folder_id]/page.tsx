@@ -1309,7 +1309,7 @@ const PracticeRecordLayout = () => {
                   <div className="flex items-center justify-between gap-2">
                     <Button
                       onClick={handlePreviousQuestion}
-                      disabled={uiBlocked || currentQuestionIndex === 0}
+                      disabled={uiBlocked || recording || currentQuestionIndex === 0}
                       variant="ghost"
                       className="flex-1 cursor-pointer h-12 flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
                     >
@@ -1334,7 +1334,7 @@ const PracticeRecordLayout = () => {
                     
                     <Button
                       onClick={handleNextQuestion}
-                      disabled={uiBlocked || currentQuestionIndex >= recordsList.length - 1}
+                      disabled={uiBlocked || recording || currentQuestionIndex >= recordsList.length - 1}
                       variant="ghost"
                       className="flex-1 cursor-pointer h-12 flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all group"
                     >
