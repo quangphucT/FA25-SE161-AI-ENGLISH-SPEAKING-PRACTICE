@@ -86,7 +86,7 @@ const normalizeQuestionType = (type: QuestionTypeInput): QuestionType => {
   }
 
   if (typeof type === "string") {
-    const normalized = type.toLowerCase();
+    const normalized = type.trim();
     if (
       normalized === "Word" ||
       normalized === "Phrase" ||
