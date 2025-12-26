@@ -1591,26 +1591,6 @@ const StatisticsForMentor = () => {
                       </div>
                     </div>
 
-                    {/* Review Status */}
-                    <div>
-                      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
-                        <CheckCircle2 className="w-4 h-4 text-gray-500" />
-                        Review Status
-                      </Label>
-                      <div>
-                        {selectedFeedbackDetail.reviewStatus === "Completed" ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200">
-                            <CheckCircle2 className="w-4 h-4" />
-                            {selectedFeedbackDetail.reviewStatus}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                            <Clock className="w-4 h-4" />
-                            {selectedFeedbackDetail.reviewStatus === "Reported_Pending" ? "Reported Pending" : ""}
-                          </span>
-                        )}
-                      </div>
-                    </div>
 
                     {/* Review Type */}
                     <div>

@@ -41,6 +41,9 @@ export interface AdminReviewerIncomeResponse {
       completed: number;
       reported: number;
       rejected: number;
+      pageNumber: number;
+      pageSize: number;
+      totalPages: number;
       items?: Array<{
         reviewId: string;
         score: number;
@@ -50,6 +53,7 @@ export interface AdminReviewerIncomeResponse {
         createdAt: Date;
         learner: string;
         earnedFromThisReview: number;
+        tipAmount: number;
       }>;
     };
     businessCode?: number;

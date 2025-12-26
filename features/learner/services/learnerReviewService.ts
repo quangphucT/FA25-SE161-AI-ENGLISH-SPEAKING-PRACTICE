@@ -12,6 +12,11 @@ export interface LearnerReviewHistory {
     reviewAudioUrl: string | null;
     reviewType: "Record" | "LearnerAnswer" ;
     feedbackStatus: "NotSent" | "Approved" | "Rejected" | "Pending";
+    feedbackRating: number;
+    feedbackContent: string;
+    tipAmount: number;
+    tipMessage: string;
+    learnerAudioUrl: string;
 }
 export interface LearnerReviewHistoryResponse {
     isSucess: boolean;

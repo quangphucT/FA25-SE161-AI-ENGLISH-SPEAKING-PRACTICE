@@ -69,9 +69,9 @@ const normalizeStatus = (
 
 const mapCourseStatus = (
   status: string | null | undefined
-): "Active" | "Completed" | "Expired" => {
+): "Active" | "Completed" | "Expired" | "Enrolled" | "NotStarted" => {
   const normalized = (status || "").toLowerCase();
-  if (normalized === "enrolled" || normalized === "active") return "Active";
+  if (normalized === "enrolled" || normalized === "active"||normalized === "notstarted") return "Active";
   if (normalized === "completed") return "Completed";
   if (normalized === "expired") return "Expired";
   return "Expired";
@@ -698,7 +698,7 @@ const LearnerManagement = () => {
                     </div>
                     
                       <div>
-                        <span className="font-medium">Điểm Phát Âm:</span>
+                        <span className="font-medium">Điểm Phát Âm Đầu Vào:</span>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="outline" className="text-sm px-3 py-1">
                             {learnerDetail.avgScore != null
@@ -726,7 +726,7 @@ const LearnerManagement = () => {
                             (course) => mapCourseStatus(course.status) === "Active"
                           ).length || 0
                       }{" "}
-                      đang học
+                      đã đăng ký
                     </span>
                   </div>
                 </div>
@@ -805,7 +805,7 @@ const LearnerManagement = () => {
                                       }`}
                                     >
                                           {courseStatus === "Active"
-                                        ? "Đang học"
+                                        ? "Đã đăng ký"
                                             : courseStatus === "Completed"
                                         ? "Hoàn thành"
                                         : "Hết hạn"}
