@@ -61,6 +61,10 @@ const WithdrawRequest = () => {
   const totalItems = withdrawalData?.data?.totalItems ?? 0;
   const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
 
+  const handlePageChange = (newPage: number) => {
+    setPageNumber(newPage);
+  };
+
   useEffect(() => {
     setPageNumber(1);
   }, [statusFilter, search]);
@@ -441,39 +445,88 @@ const WithdrawRequest = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
-        <div>
-          {requests.length > 0
-            ? `Hiển thị ${(pageNumber - 1) * pageSize + 1}-${Math.min(
-                pageNumber * pageSize,
-                totalItems
-              )} trong tổng số ${totalItems} yêu cầu`
-            : "Không có dữ liệu"}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pageNumber === 1}
-            onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
-          >
-            Trước
-          </Button>
-          <div className="px-3 py-1 border rounded">
-            Trang {pageNumber} / {totalPages}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pageNumber >= totalPages}
-            onClick={() =>
-              setPageNumber((prev) => Math.min(prev + 1, totalPages))
-            }
-          >
-            Sau
-          </Button>
-        </div>
-      </div>
+      {!isLoading && requests.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="text-sm text-gray-600">
+                Hiển thị{" "}
+                <span className="font-semibold text-gray-900">
+                  {totalItems > 0
+                    ? (pageNumber - 1) * pageSize + 1
+                    : 0}
+                </span>{" "}
+                đến{" "}
+                <span className="font-semibold text-gray-900">
+                  {Math.min(pageNumber * pageSize, totalItems)}
+                </span>{" "}
+                trong tổng số{" "}
+                <span className="font-semibold text-gray-900">
+                  {totalItems}
+                </span>{" "}
+                yêu cầu
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pageNumber - 1)}
+                  disabled={pageNumber === 1 || isLoading}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  Trước
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from(
+                    { length: Math.min(5, totalPages) },
+                    (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pageNumber <= 3) {
+                        pageNum = i + 1;
+                      } else if (
+                        pageNumber >=
+                        totalPages - 2
+                      ) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = pageNumber - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={
+                            pageNumber === pageNum ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`cursor-pointer min-w-[40px] ${
+                            pageNumber === pageNum
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    }
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pageNumber + 1)}
+                  disabled={pageNumber >= totalPages || isLoading}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Details Modal */}
       {showDetailsModal && selectedRequest && (

@@ -373,7 +373,7 @@ const exportToPDF = () => {
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Tìm theo mã giao dịch, Order Code..."
+              placeholder="Tìm theo tên người dùng"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10"

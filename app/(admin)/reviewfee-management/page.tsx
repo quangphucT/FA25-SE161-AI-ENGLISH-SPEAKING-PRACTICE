@@ -58,7 +58,7 @@ import { NumberInput } from "@/components/common/NumberInput";
 };
 
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 const BUYERS_PAGE_SIZE = 5;
 
 const formatDate = (dateString?: string) => {
@@ -568,26 +568,44 @@ const policyForm = useForm<CreatePolicyForm>({
             </CardContent>
           </Card>
 
-          {/* Pagination */}
+          {/* Pagination Footer */}
           {packages.length > 0 && (
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Trang {pageNumber} / {totalPages}
+            <div className="flex justify-between items-center px-6 py-4 border-t text-sm text-gray-700">
+              {/* Left: Rows per page */}
+              <div className="flex items-center gap-2">
+                <span>Số dòng trên mỗi trang:</span>
+                <span className="font-medium">{PAGE_SIZE}</span>
               </div>
-              <div className="flex gap-2">
+
+              {/* Middle: 1–5 of 18 */}
+              <div>
+                {totalItems === 0
+                  ? "0–0 of 0"
+                  : `${(pageNumber - 1) * PAGE_SIZE + 1}–${Math.min(pageNumber * PAGE_SIZE, totalItems)} trong số ${totalItems}`}
+              </div>
+
+              {/* Right: Previous / Page number / Next */}
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
                   disabled={pageNumber === 1 || isLoading}
+                  onClick={() => setPageNumber(pageNumber - 1)}
+                  className="cursor-pointer"
                 >
-                  Trước
+                  Trước 
                 </Button>
+
+                <span className="px-3 py-1 border rounded-md bg-gray-50">
+                  {pageNumber}
+                </span>
+
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPageNumber((prev) => prev + 1)}
                   disabled={pageNumber >= totalPages || isLoading}
+                  onClick={() => setPageNumber(pageNumber + 1)}
+                  className="cursor-pointer"
                 >
                   Sau
                 </Button>
@@ -1571,7 +1589,7 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                       <div className="flex justify-between items-center px-4 py-4 border-t text-sm text-gray-700 mt-4">
                         {/* Left: Rows per page */}
                         <div className="flex items-center gap-2">
-                          <span>Rows per page:</span>
+                          <span>Số dòng trên mỗi trang:</span>
                           <span className="font-medium">{buyersPageSize}</span>
                         </div>
 
@@ -1579,7 +1597,7 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                         <div>
                           {totalBuyers === 0
                             ? "0–0 of 0"
-                            : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} of ${totalBuyers}`}
+                            : `${startIndex + 1}–${Math.min(endIndex, totalBuyers)} trong số ${totalBuyers}`}
                         </div>
 
                         {/* Right: Previous / Page number / Next */}
@@ -1591,7 +1609,7 @@ value={((detailData?.data?.currentPolicy?.percentOfReviewer ?? 0) * 100).toFixed
                             onClick={() => setBuyersPageNumber(actualBuyerPageNumber - 1)}
                             className="cursor-pointer"
                           >
-                            Previous
+                            Trước
                           </Button>
 
                           <span className="px-3 py-1 border rounded-md bg-gray-50">

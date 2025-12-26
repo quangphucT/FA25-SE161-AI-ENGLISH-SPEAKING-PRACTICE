@@ -1205,7 +1205,7 @@ const StatisticsForMentor = () => {
                         onClick={() => setModalPageNumber((prev) => Math.max(1, prev - 1))}
                         disabled={modalPageNumber === 1 || isLoadingAllFeedback}
                       >
-                        Previous
+                        Trước
                       </Button>
                       <span className="text-sm text-gray-600">
                         Page {modalPagination.currentPage} / {modalPagination.totalPages}
@@ -1216,7 +1216,7 @@ const StatisticsForMentor = () => {
                         onClick={() => setModalPageNumber((prev) => Math.min(modalPagination.totalPages, prev + 1))}
                         disabled={modalPageNumber >= modalPagination.totalPages || isLoadingAllFeedback}
                       >
-                        Next
+                        Sau
                       </Button>
                     </div>
                   )}

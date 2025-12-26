@@ -218,6 +218,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveMenu("feedback")}
+              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
+                activeMenu === "feedback"
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg transform scale-105"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
+              }`}
+            >
+              <span
+                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  activeMenu === "feedback"
+                    ? "bg-white/20"
+                    : "bg-pink-500/20 group-hover:bg-pink-500/30"
+                }`}
+              >
+                <Star size={20} />
+              </span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="font-semibold text-sm">Đánh giá</span>
+                <span className="text-xs opacity-70">Phản hồi & bình luận</span>
+              </div>
+            </button>
+          </li>
         </ul>
         )}
       </div>
@@ -375,7 +400,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
           className="flex items-center justify-between w-full mb-4 group hover:bg-slate-700/30 rounded-lg px-2 py-2 transition-colors"
         >
           <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-            Nguồn thu 
+          Dòng tiền
           </p>
           {isBusinessCollapsed ? (
             <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
@@ -460,31 +485,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, setActiveMenu }) => {
               </div>
             </button>
           </li>
-          <li>
-            <button
-              type="button"
-              onClick={() => setActiveMenu("feedback")}
-              className={`group flex items-center gap-4 cursor-pointer px-4 py-3 rounded-xl font-medium w-full transition-all duration-200 ${
-                activeMenu === "feedback"
-                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg transform scale-105"
-                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white hover:transform hover:scale-105"
-              }`}
-            >
-              <span
-                className={`p-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  activeMenu === "feedback"
-                    ? "bg-white/20"
-                    : "bg-orange-500/20 group-hover:bg-orange-500/30"
-                }`}
-              >
-                <Star size={20} />
-              </span>
-              <div className="flex flex-col items-start justify-center">
-                <span className="font-semibold text-sm">Đánh giá</span>
-                <span className="text-xs opacity-70">Phản hồi & bình luận</span>
-              </div>
-            </button>
-          </li>
+          
           <li>
             <button
               type="button"
